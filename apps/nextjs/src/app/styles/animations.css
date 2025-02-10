@@ -164,20 +164,23 @@
   --tw-exit-translate-x: --value([percentage], [length]);
 }
 
-.animate-meteor-effect {
-  animation: meteor 5s linear infinite;
+.animate-meteor {
+  animation: meteor 7s linear infinite;
 }
 
 @keyframes meteor {
   0% {
     transform: rotate(215deg) translateX(0);
+    opacity: 0;
+  }
+  30% {
     opacity: 1;
   }
   70% {
     opacity: 1;
   }
   100% {
-    transform: rotate(215deg) translateX(-500px);
+    transform: rotate(215deg) translateX(-600px);
     opacity: 0;
   }
 }
