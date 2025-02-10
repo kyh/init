@@ -21,7 +21,7 @@
   "dependencies": {
     "@init/ui": "workspace:^",
     "@tanstack/react-table": "^8.20.6",
-    "nuqs": "catalog:"
+    "nuqs": "^2.3.2"
   },
   "devDependencies": {
     "@kyh/eslint-config": "catalog:",

@@ -1,0 +1,184 @@
+@import "tailwindcss" source("../../../../../");
+@import "./animations.css";
+
+@plugin "@tailwindcss/typography";
+
+:root {
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(240 10% 3.9%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(240 10% 3.9%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(240 10% 3.9%);
+  --primary: hsl(240 5.9% 10%);
+  --primary-foreground: hsl(0 0% 98%);
+  --secondary: hsl(240 4.8% 95.9%);
+  --secondary-foreground: hsl(240 5.9% 10%);
+  --muted: hsl(240 4.8% 95.9%);
+  --muted-foreground: hsl(240 3.8% 46.1%);
+  --accent: hsl(240 4.8% 95.9%);
+  --accent-foreground: hsl(240 5.9% 10%);
+  --destructive: hsl(0 84.2% 60.2%);
+  --destructive-foreground: hsl(0 0% 98%);
+  --border: hsl(240 5.9% 90%);
+  --input: hsl(240 5.9% 90%);
+  --ring: hsl(240 5.9% 10%);
+  --radius: 0.3rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+
+  --radius-radius: var(--radius);
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+.dark {
+  --background: hsl(240 10% 3.9%);
+  --foreground: hsl(0 0% 98%);
+  --card: hsl(240 10% 3.9%);
+  --card-foreground: hsl(0 0% 98%);
+  --popover: hsl(240 10% 3.9%);
+  --popover-foreground: hsl(0 0% 98%);
+  --primary: hsl(0 0% 98%);
+  --primary-foreground: hsl(240 5.9% 10%);
+  --secondary: hsl(240 3.7% 15.9%);
+  --secondary-foreground: hsl(0 0% 98%);
+  --muted: hsl(240 3.7% 15.9%);
+  --muted-foreground: hsl(240 5% 64.9%);
+  --accent: hsl(240 3.7% 15.9%);
+  --accent-foreground: hsl(0 0% 98%);
+  --destructive: hsl(0 62.8% 30.6%);
+  --destructive-foreground: hsl(0 0% 98%);
+  --border: hsl(240 3.7% 15.9%);
+  --input: hsl(240 3.7% 15.9%);
+  --ring: hsl(240 4.9% 83.9%);
+}
+
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--border, currentColor);
+  }
+}
+
+/* 
+  * We are using rehype-pretty to style the code blocks in the project.
+  * rehype-pretty-code is a Rehype plugin powered by the shiki syntax highlighter that provides beautiful code blocks for Markdown or MDX. 
+  * It works on both the server at build-time (avoiding runtime syntax highlighting) and on the client for dynamic highlighting.
+  * @see: https://rehype-pretty.pages.dev/
+  */
+
+/* 
+  * Here we are setting up the styles needed to enable theme-aware code blocks.
+  * @see: https://rehype-pretty.pages.dev/#multiple-themes-dark-and-light-mode
+  */
+html {
+  code[data-theme*=" "],
+  code[data-theme*=" "] span {
+    color: var(--shiki-light);
+    background-color: var(--shiki-light-bg);
+  }
+
+  &.dark {
+    code[data-theme*=" "],
+    code[data-theme*=" "] span {
+      color: var(--shiki-dark);
+      background-color: var(--shiki-dark-bg);
+    }
+  }
+}
+
+/* 
+  * Here we are setting up the styles needed to enable line numbers in code blocks.
+  * @see: https://rehype-pretty.pages.dev/#line-numbers
+  */
+html {
+  code[data-line-numbers] {
+    counter-reset: line;
+  }
+
+  code[data-line-numbers] > [data-line]::before {
+    display: inline-block;
+    width: 12px;
+    margin-right: 2rem;
+    color: gray;
+    text-align: right;
+    content: counter(line);
+    counter-increment: line;
+  }
+
+  code[data-line-numbers-max-digits="2"] > [data-line]::before {
+    width: 1.25rem;
+  }
+
+  code[data-line-numbers-max-digits="3"] > [data-line]::before {
+    width: 1.75rem;
+  }
+
+  code[data-line-numbers-max-digits="4"] > [data-line]::before {
+    width: 2.25rem;
+  }
+
+  p [data-line] {
+    padding: 2px 4px;
+    margin-right: 2px;
+    margin-left: 2px;
+    text-align: center;
+    background-color: var(--kbd-background) !important;
+    border-radius: 4px;
+    box-shadow: 0 0 0 1px var(--kbd-border);
+  }
+}
+
+/* 
+  * Here we are just some additional styles to make the code blocks look better.
+  * @see: https://rehype-pretty.pages.dev/#styles
+  */
+* {
+  pre {
+    padding: 16px;
+    overflow-x: auto;
+    font-size: 12px;
+
+    [data-line] {
+      margin-top: 0 !important;
+    }
+  }
+
+  figure {
+    width: 100%;
+    margin-top: 4px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-base);
+  }
+}
