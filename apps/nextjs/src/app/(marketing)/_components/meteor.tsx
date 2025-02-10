@@ -31,7 +31,7 @@ export const Meteors = ({ top = -5, number = 20 }: MeteorsProps) => {
           )}
           style={style}
         >
-          <span className="pointer-events-none absolute top-1/2 -z-10 h-[1px] w-[50px] -translate-y-1/2 bg-gradient-to-r from-slate-500 to-transparent" />
+          <span className="pointer-events-none absolute top-1/2 -z-10 h-[1px] w-[50px] -translate-y-1/2 bg-linear-to-r from-slate-500 to-transparent" />
         </span>
       ))}
     </div>

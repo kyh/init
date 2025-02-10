@@ -539,7 +539,7 @@ export const DataTableFilterList = <TData,>({
           align="start"
           collisionPadding={16}
           className={cn(
-            "flex w-[calc(100vw-theme(spacing.12))] min-w-60 origin-[var(--radix-popover-content-transform-origin)] flex-col p-4 sm:w-[36rem]",
+            "flex w-[calc(100vw-(--spacing(12)))] min-w-60 origin-[var(--radix-popover-content-transform-origin)] flex-col p-4 sm:w-[36rem]",
             filters.length > 0 ? "gap-3.5" : "gap-2",
           )}
         >
@@ -611,7 +611,7 @@ export const DataTableFilterList = <TData,>({
                           role="combobox"
                           aria-label="Select filter field"
                           aria-controls={fieldListboxId}
-                          className="focus:ring-ring h-8 w-32 justify-between gap-2 rounded focus:outline-none focus:ring-1 focus-visible:ring-0"
+                          className="focus:ring-ring h-8 w-32 justify-between gap-2 rounded focus:outline-hidden focus:ring-1 focus-visible:ring-0"
                         >
                           <span className="truncate">
                             {filterFields.find(

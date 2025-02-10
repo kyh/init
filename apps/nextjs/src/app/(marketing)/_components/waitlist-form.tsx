@@ -51,7 +51,7 @@ export const WaitlistForm = () => {
               <FormLabel className="sr-only">Email</FormLabel>
               <FormControl>
                 <input
-                  className="w-full border-none bg-transparent py-3 pl-4 text-sm placeholder-white/50 focus:placeholder-white/75 focus:outline-none focus:ring-0"
+                  className="w-full border-none bg-transparent py-3 pl-4 text-sm placeholder-white/50 focus:placeholder-white/75 focus:outline-hidden focus:ring-0"
                   required
                   type="email"
                   placeholder="name@example.com"
