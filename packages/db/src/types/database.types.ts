@@ -117,10 +117,10 @@ export type Database = {
           id: string
           label: Database["public"]["Enums"]["task_label"]
           priority: Database["public"]["Enums"]["task_priority"]
-          slug: string | null
+          slug: string
           status: Database["public"]["Enums"]["task_status"]
           team_id: string
-          title: string | null
+          title: string
           updated_at: string
           user_id: string | null
         }
@@ -129,10 +129,10 @@ export type Database = {
           id?: string
           label?: Database["public"]["Enums"]["task_label"]
           priority?: Database["public"]["Enums"]["task_priority"]
-          slug?: string | null
+          slug: string
           status?: Database["public"]["Enums"]["task_status"]
           team_id: string
-          title?: string | null
+          title: string
           updated_at?: string
           user_id?: string | null
         }
@@ -141,10 +141,10 @@ export type Database = {
           id?: string
           label?: Database["public"]["Enums"]["task_label"]
           priority?: Database["public"]["Enums"]["task_priority"]
-          slug?: string | null
+          slug?: string
           status?: Database["public"]["Enums"]["task_status"]
           team_id?: string
-          title?: string | null
+          title?: string
           updated_at?: string
           user_id?: string | null
         }
