@@ -22,7 +22,7 @@
     "@trpc/client": "catalog:",
     "@trpc/react-query": "catalog:",
     "@trpc/server": "catalog:",
-    "expo": "^52.0.31",
+    "expo": "^52.0.32",
     "expo-constants": "^17.0.5",
     "expo-linking": "^7.0.5",
     "expo-router": "^4.0.17",
