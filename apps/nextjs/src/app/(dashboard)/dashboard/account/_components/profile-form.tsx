@@ -107,7 +107,7 @@ export const ProfileForm = () => {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <div className="col-span-full flex items-center gap-x-8">
-          <label className="relative cursor-pointer bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80">
+          <label className="bg-secondary text-secondary-foreground hover:bg-secondary/80 relative shadow-sm">
             <input
               className="invisible absolute inset-0"
               type="file"
@@ -144,7 +144,7 @@ export const ProfileForm = () => {
                 </label>
               </Button>
             )}
-            <p className="mt-2 text-xs leading-5 text-muted-foreground">
+            <p className="text-muted-foreground mt-2 text-xs leading-5">
               JPG, GIF or PNG. 1MB max.
             </p>
           </div>

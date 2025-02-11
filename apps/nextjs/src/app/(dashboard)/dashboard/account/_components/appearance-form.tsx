@@ -51,9 +51,9 @@ export const AppearanceForm = () => {
             alt={item.label}
             width={120}
             height={120}
-            className="relative cursor-pointer overflow-hidden rounded-lg border border-input shadow-sm shadow-black/[.04] ring-offset-background transition-colors peer-[:focus-visible]:ring-2 peer-[:focus-visible]:ring-ring/70 peer-[:focus-visible]:ring-offset-2 peer-data-[disabled]:cursor-not-allowed peer-data-[state=checked]:border-ring peer-data-[state=checked]:bg-accent peer-data-[disabled]:opacity-50"
+            className="border-input ring-offset-background peer-[:focus-visible]:ring-ring/70 peer-data-[state=checked]:border-ring peer-data-[state=checked]:bg-accent relative overflow-hidden rounded-lg border shadow-sm shadow-black/[.04] transition-colors peer-data-[disabled]:cursor-not-allowed peer-data-[disabled]:opacity-50 peer-[:focus-visible]:ring-2 peer-[:focus-visible]:ring-offset-2"
           />
-          <span className="group mt-2 flex items-center gap-1 peer-data-[state=unchecked]:text-muted-foreground/70">
+          <span className="group peer-data-[state=unchecked]:text-muted-foreground/70 mt-2 flex items-center gap-1">
             <Check
               size={16}
               strokeWidth={2}
