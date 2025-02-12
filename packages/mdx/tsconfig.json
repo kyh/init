@@ -3,8 +3,11 @@
   "compilerOptions": {
     "lib": ["ES2022", "dom", "dom.iterable"],
     "jsx": "preserve",
-    "rootDir": "."
+    "rootDir": ".",
+    "paths": {
+      "content-collections": ["./.content-collections/generated"]
+    }
   },
-  "include": ["src"],
+  "include": ["src", "content-collections.ts"],
   "exclude": ["node_modules"]
 }

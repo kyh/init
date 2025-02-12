@@ -25,6 +25,7 @@ apps/expo/.gitignore
 
 # production
 build
+.content-collections
 
 # misc
 .DS_Store
