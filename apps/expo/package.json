@@ -34,7 +34,7 @@
     "react-hook-form": "^7.54.2",
     "react-native": "^0.76.7",
     "react-native-css-interop": "^0.1.22",
-    "react-native-gesture-handler": "^2.23.0",
+    "react-native-gesture-handler": "^2.23.1",
     "react-native-reanimated": "^3.16.7",
     "react-native-safe-area-context": "^5.2.0",
     "react-native-screens": "^4.6.0",
