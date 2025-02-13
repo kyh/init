@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { buttonVariants } from "@init/ui/button";
+import { Logo } from "@init/ui/logo";
 import { cn } from "@init/ui/utils";
 
 import { api } from "@/trpc/react";
@@ -14,21 +15,21 @@ export const Header = () => {
 
   return (
     <div className="mx-auto w-full justify-center">
-      <div className="border-t-none mx-auto flex w-full max-w-7xl items-center justify-between border border-border px-8 py-4 md:p-8">
-        <div className="flex items-center justify-between text-secondary-foreground">
-          <Link className="font-display inline-flex items-center" href="/">
-            Init.
+      <div className="border-t-none border-border mx-auto flex w-full max-w-7xl items-center justify-between border px-8 py-4 md:p-8">
+        <div className="text-secondary-foreground flex items-center justify-between">
+          <Link className="-ml-2" href="/">
+            <Logo className="size-10" />
           </Link>
         </div>
         <nav className="ml-auto flex items-center text-sm">
           <Link
-            className="px-4 py-2 text-muted-foreground transition hover:text-secondary-foreground"
+            className="text-muted-foreground hover:text-secondary-foreground px-4 py-2 transition"
             href="/docs"
           >
             Documentation
           </Link>
           <Link
-            className="px-4 py-2 text-muted-foreground transition hover:text-secondary-foreground"
+            className="text-muted-foreground hover:text-secondary-foreground px-4 py-2 transition"
             href="https://github.com/kyh/init"
             target="_blank"
           >
