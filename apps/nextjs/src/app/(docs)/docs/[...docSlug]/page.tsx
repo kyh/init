@@ -4,7 +4,7 @@ import { allDocs } from "@init/mdx";
 
 type PageProps = {
   params: Promise<{
-    docSlug: string;
+    docSlug: string[];
   }>;
 };
 
@@ -12,20 +12,14 @@ const Page = async ({ params }: PageProps) => {
   const { docSlug } = await params;
 
   const currentDoc = allDocs.find((doc) => {
-    const slug = doc._meta.fileName.replace(/\.mdx$/, "");
-    return slug === docSlug;
+    return doc._meta.filePath.replace(/\.mdx$/, "") === docSlug.join("/");
   });
 
   if (!currentDoc) {
     return notFound();
   }
 
-  return (
-    <div>
-      <h1>{currentDoc.title}</h1>
-      <MDXContent code={currentDoc.mdx} />
-    </div>
-  );
+  return <MDXContent code={currentDoc.mdx} />;
 };
 
 export default Page;
