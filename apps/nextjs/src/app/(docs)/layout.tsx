@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { allDocs } from "@init/mdx";
+import { allDocs } from "@init/mdx/content";
 import { Logo } from "@init/ui/logo";
 
 import { NavLink } from "@/components/nav";

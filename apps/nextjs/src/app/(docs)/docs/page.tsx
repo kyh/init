@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import { MDXContent } from "@content-collections/mdx/react";
-import { allDocs } from "@init/mdx";
+import { MDXContent } from "@init/mdx";
+import { allDocs } from "@init/mdx/content";
 
 const homePage = "overview/introduction";
 
