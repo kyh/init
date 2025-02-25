@@ -3,7 +3,6 @@ import { GlobalAlertDialog } from "@init/ui/alert-dialog";
 import { ThemeProvider } from "@init/ui/theme";
 import { GlobalToaster } from "@init/ui/toast";
 import { TooltipProvider } from "@init/ui/tooltip";
-import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 import { siteConfig } from "@/lib/site-config";
 import { TRPCReactProvider } from "@/trpc/react";
@@ -84,15 +83,13 @@ const RootLayout = (props: LayoutProps) => {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="bg-background text-foreground font-sans antialiased">
-        <NuqsAdapter>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            <TooltipProvider>
-              <TRPCReactProvider>{props.children}</TRPCReactProvider>
-              <GlobalToaster />
-              <GlobalAlertDialog />
-            </TooltipProvider>
-          </ThemeProvider>
-        </NuqsAdapter>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <TooltipProvider>
+            <TRPCReactProvider>{props.children}</TRPCReactProvider>
+            <GlobalToaster />
+            <GlobalAlertDialog />
+          </TooltipProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

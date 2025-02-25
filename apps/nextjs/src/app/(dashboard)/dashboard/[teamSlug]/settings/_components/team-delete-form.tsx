@@ -23,18 +23,25 @@ import {
 } from "@init/ui/form";
 import { Input } from "@init/ui/input";
 import { toast } from "@init/ui/toast";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { z } from "zod";
 
 import type { RouterOutputs } from "@init/api";
-import { api } from "@/trpc/react";
+import { useTRPC } from "@/trpc/react";
 
 type TeamDeleteFormProps = {
   teamSlug: string;
 };
 
 export const TeamDeleteForm = ({ teamSlug }: TeamDeleteFormProps) => {
-  const [{ user, teams }] = api.auth.workspace.useSuspenseQuery();
-  const [{ team }] = api.team.getTeam.useSuspenseQuery({ slug: teamSlug });
+  const trpc = useTRPC();
+  const {
+    data: { user, teams },
+  } = useSuspenseQuery(trpc.auth.workspace.queryOptions());
+  const {
+    data: { team },
+  } = useSuspenseQuery(trpc.team.getTeam.queryOptions({ slug: teamSlug }));
+
   const currentTeam = teams.find((t) => t.id === team?.id);
 
   if (!currentTeam || !user) {
@@ -57,7 +64,8 @@ type DeleteProps = {
 };
 
 const Delete = ({ team }: DeleteProps) => {
-  const deleteTeam = api.team.deleteTeam.useMutation();
+  const trpc = useTRPC();
+  const deleteTeam = useMutation(trpc.team.deleteTeam.mutationOptions());
 
   const form = useForm({
     mode: "onChange",
@@ -86,7 +94,7 @@ const Delete = ({ team }: DeleteProps) => {
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
         <span className="font-medium">Delete Team</span>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           You are about to delete the team {team.name}. This action cannot be
           undone.
         </p>
@@ -163,7 +171,8 @@ type LeaveProps = {
 };
 
 const Leave = ({ user, team }: LeaveProps) => {
-  const leaveTeam = api.team.deleteTeamMember.useMutation();
+  const trpc = useTRPC();
+  const leaveTeam = useMutation(trpc.team.deleteTeamMember.mutationOptions());
 
   const form = useForm({
     schema: z.object({
@@ -188,7 +197,7 @@ const Leave = ({ user, team }: LeaveProps) => {
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-muted-foreground">
+      <p className="text-muted-foreground text-sm">
         Click the button below to leave the team. Remember, you will no longer
         have access to it and will need to be re-invited to join
       </p>

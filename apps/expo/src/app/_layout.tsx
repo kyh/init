@@ -2,9 +2,10 @@ import "@bacons/text-decoder/install";
 
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { useColorScheme } from "nativewind";
 
-import { TRPCProvider } from "@/trpc/react";
+import { queryClient } from "@/trpc/react";
 
 import "./styles/globals.css";
 
@@ -13,7 +14,7 @@ import "./styles/globals.css";
 const RootLayout = () => {
   const { colorScheme } = useColorScheme();
   return (
-    <TRPCProvider>
+    <QueryClientProvider client={queryClient}>
       {/*
           The Stack component displays the current page.
           It also allows you to configure your screens 
@@ -29,7 +30,7 @@ const RootLayout = () => {
         }}
       />
       <StatusBar />
-    </TRPCProvider>
+    </QueryClientProvider>
   );
 };
 

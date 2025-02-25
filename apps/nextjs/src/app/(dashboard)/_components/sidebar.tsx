@@ -38,6 +38,7 @@ import { Input } from "@init/ui/input";
 import { Logo } from "@init/ui/logo";
 import { toast } from "@init/ui/toast";
 import { cn } from "@init/ui/utils";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import {
   CheckIcon,
   CreditCardIcon,
@@ -49,11 +50,14 @@ import {
 } from "lucide-react";
 
 import { NavLink } from "@/components/nav";
-import { api } from "@/trpc/react";
+import { useTRPC } from "@/trpc/react";
 
 export const Sidebar = () => {
+  const trpc = useTRPC();
   const params = useParams<{ teamSlug: string | undefined }>();
-  const [{ defaultTeamSlug }] = api.auth.workspace.useSuspenseQuery();
+  const {
+    data: { defaultTeamSlug },
+  } = useSuspenseQuery(trpc.auth.workspace.queryOptions());
 
   const rootUrl = `/dashboard/${params.teamSlug ?? defaultTeamSlug}`;
   const pageLinks = [
@@ -81,11 +85,11 @@ export const Sidebar = () => {
   ];
 
   return (
-    <nav className="sticky top-0 flex h-dvh w-[80px] flex-col items-center overflow-y-auto overflow-x-hidden px-4 py-[26px]">
+    <nav className="sticky top-0 flex h-dvh w-[80px] flex-col items-center overflow-x-hidden overflow-y-auto px-4 py-[26px]">
       <div className="flex flex-col">
         <div className="flex justify-center pb-2">
           <NavLink href={rootUrl}>
-            <Logo className="size-10 rounded-lg bg-muted text-primary" />
+            <Logo className="bg-muted text-primary size-10 rounded-lg" />
             <span className="sr-only">Init</span>
           </NavLink>
         </div>
@@ -96,7 +100,7 @@ export const Sidebar = () => {
             exact={link.exact}
             className="group flex flex-col items-center gap-1 p-2 text-xs"
           >
-            <span className="flex size-9 items-center justify-center rounded-lg transition group-hover:bg-secondary group-data-[state=active]:bg-secondary">
+            <span className="group-hover:bg-secondary group-data-[state=active]:bg-secondary flex size-9 items-center justify-center rounded-lg transition">
               <link.icon className="size-4" />
             </span>
             <span>{link.label}</span>
@@ -109,25 +113,32 @@ export const Sidebar = () => {
 };
 
 export const UserDropdown = ({ teamSlug }: { teamSlug?: string }) => {
+  const trpc = useTRPC();
   const router = useRouter();
-  const [{ user, userMetadata, teams }] = api.auth.workspace.useSuspenseQuery();
+  const {
+    data: { user, userMetadata, teams },
+  } = useSuspenseQuery(trpc.auth.workspace.queryOptions());
 
-  const signOut = api.auth.signOut.useMutation({
-    onSuccess: () => {
-      router.replace("/");
-    },
-    onError: (error) => toast.error(error.message),
-  });
-  const createTeamAccount = api.team.createTeam.useMutation({
-    onSuccess: ({ team }) => {
-      toast.success("Team created successfully");
-      router.push(`/dashboard/${team.slug}`);
-    },
-    onError: () =>
-      toast.error(
-        "We encountered an error creating your team. Please try again.",
-      ),
-  });
+  const signOut = useMutation(
+    trpc.auth.signOut.mutationOptions({
+      onSuccess: () => {
+        router.replace("/");
+      },
+      onError: (error) => toast.error(error.message),
+    }),
+  );
+  const createTeamAccount = useMutation(
+    trpc.team.createTeam.mutationOptions({
+      onSuccess: ({ team }) => {
+        toast.success("Team created successfully");
+        router.push(`/dashboard/${team.slug}`);
+      },
+      onError: () =>
+        toast.error(
+          "We encountered an error creating your team. Please try again.",
+        ),
+    }),
+  );
 
   const form = useForm({
     schema: createTeamInput,
@@ -156,11 +167,11 @@ export const UserDropdown = ({ teamSlug }: { teamSlug?: string }) => {
         >
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col gap-1">
-              <p className="text-sm font-medium leading-none">
+              <p className="text-sm leading-none font-medium">
                 {userMetadata?.displayName ?? user.email}
               </p>
               {userMetadata?.displayName && (
-                <p className="text-xs leading-none text-muted-foreground">
+                <p className="text-muted-foreground text-xs leading-none">
                   {user.email}
                 </p>
               )}

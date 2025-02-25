@@ -4,11 +4,13 @@ import Link from "next/link";
 import { buttonVariants } from "@init/ui/button";
 import { Logo } from "@init/ui/logo";
 import { cn } from "@init/ui/utils";
+import { useQuery } from "@tanstack/react-query";
 
-import { api } from "@/trpc/react";
+import { useTRPC } from "@/trpc/react";
 
 export const Header = () => {
-  const { data, isLoading } = api.auth.workspace.useQuery();
+  const trpc = useTRPC();
+  const { data, isLoading } = useQuery(trpc.auth.workspace.queryOptions());
 
   const user = data?.user;
   const metaData = data?.userMetadata;

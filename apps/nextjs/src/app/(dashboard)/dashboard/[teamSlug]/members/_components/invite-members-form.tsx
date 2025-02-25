@@ -33,10 +33,11 @@ import {
 } from "@init/ui/select";
 import { toast } from "@init/ui/toast";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@init/ui/tooltip";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { PlusIcon, XIcon } from "lucide-react";
 
 import type { CreateTeamInvitationsInput } from "@init/api/team/team-schema";
-import { api } from "@/trpc/react";
+import { useTRPC } from "@/trpc/react";
 
 /**
  * The maximum number of invites that can be sent at once.
@@ -49,7 +50,10 @@ type InviteMembersDialogProps = {
 };
 
 export const InviteMembersDialog = ({ teamSlug }: InviteMembersDialogProps) => {
-  const [{ team }] = api.team.getTeam.useSuspenseQuery({ slug: teamSlug });
+  const trpc = useTRPC();
+  const {
+    data: { team },
+  } = useSuspenseQuery(trpc.team.getTeam.queryOptions({ slug: teamSlug }));
 
   if (!team) {
     return null;
@@ -81,7 +85,10 @@ type InviteMembersFormProps = {
 };
 
 export const InviteMembersForm = ({ teamId }: InviteMembersFormProps) => {
-  const createInvitations = api.team.createTeamInvitations.useMutation();
+  const trpc = useTRPC();
+  const createInvitations = useMutation(
+    trpc.team.createTeamInvitations.mutationOptions(),
+  );
 
   const form = useForm({
     schema: createTeamInvitationsInput,

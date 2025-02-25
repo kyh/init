@@ -12,12 +12,14 @@ import {
   useForm,
 } from "@init/ui/form";
 import { toast } from "@init/ui/toast";
+import { useMutation } from "@tanstack/react-query";
 
 import type { JoinWaitlistInput } from "@init/api/waitlist/waitlist-schema";
-import { api } from "@/trpc/react";
+import { useTRPC } from "@/trpc/react";
 
 export const WaitlistForm = () => {
-  const joinWaitlist = api.waitlist.join.useMutation();
+  const trpc = useTRPC();
+  const joinWaitlist = useMutation(trpc.waitlist.join.mutationOptions());
 
   const form = useForm({
     schema: joinWaitlistInput,
@@ -41,7 +43,7 @@ export const WaitlistForm = () => {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(handleJoinWaitlist)}
-        className="mt-10 flex max-w-sm items-center gap-2 rounded-xl border border-white/10 bg-input shadow-lg"
+        className="bg-input mt-10 flex max-w-sm items-center gap-2 rounded-xl border border-white/10 shadow-lg"
       >
         <FormField
           control={form.control}
@@ -51,7 +53,7 @@ export const WaitlistForm = () => {
               <FormLabel className="sr-only">Email</FormLabel>
               <FormControl>
                 <input
-                  className="w-full border-none bg-transparent py-3 pl-4 text-sm placeholder-white/50 focus:placeholder-white/75 focus:outline-hidden focus:ring-0"
+                  className="w-full border-none bg-transparent py-3 pl-4 text-sm placeholder-white/50 focus:placeholder-white/75 focus:ring-0 focus:outline-hidden"
                   required
                   type="email"
                   placeholder="name@example.com"

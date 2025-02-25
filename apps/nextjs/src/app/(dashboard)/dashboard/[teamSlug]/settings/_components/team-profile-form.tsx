@@ -14,24 +14,30 @@ import {
 } from "@init/ui/form";
 import { Input } from "@init/ui/input";
 import { toast } from "@init/ui/toast";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 
 import type { UpdateTeamInput } from "@init/api/team/team-schema";
-import { api } from "@/trpc/react";
+import { useTRPC } from "@/trpc/react";
 
 type TeamProfileFormProps = {
   teamSlug: string;
 };
 
 export const TeamProfileForm = ({ teamSlug }: TeamProfileFormProps) => {
+  const trpc = useTRPC();
   const router = useRouter();
-  const [{ team }] = api.team.getTeam.useSuspenseQuery({ slug: teamSlug });
+  const {
+    data: { team },
+  } = useSuspenseQuery(trpc.team.getTeam.queryOptions({ slug: teamSlug }));
 
-  const updateTeam = api.team.updateTeam.useMutation({
-    onSuccess: ({ team }) => {
-      if (!team) return;
-      router.replace(`/dashboard/${team.slug}/settings`);
-    },
-  });
+  const updateTeam = useMutation(
+    trpc.team.updateTeam.mutationOptions({
+      onSuccess: ({ team }) => {
+        if (!team) return;
+        router.replace(`/dashboard/${team.slug}/settings`);
+      },
+    }),
+  );
 
   const form = useForm({
     schema: updateTeamInput,
@@ -75,7 +81,7 @@ export const TeamProfileForm = ({ teamSlug }: TeamProfileFormProps) => {
               <FormLabel>Team URL</FormLabel>
               <FormControl>
                 <div className="flex rounded-lg shadow-sm shadow-black/[.04]">
-                  <span className="-z-10 inline-flex items-center rounded-s-lg border border-input bg-background px-3 text-sm text-muted-foreground">
+                  <span className="border-input bg-background text-muted-foreground -z-10 inline-flex items-center rounded-s-lg border px-3 text-sm">
                     dashboard/
                   </span>
                   <Input
