@@ -2,7 +2,7 @@ export const siteConfig = {
   name: "Init",
   shortName: "Init",
   description:
-    "A comprehensive boilerplate to build, launch, and scale your next project",
+    "An AI native boilerplate to build, launch, and scale your next project.",
   url:
     process.env.NODE_ENV === "development"
       ? "http://localhost:3000"

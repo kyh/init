@@ -12,6 +12,7 @@ import {
   useForm,
 } from "@init/ui/form";
 import { toast } from "@init/ui/toast";
+import { cn } from "@init/ui/utils";
 import { useMutation } from "@tanstack/react-query";
 
 import type { JoinWaitlistInput } from "@init/api/waitlist/waitlist-schema";
@@ -68,7 +69,10 @@ export const WaitlistForm = () => {
           )}
         />
         <Button
-          className="text-xs"
+          className={cn(
+            "text-xs",
+            joinWaitlist.isPending && "[&>:first-child]:bg-input",
+          )}
           variant="ghost"
           loading={joinWaitlist.isPending}
         >
