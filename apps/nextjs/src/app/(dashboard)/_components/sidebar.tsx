@@ -63,7 +63,7 @@ export const Sidebar = () => {
   const pageLinks = [
     {
       href: rootUrl,
-      label: "Tasks",
+      label: "Home",
       exact: true,
       icon: HomeIcon,
     },
