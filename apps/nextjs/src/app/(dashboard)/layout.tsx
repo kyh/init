@@ -1,4 +1,4 @@
-import { api, HydrateClient } from "@/trpc/server";
+import { HydrateClient, prefetch, trpc } from "@/trpc/server";
 import { Sidebar } from "./_components/sidebar";
 
 export const dynamic = "force-dynamic";
@@ -8,7 +8,7 @@ type LayoutProps = {
 };
 
 const Layout = (props: LayoutProps) => {
-  void api.auth.workspace.prefetch();
+  prefetch(trpc.auth.workspace.queryOptions());
 
   return (
     <HydrateClient>

@@ -10,9 +10,9 @@ const Page = () => {
             <span className="text-muted-foreground font-light">
               Accelerate building modern applications
             </span>
-            <h1 className="text-secondary-foreground mt-6 text-2xl font-light">
-              The most comprehensive boilerplate to build, launch, and scale
-              your next project.
+            <h1 className="text-secondary-foreground mt-6 text-2xl font-light text-pretty">
+              An AI native boilerplate to build, launch, and scale your next
+              project.
             </h1>
             <WaitlistForm />
           </div>

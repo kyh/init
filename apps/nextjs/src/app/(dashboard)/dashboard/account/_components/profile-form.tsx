@@ -16,16 +16,20 @@ import {
 } from "@init/ui/form";
 import { Input } from "@init/ui/input";
 import { toast } from "@init/ui/toast";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { ImageIcon } from "lucide-react";
 
 import type { UpdateUserInput } from "@init/api/user/user-schema";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { api } from "@/trpc/react";
+import { useTRPC } from "@/trpc/react";
 
 export const ProfileForm = () => {
   const client = getSupabaseBrowserClient();
-  const [{ user, userMetadata }] = api.auth.workspace.useSuspenseQuery();
-  const updateUser = api.user.updateUser.useMutation();
+  const trpc = useTRPC();
+  const {
+    data: { user, userMetadata },
+  } = useSuspenseQuery(trpc.auth.workspace.queryOptions());
+  const updateUser = useMutation(trpc.user.updateUser.mutationOptions());
 
   const form = useForm({
     schema: updateUserInput,

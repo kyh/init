@@ -1,24 +1,6 @@
 # Init
 
-A comprehensive boilerplate to build, launch, and scale your next project.
-
-## Features
-
-- [ ] Authentication
-- [ ] CRUD
-- [ ] User Profile
-- [ ] Multi Tenancy
-- [ ] Billing
-- [ ] Submit Feedback System
-- [ ] Notifications System
-- [ ] Admin Dashboard
-- [ ] Search
-- [ ] Analytics
-- [ ] Native Mobile App
-- [ ] Native Desktop App
-- [ ] Something something AI
-- [ ] CLI generator
-- [ ] [Taking Submissions](https://github.com/kyh/init/issues/new?assignees=&labels=%E2%9C%A8+enhancement&projects=&template=feature_request.yml&title=feat%3A+)
+An AI native boilerplate to build, launch, and scale your next project.
 
 ## Stack
 

@@ -17,21 +17,27 @@ import {
   DropdownMenuTrigger,
 } from "@init/ui/dropdown-menu";
 import { AutoTable } from "@init/ui/table";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { MoreHorizontalIcon } from "lucide-react";
 
 import type { RouterOutputs } from "@init/api";
 import type { TeamMemberRole } from "@init/api/team/team-schema";
 import type { ColumnDef } from "@tanstack/react-table";
-import { api } from "@/trpc/react";
+import { useTRPC } from "@/trpc/react";
 
 type InvitationsTableProps = {
   teamSlug: string;
 };
 
 export const InvitationsTable = ({ teamSlug }: InvitationsTableProps) => {
-  const [{ team }] = api.team.getTeam.useSuspenseQuery({ slug: teamSlug });
-  const [{ user }] = api.auth.workspace.useSuspenseQuery();
+  const trpc = useTRPC();
+  const {
+    data: { team },
+  } = useSuspenseQuery(trpc.team.getTeam.queryOptions({ slug: teamSlug }));
+  const {
+    data: { user },
+  } = useSuspenseQuery(trpc.auth.workspace.queryOptions());
 
   const userId = user?.id;
   const invitations = team?.invitations ?? [];
