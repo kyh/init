@@ -1,5 +1,6 @@
 import { PageHeader } from "@/components/header";
 import { HydrateClient } from "@/trpc/server";
+import { AIForm } from "./_components/ai-form";
 
 type PageProps = {
   params: Promise<{
@@ -15,7 +16,7 @@ const Page = async (props: PageProps) => {
     <HydrateClient>
       <main className="flex flex-1 flex-col px-5">
         <PageHeader>Welcome back</PageHeader>
-        <section>{teamSlug}</section>
+        <AIForm teamSlug={teamSlug} />
       </main>
     </HydrateClient>
   );
