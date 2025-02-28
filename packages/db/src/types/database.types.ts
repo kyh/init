@@ -52,25 +52,28 @@ export type Database = {
           content: string;
           created_at: string;
           id: string;
+          role: string;
           team_id: string;
           updated_at: string;
-          user_id: string | null;
+          user_id: string;
         };
         Insert: {
           content: string;
           created_at?: string;
           id?: string;
+          role: string;
           team_id: string;
           updated_at?: string;
-          user_id?: string | null;
+          user_id: string;
         };
         Update: {
           content?: string;
           created_at?: string;
           id?: string;
+          role?: string;
           team_id?: string;
           updated_at?: string;
-          user_id?: string | null;
+          user_id?: string;
         };
         Relationships: [
           {

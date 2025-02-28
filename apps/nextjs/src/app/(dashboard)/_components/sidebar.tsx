@@ -152,7 +152,7 @@ export const UserDropdown = ({ teamSlug }: { teamSlug?: string }) => {
   return (
     <Dialog>
       <DropdownMenu>
-        <DropdownMenuTrigger className="mt-auto">
+        <DropdownMenuTrigger className="mt-auto cursor-pointer">
           <ProfileAvatar
             displayName={userMetadata?.displayName ?? user.email}
             avatarUrl={userMetadata?.avatarUrl}

@@ -1,6 +1,6 @@
 import { PageHeader } from "@/components/header";
 import { HydrateClient } from "@/trpc/server";
-import { AIForm } from "./_components/ai-form";
+import { AIChatForm } from "./_components/ai-chat-form";
 
 type PageProps = {
   params: Promise<{
@@ -14,9 +14,9 @@ const Page = async (props: PageProps) => {
 
   return (
     <HydrateClient>
-      <main className="flex flex-1 flex-col px-5">
+      <main className="flex h-dvh flex-1 flex-col px-5 pb-5">
         <PageHeader>Welcome back</PageHeader>
-        <AIForm teamSlug={teamSlug} />
+        <AIChatForm teamSlug={teamSlug} />
       </main>
     </HydrateClient>
   );

@@ -28,6 +28,7 @@
     "next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
+    "react-infinite-scroll-hook": "^5.0.1",
     "superjson": "catalog:",
     "zod": "catalog:"
   },

@@ -3,9 +3,9 @@ import { z } from "zod";
 export const teamMemberRoles = ["owner", "admin", "member"] as const;
 export type TeamMemberRole = (typeof teamMemberRoles)[number];
 
-/**********
- * Create
- **********/
+/**
+ * Create schema
+ */
 // Create - teams
 export const createTeamInput = z.object({
   name: z.string(),
@@ -48,9 +48,9 @@ export type CreateTeamInvitationsInput = z.infer<
   typeof createTeamInvitationsInput
 >;
 
-/**********
- * Read
- **********/
+/**
+ * Read schema
+ */
 // Read - teams
 export const getTeamInput = z.object({
   id: z.string().optional(),
@@ -93,9 +93,9 @@ export const getTeamInvitationInput = z.object({
 });
 export type GetTeamInvitationInput = z.infer<typeof getTeamInvitationInput>;
 
-/**********
- * Update
- **********/
+/**
+ * Update schema
+ */
 // Update - teams
 export const updateTeamInput = z
   .object({
@@ -133,9 +133,9 @@ export type UpdateTeamInvitationsInput = z.infer<
   typeof updateTeamInvitationsInput
 >;
 
-/**********
- * Delete
- **********/
+/**
+ * Delete schema
+ */
 // Delete - teams
 export const deleteTeamInput = z.object({
   id: z.string(),

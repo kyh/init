@@ -109,12 +109,16 @@ export const invitationsRelations = relations(invitations, ({ one }) => ({
 
 export const messages = pgTable("messages", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
+  content: t.text().notNull(),
+  role: t.varchar().notNull(),
   teamId: t
     .uuid()
     .notNull()
     .references(() => teams.id),
-  userId: t.uuid().references(() => authUsers.id),
-  content: t.text().notNull(),
+  userId: t
+    .uuid()
+    .notNull()
+    .references(() => authUsers.id),
   createdAt: t
     .timestamp({ mode: "date", withTimezone: true })
     .defaultNow()

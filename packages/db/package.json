@@ -24,6 +24,7 @@
     "test": "pnpm with-env supabase db test",
     "typegen": "pnpm with-env supabase gen types typescript --local > src/types/database.types.ts",
     "push": "pnpm with-env drizzle-kit push && pnpm typegen",
+    "push-remote": "dotenv -e ../../.env.production.local -- drizzle-kit push",
     "studio": "pnpm with-env drizzle-kit studio",
     "with-env": "dotenv -e ../../.env --"
   },
