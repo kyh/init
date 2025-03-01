@@ -1,6 +1,8 @@
 import { and, eq } from "@init/db";
 import { invitations, teamMembers, teams } from "@init/db/schema";
+import { TRPCError } from "@trpc/server";
 
+import type { Db } from "@init/db/client";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import {
   createTeamInput,
@@ -59,16 +61,7 @@ export const teamRouter = createTRPCRouter({
   getTeam: protectedProcedure
     .input(getTeamInput)
     .query(async ({ ctx, input }) => {
-      const whereClause = whereIdOrSlug(input);
-      const team = await ctx.db.query.teams.findFirst({
-        where: whereClause,
-        with: {
-          teamMembers: {
-            with: { user: true },
-          },
-          invitations: true,
-        },
-      });
+      const team = await getTeamOrThrow(ctx.db, input);
 
       return {
         team,
@@ -78,6 +71,8 @@ export const teamRouter = createTRPCRouter({
   updateTeam: protectedProcedure
     .input(updateTeamInput)
     .mutation(async ({ ctx, input }) => {
+      await getTeamOrThrow(ctx.db, input);
+
       const [updated] = await ctx.db
         .update(teams)
         .set(input)
@@ -92,6 +87,8 @@ export const teamRouter = createTRPCRouter({
   deleteTeam: protectedProcedure
     .input(deleteTeamInput)
     .mutation(async ({ ctx, input }) => {
+      await getTeamOrThrow(ctx.db, input);
+
       const [deleted] = await ctx.db
         .delete(teams)
         .where(eq(teams.id, input.id))
@@ -241,4 +238,26 @@ const whereIdOrSlug = (input: { id?: string; slug?: string }) => {
   }
 
   return whereClause;
+};
+
+export const getTeamOrThrow = async (
+  db: Db,
+  input: { id?: string; slug?: string },
+) => {
+  const whereClause = whereIdOrSlug(input);
+  const team = await db.query.teams.findFirst({
+    where: whereClause,
+    with: {
+      teamMembers: {
+        with: { user: true },
+      },
+      invitations: true,
+    },
+  });
+
+  if (!team) {
+    throw new TRPCError({ code: "NOT_FOUND" });
+  }
+
+  return team;
 };
