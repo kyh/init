@@ -39,7 +39,6 @@ export const teams = pgTable("teams", (t) => ({
 export const teamsRelations = relations(teams, ({ many }) => ({
   teamMembers: many(teamMembers),
   invitations: many(invitations),
-  messages: many(messages),
 }));
 
 export const teamMembers = pgTable(
@@ -103,40 +102,6 @@ export const invitationsRelations = relations(invitations, ({ one }) => ({
   }),
   invitedBy: one(authUsers, {
     fields: [invitations.invitedBy],
-    references: [authUsers.id],
-  }),
-}));
-
-export const messages = pgTable("messages", (t) => ({
-  id: t.uuid().notNull().primaryKey().defaultRandom(),
-  content: t.text().notNull(),
-  role: t.varchar().notNull(),
-  teamId: t
-    .uuid()
-    .notNull()
-    .references(() => teams.id),
-  userId: t
-    .uuid()
-    .notNull()
-    .references(() => authUsers.id),
-  createdAt: t
-    .timestamp({ mode: "date", withTimezone: true })
-    .defaultNow()
-    .notNull(),
-  updatedAt: t
-    .timestamp({ mode: "date", withTimezone: true })
-    .defaultNow()
-    .notNull()
-    .$onUpdateFn(() => new Date()),
-}));
-
-export const messagesRelations = relations(messages, ({ one }) => ({
-  team: one(teams, {
-    fields: [messages.teamId],
-    references: [teams.id],
-  }),
-  user: one(authUsers, {
-    fields: [messages.userId],
     references: [authUsers.id],
   }),
 }));
