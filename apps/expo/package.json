@@ -32,10 +32,10 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-hook-form": "^7.54.2",
-    "react-native": "^0.77.1",
+    "react-native": "^0.78.0",
     "react-native-css-interop": "^0.1.22",
     "react-native-gesture-handler": "^2.24.0",
-    "react-native-reanimated": "^3.17.0",
+    "react-native-reanimated": "^3.17.1",
     "react-native-safe-area-context": "^5.2.0",
     "react-native-screens": "^4.9.1",
     "superjson": "catalog:"
