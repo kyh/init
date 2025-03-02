@@ -11,10 +11,12 @@ export async function POST(request: Request) {
     messages: Message[];
     teamSlug: string;
   };
+
+  // Ensure the team exists and the user has access to it
   await caller.team.getTeam({ slug: teamSlug });
 
   const result = streamText({
-    model: openai("gpt-3.5-turbo"),
+    model: openai("gpt-4o-mini"),
     messages,
   });
 

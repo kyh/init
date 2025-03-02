@@ -2,6 +2,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import { Button } from "@init/ui/button";
+import { toast } from "@init/ui/toast";
 import { ArrowUp, Square } from "lucide-react";
 
 import {
@@ -31,6 +32,9 @@ export const AIChatForm = ({ teamSlug }: AIFormProps) => {
     stop,
   } = useChat({
     body: { teamSlug },
+    onError: (error) => {
+      toast.error(`An error occurred, ${error.message}`);
+    },
   });
 
   const handleSubmit = () => {

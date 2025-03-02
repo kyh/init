@@ -2,7 +2,7 @@ import { and, eq } from "@init/db";
 import { invitations, teamMembers, teams } from "@init/db/schema";
 import { TRPCError } from "@trpc/server";
 
-import type { Db } from "@init/db/client";
+import type { TRPCContext } from "../trpc";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import {
   createTeamInput,
@@ -44,7 +44,10 @@ export const teamRouter = createTRPCRouter({
         .returning();
 
       if (!created) {
-        throw new Error("Failed to create team");
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create team",
+        });
       }
 
       await ctx.db.insert(teamMembers).values({
@@ -61,7 +64,7 @@ export const teamRouter = createTRPCRouter({
   getTeam: protectedProcedure
     .input(getTeamInput)
     .query(async ({ ctx, input }) => {
-      const team = await getTeamOrThrow(ctx.db, input);
+      const team = await checkTeamAuth(ctx, input);
 
       return {
         team,
@@ -71,7 +74,7 @@ export const teamRouter = createTRPCRouter({
   updateTeam: protectedProcedure
     .input(updateTeamInput)
     .mutation(async ({ ctx, input }) => {
-      await getTeamOrThrow(ctx.db, input);
+      await checkTeamAuth(ctx, { id: input.id });
 
       const [updated] = await ctx.db
         .update(teams)
@@ -87,7 +90,7 @@ export const teamRouter = createTRPCRouter({
   deleteTeam: protectedProcedure
     .input(deleteTeamInput)
     .mutation(async ({ ctx, input }) => {
-      await getTeamOrThrow(ctx.db, input);
+      await checkTeamAuth(ctx, { id: input.id });
 
       const [deleted] = await ctx.db
         .delete(teams)
@@ -102,6 +105,15 @@ export const teamRouter = createTRPCRouter({
   createTeamInvitations: protectedProcedure
     .input(createTeamInvitationsInput)
     .mutation(async ({ ctx, input }) => {
+      if (!input.teamInvitations[0]) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "No invitations provided",
+        });
+      }
+
+      await checkTeamAuth(ctx, { id: input.teamInvitations[0].teamId });
+
       const createdInvitations = (
         await Promise.all(
           input.teamInvitations.map(async (invitation) => {
@@ -135,6 +147,8 @@ export const teamRouter = createTRPCRouter({
   updateTeamInvitation: protectedProcedure
     .input(updateTeamInvitationInput)
     .mutation(async ({ ctx, input }) => {
+      await checkTeamAuth(ctx, { id: input.teamId });
+
       const [updated] = await ctx.db
         .update(invitations)
         .set(input)
@@ -162,13 +176,11 @@ export const teamRouter = createTRPCRouter({
   getTeamMember: protectedProcedure
     .input(getTeamMemberInput)
     .query(async ({ ctx, input }) => {
-      const member = await ctx.db.query.teamMembers.findFirst({
-        where: and(
-          eq(teamMembers.teamId, input.teamId),
-          eq(teamMembers.userId, input.userId),
-        ),
-        with: { user: true },
-      });
+      const team = await checkTeamAuth(ctx, { id: input.teamId });
+
+      const member = team.teamMembers.find(
+        (member) => member.userId === input.userId,
+      );
 
       return {
         teamMember: member,
@@ -178,6 +190,8 @@ export const teamRouter = createTRPCRouter({
   createTeamMember: protectedProcedure
     .input(createTeamMemberInput)
     .mutation(async ({ ctx, input }) => {
+      await checkTeamAuth(ctx, { id: input.teamId });
+
       const [created] = await ctx.db
         .insert(teamMembers)
         .values(input)
@@ -191,6 +205,8 @@ export const teamRouter = createTRPCRouter({
   updateTeamMember: protectedProcedure
     .input(updateTeamMemberInput)
     .mutation(async ({ ctx, input }) => {
+      await checkTeamAuth(ctx, { id: input.teamId });
+
       const [updated] = await ctx.db
         .update(teamMembers)
         .set(input)
@@ -210,6 +226,8 @@ export const teamRouter = createTRPCRouter({
   deleteTeamMember: protectedProcedure
     .input(deleteTeamMemberInput)
     .mutation(async ({ ctx, input }) => {
+      await checkTeamAuth(ctx, { id: input.teamId });
+
       const [deleted] = await ctx.db
         .delete(teamMembers)
         .where(
@@ -234,18 +252,22 @@ const whereIdOrSlug = (input: { id?: string; slug?: string }) => {
       : undefined;
 
   if (!whereClause) {
-    throw new Error("Either ID or Slug must be provided");
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Either ID or Slug must be provided",
+    });
   }
 
   return whereClause;
 };
 
-export const getTeamOrThrow = async (
-  db: Db,
+export const checkTeamAuth = async (
+  ctx: TRPCContext,
   input: { id?: string; slug?: string },
 ) => {
   const whereClause = whereIdOrSlug(input);
-  const team = await db.query.teams.findFirst({
+  const team = await ctx.db.query.teams.findFirst({
+    // updated db reference
     where: whereClause,
     with: {
       teamMembers: {
@@ -256,7 +278,15 @@ export const getTeamOrThrow = async (
   });
 
   if (!team) {
-    throw new TRPCError({ code: "NOT_FOUND" });
+    throw new TRPCError({ code: "NOT_FOUND", message: "Team not found" });
+  }
+
+  // Check if the current user is a member of the team
+  const isMember = team.teamMembers.some(
+    (member) => member.userId === ctx.user?.id,
+  );
+  if (!isMember) {
+    throw new TRPCError({ code: "UNAUTHORIZED", message: "Not a team member" });
   }
 
   return team;
