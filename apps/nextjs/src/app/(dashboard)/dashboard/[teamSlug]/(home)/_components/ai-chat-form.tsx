@@ -23,14 +23,7 @@ export type AIFormProps = {
 };
 
 export const AIChatForm = ({ teamSlug }: AIFormProps) => {
-  const {
-    messages,
-    input,
-    setInput,
-    handleSubmit: sendMessage,
-    status,
-    stop,
-  } = useChat({
+  const { messages, append, status, stop, input, setInput } = useChat({
     body: { teamSlug },
     onError: (error) => {
       toast.error(`An error occurred, ${error.message}`);
@@ -38,12 +31,24 @@ export const AIChatForm = ({ teamSlug }: AIFormProps) => {
   });
 
   const handleSubmit = () => {
-    if (status === "streaming") {
+    if (input === "") {
+      return;
+    }
+
+    if (isGeneratingResponse) {
       stop();
     } else {
-      sendMessage();
+      void append({
+        role: "user",
+        content: input,
+        createdAt: new Date(),
+      });
     }
+
+    setInput("");
   };
+
+  const isGeneratingResponse = ["streaming", "submitted"].includes(status);
 
   return (
     <>
@@ -66,9 +71,12 @@ export const AIChatForm = ({ teamSlug }: AIFormProps) => {
               )}
               <div className="max-w-[85%] flex-1 sm:max-w-[75%]">
                 {isAssistant ? (
-                  <div className="bg-secondary text-foreground prose rounded-lg p-2">
+                  <MessageContent
+                    className="bg-secondary text-secondary-foreground"
+                    markdown
+                  >
                     {message.content}
-                  </div>
+                  </MessageContent>
                 ) : (
                   <MessageContent className="bg-primary text-primary-foreground">
                     {message.content}
@@ -88,16 +96,14 @@ export const AIChatForm = ({ teamSlug }: AIFormProps) => {
         <PromptInputTextarea placeholder="Ask me anything..." />
         <PromptInputActions className="flex items-center justify-between gap-2 pt-2">
           <PromptInputAction
-            tooltip={
-              status === "streaming" ? "Stop generation" : "Send message"
-            }
+            tooltip={isGeneratingResponse ? "Stop generation" : "Send message"}
           >
             <Button
               size="icon"
               className="ml-auto h-8 w-8 rounded-full"
               onClick={handleSubmit}
             >
-              {status === "streaming" ? (
+              {isGeneratingResponse ? (
                 <Square className="size-5 fill-current" />
               ) : (
                 <ArrowUp className="size-5" />

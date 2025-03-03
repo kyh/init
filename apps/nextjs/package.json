@@ -28,10 +28,11 @@
     "@trpc/server": "catalog:",
     "@trpc/tanstack-react-query": "catalog:",
     "ai": "^4.1.47",
+    "marked": "^15.0.7",
     "next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "react-infinite-scroll-hook": "^5.0.1",
+    "react-markdown": "^10.0.1",
     "superjson": "catalog:",
     "zod": "catalog:"
   },

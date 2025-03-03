@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@init/ui/avatar";
 import { cn } from "@init/ui/utils";
 
+import { Markdown } from "./ai-chat-markdown";
+
 export type MessageProps = {
   children: React.ReactNode;
   className?: string;
@@ -42,10 +44,12 @@ export type MessageContentProps = {
   children: React.ReactNode;
   markdown?: boolean;
   className?: string;
-} & React.HTMLProps<HTMLDivElement>;
+} & React.ComponentProps<typeof Markdown> &
+  React.HTMLProps<HTMLDivElement>;
 
 const MessageContent = ({
   children,
+  markdown = false,
   className,
   ...props
 }: MessageContentProps) => {
@@ -54,7 +58,11 @@ const MessageContent = ({
     className,
   );
 
-  return (
+  return markdown ? (
+    <div className={classNames}>
+      <Markdown {...props}>{children as string}</Markdown>
+    </div>
+  ) : (
     <div className={classNames} {...props}>
       {children}
     </div>

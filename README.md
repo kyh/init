@@ -4,12 +4,12 @@ An AI native boilerplate to build, launch, and scale your next project.
 
 ## Stack
 
-- Next.js
-- Expo
-- Tailwind CSS
-- TRPC
-- Drizzle
-- Supabase
+- [Next.js](https://nextjs.org)
+- [Expo](https://expo.dev)
+- [Tailwind CSS](https://tailwindcss.com)
+- [TRPC](https://trpc.io)
+- [Drizzle](https://orm.drizzle.team)
+- [Supabase](https://supabase.com)
 
 ## Running Locally
 

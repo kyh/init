@@ -1,6 +1,18 @@
 
 export default [
   {
+    "content": "# AI",
+    "title": "AI",
+    "_meta": {
+      "filePath": "architecture/ai.mdx",
+      "fileName": "ai.mdx",
+      "directory": "architecture",
+      "extension": "mdx",
+      "path": "architecture/ai"
+    },
+    "mdx": "var Component=(()=>{var d=Object.create;var r=Object.defineProperty;var h=Object.getOwnPropertyDescriptor;var _=Object.getOwnPropertyNames;var f=Object.getPrototypeOf,j=Object.prototype.hasOwnProperty;var l=(n,t)=>()=>(t||n((t={exports:{}}).exports,t),t.exports),M=(n,t)=>{for(var e in t)r(n,e,{get:t[e],enumerable:!0})},s=(n,t,e,i)=>{if(t&&typeof t==\"object\"||typeof t==\"function\")for(let o of _(t))!j.call(n,o)&&o!==e&&r(n,o,{get:()=>t[o],enumerable:!(i=h(t,o))||i.enumerable});return n};var p=(n,t,e)=>(e=n!=null?d(f(n)):{},s(t||!n||!n.__esModule?r(e,\"default\",{value:n,enumerable:!0}):e,n)),C=n=>s(r({},\"__esModule\",{value:!0}),n);var a=l((w,u)=>{u.exports=_jsx_runtime});var D={};M(D,{default:()=>x});var c=p(a());function m(n){let t={h1:\"h1\",...n.components};return(0,c.jsx)(t.h1,{id:\"ai\",children:\"AI\"})}function x(n={}){let{wrapper:t}=n.components||{};return t?(0,c.jsx)(t,{...n,children:(0,c.jsx)(m,{...n})}):m(n)}return C(D);})();\n;return Component;"
+  },
+  {
     "content": "# API",
     "title": "API",
     "_meta": {
@@ -49,14 +61,26 @@ export default [
     "mdx": "var Component=(()=>{var a=Object.create;var o=Object.defineProperty;var f=Object.getOwnPropertyDescriptor;var h=Object.getOwnPropertyNames;var l=Object.getPrototypeOf,_=Object.prototype.hasOwnProperty;var j=(t,n)=>()=>(n||t((n={exports:{}}).exports,n),n.exports),M=(t,n)=>{for(var e in n)o(t,e,{get:n[e],enumerable:!0})},s=(t,n,e,u)=>{if(n&&typeof n==\"object\"||typeof n==\"function\")for(let r of h(n))!_.call(t,r)&&r!==e&&o(t,r,{get:()=>n[r],enumerable:!(u=f(n,r))||u.enumerable});return t};var p=(t,n,e)=>(e=t!=null?a(l(t)):{},s(n||!t||!t.__esModule?o(e,\"default\",{value:t,enumerable:!0}):e,t)),C=t=>s(o({},\"__esModule\",{value:!0}),t);var i=j((w,d)=>{d.exports=_jsx_runtime});var D={};M(D,{default:()=>x});var c=p(i());function m(t){let n={h1:\"h1\",...t.components};return(0,c.jsx)(n.h1,{id:\"folder-structure\",children:'Folder Structure\"'})}function x(t={}){let{wrapper:n}=t.components||{};return n?(0,c.jsx)(n,{...t,children:(0,c.jsx)(m,{...t})}):m(t)}return C(D);})();\n;return Component;"
   },
   {
+    "content": "# CRUD",
+    "title": "CRUD",
+    "_meta": {
+      "filePath": "build/crud.mdx",
+      "fileName": "crud.mdx",
+      "directory": "build",
+      "extension": "mdx",
+      "path": "build/crud"
+    },
+    "mdx": "var Component=(()=>{var a=Object.create;var r=Object.defineProperty;var h=Object.getOwnPropertyDescriptor;var _=Object.getOwnPropertyNames;var f=Object.getPrototypeOf,j=Object.prototype.hasOwnProperty;var l=(n,t)=>()=>(t||n((t={exports:{}}).exports,t),t.exports),C=(n,t)=>{for(var e in t)r(n,e,{get:t[e],enumerable:!0})},i=(n,t,e,u)=>{if(t&&typeof t==\"object\"||typeof t==\"function\")for(let o of _(t))!j.call(n,o)&&o!==e&&r(n,o,{get:()=>t[o],enumerable:!(u=h(t,o))||u.enumerable});return n};var D=(n,t,e)=>(e=n!=null?a(f(n)):{},i(t||!n||!n.__esModule?r(e,\"default\",{value:n,enumerable:!0}):e,n)),M=n=>i(r({},\"__esModule\",{value:!0}),n);var d=l((w,s)=>{s.exports=_jsx_runtime});var p={};C(p,{default:()=>x});var c=D(d());function m(n){let t={h1:\"h1\",...n.components};return(0,c.jsx)(t.h1,{id:\"crud\",children:\"CRUD\"})}function x(n={}){let{wrapper:t}=n.components||{};return t?(0,c.jsx)(t,{...n,children:(0,c.jsx)(m,{...n})}):m(n)}return M(p);})();\n;return Component;"
+  },
+  {
     "content": "# Data Modelling\n\nLearn how to structure your application's data model effectively.\n\n## Overview\n\nData modeling is a crucial step in building robust applications. It helps define how data is organized, stored, and accessed.\n\n## Key Concepts\n\n- Database schema design\n- Entity relationships\n- Data normalization\n- Model validation",
     "title": "Data Modelling",
     "_meta": {
-      "filePath": "build/data-model.mdx",
-      "fileName": "data-model.mdx",
+      "filePath": "build/database.mdx",
+      "fileName": "database.mdx",
       "directory": "build",
       "extension": "mdx",
-      "path": "build/data-model"
+      "path": "build/database"
     },
     "mdx": "var Component=(()=>{var u=Object.create;var l=Object.defineProperty;var p=Object.getOwnPropertyDescriptor;var m=Object.getOwnPropertyNames;var g=Object.getPrototypeOf,x=Object.prototype.hasOwnProperty;var f=(e,n)=>()=>(n||e((n={exports:{}}).exports,n),n.exports),_=(e,n)=>{for(var t in n)l(e,t,{get:n[t],enumerable:!0})},r=(e,n,t,o)=>{if(n&&typeof n==\"object\"||typeof n==\"function\")for(let a of m(n))!x.call(e,a)&&a!==t&&l(e,a,{get:()=>n[a],enumerable:!(o=p(n,a))||o.enumerable});return e};var v=(e,n,t)=>(t=e!=null?u(g(e)):{},r(n||!e||!e.__esModule?l(t,\"default\",{value:e,enumerable:!0}):t,e)),y=e=>r(l({},\"__esModule\",{value:!0}),e);var c=f((w,d)=>{d.exports=_jsx_runtime});var D={};_(D,{default:()=>h});var i=v(c());function s(e){let n={h1:\"h1\",h2:\"h2\",li:\"li\",p:\"p\",ul:\"ul\",...e.components};return(0,i.jsxs)(i.Fragment,{children:[(0,i.jsx)(n.h1,{id:\"data-modelling\",children:\"Data Modelling\"}),`\n`,(0,i.jsx)(n.p,{children:\"Learn how to structure your application's data model effectively.\"}),`\n`,(0,i.jsx)(n.h2,{id:\"overview\",children:\"Overview\"}),`\n`,(0,i.jsx)(n.p,{children:\"Data modeling is a crucial step in building robust applications. It helps define how data is organized, stored, and accessed.\"}),`\n`,(0,i.jsx)(n.h2,{id:\"key-concepts\",children:\"Key Concepts\"}),`\n`,(0,i.jsxs)(n.ul,{children:[`\n`,(0,i.jsx)(n.li,{children:\"Database schema design\"}),`\n`,(0,i.jsx)(n.li,{children:\"Entity relationships\"}),`\n`,(0,i.jsx)(n.li,{children:\"Data normalization\"}),`\n`,(0,i.jsx)(n.li,{children:\"Model validation\"}),`\n`]})]})}function h(e={}){let{wrapper:n}=e.components||{};return n?(0,i.jsx)(n,{...e,children:(0,i.jsx)(s,{...e})}):s(e)}return y(D);})();\n;return Component;"
   },
