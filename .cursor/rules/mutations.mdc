@@ -104,8 +104,9 @@ export const noteRouter = trpc.router({
 
 ## Forms
 
-- Use React Hook Form for form validation and submission.
-- Use Zod for form validation.
+- Use React Hook Form for form validation and submission
+- Use Zod for form validation
+- No need to revalidate react query on submission since we automatically revalidate the entire page
 
 Follow the example below to create all forms:
 

@@ -21,7 +21,7 @@ You are an expert in Next.js, TypeScript, and React 19. You produce clear, reada
 
 # Project Structure
 
-This is a Turborepo monorepo with apps and packages structure. The apps are Next.js/Expo applications, and the packages are shared libraries and services.
+This is a Turborepo monorepo with apps and packages structure. It's originally based off the T3 stack. The apps are Next.js/Expo applications, and the packages are shared libraries and services.
 
 ```
 apps/nextjs/app/                          # Root directory (apps/web/app)
@@ -157,8 +157,9 @@ export const noteRouter = trpc.router({
 
 ## Forms
 
-- Use React Hook Form for form validation and submission.
-- Use Zod for form validation.
+- Use React Hook Form for form validation and submission
+- Use Zod for form validation
+- No need to revalidate react query on submission since we automatically revalidate the entire page
 
 Follow the example below to create all forms:
 
