@@ -1,13 +1,12 @@
-import "@bacons/text-decoder/install";
-
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { QueryClientProvider } from "@tanstack/react-query";
 import { useColorScheme } from "nativewind";
 
 import { queryClient } from "@/trpc/react";
 
-import "./styles/globals.css";
+import "../styles.css";
+
+import { QueryClientProvider } from "@tanstack/react-query";
 
 // This is the main layout of the app
 // It wraps your pages with the providers they need
@@ -21,9 +20,6 @@ const RootLayout = () => {
         */}
       <Stack
         screenOptions={{
-          headerStyle: {
-            backgroundColor: "#000",
-          },
           contentStyle: {
             backgroundColor: colorScheme == "dark" ? "#09090B" : "#FFFFFF",
           },

@@ -1,6 +1,6 @@
 # Init
 
-An AI native boilerplate to build, launch, and scale your next project.
+An AI native starter kit to build, launch, and scale your next project.
 
 ## Stack
 

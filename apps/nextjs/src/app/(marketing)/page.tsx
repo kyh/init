@@ -11,7 +11,7 @@ const Page = () => {
               Accelerate building modern applications
             </span>
             <h1 className="text-secondary-foreground mt-6 text-2xl font-light text-pretty">
-              An AI native boilerplate to build, launch, and scale your next
+              An AI native starter kit to build, launch, and scale your next
               project.
             </h1>
             <WaitlistForm />

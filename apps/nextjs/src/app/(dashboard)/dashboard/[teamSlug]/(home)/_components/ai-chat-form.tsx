@@ -104,7 +104,7 @@ export const AIChatForm = ({ teamSlug }: AIFormProps) => {
               onClick={handleSubmit}
             >
               {isGeneratingResponse ? (
-                <Square className="size-5 fill-current" />
+                <Square className="size-5" />
               ) : (
                 <ArrowUp className="size-5" />
               )}

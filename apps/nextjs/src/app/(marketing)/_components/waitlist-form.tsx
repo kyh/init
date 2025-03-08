@@ -31,7 +31,11 @@ export const WaitlistForm = () => {
 
   const handleJoinWaitlist = (values: JoinWaitlistInput) => {
     toast.promise(
-      joinWaitlist.mutateAsync({ type: "app", email: values.email }),
+      joinWaitlist
+        .mutateAsync({ type: "app", email: values.email })
+        .then(() => {
+          form.reset({ email: "" });
+        }),
       {
         loading: "Submitting...",
         success: "Waitlist joined!",
