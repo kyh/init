@@ -5,14 +5,14 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import {
   createTRPCClient,
   httpBatchLink,
+  httpBatchStreamLink,
   loggerLink,
   splitLink,
-  unstable_httpBatchStreamLink,
 } from "@trpc/client";
 import { createTRPCContext } from "@trpc/tanstack-react-query";
 import SuperJSON from "superjson";
 
-import type { AppRouter } from "@init/api";
+import type { AppRouter } from "@kyh/api";
 import type { QueryClient } from "@tanstack/react-query";
 import { createQueryClient } from "./query-client";
 
@@ -54,7 +54,7 @@ export const TRPCReactProvider = (props: { children: React.ReactNode }) => {
               return headers;
             },
           }),
-          false: unstable_httpBatchStreamLink({
+          false: httpBatchStreamLink({
             transformer: SuperJSON,
             url: `${getBaseUrl()}/api/trpc`,
             headers: () => {
