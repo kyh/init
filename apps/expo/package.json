@@ -33,12 +33,12 @@
     "nativewind": "^4.1.23",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "react-native": "^0.79.0",
+    "react-native": "^0.79.1",
     "react-native-css-interop": "^0.1.22",
-    "react-native-gesture-handler": "^2.24.0",
-    "react-native-reanimated": "^3.17.3",
-    "react-native-safe-area-context": "^5.2.0",
-    "react-native-screens": "^4.9.2",
+    "react-native-gesture-handler": "^2.25.0",
+    "react-native-reanimated": "^3.17.4",
+    "react-native-safe-area-context": "^5.4.0",
+    "react-native-screens": "^4.10.0",
     "superjson": "2.2.2"
   },
   "devDependencies": {
