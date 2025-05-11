@@ -18,7 +18,7 @@
   "dependencies": {
     "@kyh/db": "workspace:^",
     "@trpc/server": "catalog:",
-    "stripe": "^18.0.0",
+    "stripe": "^18.1.0",
     "superjson": "catalog:",
     "zod": "catalog:"
   },
