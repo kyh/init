@@ -26,8 +26,8 @@
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
     "@trpc/tanstack-react-query": "catalog:",
-    "ai": "^4.3.15",
-    "marked": "^15.0.11",
+    "ai": "^4.3.16",
+    "marked": "^15.0.12",
     "next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
@@ -39,7 +39,7 @@
     "@kyh/eslint-config": "catalog:",
     "@kyh/prettier-config": "catalog:",
     "@kyh/tsconfig": "catalog:",
-    "@tailwindcss/postcss": "^4.1.6",
+    "@tailwindcss/postcss": "^4.1.7",
     "@tailwindcss/typography": "^0.5.16",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
@@ -47,7 +47,7 @@
     "eslint": "catalog:",
     "postcss": "^8.5.3",
     "prettier": "catalog:",
-    "tailwindcss": "^4.1.6",
+    "tailwindcss": "^4.1.7",
     "typescript": "catalog:"
   },
   "prettier": "@kyh/prettier-config"
