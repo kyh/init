@@ -21,7 +21,7 @@
     "@kyh/mdx": "workspace:^",
     "@kyh/ui": "workspace:^",
     "@stripe/react-stripe-js": "^3.7.0",
-    "@stripe/stripe-js": "^7.3.0",
+    "@stripe/stripe-js": "^7.3.1",
     "@tanstack/react-query": "catalog:",
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
@@ -39,7 +39,7 @@
     "@kyh/eslint-config": "catalog:",
     "@kyh/prettier-config": "catalog:",
     "@kyh/tsconfig": "catalog:",
-    "@tailwindcss/postcss": "^4.1.7",
+    "@tailwindcss/postcss": "^4.1.8",
     "@tailwindcss/typography": "^0.5.16",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
@@ -47,7 +47,7 @@
     "eslint": "catalog:",
     "postcss": "^8.5.3",
     "prettier": "catalog:",
-    "tailwindcss": "^4.1.7",
+    "tailwindcss": "^4.1.8",
     "typescript": "catalog:"
   },
   "prettier": "@kyh/prettier-config"
