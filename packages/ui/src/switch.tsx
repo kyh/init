@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { cn } from "@kyh/ui/utils";
-import * as SwitchPrimitives from "@radix-ui/react-switch";
+import { Switch as SwitchPrimitives } from "radix-ui";
 
 export const Switch = ({
   className,

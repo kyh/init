@@ -2,8 +2,8 @@
 
 import * as React from "react";
 import { cn } from "@kyh/ui/utils";
-import * as RadioGroupPrimitive from "@radix-ui/react-radio-group";
 import { CheckIcon } from "lucide-react";
+import { RadioGroup as RadioGroupPrimitive } from "radix-ui";
 
 export const RadioGroup = ({
   className,

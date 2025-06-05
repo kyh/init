@@ -2,13 +2,13 @@
 
 import * as React from "react";
 import { cn } from "@kyh/ui/utils";
-import * as SelectPrimitive from "@radix-ui/react-select";
 import {
   ArrowUpDownIcon,
   CheckIcon,
   ChevronDownIcon,
   ChevronUpIcon,
 } from "lucide-react";
+import { Select as SelectPrimitive } from "radix-ui";
 
 export const Select = SelectPrimitive.Root;
 export const SelectGroup = SelectPrimitive.Group;
