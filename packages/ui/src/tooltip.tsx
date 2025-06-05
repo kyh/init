@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "@kyh/ui/utils";
+import { cn } from "@repo/ui/utils";
 import { Tooltip as TooltipPrimitive } from "radix-ui";
 
 export const TooltipProvider = TooltipPrimitive.Provider;

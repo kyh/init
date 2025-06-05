@@ -3,7 +3,7 @@
   "extends": ["config:base"],
   "packageRules": [
     {
-      "matchPackagePatterns": ["^@kyh/"],
+      "matchPackagePatterns": ["^@repo/"],
       "enabled": false
     }
   ],

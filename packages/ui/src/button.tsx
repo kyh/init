@@ -1,13 +1,13 @@
 import type { VariantProps } from "class-variance-authority";
 import * as React from "react";
-import { cn } from "@kyh/ui/utils";
+import { cn } from "@repo/ui/utils";
 import { cva } from "class-variance-authority";
 import { Slot } from "radix-ui";
 
 import { Spinner } from "./spinner";
 
 export const buttonVariants = cva(
-  "focus-visible:ring-ring relative inline-flex cursor-pointer items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition focus-visible:ring-1 focus-visible:outline-hidden disabled:pointer-events-none",
+  "focus-visible:ring-ring focus-visible:outline-hidden relative inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition focus-visible:ring-1 disabled:pointer-events-none",
   {
     variants: {
       variant: {
@@ -16,7 +16,7 @@ export const buttonVariants = cva(
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/80 shadow-xs",
         outline:
-          "border-border bg-background hover:bg-accent hover:text-accent-foreground border shadow-xs",
+          "border-border bg-background hover:bg-accent hover:text-accent-foreground shadow-xs border",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-xs",
         ghost: "hover:bg-accent hover:text-accent-foreground",
