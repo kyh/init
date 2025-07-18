@@ -34,6 +34,12 @@ const Page = () => {
         </Link>
         .
       </p>
+      <p className="text-muted-foreground px-8 text-center text-sm">
+        Already have an account?{" "}
+        <Link href="/auth/login" className="underline">
+          Login
+        </Link>
+      </p>
     </div>
   );
 };

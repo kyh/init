@@ -111,6 +111,9 @@ export const authRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const response = await ctx.supabase.auth.resetPasswordForEmail(
         input.email,
+        {
+          redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/password-update`,
+        },
       );
 
       if (response.error) {
