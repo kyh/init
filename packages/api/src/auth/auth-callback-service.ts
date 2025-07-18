@@ -148,7 +148,7 @@ const onError = ({ error, path }: { error: string; path: string }) => {
       error,
       name: `auth.callback`,
     },
-    `An error occurred while signing user in`,
+    `An error occurred while logging user in`,
   );
 
   const nextPath = `${path}?error=${errorMessage}`;
@@ -161,8 +161,8 @@ const onError = ({ error, path }: { error: string; path: string }) => {
 /**
  * Checks if the given error message indicates a verifier error.
  * We check for this specific error because it's highly likely that the
- * user is trying to sign in using a different browser than the one they
- * used to request the sign in link. This is a common mistake, so we
+ * user is trying to login using a different browser than the one they
+ * used to request the login link. This is a common mistake, so we
  * want to provide a helpful error message.
  */
 const isVerifierError = (error: string) =>

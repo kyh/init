@@ -4,7 +4,7 @@ import Link from "next/link";
 import { AuthForm } from "@/app/(auth)/_components/auth-form";
 
 export const metadata: Metadata = {
-  title: "Sign Up",
+  title: "Register",
 };
 
 const Page = () => {
@@ -13,10 +13,10 @@ const Page = () => {
       <div className="flex flex-col text-center">
         <h1 className="text-lg font-light">Create an account</h1>
         <p className="text-muted-foreground text-sm">
-          Please sign up to continue
+          Please register to continue
         </p>
       </div>
-      <AuthForm type="signup" />
+      <AuthForm type="register" />
       <p className="text-muted-foreground px-8 text-center text-sm">
         By clicking continue, you agree to our{" "}
         <Link

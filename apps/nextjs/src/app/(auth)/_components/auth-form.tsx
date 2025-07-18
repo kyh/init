@@ -21,7 +21,7 @@ import type { SignInWithPasswordInput } from "@repo/api/auth/auth-schema";
 import { useTRPC } from "@/trpc/react";
 
 type AuthFormProps = {
-  type: "signin" | "signup";
+  type: "login" | "register";
 } & React.HTMLAttributes<HTMLDivElement>;
 
 export const AuthForm = ({ className, type, ...props }: AuthFormProps) => {
@@ -73,10 +73,10 @@ export const AuthForm = ({ className, type, ...props }: AuthFormProps) => {
   };
 
   const handleAuthWithPassword = (credentials: SignInWithPasswordInput) => {
-    if (type === "signup") {
+    if (type === "register") {
       signUp.mutate(credentials);
     }
-    if (type === "signin") {
+    if (type === "login") {
       signInWithPassword.mutate(credentials);
     }
   };
@@ -149,7 +149,7 @@ export const AuthForm = ({ className, type, ...props }: AuthFormProps) => {
             )}
           />
           <Button loading={signUp.isPending || signInWithPassword.isPending}>
-            {type === "signin" ? "Login" : "Sign Up"}
+            {type === "login" ? "Login" : "Register"}
           </Button>
         </form>
       </Form>

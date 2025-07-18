@@ -15,8 +15,8 @@ const Page = () => (
     <RequestPasswordResetForm />
     <p className="text-muted-foreground px-8 text-center text-sm">
       Back to{" "}
-      <Link href="/auth/sign-in" className="underline">
-        sign in
+      <Link href="/auth/login" className="underline">
+        login
       </Link>
     </p>
   </div>
