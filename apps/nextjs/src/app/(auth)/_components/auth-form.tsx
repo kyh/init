@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { z } from "zod";
 import { signInWithPasswordInput } from "@repo/api/auth/auth-schema";
 import { Button } from "@repo/ui/button";
 import {
@@ -18,6 +17,7 @@ import { Input } from "@repo/ui/input";
 import { toast } from "@repo/ui/toast";
 import { cn } from "@repo/ui/utils";
 import { useMutation } from "@tanstack/react-query";
+import { z } from "zod";
 
 import type { SignInWithPasswordInput } from "@repo/api/auth/auth-schema";
 import { useTRPC } from "@/trpc/react";
@@ -63,8 +63,8 @@ export const AuthForm = ({ className, type, ...props }: AuthFormProps) => {
   const form = useForm({
     schema: signInWithPasswordInput,
     defaultValues: {
-      email: "im.kaiyu@gmail.com",
-      password: "testing123",
+      email: "",
+      password: "",
     },
   });
 
@@ -188,10 +188,11 @@ export const RequestPasswordResetForm = () => {
 
   if (isSuccess) {
     return (
-      <div className="text-center space-y-4">
+      <div className="space-y-4 text-center">
         <div className="rounded-md bg-green-50 p-4 dark:bg-green-900/20">
           <p className="text-sm text-green-800 dark:text-green-200">
-            Password reset email sent! Check your inbox and follow the instructions to reset your password.
+            Password reset email sent! Check your inbox and follow the
+            instructions to reset your password.
           </p>
         </div>
       </div>
@@ -209,7 +210,7 @@ export const RequestPasswordResetForm = () => {
           name="email"
           render={({ field }) => (
             <FormItem className="grid gap-1 space-y-0">
-              <FormLabel>Email</FormLabel>
+              <FormLabel className="sr-only">Email</FormLabel>
               <FormControl>
                 <Input
                   required
@@ -226,7 +227,7 @@ export const RequestPasswordResetForm = () => {
           )}
         />
         <Button loading={requestPasswordReset.isPending}>
-          Send Reset Email
+          Request Password Reset
         </Button>
       </form>
     </Form>
@@ -236,51 +237,39 @@ export const RequestPasswordResetForm = () => {
 export const UpdatePasswordForm = () => {
   const trpc = useTRPC();
   const router = useRouter();
-  const [isSuccess, setIsSuccess] = useState(false);
 
   const updatePassword = useMutation(
     trpc.auth.updatePassword.mutationOptions({
       onSuccess: () => {
-        setIsSuccess(true);
         toast.success("Password updated successfully!");
-        // Redirect to dashboard after a brief delay
-        setTimeout(() => {
-          router.push("/dashboard");
-        }, 2000);
+        router.push("/dashboard");
       },
       onError: (error) => toast.error(error.message),
     }),
   );
 
   const form = useForm({
-    schema: z.object({
-      password: z.string().min(8, "Password must be at least 8 characters"),
-      confirmPassword: z.string(),
-    }).refine((data) => data.password === data.confirmPassword, {
-      message: "Passwords don't match",
-      path: ["confirmPassword"],
-    }),
+    schema: z
+      .object({
+        password: z.string().min(8, "Password must be at least 8 characters"),
+        confirmPassword: z.string(),
+      })
+      .refine((data) => data.password === data.confirmPassword, {
+        message: "Passwords don't match",
+        path: ["confirmPassword"],
+      }),
     defaultValues: {
       password: "",
       confirmPassword: "",
     },
   });
 
-  const handleUpdatePassword = (data: { password: string; confirmPassword: string }) => {
+  const handleUpdatePassword = (data: {
+    password: string;
+    confirmPassword: string;
+  }) => {
     updatePassword.mutate({ password: data.password });
   };
-
-  if (isSuccess) {
-    return (
-      <div className="text-center space-y-4">
-        <div className="rounded-md bg-green-50 p-4 dark:bg-green-900/20">
-          <p className="text-sm text-green-800 dark:text-green-200">
-            Password updated successfully! Redirecting to dashboard...
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <Form {...form}>
@@ -293,7 +282,7 @@ export const UpdatePasswordForm = () => {
           name="password"
           render={({ field }) => (
             <FormItem className="grid gap-1 space-y-0">
-              <FormLabel>New Password</FormLabel>
+              <FormLabel className="sr-only">New Password</FormLabel>
               <FormControl>
                 <Input
                   required
@@ -314,7 +303,7 @@ export const UpdatePasswordForm = () => {
           name="confirmPassword"
           render={({ field }) => (
             <FormItem className="grid gap-1 space-y-0">
-              <FormLabel>Confirm New Password</FormLabel>
+              <FormLabel className="sr-only">Confirm New Password</FormLabel>
               <FormControl>
                 <Input
                   required
@@ -330,9 +319,7 @@ export const UpdatePasswordForm = () => {
             </FormItem>
           )}
         />
-        <Button loading={updatePassword.isPending}>
-          Update Password
-        </Button>
+        <Button loading={updatePassword.isPending}>Update Password</Button>
       </form>
     </Form>
   );

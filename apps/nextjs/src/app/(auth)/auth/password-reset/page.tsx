@@ -16,7 +16,7 @@ const Page = () => (
     <p className="text-muted-foreground px-8 text-center text-sm">
       Back to{" "}
       <Link href="/auth/login" className="underline">
-        login
+        Login
       </Link>
     </p>
   </div>

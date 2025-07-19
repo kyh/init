@@ -13,27 +13,18 @@ const Page = () => {
       <div className="flex flex-col text-center">
         <h1 className="text-lg font-light">Create an account</h1>
         <p className="text-muted-foreground text-sm">
-          Please register to continue
+          New accounts are currently{" "}
+          <Link
+            className="underline"
+            href="https://x.com/kaiyuhsu"
+            target="_blank"
+          >
+            invite only
+          </Link>
+          .
         </p>
       </div>
       <AuthForm type="register" />
-      <p className="text-muted-foreground px-8 text-center text-sm">
-        By clicking continue, you agree to our{" "}
-        <Link
-          href="#"
-          className="hover:text-primary underline underline-offset-4"
-        >
-          Terms of Service
-        </Link>{" "}
-        and{" "}
-        <Link
-          href="#"
-          className="hover:text-primary underline underline-offset-4"
-        >
-          Privacy Policy
-        </Link>
-        .
-      </p>
       <p className="text-muted-foreground px-8 text-center text-sm">
         Already have an account?{" "}
         <Link href="/auth/login" className="underline">

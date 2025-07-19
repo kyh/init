@@ -14,19 +14,12 @@ const Page = () => {
         <h1 className="text-lg font-light">Welcome back</h1>
       </div>
       <AuthForm type="login" />
-      <div className="flex flex-col gap-2 text-center">
-        <p className="text-muted-foreground px-8 text-sm">
-          <Link href="/auth/password-reset" className="underline">
-            Forgot your password?
-          </Link>
-        </p>
-        <p className="text-muted-foreground px-8 text-sm">
-          Don't have an account?{" "}
-          <Link href="/auth/register" className="underline">
-            Register
-          </Link>
-        </p>
-      </div>
+      <p className="text-muted-foreground px-8 text-center text-sm">
+        Don't have an account?{" "}
+        <Link href="/auth/register" className="underline">
+          Register
+        </Link>
+      </p>
     </div>
   );
 };
