@@ -2,4 +2,356 @@
 title: "Local Development"
 ---
 
-# Local Development"
+# Local Development
+
+Learn how to effectively develop with Init, from daily workflows to debugging techniques. This guide covers everything you need to know to be productive with the Init boilerplate.
+
+## Development Workflow
+
+### Starting Your Development Session
+
+1. **Start the database** (if using local Supabase):
+   ```bash
+   pnpm db:start
+   ```
+
+2. **Start all development servers**:
+   ```bash
+   pnpm dev
+   ```
+   This starts:
+   - Next.js web app on http://localhost:3000
+   - Expo development server
+   - API server with hot reload
+
+3. **Open your development tools**:
+   - Web app: http://localhost:3000
+   - Supabase Studio: http://localhost:54323
+   - Mobile app: Use Expo Go or simulator
+
+### Daily Development Commands
+
+```bash
+# Start development (most common)
+pnpm dev
+
+# Run specific apps
+pnpm dev:nextjs    # Web app only
+pnpm dev:expo      # Mobile app only
+
+# Database operations
+pnpm db:reset      # Reset local database
+pnpm db:push       # Push schema changes
+
+# Code quality
+pnpm lint          # Check code quality
+pnpm typecheck     # Check TypeScript
+pnpm format        # Format code
+```
+
+## Monorepo Structure
+
+Init uses Turborepo to manage multiple packages efficiently:
+
+### Packages Overview
+
+```
+packages/
+├── api/          # tRPC API routes and business logic
+├── db/           # Database schema, migrations, and clients
+├── ui/           # Shared React components
+└── mdx/          # Documentation system
+```
+
+### Apps Overview
+
+```
+apps/
+├── nextjs/       # Web application (Next.js)
+└── expo/         # Mobile application (React Native)
+```
+
+### Shared Code Strategy
+
+Init maximizes code sharing between web and mobile:
+
+- **API package** - Shared business logic and tRPC routes
+- **Database package** - Shared schema and data access
+- **UI package** - Shared components (adapted for each platform)
+
+## Working with the Database
+
+### Schema Changes
+
+Init uses Drizzle ORM for type-safe database operations:
+
+1. **Modify schema** in `packages/db/src/schema.ts`
+2. **Push changes** to update database:
+   ```bash
+   pnpm db:push
+   ```
+3. **Verify changes** in Supabase Studio
+
+### Database Operations
+
+```bash
+# View database in browser
+open http://localhost:54323
+
+# Reset database (careful!)
+pnpm db:reset
+
+# Generate new migration
+pnpm db:generate
+
+# Push schema without migrations
+pnpm db:push
+```
+
+### Adding New Tables
+
+Example of adding a new table:
+
+```typescript
+// packages/db/src/schema.ts
+export const posts = pgTable("posts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  content: text("content"),
+  authorId: uuid("author_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+```
+
+## API Development
+
+### Adding New API Routes
+
+Init uses tRPC for type-safe APIs. Add routes in `packages/api/src/`:
+
+```typescript
+// packages/api/src/post/post-router.ts
+export const postRouter = createTRPCRouter({
+  create: publicProcedure
+    .input(z.object({ title: z.string(), content: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      return ctx.db.insert(posts).values(input);
+    }),
+  
+  list: publicProcedure
+    .query(async ({ ctx }) => {
+      return ctx.db.select().from(posts);
+    }),
+});
+```
+
+### Testing API Routes
+
+Use the tRPC panel or create test calls:
+
+```typescript
+// In your component
+const { data: posts } = api.post.list.useQuery();
+const createPost = api.post.create.useMutation();
+```
+
+## Frontend Development
+
+### Web App (Next.js)
+
+The web app uses Next.js 15 with App Router:
+
+```
+apps/nextjs/src/app/
+├── (auth)/           # Authentication pages
+├── (dashboard)/      # Protected dashboard pages
+├── (marketing)/      # Public marketing pages
+└── api/              # API routes (tRPC)
+```
+
+### Mobile App (Expo)
+
+The mobile app shares components and logic:
+
+```
+apps/expo/src/app/
+├── (tabs)/           # Tab navigation
+├── auth/             # Authentication screens
+└── _layout.tsx       # Root layout
+```
+
+### Adding New Features
+
+1. **Plan the feature** - Consider web and mobile UX
+2. **Add API routes** - Create tRPC procedures
+3. **Build UI components** - Share when possible
+4. **Implement screens** - Web and mobile versions
+5. **Test thoroughly** - Both platforms
+
+## UI Components
+
+### Using Shared Components
+
+Init provides a shared UI package:
+
+```typescript
+// Import from shared package
+import { Button, Card, Input } from "@repo/ui";
+
+// Use in your app
+<Button variant="primary" onClick={handleClick}>
+  Save Changes
+</Button>
+```
+
+### Creating New Components
+
+Add components to `packages/ui/src/`:
+
+```typescript
+// packages/ui/src/new-component.tsx
+export function NewComponent({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="p-4 bg-gray-100 rounded">
+      {children}
+    </div>
+  );
+}
+```
+
+Export from `packages/ui/src/index.ts`:
+
+```typescript
+export { NewComponent } from "./new-component";
+```
+
+## Code Quality
+
+### Automated Checks
+
+Init enforces code quality automatically:
+
+- **ESLint** - Code linting and style
+- **Prettier** - Code formatting
+- **TypeScript** - Type checking
+- **Turbo** - Fast builds and caching
+
+### Running Quality Checks
+
+```bash
+# Check everything
+pnpm lint && pnpm typecheck
+
+# Fix auto-fixable issues
+pnpm lint:fix && pnpm format:fix
+
+# Check specific package
+pnpm -F @repo/api lint
+```
+
+### Pre-commit Hooks
+
+Consider setting up pre-commit hooks to run checks automatically:
+
+```bash
+# Install husky for git hooks
+pnpm add -D husky
+npx husky init
+```
+
+## Debugging
+
+### Web App Debugging
+
+1. **Browser DevTools** - Standard web debugging
+2. **React DevTools** - Component inspection
+3. **Network tab** - API request inspection
+4. **Console logs** - Use `console.log` for quick debugging
+
+### Mobile App Debugging
+
+1. **Expo DevTools** - Built-in debugging tools
+2. **React Native Debugger** - Enhanced debugging
+3. **Console logs** - View in Expo DevTools
+4. **Device logs** - Physical device debugging
+
+### API Debugging
+
+1. **tRPC DevTools** - Query inspection
+2. **Database logs** - Supabase Studio
+3. **Server logs** - Console output
+4. **API testing** - Use Postman or similar
+
+### Common Issues
+
+**TypeScript errors**
+```bash
+# Rebuild packages
+pnpm build
+
+# Check specific issues
+pnpm typecheck
+```
+
+**Database connection issues**
+```bash
+# Restart database
+pnpm db:stop && pnpm db:start
+
+# Check environment variables
+cat packages/db/.env
+```
+
+**Build failures**
+```bash
+# Clean and rebuild
+pnpm clean && pnpm install && pnpm build
+```
+
+## Performance Tips
+
+### Development Performance
+
+- **Use Turbo cache** - Speeds up repeated builds
+- **Run specific apps** - Use `pnpm dev:nextjs` for web-only
+- **Selective rebuilds** - Turbo only rebuilds changed packages
+
+### Monitoring Performance
+
+- **Bundle analyzer** - Check bundle sizes
+- **Lighthouse** - Web performance metrics
+- **React DevTools Profiler** - Component performance
+
+## Environment Variables
+
+### Managing Secrets
+
+```bash
+# Development (local)
+apps/nextjs/.env.local
+packages/db/.env
+
+# Production
+# Use your deployment platform's secret management
+```
+
+### Required Variables
+
+```env
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# Database
+DATABASE_URL=your-database-url
+```
+
+## Next Steps
+
+Now that you understand the development workflow:
+
+1. **Explore the architecture** - Learn about [project structure](/docs/architecture/folder-structure)
+2. **Understand the API** - Read the [tRPC guide](/docs/architecture/api)
+3. **Set up authentication** - Configure [Supabase auth](/docs/architecture/authentication)
+4. **Build features** - Start building your product!

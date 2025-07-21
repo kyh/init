@@ -3,3 +3,197 @@ title: "Installation"
 ---
 
 # Installation
+
+Get Init up and running on your local machine in just a few minutes. This guide will walk you through setting up the development environment and running your first Init application.
+
+## Prerequisites
+
+Before you begin, make sure you have the following installed on your system:
+
+### Required Tools
+
+- **Node.js** (v18 or higher) - [Download Node.js](https://nodejs.org/)
+- **pnpm** (v8 or higher) - Fast, disk space efficient package manager
+- **Git** - Version control system
+
+### Install pnpm
+
+If you don't have pnpm installed, install it globally:
+
+```bash
+npm install -g pnpm
+```
+
+Or using the official installer:
+
+```bash
+curl -fsSL https://get.pnpm.io/install.sh | sh -
+```
+
+### Verify Installation
+
+Check that you have the correct versions installed:
+
+```bash
+node --version  # Should be v18+
+pnpm --version  # Should be v8+
+git --version
+```
+
+## Quick Start
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/your-username/init.git
+cd init
+```
+
+### 2. Install Dependencies
+
+Init uses pnpm workspaces to manage the monorepo. Install all dependencies:
+
+```bash
+pnpm install
+```
+
+This will install dependencies for all packages in the monorepo including:
+- Next.js web application
+- Expo mobile application  
+- API package
+- Database package
+- UI components
+
+### 3. Environment Setup
+
+Copy the example environment files:
+
+```bash
+# Copy environment files
+cp apps/nextjs/.env.example apps/nextjs/.env.local
+cp packages/db/.env.example packages/db/.env
+```
+
+### 4. Database Setup
+
+Init uses Supabase for the database. You have two options:
+
+#### Option A: Use Supabase Cloud (Recommended for beginners)
+
+1. Create a free account at [supabase.com](https://supabase.com)
+2. Create a new project
+3. Copy your project URL and anon key to the environment files
+
+#### Option B: Run Supabase Locally
+
+Start the local Supabase stack:
+
+```bash
+pnpm db:start
+```
+
+This will start:
+- PostgreSQL database
+- Supabase Studio (database dashboard)
+- Auth server
+- Storage server
+- Edge functions
+
+### 5. Start Development
+
+Launch the development servers:
+
+```bash
+pnpm dev
+```
+
+This starts all development servers concurrently:
+- **Next.js web app**: http://localhost:3000
+- **Expo mobile app**: Follow the Expo CLI instructions
+- **Supabase Studio**: http://localhost:54323
+
+## What's Next?
+
+Now that Init is running locally, you can:
+
+1. **Explore the web app** at http://localhost:3000
+2. **Check out the mobile app** using the Expo Go app
+3. **View the database** in Supabase Studio
+4. **Read the development guide** to understand the workflow
+
+## Project Structure Overview
+
+```
+init/
+├── apps/
+│   ├── nextjs/          # Next.js web application
+│   └── expo/            # Expo mobile application
+├── packages/
+│   ├── api/             # tRPC API routes
+│   ├── db/              # Database schema and utilities
+│   ├── ui/              # Shared UI components
+│   └── mdx/             # Documentation (you're reading this!)
+└── package.json         # Root workspace configuration
+```
+
+## Available Scripts
+
+Init comes with several useful scripts:
+
+### Development
+- `pnpm dev` - Start all development servers
+- `pnpm dev:nextjs` - Start only the Next.js web app
+- `pnpm dev:expo` - Start only the Expo mobile app
+
+### Database
+- `pnpm db:start` - Start local Supabase
+- `pnpm db:stop` - Stop local Supabase
+- `pnpm db:reset` - Reset local database
+- `pnpm db:push` - Push schema changes to database
+
+### Code Quality
+- `pnpm lint` - Run ESLint on all packages
+- `pnpm lint:fix` - Fix linting issues automatically
+- `pnpm typecheck` - Run TypeScript type checking
+- `pnpm format` - Format code with Prettier
+
+### Build
+- `pnpm build` - Build all packages for production
+
+## Troubleshooting
+
+### Common Issues
+
+**Port already in use**
+If you see port conflicts, make sure no other applications are running on ports 3000, 54321, or 54323.
+
+**pnpm install fails**
+Try clearing the package manager cache:
+```bash
+pnpm store prune
+pnpm install
+```
+
+**Database connection issues**
+Ensure Supabase is running and environment variables are correctly set:
+```bash
+pnpm db:start
+```
+
+**Type errors**
+Make sure all packages are built:
+```bash
+pnpm build
+```
+
+### Getting Help
+
+If you encounter issues:
+
+1. Check the [troubleshooting guide](/docs/troubleshooting)
+2. Search existing [GitHub issues](https://github.com/your-username/init/issues)
+3. Create a new issue with detailed information
+
+## Next Steps
+
+Ready to start building? Continue with the [local development guide](/docs/overview/local-development) to learn about the development workflow and best practices.

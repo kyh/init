@@ -2,4 +2,264 @@
 title: "Folder Structure"
 ---
 
-# Folder Structure"
+# Project Structure
+
+Init is organized as a Turborepo monorepo with clear separation between applications and shared packages. This structure promotes code reuse, maintainability, and developer productivity.
+
+## Overview
+
+```
+init/
+├── apps/                    # Applications
+│   ├── nextjs/             # Next.js web application
+│   └── expo/               # Expo mobile application
+├── packages/               # Shared packages
+│   ├── api/                # tRPC API routes
+│   ├── db/                 # Database schema and utilities
+│   ├── ui/                 # Shared UI components
+│   └── mdx/                # Documentation system
+├── package.json            # Root workspace configuration
+├── turbo.json              # Turborepo configuration
+└── pnpm-workspace.yaml     # pnpm workspace configuration
+```
+
+## Applications (`apps/`)
+
+### Next.js Web App (`apps/nextjs/`)
+
+The web application built with Next.js 15 and the App Router:
+
+```
+apps/nextjs/
+├── src/
+│   ├── app/                # App Router structure
+│   │   ├── (auth)/         # Authentication routes
+│   │   │   ├── auth/       # Auth pages (login, register, etc.)
+│   │   │   └── layout.tsx  # Auth layout
+│   │   ├── (dashboard)/    # Protected dashboard routes
+│   │   │   ├── dashboard/  # Team-specific dashboards
+│   │   │   ├── account/    # User account settings
+│   │   │   └── layout.tsx  # Dashboard layout with sidebar
+│   │   ├── (docs)/         # Documentation routes
+│   │   │   └── docs/       # MDX documentation pages
+│   │   ├── (marketing)/    # Public marketing pages
+│   │   │   ├── page.tsx    # Landing page
+│   │   │   └── layout.tsx  # Marketing layout
+│   │   ├── api/            # API routes
+│   │   │   ├── trpc/       # tRPC endpoint
+│   │   │   └── chat/       # AI chat endpoint
+│   │   ├── layout.tsx      # Root layout
+│   │   └── globals.css     # Global styles
+│   ├── components/         # App-specific components
+│   ├── lib/                # Utility functions and config
+│   ├── trpc/               # tRPC client setup
+│   └── middleware.ts       # Next.js middleware (auth, etc.)
+├── public/                 # Static assets
+├── next.config.js          # Next.js configuration
+├── tailwind.config.ts      # Tailwind CSS configuration
+└── package.json            # Dependencies and scripts
+```
+
+#### Route Organization
+
+Next.js App Router uses folder-based routing with special conventions:
+
+- `(auth)/` - Route group for authentication pages
+- `(dashboard)/` - Route group for protected dashboard pages
+- `(marketing)/` - Route group for public marketing pages
+- `[param]/` - Dynamic routes (e.g., `[teamSlug]`)
+- `_components/` - Collocated components (not routes)
+
+### Expo Mobile App (`apps/expo/`)
+
+The mobile application built with Expo and React Native:
+
+```
+apps/expo/
+├── src/
+│   ├── app/                # Expo Router structure
+│   │   ├── (tabs)/         # Tab navigation
+│   │   ├── auth/           # Authentication screens
+│   │   ├── _layout.tsx     # Root layout with providers
+│   │   └── index.tsx       # Home screen
+│   ├── trpc/               # tRPC client setup
+│   └── utils/              # Mobile-specific utilities
+├── assets/                 # Images, icons, fonts
+├── app.config.ts           # Expo configuration
+├── babel.config.js         # Babel configuration
+└── package.json            # Dependencies and scripts
+```
+
+## Shared Packages (`packages/`)
+
+### API Package (`packages/api/`)
+
+Contains all tRPC API routes and business logic:
+
+```
+packages/api/
+├── src/
+│   ├── auth/               # Authentication routes
+│   │   ├── auth-router.ts  # Auth procedures
+│   │   └── auth-schema.ts  # Zod validation schemas
+│   ├── user/               # User management routes
+│   ├── team/               # Team management routes
+│   ├── billing/            # Billing and subscription routes
+│   ├── note/               # Example CRUD routes
+│   ├── waitlist/           # Waitlist management
+│   ├── root-router.ts      # Main router composition
+│   ├── trpc.ts             # tRPC setup and middleware
+│   └── index.ts            # Package exports
+└── package.json
+```
+
+#### Router Organization
+
+Each feature has its own router module:
+- `*-router.ts` - tRPC procedures (queries/mutations)
+- `*-schema.ts` - Zod validation schemas
+- Route grouping by domain (auth, user, team, etc.)
+
+### Database Package (`packages/db/`)
+
+Database schema, migrations, and client utilities:
+
+```
+packages/db/
+├── src/
+│   ├── schema.ts           # Drizzle database schema
+│   ├── drizzle-client.ts   # Drizzle ORM client
+│   ├── supabase-*-client.ts # Supabase clients (server, browser, etc.)
+│   ├── database.types.ts   # Generated TypeScript types
+│   └── index.ts            # Package exports
+├── supabase/               # Supabase configuration
+│   ├── config.toml         # Supabase local config
+│   ├── migrations/         # SQL migrations
+│   └── functions/          # Edge functions
+├── drizzle.config.ts       # Drizzle configuration
+└── package.json
+```
+
+#### Database Architecture
+
+- **Drizzle ORM** - Type-safe database queries
+- **Supabase** - PostgreSQL with real-time features
+- **Multiple clients** - Server, browser, middleware contexts
+- **Type generation** - Automatic TypeScript types
+
+### UI Package (`packages/ui/`)
+
+Shared React components used across web and mobile:
+
+```
+packages/ui/
+├── src/
+│   ├── button.tsx          # Button component
+│   ├── card.tsx            # Card component
+│   ├── input.tsx           # Input component
+│   ├── form.tsx            # Form components
+│   ├── dialog.tsx          # Modal/dialog component
+│   ├── theme.tsx           # Theme provider
+│   ├── utils.tsx           # Utility functions
+│   └── index.tsx           # Package exports
+├── components.json         # Shadcn/ui configuration
+└── package.json
+```
+
+#### Component Strategy
+
+- **Shadcn/ui base** - High-quality accessible components
+- **Platform adaptation** - Works on web and mobile
+- **Consistent design** - Shared design system
+- **Customizable** - Easy to modify and extend
+
+### Documentation Package (`packages/mdx/`)
+
+MDX-based documentation system:
+
+```
+packages/mdx/
+├── content/                # MDX content files
+│   ├── overview/           # Getting started guides
+│   ├── architecture/       # Architecture documentation
+│   ├── build/              # Build and deployment
+│   ├── launch/             # Launch preparation
+│   └── scale/              # Scaling strategies
+├── src/
+│   └── index.tsx           # MDX processing utilities
+├── content-collections.ts  # Content configuration
+└── package.json
+```
+
+## Configuration Files
+
+### Root Configuration
+
+- `package.json` - Workspace configuration and scripts
+- `turbo.json` - Turborepo build pipeline configuration
+- `pnpm-workspace.yaml` - pnpm workspace definition
+
+### Build and Development
+
+- `eslint.config.js` - Code linting rules
+- `prettier.config.js` - Code formatting rules
+- `tsconfig.json` - TypeScript configuration
+
+## Key Design Principles
+
+### 1. Separation of Concerns
+
+- **Apps** contain application-specific code
+- **Packages** contain shared, reusable code
+- Clear boundaries between UI, API, and data layers
+
+### 2. Code Sharing
+
+- API logic shared between web and mobile
+- UI components adapted for each platform
+- Database schema and utilities shared
+
+### 3. Type Safety
+
+- End-to-end TypeScript coverage
+- Shared types between packages
+- Automatic type generation from database
+
+### 4. Developer Experience
+
+- Fast development with Turborepo
+- Hot reload across all packages
+- Consistent tooling and scripts
+
+### 5. Scalability
+
+- Easy to add new apps or packages
+- Clear patterns for feature organization
+- Independent deployment of packages
+
+## Adding New Features
+
+### New API Routes
+1. Add router in `packages/api/src/[feature]/`
+2. Export from `packages/api/src/root-router.ts`
+3. Use in apps with full type safety
+
+### New UI Components
+1. Add component in `packages/ui/src/`
+2. Export from `packages/ui/src/index.tsx`
+3. Import in apps as needed
+
+### New Database Tables
+1. Add schema in `packages/db/src/schema.ts`
+2. Run `pnpm db:push` to update database
+3. Types automatically available across packages
+
+## Navigation Between Packages
+
+Understanding the relationships:
+- Apps depend on packages
+- Packages can depend on other packages
+- No circular dependencies
+- Clean import/export boundaries
+
+This structure enables rapid development while maintaining code quality and type safety across the entire application.

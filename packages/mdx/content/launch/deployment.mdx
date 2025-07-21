@@ -2,17 +2,695 @@
 title: "Deployment"
 ---
 
-# Deployment
+# Production Deployment
 
-Learn about deployment strategies and best practices.
+Deploy your Init application to production with confidence. This guide covers deployment strategies, platform configurations, and best practices for going live.
 
 ## Overview
 
-Effective deployment processes ensure reliable and consistent application updates.
+Init is designed to deploy easily to modern hosting platforms with:
 
-## Key Concepts
+- **Zero-downtime deployments** - Rolling updates with no service interruption
+- **Environment-specific configurations** - Separate settings for dev/staging/prod
+- **Database migrations** - Automated schema updates
+- **Asset optimization** - CDN integration and performance optimization
+- **Monitoring integration** - Health checks and observability
 
-- Continuous Integration
-- Deployment automation
-- Version control
-- Rollback procedures
+## Deployment Options
+
+### Vercel (Recommended)
+
+Vercel provides the best developer experience for Next.js applications:
+
+#### 1. Initial Setup
+
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Login to Vercel
+vercel login
+
+# Deploy from project root
+vercel
+```
+
+#### 2. Project Configuration
+
+Create `vercel.json` in the project root:
+
+```json
+{
+  "builds": [
+    {
+      "src": "apps/nextjs/package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "apps/nextjs/$1"
+    }
+  ],
+  "installCommand": "pnpm install",
+  "buildCommand": "cd apps/nextjs && pnpm build",
+  "outputDirectory": "apps/nextjs/.next"
+}
+```
+
+#### 3. Environment Variables
+
+Configure environment variables in the Vercel dashboard:
+
+```env
+# Database
+DATABASE_URL=your-production-database-url
+
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# OpenAI (for AI features)
+OPENAI_API_KEY=your-openai-key
+
+# Stripe (for billing)
+STRIPE_PUBLISHABLE_KEY=your-stripe-publishable-key
+STRIPE_SECRET_KEY=your-stripe-secret-key
+STRIPE_WEBHOOK_SECRET=your-webhook-secret
+
+# NextAuth (if using)
+NEXTAUTH_SECRET=your-nextauth-secret
+NEXTAUTH_URL=https://your-domain.com
+```
+
+#### 4. Custom Domain
+
+1. Add your domain in Vercel dashboard
+2. Update DNS records as instructed
+3. SSL certificate is automatically provisioned
+
+### Railway
+
+Railway provides a simple deployment experience:
+
+#### 1. Connect Repository
+
+1. Connect your GitHub repository to Railway
+2. Select the Next.js template
+3. Configure build settings
+
+#### 2. Railway Configuration
+
+Create `railway.toml`:
+
+```toml
+[build]
+builder = "nixpacks"
+buildCommand = "pnpm build"
+watchPatterns = ["**/*.tsx", "**/*.ts", "**/*.jsx", "**/*.js"]
+
+[deploy]
+startCommand = "cd apps/nextjs && pnpm start"
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 10
+```
+
+#### 3. Environment Variables
+
+Set in Railway dashboard or use Railway CLI:
+
+```bash
+railway variables set DATABASE_URL=your-database-url
+railway variables set NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+```
+
+### Docker Deployment
+
+For custom infrastructure or self-hosting:
+
+#### 1. Dockerfile
+
+Create `Dockerfile` in project root:
+
+```dockerfile
+FROM node:18-alpine AS base
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
+
+# Install dependencies
+FROM base AS deps
+WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/nextjs/package.json ./apps/nextjs/
+COPY packages/*/package.json ./packages/*/
+RUN pnpm install --frozen-lockfile
+
+# Build application
+FROM base AS builder
+WORKDIR /app
+COPY . .
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/nextjs/node_modules ./apps/nextjs/node_modules
+RUN pnpm build
+
+# Production runtime
+FROM base AS runner
+WORKDIR /app
+ENV NODE_ENV production
+ENV PORT 3000
+ENV HOSTNAME "0.0.0.0"
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/apps/nextjs/public ./apps/nextjs/public
+COPY --from=builder --chown=nextjs:nodejs /app/apps/nextjs/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/nextjs/.next/static ./apps/nextjs/.next/static
+
+USER nextjs
+EXPOSE 3000
+
+CMD ["node", "apps/nextjs/server.js"]
+```
+
+#### 2. Docker Compose
+
+Create `docker-compose.prod.yml`:
+
+```yaml
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=init_prod
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data:
+```
+
+### AWS Amplify
+
+Deploy to AWS with CDN and global distribution:
+
+#### 1. Amplify Configuration
+
+Create `amplify.yml`:
+
+```yaml
+version: 1
+applications:
+  - appRoot: apps/nextjs
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - npm install -g pnpm
+            - pnpm install
+        build:
+          commands:
+            - pnpm build
+      artifacts:
+        baseDirectory: .next
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - node_modules/**/*
+          - .next/cache/**/*
+```
+
+#### 2. Environment Variables
+
+Configure in AWS Amplify console or CLI:
+
+```bash
+aws amplify put-app --app-id your-app-id --environment-variables DATABASE_URL=your-db-url
+```
+
+## Database Deployment
+
+### Supabase Production
+
+1. **Create Production Project**:
+   - Go to Supabase dashboard
+   - Create new project for production
+   - Note the connection details
+
+2. **Run Migrations**:
+   ```bash
+   # Set production database URL
+   export DATABASE_URL="your-production-url"
+   
+   # Push schema to production
+   pnpm db:push-remote
+   ```
+
+3. **Configure RLS Policies**:
+   ```sql
+   -- Enable RLS on all tables
+   ALTER TABLE teams ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE team_members ENABLE ROW LEVEL SECURITY;
+   
+   -- Create policies for team access
+   CREATE POLICY "Users can view their teams" ON teams
+     FOR SELECT USING (
+       id IN (
+         SELECT team_id FROM team_members 
+         WHERE user_id = auth.uid()
+       )
+     );
+   ```
+
+### Self-Hosted PostgreSQL
+
+If using your own PostgreSQL:
+
+```bash
+# Create production database
+createdb init_production
+
+# Set connection string
+export DATABASE_URL="postgresql://user:password@host:5432/init_production"
+
+# Run migrations
+pnpm db:push
+```
+
+## CI/CD Pipeline
+
+### GitHub Actions
+
+Create `.github/workflows/deploy.yml`:
+
+```yaml
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+      
+      - name: Install pnpm
+        run: npm install -g pnpm
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Run tests
+        run: pnpm test
+        
+      - name: Type check
+        run: pnpm typecheck
+        
+      - name: Build application
+        run: pnpm build
+        
+      - name: Deploy to Vercel
+        uses: vercel/action@v25.0.1
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+```
+
+### Database Migration Pipeline
+
+```yaml
+  migrate:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Install pnpm
+        run: npm install -g pnpm
+        
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        
+      - name: Run database migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: pnpm db:push-remote
+```
+
+## Environment Configuration
+
+### Production Environment Variables
+
+```env
+# App Configuration
+NODE_ENV=production
+NEXT_PUBLIC_APP_URL=https://your-domain.com
+
+# Database
+DATABASE_URL=your-production-database-url
+
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# Authentication
+NEXTAUTH_SECRET=your-production-secret
+NEXTAUTH_URL=https://your-domain.com
+
+# AI Services
+OPENAI_API_KEY=your-openai-key
+
+# Payment Processing
+STRIPE_PUBLISHABLE_KEY=pk_live_...
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+
+# Email (if using)
+RESEND_API_KEY=your-resend-key
+SMTP_FROM=noreply@your-domain.com
+
+# Analytics (optional)
+NEXT_PUBLIC_ANALYTICS_ID=your-analytics-id
+
+# Monitoring
+SENTRY_DSN=your-sentry-dsn
+```
+
+### Environment Validation
+
+Add runtime validation:
+
+```typescript
+// lib/env.ts
+import { z } from "zod";
+
+const envSchema = z.object({
+  NODE_ENV: z.enum(["development", "production", "test"]),
+  DATABASE_URL: z.string().url(),
+  NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string(),
+  OPENAI_API_KEY: z.string().optional(),
+  STRIPE_PUBLISHABLE_KEY: z.string().optional(),
+  STRIPE_SECRET_KEY: z.string().optional(),
+});
+
+export const env = envSchema.parse(process.env);
+```
+
+## Performance Optimization
+
+### Next.js Optimization
+
+```javascript
+// next.config.js
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  // Enable standalone output for Docker
+  output: 'standalone',
+  
+  // Optimize images
+  images: {
+    domains: ['your-cdn-domain.com'],
+    formats: ['image/webp', 'image/avif'],
+  },
+  
+  // Enable compression
+  compress: true,
+  
+  // Optimize bundle
+  experimental: {
+    optimizeCss: true,
+    optimizePackageImports: ['@repo/ui'],
+  },
+  
+  // Headers for caching
+  async headers() {
+    return [
+      {
+        source: '/static/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+    ];
+  },
+};
+
+module.exports = nextConfig;
+```
+
+### Database Performance
+
+```sql
+-- Add indexes for common queries
+CREATE INDEX idx_team_members_user_id ON team_members(user_id);
+CREATE INDEX idx_team_members_team_id ON team_members(team_id);
+CREATE INDEX idx_teams_slug ON teams(slug);
+
+-- Optimize queries
+ANALYZE;
+```
+
+## Health Checks
+
+### Application Health Check
+
+```typescript
+// app/api/health/route.ts
+import { db } from "@repo/db/drizzle-client";
+
+export async function GET() {
+  try {
+    // Check database connection
+    await db.execute("SELECT 1");
+    
+    // Check external services
+    const checks = {
+      database: "ok",
+      timestamp: new Date().toISOString(),
+      status: "healthy",
+    };
+    
+    return Response.json(checks);
+  } catch (error) {
+    return Response.json(
+      { status: "unhealthy", error: error.message },
+      { status: 500 }
+    );
+  }
+}
+```
+
+### Database Health Check
+
+```sql
+-- Create health check function
+CREATE OR REPLACE FUNCTION health_check()
+RETURNS json AS $$
+BEGIN
+  RETURN json_build_object(
+    'status', 'healthy',
+    'timestamp', NOW(),
+    'version', version(),
+    'connections', (
+      SELECT count(*) 
+      FROM pg_stat_activity 
+      WHERE state = 'active'
+    )
+  );
+END;
+$$ LANGUAGE plpgsql;
+```
+
+## Rollback Procedures
+
+### Vercel Rollback
+
+```bash
+# List deployments
+vercel ls
+
+# Rollback to specific deployment
+vercel rollback [deployment-url]
+```
+
+### Database Rollback
+
+```bash
+# Create backup before deployment
+pg_dump $DATABASE_URL > backup_$(date +%Y%m%d_%H%M%S).sql
+
+# Restore if needed
+psql $DATABASE_URL < backup_20240101_120000.sql
+```
+
+### Docker Rollback
+
+```bash
+# Tag images with versions
+docker build -t myapp:v1.2.3 .
+
+# Rollback to previous version
+docker service update --image myapp:v1.2.2 myapp_service
+```
+
+## Security Hardening
+
+### HTTPS Configuration
+
+```javascript
+// next.config.js
+const nextConfig = {
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains',
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'origin-when-cross-origin',
+          },
+        ],
+      },
+    ];
+  },
+};
+```
+
+### Environment Secrets
+
+```bash
+# Use secret management services
+aws ssm put-parameter --name "/init/prod/database-url" --value "..." --type "SecureString"
+
+# Or use environment-specific secret files
+echo "DATABASE_URL=..." | base64 > .env.prod.encrypted
+```
+
+## Monitoring Setup
+
+### Basic Monitoring
+
+```typescript
+// lib/monitoring.ts
+export function logDeployment() {
+  console.log({
+    event: 'deployment',
+    version: process.env.npm_package_version,
+    timestamp: new Date().toISOString(),
+    env: process.env.NODE_ENV,
+  });
+}
+
+// Call in layout.tsx or app initialization
+logDeployment();
+```
+
+### Error Tracking
+
+```typescript
+// lib/sentry.ts
+import * as Sentry from "@sentry/nextjs";
+
+if (process.env.NODE_ENV === "production") {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV,
+  });
+}
+```
+
+## Troubleshooting
+
+### Common Issues
+
+**Build failures**:
+```bash
+# Clear cache and rebuild
+pnpm clean
+pnpm install
+pnpm build
+```
+
+**Database connection issues**:
+```bash
+# Test connection
+psql $DATABASE_URL -c "SELECT version();"
+```
+
+**Memory issues**:
+```javascript
+// Increase Node.js memory limit
+"scripts": {
+  "build": "NODE_OPTIONS='--max-old-space-size=4096' next build"
+}
+```
+
+**Cold start performance**:
+- Use Vercel Pro for reduced cold starts
+- Implement database connection pooling
+- Optimize bundle size with tree shaking
+
+## Next Steps
+
+After deployment:
+
+1. **Monitor performance** - Set up [monitoring and observability](/docs/launch/monitoring)
+2. **Production checklist** - Review [production best practices](/docs/launch/production)
+3. **User analytics** - Implement [user analytics](/docs/scale/user-analytics)
+4. **Growth strategies** - Plan [scaling and growth](/docs/scale/user-growth)
