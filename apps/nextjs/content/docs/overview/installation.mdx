@@ -2,8 +2,6 @@
 title: "Installation"
 ---
 
-# Installation
-
 Get Init up and running on your local machine in just a few minutes. This guide will walk you through setting up the development environment and running your first Init application.
 
 ## Prerequisites
@@ -58,8 +56,9 @@ pnpm install
 ```
 
 This will install dependencies for all packages in the monorepo including:
+
 - Next.js web application
-- Expo mobile application  
+- Expo mobile application
 - API package
 - Database package
 - UI components
@@ -93,6 +92,7 @@ pnpm db:start
 ```
 
 This will start:
+
 - PostgreSQL database
 - Supabase Studio (database dashboard)
 - Auth server
@@ -108,6 +108,7 @@ pnpm dev
 ```
 
 This starts all development servers concurrently:
+
 - **Next.js web app**: http://localhost:3000
 - **Expo mobile app**: Follow the Expo CLI instructions
 - **Supabase Studio**: http://localhost:54323
@@ -141,23 +142,27 @@ init/
 Init comes with several useful scripts:
 
 ### Development
+
 - `pnpm dev` - Start all development servers
 - `pnpm dev:nextjs` - Start only the Next.js web app
 - `pnpm dev:expo` - Start only the Expo mobile app
 
 ### Database
+
 - `pnpm db:start` - Start local Supabase
 - `pnpm db:stop` - Stop local Supabase
 - `pnpm db:reset` - Reset local database
 - `pnpm db:push` - Push schema changes to database
 
 ### Code Quality
+
 - `pnpm lint` - Run ESLint on all packages
 - `pnpm lint:fix` - Fix linting issues automatically
 - `pnpm typecheck` - Run TypeScript type checking
 - `pnpm format` - Format code with Prettier
 
 ### Build
+
 - `pnpm build` - Build all packages for production
 
 ## Troubleshooting
@@ -169,6 +174,7 @@ If you see port conflicts, make sure no other applications are running on ports 
 
 **pnpm install fails**
 Try clearing the package manager cache:
+
 ```bash
 pnpm store prune
 pnpm install
@@ -176,12 +182,14 @@ pnpm install
 
 **Database connection issues**
 Ensure Supabase is running and environment variables are correctly set:
+
 ```bash
 pnpm db:start
 ```
 
 **Type errors**
 Make sure all packages are built:
+
 ```bash
 pnpm build
 ```

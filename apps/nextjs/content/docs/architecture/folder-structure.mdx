@@ -2,8 +2,6 @@
 title: "Folder Structure"
 ---
 
-# Project Structure
-
 Init is organized as a Turborepo monorepo with clear separation between applications and shared packages. This structure promotes code reuse, maintainability, and developer productivity.
 
 ## Overview
@@ -116,6 +114,7 @@ packages/api/
 #### Router Organization
 
 Each feature has its own router module:
+
 - `*-router.ts` - tRPC procedures (queries/mutations)
 - `*-schema.ts` - Zod validation schemas
 - Route grouping by domain (auth, user, team, etc.)
@@ -240,16 +239,19 @@ packages/mdx/
 ## Adding New Features
 
 ### New API Routes
+
 1. Add router in `packages/api/src/[feature]/`
 2. Export from `packages/api/src/root-router.ts`
 3. Use in apps with full type safety
 
 ### New UI Components
+
 1. Add component in `packages/ui/src/`
 2. Export from `packages/ui/src/index.tsx`
 3. Import in apps as needed
 
 ### New Database Tables
+
 1. Add schema in `packages/db/src/schema.ts`
 2. Run `pnpm db:push` to update database
 3. Types automatically available across packages
@@ -257,6 +259,7 @@ packages/mdx/
 ## Navigation Between Packages
 
 Understanding the relationships:
+
 - Apps depend on packages
 - Packages can depend on other packages
 - No circular dependencies

@@ -2,8 +2,6 @@
 title: "API"
 ---
 
-# tRPC API Architecture
-
 Init uses tRPC to create end-to-end typesafe APIs that work seamlessly between your Next.js web app, Expo mobile app, and backend. This guide covers how the API is structured and how to extend it.
 
 ## What is tRPC?
@@ -27,7 +25,7 @@ packages/api/src/
 ├── auth/               # Authentication procedures
 ├── billing/            # Subscription and billing
 ├── team/               # Team management
-├── user/               # User management  
+├── user/               # User management
 ├── waitlist/           # Waitlist functionality
 ├── root-router.ts      # Main router composition
 ├── trpc.ts            # tRPC setup and context
@@ -43,7 +41,7 @@ The tRPC context provides access to shared resources:
 ```typescript
 export const createTRPCContext = async (opts: { headers: Headers }) => {
   const supabase = getSupabaseServerClient();
-  
+
   // Handle authentication from headers or cookies
   const token = opts.headers.get("authorization");
   const { data } = token
@@ -64,6 +62,7 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
 Init provides several types of procedures:
 
 #### Public Procedures
+
 Available to all users (authenticated or not):
 
 ```typescript
@@ -80,6 +79,7 @@ export const waitlistRouter = createTRPCRouter({
 ```
 
 #### Protected Procedures
+
 Require user authentication:
 
 ```typescript
@@ -89,17 +89,16 @@ export const protectedProcedure = t.procedure.use(
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
     return next({ ctx: { user: ctx.user, ...ctx } });
-  })
+  }),
 );
 
-// Usage  
+// Usage
 export const userRouter = createTRPCRouter({
-  profile: protectedProcedure
-    .query(async ({ ctx }) => {
-      return ctx.db.query.users.findFirst({
-        where: eq(users.id, ctx.user.id)
-      });
-    }),
+  profile: protectedProcedure.query(async ({ ctx }) => {
+    return ctx.db.query.users.findFirst({
+      where: eq(users.id, ctx.user.id),
+    });
+  }),
 });
 ```
 
@@ -138,7 +137,7 @@ export const authRouter = createTRPCRouter({
 
     return {
       user: ctx.user,
-      teams: teamMembers.map(tm => tm.team),
+      teams: teamMembers.map((tm) => tm.team),
     };
   }),
 
@@ -150,12 +149,13 @@ export const authRouter = createTRPCRouter({
         email: input.email,
         password: input.password,
       });
-      
-      if (error) throw new TRPCError({ 
-        code: "UNAUTHORIZED", 
-        message: error.message 
-      });
-      
+
+      if (error)
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: error.message,
+        });
+
       return data;
     }),
 });
@@ -181,10 +181,13 @@ export const teamRouter = createTRPCRouter({
     .mutation(async ({ input, ctx }) => {
       return ctx.db.transaction(async (tx) => {
         // Create team
-        const [team] = await tx.insert(teams).values({
-          name: input.name,
-          slug: input.slug,
-        }).returning();
+        const [team] = await tx
+          .insert(teams)
+          .values({
+            name: input.name,
+            slug: input.slug,
+          })
+          .returning();
 
         // Add creator as owner
         await tx.insert(teamMembers).values({
@@ -234,7 +237,7 @@ import type { AppRouter } from "@repo/api";
 
 export const api = createTRPCReact<AppRouter>();
 
-// Expo (apps/expo/src/trpc/react.tsx) 
+// Expo (apps/expo/src/trpc/react.tsx)
 import { createTRPCReact } from "@trpc/react-query";
 import type { AppRouter } from "@repo/api";
 
@@ -373,18 +376,18 @@ Create custom middleware for common logic:
 // Team ownership check
 const teamOwnerMiddleware = t.middleware(async ({ ctx, next, input }) => {
   if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED" });
-  
+
   const teamId = (input as any)?.teamId;
   const member = await ctx.db.query.teamMembers.findFirst({
     where: and(
       eq(teamMembers.teamId, teamId),
       eq(teamMembers.userId, ctx.user.id),
-      eq(teamMembers.role, "OWNER")
+      eq(teamMembers.role, "OWNER"),
     ),
   });
-  
+
   if (!member) throw new TRPCError({ code: "FORBIDDEN" });
-  
+
   return next({ ctx: { ...ctx, teamId } });
 });
 
@@ -403,11 +406,13 @@ export const postsRouter = createTRPCRouter({
     return observable<Post>((emit) => {
       // WebSocket or Supabase real-time logic
       const channel = supabase
-        .channel('posts')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, 
-          (payload) => emit.next(payload.new as Post)
+        .channel("posts")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "posts" },
+          (payload) => emit.next(payload.new as Post),
         );
-      
+
       return () => channel.unsubscribe();
     });
   }),

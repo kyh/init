@@ -1,9 +1,7 @@
 @import "tailwindcss" source("../../../../../");
-@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/black.css";
 @import "fumadocs-ui/css/preset.css";
 @import "./animations.css";
-
-@plugin "@tailwindcss/typography";
 
 :root {
   --background: hsl(0 0% 100%);

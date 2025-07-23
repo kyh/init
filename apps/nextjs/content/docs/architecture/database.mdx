@@ -2,8 +2,6 @@
 title: "Database"
 ---
 
-# Database Architecture
-
 Init uses Supabase (PostgreSQL) as the database with Drizzle ORM for type-safe queries. This guide covers the database setup, schema design, and development patterns.
 
 ## Overview
@@ -22,10 +20,10 @@ graph TB
     A[Application] --> B[Drizzle ORM]
     B --> C[Supabase Client]
     C --> D[PostgreSQL Database]
-    
+
     E[Schema Definition] --> F[Type Generation]
     F --> G[Application Types]
-    
+
     H[Migrations] --> D
 ```
 
@@ -63,7 +61,10 @@ export const teams = pgTable("teams", (t) => ({
 // Team Members
 export const teamMembers = pgTable("team_members", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
-  teamId: t.uuid().notNull().references(() => teams.id, { onDelete: "cascade" }),
+  teamId: t
+    .uuid()
+    .notNull()
+    .references(() => teams.id, { onDelete: "cascade" }),
   userId: t.uuid().notNull(),
   role: t.varchar({ length: 20, enum: ["OWNER", "ADMIN", "MEMBER"] }).notNull(),
   createdAt: t.timestamp({ withTimezone: true }).defaultNow().notNull(),
@@ -72,7 +73,10 @@ export const teamMembers = pgTable("team_members", (t) => ({
 // Invitations
 export const invitations = pgTable("invitations", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
-  teamId: t.uuid().notNull().references(() => teams.id, { onDelete: "cascade" }),
+  teamId: t
+    .uuid()
+    .notNull()
+    .references(() => teams.id, { onDelete: "cascade" }),
   email: t.varchar({ length: 255 }).notNull(),
   role: t.varchar({ length: 20, enum: ["ADMIN", "MEMBER"] }).notNull(),
   invitedBy: t.uuid().notNull(),
@@ -128,6 +132,7 @@ export const usersRelations = relations(authUsers, ({ many }) => ({
 // packages/db/src/drizzle-client.ts
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+
 import * as schema from "./schema";
 
 const connectionString = process.env.DATABASE_URL!;
@@ -186,16 +191,22 @@ const teamsWithMembers = await db.query.teams.findMany({
 
 ```typescript
 // Insert single record
-const newTeam = await db.insert(teams).values({
-  name: "Acme Corp",
-  slug: "acme-corp",
-}).returning();
+const newTeam = await db
+  .insert(teams)
+  .values({
+    name: "Acme Corp",
+    slug: "acme-corp",
+  })
+  .returning();
 
 // Insert multiple records
-const newMembers = await db.insert(teamMembers).values([
-  { teamId: team.id, userId: user1.id, role: "OWNER" },
-  { teamId: team.id, userId: user2.id, role: "MEMBER" },
-]).returning();
+const newMembers = await db
+  .insert(teamMembers)
+  .values([
+    { teamId: team.id, userId: user1.id, role: "OWNER" },
+    { teamId: team.id, userId: user2.id, role: "MEMBER" },
+  ])
+  .returning();
 ```
 
 ### Updates
@@ -223,12 +234,7 @@ await db
 // Delete with condition
 await db
   .delete(teamMembers)
-  .where(
-    and(
-      eq(teamMembers.teamId, teamId),
-      eq(teamMembers.userId, userId)
-    )
-  );
+  .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, userId)));
 
 // Cascade delete (handled by foreign key constraints)
 await db.delete(teams).where(eq(teams.id, teamId));
@@ -240,10 +246,13 @@ await db.delete(teams).where(eq(teams.id, teamId));
 // Database transaction
 const result = await db.transaction(async (tx) => {
   // Create team
-  const [team] = await tx.insert(teams).values({
-    name: input.name,
-    slug: input.slug,
-  }).returning();
+  const [team] = await tx
+    .insert(teams)
+    .values({
+      name: input.name,
+      slug: input.slug,
+    })
+    .returning();
 
   // Add owner
   await tx.insert(teamMembers).values({
@@ -300,8 +309,8 @@ const largeTeams = await db
         .select({ teamId: teamMembers.teamId })
         .from(teamMembers)
         .groupBy(teamMembers.teamId)
-        .having(gt(count(teamMembers.id), 5))
-    )
+        .having(gt(count(teamMembers.id), 5)),
+    ),
   );
 ```
 
@@ -311,7 +320,7 @@ Drizzle automatically generates types:
 
 ```typescript
 // Infer types from schema
-import type { InferSelectModel, InferInsertModel } from "drizzle-orm";
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
 // Select types (what you get from database)
 export type Team = InferSelectModel<typeof teams>;
@@ -370,12 +379,13 @@ Enable real-time updates:
 ```typescript
 // Enable real-time for table
 await supabase
-  .channel('teams')
-  .on('postgres_changes', 
-    { event: '*', schema: 'public', table: 'teams' },
+  .channel("teams")
+  .on(
+    "postgres_changes",
+    { event: "*", schema: "public", table: "teams" },
     (payload) => {
-      console.log('Team changed:', payload);
-    }
+      console.log("Team changed:", payload);
+    },
   )
   .subscribe();
 ```
@@ -392,7 +402,7 @@ ALTER TABLE teams ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view their teams" ON teams
   FOR SELECT USING (
     id IN (
-      SELECT team_id FROM team_members 
+      SELECT team_id FROM team_members
       WHERE user_id = auth.uid()
     )
   );
@@ -401,7 +411,7 @@ CREATE POLICY "Users can view their teams" ON teams
 CREATE POLICY "Only owners can update teams" ON teams
   FOR UPDATE USING (
     id IN (
-      SELECT team_id FROM team_members 
+      SELECT team_id FROM team_members
       WHERE user_id = auth.uid() AND role = 'OWNER'
     )
   );
@@ -453,8 +463,9 @@ try {
   const team = await db.insert(teams).values(data).returning();
   return team[0];
 } catch (error) {
-  if (error.code === '23505') { // Unique constraint violation
-    throw new Error('Team slug already exists');
+  if (error.code === "23505") {
+    // Unique constraint violation
+    throw new Error("Team slug already exists");
   }
   throw error;
 }
@@ -481,7 +492,10 @@ const teamWithMembers = await db.query.teams.findFirst({
 const team = await db.query.teams.findFirst({
   where: eq(teams.id, teamId),
 });
-const members = await db.select().from(teamMembers).where(eq(teamMembers.teamId, teamId));
+const members = await db
+  .select()
+  .from(teamMembers)
+  .where(eq(teamMembers.teamId, teamId));
 ```
 
 ### 4. Connection Management
@@ -491,7 +505,7 @@ Use connection pooling for production:
 ```typescript
 // packages/db/src/drizzle-client.ts
 const pool = postgres(connectionString, {
-  max: 10,          // Maximum connections
+  max: 10, // Maximum connections
   idle_timeout: 20, // Close idle connections after 20s
   max_lifetime: 60 * 30, // Close connections after 30 minutes
 });
@@ -503,7 +517,7 @@ Keep schema organized by domain:
 
 ```typescript
 // auth-schema.ts - Authentication related tables
-// team-schema.ts - Team management tables  
+// team-schema.ts - Team management tables
 // billing-schema.ts - Billing and subscription tables
 // content-schema.ts - User content tables
 ```
@@ -558,10 +572,13 @@ export const usersRelations = relations(authUsers, ({ many }) => ({
 
 ```typescript
 // Create test data
-const testTeam = await db.insert(teams).values({
-  name: "Test Team",
-  slug: "test-team",
-}).returning();
+const testTeam = await db
+  .insert(teams)
+  .values({
+    name: "Test Team",
+    slug: "test-team",
+  })
+  .returning();
 
 // Test queries
 const foundTeam = await db.query.teams.findFirst({
@@ -576,6 +593,7 @@ console.log("Team created:", foundTeam);
 ### Common Issues
 
 **Connection errors**
+
 ```bash
 # Check database URL
 echo $DATABASE_URL
@@ -585,6 +603,7 @@ pnpm db:push
 ```
 
 **Migration conflicts**
+
 ```bash
 # Reset local database
 pnpm db:reset
@@ -594,6 +613,7 @@ pnpm db:generate
 ```
 
 **Type errors**
+
 ```bash
 # Rebuild packages
 pnpm build
@@ -603,6 +623,7 @@ pnpm typecheck
 ```
 
 **Performance issues**
+
 - Add database indexes for frequently queried columns
 - Use relations instead of manual joins
 - Implement connection pooling
