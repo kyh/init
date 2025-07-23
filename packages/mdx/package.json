@@ -12,8 +12,7 @@
   },
   "scripts": {
     "build": "content-collections build",
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "content-collections watch",
+    "clean": "git clean -xdf .cache .turbo dist node_modules .content-collections",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
@@ -30,10 +29,6 @@
     "@kyh/tsconfig": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
-    "rehype-pretty-code": "^0.14.1",
-    "rehype-slug": "^6.0.0",
-    "remark-gfm": "^4.0.1",
-    "shiki": "^2.5.0",
     "typescript": "catalog:"
   },
   "prettier": "@kyh/prettier-config"

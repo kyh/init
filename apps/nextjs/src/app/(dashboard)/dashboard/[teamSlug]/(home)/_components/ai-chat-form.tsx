@@ -1,117 +1,109 @@
 "use client";
 
+import { useState } from "react";
 import { useChat } from "@ai-sdk/react";
-import { Button } from "@repo/ui/button";
+import {
+  AIConversation,
+  AIConversationContent,
+  AIConversationScrollButton,
+  AIInput,
+  AIInputButton,
+  AIInputSubmit,
+  AIInputTextarea,
+  AIInputToolbar,
+  AIInputTools,
+  AIMessage,
+  AIMessageContent,
+  AIResponse,
+} from "@repo/ui/ai";
 import { toast } from "@repo/ui/toast";
-import { ArrowUp, Square } from "lucide-react";
-
-import {
-  PromptInput,
-  PromptInputAction,
-  PromptInputActions,
-  PromptInputTextarea,
-} from "./ai-chat-input";
-import {
-  Message,
-  MessageAvatar,
-  MessageContent,
-  MessagesContainer,
-} from "./ai-chat-message";
+import { DefaultChatTransport } from "ai";
+import { GlobeIcon, MicIcon, PlusIcon } from "lucide-react";
 
 export type AIFormProps = {
   teamSlug: string;
 };
 
 export const AIChatForm = ({ teamSlug }: AIFormProps) => {
-  const { messages, append, status, stop, input, setInput } = useChat({
-    body: { teamSlug },
+  const [input, setInput] = useState("");
+  const { messages, sendMessage, status, stop } = useChat({
+    transport: new DefaultChatTransport({
+      api: "/api/chat",
+      prepareSendMessagesRequest({ messages, id, body }) {
+        return {
+          body: {
+            id,
+            messages,
+            teamSlug,
+            ...body,
+          },
+        };
+      },
+    }),
     onError: (error) => {
       toast.error(`An error occurred, ${error.message}`);
     },
   });
 
-  const handleSubmit = () => {
-    if (input === "") {
-      return;
-    }
-
-    if (isGeneratingResponse) {
-      stop();
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (status === "streaming" || status === "submitted") {
+      void stop();
     } else {
-      void append({
-        role: "user",
-        content: input,
-        createdAt: new Date(),
+      void sendMessage({
+        text: input,
       });
     }
 
     setInput("");
   };
 
-  const isGeneratingResponse = ["streaming", "submitted"].includes(status);
-
   return (
     <>
-      <MessagesContainer className="max-w-(--breakpoint-md) m-auto w-full flex-1 space-y-4 p-4">
-        {messages.map((message) => {
-          const isAssistant = message.role === "assistant";
-          return (
-            <Message
-              key={message.id}
-              className={
-                message.role === "user" ? "justify-end" : "justify-start"
-              }
-            >
-              {isAssistant && (
-                <MessageAvatar
-                  src="/avatars/ai.png"
-                  alt="AI Assistant"
-                  fallback="AI"
-                />
-              )}
-              <div className="max-w-[85%] flex-1 sm:max-w-[75%]">
-                {isAssistant ? (
-                  <MessageContent
-                    className="bg-secondary text-secondary-foreground"
-                    markdown
-                  >
-                    {message.content}
-                  </MessageContent>
-                ) : (
-                  <MessageContent className="bg-primary text-primary-foreground">
-                    {message.content}
-                  </MessageContent>
-                )}
-              </div>
-            </Message>
-          );
-        })}
-      </MessagesContainer>
-      <PromptInput
-        value={input}
-        onValueChange={setInput}
+      <AIConversation className="relative m-auto w-full max-w-(--breakpoint-md) flex-1 p-4">
+        <AIConversationContent>
+          {messages.map((message) => (
+            <AIMessage from={message.role} key={message.id}>
+              <AIMessageContent>
+                {message.parts.map((part) => {
+                  if (part.type === "text") {
+                    if (message.role === "assistant") {
+                      return <AIResponse>{part.text}</AIResponse>;
+                    }
+                    return <>{part.text}</>;
+                  }
+                  return null;
+                })}
+              </AIMessageContent>
+            </AIMessage>
+          ))}
+        </AIConversationContent>
+        <AIConversationScrollButton />
+      </AIConversation>
+      <AIInput
         onSubmit={handleSubmit}
-        className="max-w-(--breakpoint-md) m-auto w-full"
+        className="m-auto w-full max-w-(--breakpoint-md)"
       >
-        <PromptInputTextarea placeholder="Ask me anything..." />
-        <PromptInputActions className="flex items-center justify-between gap-2 pt-2">
-          <PromptInputAction
-            tooltip={isGeneratingResponse ? "Stop generation" : "Send message"}
-          >
-            <Button
-              size="icon"
-              className="ml-auto h-8 w-8 rounded-full"
-              onClick={handleSubmit}
-            >
-              {isGeneratingResponse ? (
-                <Square className="size-5" />
-              ) : (
-                <ArrowUp className="size-5" />
-              )}
-            </Button>
-          </PromptInputAction>
-        </PromptInputActions>
-      </PromptInput>
+        <AIInputTextarea
+          onChange={(e) => setInput(e.target.value)}
+          value={input}
+        />
+        <AIInputToolbar>
+          <AIInputTools>
+            <AIInputButton>
+              <PlusIcon size={16} />
+            </AIInputButton>
+            <AIInputButton>
+              <MicIcon size={16} />
+            </AIInputButton>
+            <AIInputButton>
+              <GlobeIcon size={16} />
+              <span>Search</span>
+            </AIInputButton>
+          </AIInputTools>
+          <AIInputSubmit disabled={!input} status={status} />
+        </AIInputToolbar>
+      </AIInput>
     </>
   );
 };
