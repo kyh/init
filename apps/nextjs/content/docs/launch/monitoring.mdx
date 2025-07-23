@@ -31,14 +31,14 @@ import * as Sentry from "@sentry/nextjs";
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
   environment: process.env.NODE_ENV,
-  
+
   // Performance monitoring
   tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
-  
+
   // Session tracking
   replaysSessionSampleRate: 0.1,
   replaysOnErrorSampleRate: 1.0,
-  
+
   integrations: [
     new Sentry.Integrations.Http({ tracing: true }),
     new Sentry.Integrations.Postgres(),
@@ -61,7 +61,7 @@ module.exports = withSentryConfig(nextConfig, {
   silent: true,
   org: "your-org",
   project: "init-app",
-  
+
   widenClientFileUpload: true,
   transpileClientSDK: true,
   tunnelRoute: "/monitoring",
@@ -160,7 +160,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     checks.status = "unhealthy";
     checks.checks.error = error.message;
-    
+
     return Response.json(checks, { status: 503 });
   }
 }
@@ -171,7 +171,7 @@ async function checkOpenAI() {
       headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
       signal: AbortSignal.timeout(5000),
     });
-    
+
     return {
       status: response.ok ? "ok" : "error",
       responseTime: response.headers.get("x-response-time") || "unknown",
@@ -196,14 +196,14 @@ SELECT pg_reload_conf();
 
 -- Create monitoring view
 CREATE OR REPLACE VIEW slow_queries AS
-SELECT 
+SELECT
   query,
   calls,
   total_exec_time,
   mean_exec_time,
   rows,
   100.0 * shared_blks_hit / nullif(shared_blks_hit + shared_blks_read, 0) AS hit_percent
-FROM pg_stat_statements 
+FROM pg_stat_statements
 WHERE mean_exec_time > 100 -- Queries averaging > 100ms
 ORDER BY mean_exec_time DESC;
 ```
@@ -290,8 +290,8 @@ export const monitoredProcedure = t.procedure.use(performanceMiddleware);
 
 ```typescript
 // middleware.ts
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 export function middleware(request: NextRequest) {
   const start = Date.now();
@@ -299,7 +299,7 @@ export function middleware(request: NextRequest) {
 
   // Log request details
   response.headers.set("x-request-id", crypto.randomUUID());
-  
+
   if (process.env.NODE_ENV === "production") {
     // Async logging (don't await)
     logRequest({
@@ -336,18 +336,21 @@ Track Core Web Vitals automatically:
 
 ```typescript
 // lib/analytics.ts
-import { getCLS, getFID, getFCP, getLCP, getTTFB } from "web-vitals";
+import { getCLS, getFCP, getFID, getLCP, getTTFB } from "web-vitals";
 
 function sendToAnalytics(metric: any) {
   // Send to your analytics service
   if (typeof window !== "undefined") {
-    navigator.sendBeacon("/api/analytics", JSON.stringify({
-      name: metric.name,
-      value: metric.value,
-      id: metric.id,
-      url: window.location.href,
-      timestamp: Date.now(),
-    }));
+    navigator.sendBeacon(
+      "/api/analytics",
+      JSON.stringify({
+        name: metric.name,
+        value: metric.value,
+        id: metric.id,
+        url: window.location.href,
+        timestamp: Date.now(),
+      }),
+    );
   }
 }
 
@@ -365,7 +368,7 @@ getTTFB(sendToAnalytics);
 // lib/performance.ts
 export class PerformanceTracker {
   private static instance: PerformanceTracker;
-  
+
   static getInstance() {
     if (!this.instance) {
       this.instance = new PerformanceTracker();
@@ -375,8 +378,10 @@ export class PerformanceTracker {
 
   trackPageLoad(pageName: string) {
     if (typeof window !== "undefined") {
-      const navigation = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming;
-      
+      const navigation = performance.getEntriesByType(
+        "navigation",
+      )[0] as PerformanceNavigationTiming;
+
       this.sendMetric({
         name: "page.load",
         value: navigation.loadEventEnd - navigation.loadEventStart,
@@ -393,7 +398,11 @@ export class PerformanceTracker {
     });
   }
 
-  trackAPICall(endpoint: string, duration: number, status: "success" | "error") {
+  trackAPICall(
+    endpoint: string,
+    duration: number,
+    status: "success" | "error",
+  ) {
     this.sendMetric({
       name: "api.call",
       value: duration,
@@ -404,17 +413,17 @@ export class PerformanceTracker {
   private sendMetric(metric: any) {
     // Buffer metrics and send in batches
     this.buffer.push(metric);
-    
+
     if (this.buffer.length >= 10) {
       this.flush();
     }
   }
 
   private buffer: any[] = [];
-  
+
   private async flush() {
     if (this.buffer.length === 0) return;
-    
+
     try {
       await fetch("/api/metrics", {
         method: "POST",
@@ -431,7 +440,7 @@ export class PerformanceTracker {
 // Usage in components
 export function usePerformanceTracking() {
   const tracker = PerformanceTracker.getInstance();
-  
+
   return {
     trackInteraction: tracker.trackUserInteraction.bind(tracker),
     trackPageLoad: tracker.trackPageLoad.bind(tracker),
@@ -447,22 +456,30 @@ export function usePerformanceTracking() {
 // lib/alerts.ts
 export async function checkErrorRate() {
   const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  
-  const errorCount = await db.execute(`
+
+  const errorCount = await db.execute(
+    `
     SELECT COUNT(*) as error_count
     FROM error_logs 
     WHERE created_at > $1
-  `, [last24h]);
+  `,
+    [last24h],
+  );
 
-  const totalRequests = await db.execute(`
+  const totalRequests = await db.execute(
+    `
     SELECT COUNT(*) as total_requests
     FROM request_logs 
     WHERE created_at > $1
-  `, [last24h]);
+  `,
+    [last24h],
+  );
 
-  const errorRate = errorCount.rows[0].error_count / totalRequests.rows[0].total_requests;
-  
-  if (errorRate > 0.05) { // 5% error rate threshold
+  const errorRate =
+    errorCount.rows[0].error_count / totalRequests.rows[0].total_requests;
+
+  if (errorRate > 0.05) {
+    // 5% error rate threshold
     await sendAlert({
       type: "error_rate",
       message: `High error rate detected: ${(errorRate * 100).toFixed(2)}%`,
@@ -490,13 +507,13 @@ async function sendAlert(alert: any) {
 // lib/performance-alerts.ts
 export async function checkPerformanceMetrics() {
   const metrics = await getAverageResponseTimes();
-  
-  const slowEndpoints = metrics.filter(m => m.avg_response_time > 2000);
-  
+
+  const slowEndpoints = metrics.filter((m) => m.avg_response_time > 2000);
+
   if (slowEndpoints.length > 0) {
     await sendAlert({
       type: "performance",
-      message: `Slow endpoints detected: ${slowEndpoints.map(e => e.endpoint).join(", ")}`,
+      message: `Slow endpoints detected: ${slowEndpoints.map((e) => e.endpoint).join(", ")}`,
       data: slowEndpoints,
     });
   }
@@ -531,25 +548,25 @@ export default async function AdminDashboard() {
   return (
     <div className="p-6">
       <h1>System Dashboard</h1>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <MetricCard 
-          title="Active Users" 
+        <MetricCard
+          title="Active Users"
           value={metrics.activeUsers}
           change="+12%"
         />
-        <MetricCard 
-          title="Response Time" 
+        <MetricCard
+          title="Response Time"
           value={`${metrics.avgResponseTime}ms`}
           change="-5ms"
         />
-        <MetricCard 
-          title="Error Rate" 
+        <MetricCard
+          title="Error Rate"
           value={`${metrics.errorRate}%`}
           change="-0.2%"
         />
-        <MetricCard 
-          title="Database Connections" 
+        <MetricCard
+          title="Database Connections"
           value={metrics.dbConnections}
         />
       </div>
@@ -587,11 +604,7 @@ import { getDatabaseMetrics } from "@/lib/db-monitoring";
 
 export async function GET() {
   try {
-    const [
-      dbMetrics,
-      errorStats,
-      performanceStats
-    ] = await Promise.all([
+    const [dbMetrics, errorStats, performanceStats] = await Promise.all([
       getDatabaseMetrics(),
       getErrorStats(),
       getPerformanceStats(),
@@ -604,16 +617,13 @@ export async function GET() {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    return Response.json(
-      { error: "Failed to fetch metrics" },
-      { status: 500 }
-    );
+    return Response.json({ error: "Failed to fetch metrics" }, { status: 500 });
   }
 }
 
 async function getErrorStats() {
   const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  
+
   return {
     totalErrors: 42,
     errorRate: 0.02,
@@ -724,7 +734,7 @@ logger.error("Database connection failed", error);
 
 ## Environment Variables
 
-```env
+```
 # Monitoring
 SENTRY_DSN=your-sentry-dsn
 SENTRY_ORG=your-org
@@ -779,7 +789,7 @@ HEALTH_CHECK_TOKEN=your-secret-token
 ```bash
 # Check recent errors
 SELECT message, COUNT(*), MAX(created_at)
-FROM error_logs 
+FROM error_logs
 WHERE created_at > NOW() - INTERVAL '1 hour'
 GROUP BY message
 ORDER BY COUNT(*) DESC;
@@ -790,7 +800,7 @@ ORDER BY COUNT(*) DESC;
 ```bash
 # Find slow queries
 SELECT query, mean_exec_time, calls
-FROM pg_stat_statements 
+FROM pg_stat_statements
 WHERE mean_exec_time > 100
 ORDER BY mean_exec_time DESC;
 ```
@@ -802,10 +812,10 @@ ORDER BY mean_exec_time DESC;
 setInterval(() => {
   const memUsage = process.memoryUsage();
   console.log({
-    rss: Math.round(memUsage.rss / 1024 / 1024 * 100) / 100,
-    heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024 * 100) / 100,
-    heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024 * 100) / 100,
-    external: Math.round(memUsage.external / 1024 / 1024 * 100) / 100,
+    rss: Math.round((memUsage.rss / 1024 / 1024) * 100) / 100,
+    heapTotal: Math.round((memUsage.heapTotal / 1024 / 1024) * 100) / 100,
+    heapUsed: Math.round((memUsage.heapUsed / 1024 / 1024) * 100) / 100,
+    external: Math.round((memUsage.external / 1024 / 1024) * 100) / 100,
   });
 }, 30000); // Every 30 seconds
 ```
@@ -815,6 +825,6 @@ setInterval(() => {
 After setting up monitoring:
 
 1. **Production checklist** - Complete the [production readiness](/docs/launch/production) guide
-2. **User analytics** - Implement [user behavior tracking](/docs/scale/user-analytics)  
+2. **User analytics** - Implement [user behavior tracking](/docs/scale/user-analytics)
 3. **Feedback collection** - Set up [user feedback systems](/docs/scale/user-feedback)
 4. **Growth strategies** - Plan for [scaling and growth](/docs/scale/user-growth)

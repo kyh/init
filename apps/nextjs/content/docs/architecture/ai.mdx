@@ -39,6 +39,7 @@ The API route handles chat requests:
 import type { Message } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { streamText } from "ai";
+
 import { caller } from "@/trpc/server";
 
 export const maxDuration = 30;
@@ -188,12 +189,12 @@ export const MessageAvatar = ({ role }: { role: string }) => {
   );
 };
 
-export const MessageContent = ({ 
-  content, 
-  isUser 
-}: { 
-  content: string; 
-  isUser: boolean; 
+export const MessageContent = ({
+  content,
+  isUser
+}: {
+  content: string;
+  isUser: boolean;
 }) => {
   return (
     <div
@@ -215,12 +216,12 @@ export const MessageContent = ({
   );
 };
 
-export const MessagesContainer = ({ 
-  children, 
-  className 
-}: { 
-  children: React.ReactNode; 
-  className?: string; 
+export const MessagesContainer = ({
+  children,
+  className
+}: {
+  children: React.ReactNode;
+  className?: string;
 }) => {
   return (
     <div className={cn("space-y-1", className)}>
@@ -310,7 +311,7 @@ export default function TeamDashboard({ params }: { params: { teamSlug: string }
   return (
     <div className="container mx-auto p-6">
       <h1>Team Dashboard</h1>
-      
+
       {/* AI Chat Section */}
       <div className="mt-8">
         <h2>AI Assistant</h2>
@@ -368,9 +369,9 @@ export async function POST(request: Request) {
   const contextualizedMessages = [
     {
       role: "system" as const,
-      content: `You are assisting the ${teamSlug} team. Their recent activity includes...`
+      content: `You are assisting the ${teamSlug} team. Their recent activity includes...`,
     },
-    ...messages
+    ...messages,
   ];
 
   const result = streamText({
@@ -390,7 +391,10 @@ Store chat history in the database:
 // Add to your database schema
 export const chatMessages = pgTable("chat_messages", (t) => ({
   id: t.uuid().primaryKey().defaultRandom(),
-  teamId: t.uuid().notNull().references(() => teams.id),
+  teamId: t
+    .uuid()
+    .notNull()
+    .references(() => teams.id),
   role: t.varchar({ length: 20 }).notNull(), // "user" | "assistant"
   content: t.text().notNull(),
   createdAt: t.timestamp({ withTimezone: true }).defaultNow(),
@@ -399,9 +403,9 @@ export const chatMessages = pgTable("chat_messages", (t) => ({
 // In your API route
 export async function POST(request: Request) {
   const { messages, teamSlug } = await request.json();
-  
+
   const team = await caller.team.getTeam({ slug: teamSlug });
-  
+
   // Load previous messages
   const previousMessages = await db.query.chatMessages.findMany({
     where: eq(chatMessages.teamId, team.id),
@@ -410,7 +414,7 @@ export async function POST(request: Request) {
   });
 
   const fullMessages = [
-    ...previousMessages.map(msg => ({
+    ...previousMessages.map((msg) => ({
       role: msg.role,
       content: msg.content,
     })),
@@ -455,9 +459,9 @@ const result = streamText({
         includeMembers: z.boolean().describe("Whether to include team members"),
       }),
       execute: async ({ includeMembers }) => {
-        const team = await caller.team.getTeam({ 
+        const team = await caller.team.getTeam({
           slug: teamSlug,
-          includeMembers 
+          includeMembers,
         });
         return team;
       },
@@ -518,7 +522,10 @@ Track AI usage costs:
 // Add to database schema
 export const aiUsage = pgTable("ai_usage", (t) => ({
   id: t.uuid().primaryKey().defaultRandom(),
-  teamId: t.uuid().notNull().references(() => teams.id),
+  teamId: t
+    .uuid()
+    .notNull()
+    .references(() => teams.id),
   model: t.varchar({ length: 50 }).notNull(),
   inputTokens: t.integer().notNull(),
   outputTokens: t.integer().notNull(),
@@ -546,7 +553,7 @@ const result = streamText({
 
 Required environment variables:
 
-```env
+```
 # OpenAI API Key
 OPENAI_API_KEY=your-openai-api-key
 
@@ -566,9 +573,9 @@ import DOMPurify from "dompurify";
 
 export async function POST(request: Request) {
   const { messages } = await request.json();
-  
+
   // Sanitize message content
-  const sanitizedMessages = messages.map(msg => ({
+  const sanitizedMessages = messages.map((msg) => ({
     ...msg,
     content: DOMPurify.sanitize(msg.content),
   }));
@@ -626,17 +633,14 @@ export async function POST(request: Request) {
       getErrorMessage: (error) => {
         // Log error for debugging
         console.error("AI Chat Error:", error);
-        
+
         // Return user-friendly message
         return "I'm having trouble responding right now. Please try again.";
       },
     });
   } catch (error) {
     console.error("Chat API Error:", error);
-    return new Response(
-      "An unexpected error occurred",
-      { status: 500 }
-    );
+    return new Response("An unexpected error occurred", { status: 500 });
   }
 }
 ```

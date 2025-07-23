@@ -26,15 +26,16 @@
   },
   "devDependencies": {
     "@kyh/prettier-config": "catalog:",
-    "dotenv-cli": "^8.0.0",
+    "dotenv-cli": "^9.0.0",
     "prettier": "catalog:",
     "tsx": "^4.20.3",
-    "turbo": "^2.5.4",
+    "turbo": "^2.5.5",
     "typescript": "catalog:"
   },
   "prettier": "@kyh/prettier-config",
   "pnpm": {
     "onlyBuiltDependencies": [
+      "@tailwindcss/oxide",
       "esbuild",
       "sharp",
       "supabase"

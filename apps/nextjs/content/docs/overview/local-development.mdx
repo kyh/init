@@ -11,14 +11,17 @@ Learn how to effectively develop with Init, from daily workflows to debugging te
 ### Starting Your Development Session
 
 1. **Start the database** (if using local Supabase):
+
    ```bash
    pnpm db:start
    ```
 
 2. **Start all development servers**:
+
    ```bash
    pnpm dev
    ```
+
    This starts:
    - Next.js web app on http://localhost:3000
    - Expo development server
@@ -137,11 +140,10 @@ export const postRouter = createTRPCRouter({
     .mutation(async ({ input, ctx }) => {
       return ctx.db.insert(posts).values(input);
     }),
-  
-  list: publicProcedure
-    .query(async ({ ctx }) => {
-      return ctx.db.select().from(posts);
-    }),
+
+  list: publicProcedure.query(async ({ ctx }) => {
+    return ctx.db.select().from(posts);
+  }),
 });
 ```
 
@@ -285,6 +287,7 @@ npx husky init
 ### Common Issues
 
 **TypeScript errors**
+
 ```bash
 # Rebuild packages
 pnpm build
@@ -294,6 +297,7 @@ pnpm typecheck
 ```
 
 **Database connection issues**
+
 ```bash
 # Restart database
 pnpm db:stop && pnpm db:start
@@ -303,6 +307,7 @@ cat packages/db/.env
 ```
 
 **Build failures**
+
 ```bash
 # Clean and rebuild
 pnpm clean && pnpm install && pnpm build
@@ -337,7 +342,7 @@ packages/db/.env
 
 ### Required Variables
 
-```env
+```
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key

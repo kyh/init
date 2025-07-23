@@ -1,6 +1,7 @@
 @import "tailwindcss" source("../../../../../");
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
 @import "./animations.css";
-@import "./shiki.css";
 
 @plugin "@tailwindcss/typography";
 

@@ -48,8 +48,8 @@ For server-side operations (API routes, middleware):
 
 ```typescript
 // packages/db/src/supabase-server-client.ts
-import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
 
 export const getSupabaseServerClient = () => {
   return createServerClient(
@@ -64,11 +64,11 @@ export const getSupabaseServerClient = () => {
         setAll: async (cookiesToSet) => {
           const cookieStore = await cookies();
           cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options)
+            cookieStore.set(name, value, options),
           );
         },
       },
-    }
+    },
   );
 };
 ```
@@ -84,7 +84,7 @@ import { createBrowserClient } from "@supabase/ssr";
 export const getSupabaseBrowserClient = () => {
   return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   );
 };
 ```
@@ -95,8 +95,8 @@ For Next.js middleware:
 
 ```typescript
 // packages/db/src/supabase-middleware-client.ts
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 
 export const getSupabaseMiddlewareClient = (request: NextRequest) => {
   let response = NextResponse.next({
@@ -118,7 +118,7 @@ export const getSupabaseMiddlewareClient = (request: NextRequest) => {
           response.cookies.set({ name, value: "", ...options });
         },
       },
-    }
+    },
   );
 
   return { supabase, response };
@@ -144,9 +144,9 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
 
   return {
     headers: opts.headers,
-    user: data.user,     // Current authenticated user
-    supabase,            // Supabase client
-    db,                  // Database client
+    user: data.user, // Current authenticated user
+    supabase, // Supabase client
+    db, // Database client
   };
 };
 ```
@@ -167,7 +167,7 @@ export const protectedProcedure = t.procedure.use(
         ...ctx,
       },
     });
-  })
+  }),
 );
 ```
 
@@ -284,9 +284,9 @@ export function AuthForm({ type }: AuthFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  
+
   const router = useRouter();
-  
+
   const signIn = api.auth.signInWithPassword.useMutation({
     onSuccess: () => router.push("/dashboard"),
     onError: (error) => toast.error(error.message),
@@ -350,18 +350,20 @@ Protect routes at the middleware level:
 
 ```typescript
 // apps/nextjs/src/middleware.ts
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { getSupabaseMiddlewareClient } from "@repo/db/supabase-middleware-client";
 
 export async function middleware(request: NextRequest) {
   const { supabase, response } = getSupabaseMiddlewareClient(request);
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   // Protected routes
   const protectedPaths = ["/dashboard", "/account"];
-  const isProtectedPath = protectedPaths.some(path => 
-    request.nextUrl.pathname.startsWith(path)
+  const isProtectedPath = protectedPaths.some((path) =>
+    request.nextUrl.pathname.startsWith(path),
   );
 
   if (isProtectedPath && !user) {
@@ -444,7 +446,9 @@ export const teams = pgTable("teams", {
 
 export const teamMembers = pgTable("team_members", {
   id: uuid("id").primaryKey().defaultRandom(),
-  teamId: uuid("team_id").references(() => teams.id).notNull(),
+  teamId: uuid("team_id")
+    .references(() => teams.id)
+    .notNull(),
   userId: uuid("user_id").notNull(),
   role: text("role", { enum: ["OWNER", "ADMIN", "MEMBER"] }).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
@@ -564,7 +568,7 @@ export default async function DashboardPage() {
 
 Required environment variables:
 
-```env
+```
 # Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
@@ -632,21 +636,25 @@ const { data, error } = await supabase.auth.mfa.verify({
 ## Security Best Practices
 
 ### 1. Environment Security
+
 - Never commit secrets to version control
 - Use different keys for development/production
 - Rotate keys regularly
 
 ### 2. Session Security
+
 - Configure appropriate session timeouts
 - Use secure cookies in production
 - Implement proper logout flows
 
 ### 3. Input Validation
+
 - Validate all inputs with Zod schemas
 - Sanitize user data
 - Use parameterized queries
 
 ### 4. Route Protection
+
 - Protect sensitive routes with middleware
 - Implement proper role-based access
 - Use server-side session validation

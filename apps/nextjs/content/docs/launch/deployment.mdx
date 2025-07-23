@@ -63,7 +63,7 @@ Create `vercel.json` in the project root:
 
 Configure environment variables in the Vercel dashboard:
 
-```env
+```
 # Database
 DATABASE_URL=your-production-database-url
 
@@ -181,7 +181,7 @@ CMD ["node", "apps/nextjs/server.js"]
 Create `docker-compose.prod.yml`:
 
 ```yaml
-version: '3.8'
+version: "3.8"
 
 services:
   app:
@@ -236,7 +236,7 @@ applications:
       artifacts:
         baseDirectory: .next
         files:
-          - '**/*'
+          - "**/*"
       cache:
         paths:
           - node_modules/**/*
@@ -261,25 +261,27 @@ aws amplify put-app --app-id your-app-id --environment-variables DATABASE_URL=yo
    - Note the connection details
 
 2. **Run Migrations**:
+
    ```bash
    # Set production database URL
    export DATABASE_URL="your-production-url"
-   
+
    # Push schema to production
    pnpm db:push-remote
    ```
 
 3. **Configure RLS Policies**:
+
    ```sql
    -- Enable RLS on all tables
    ALTER TABLE teams ENABLE ROW LEVEL SECURITY;
    ALTER TABLE team_members ENABLE ROW LEVEL SECURITY;
-   
+
    -- Create policies for team access
    CREATE POLICY "Users can view their teams" ON teams
      FOR SELECT USING (
        id IN (
-         SELECT team_id FROM team_members 
+         SELECT team_id FROM team_members
          WHERE user_id = auth.uid()
        )
      );
@@ -318,68 +320,68 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'pnpm'
-      
+          node-version: "18"
+          cache: "pnpm"
+
       - name: Install pnpm
         run: npm install -g pnpm
-      
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      
+
       - name: Run tests
         run: pnpm test
-        
+
       - name: Type check
         run: pnpm typecheck
-        
+
       - name: Build application
         run: pnpm build
-        
+
       - name: Deploy to Vercel
         uses: vercel/action@v25.0.1
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
+          vercel-args: "--prod"
 ```
 
 ### Database Migration Pipeline
 
 ```yaml
-  migrate:
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          
-      - name: Install pnpm
-        run: npm install -g pnpm
-        
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-        
-      - name: Run database migrations
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: pnpm db:push-remote
+migrate:
+  runs-on: ubuntu-latest
+  if: github.ref == 'refs/heads/main'
+  steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "18"
+
+    - name: Install pnpm
+      run: npm install -g pnpm
+
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+
+    - name: Run database migrations
+      env:
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      run: pnpm db:push-remote
 ```
 
 ## Environment Configuration
 
 ### Production Environment Variables
 
-```env
+```
 # App Configuration
 NODE_ENV=production
 NEXT_PUBLIC_APP_URL=https://your-domain.com
@@ -446,32 +448,32 @@ export const env = envSchema.parse(process.env);
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Enable standalone output for Docker
-  output: 'standalone',
-  
+  output: "standalone",
+
   // Optimize images
   images: {
-    domains: ['your-cdn-domain.com'],
-    formats: ['image/webp', 'image/avif'],
+    domains: ["your-cdn-domain.com"],
+    formats: ["image/webp", "image/avif"],
   },
-  
+
   // Enable compression
   compress: true,
-  
+
   // Optimize bundle
   experimental: {
     optimizeCss: true,
-    optimizePackageImports: ['@repo/ui'],
+    optimizePackageImports: ["@repo/ui"],
   },
-  
+
   // Headers for caching
   async headers() {
     return [
       {
-        source: '/static/(.*)',
+        source: "/static/(.*)",
         headers: [
           {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
           },
         ],
       },
@@ -506,19 +508,19 @@ export async function GET() {
   try {
     // Check database connection
     await db.execute("SELECT 1");
-    
+
     // Check external services
     const checks = {
       database: "ok",
       timestamp: new Date().toISOString(),
       status: "healthy",
     };
-    
+
     return Response.json(checks);
   } catch (error) {
     return Response.json(
       { status: "unhealthy", error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -536,8 +538,8 @@ BEGIN
     'timestamp', NOW(),
     'version', version(),
     'connections', (
-      SELECT count(*) 
-      FROM pg_stat_activity 
+      SELECT count(*)
+      FROM pg_stat_activity
       WHERE state = 'active'
     )
   );
@@ -587,23 +589,23 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: '/(.*)',
+        source: "/(.*)",
         headers: [
           {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=31536000; includeSubDomains',
+            key: "Strict-Transport-Security",
+            value: "max-age=31536000; includeSubDomains",
           },
           {
-            key: 'X-Frame-Options',
-            value: 'DENY',
+            key: "X-Frame-Options",
+            value: "DENY",
           },
           {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
+            key: "X-Content-Type-Options",
+            value: "nosniff",
           },
           {
-            key: 'Referrer-Policy',
-            value: 'origin-when-cross-origin',
+            key: "Referrer-Policy",
+            value: "origin-when-cross-origin",
           },
         ],
       },
@@ -630,7 +632,7 @@ echo "DATABASE_URL=..." | base64 > .env.prod.encrypted
 // lib/monitoring.ts
 export function logDeployment() {
   console.log({
-    event: 'deployment',
+    event: "deployment",
     version: process.env.npm_package_version,
     timestamp: new Date().toISOString(),
     env: process.env.NODE_ENV,
@@ -660,6 +662,7 @@ if (process.env.NODE_ENV === "production") {
 ### Common Issues
 
 **Build failures**:
+
 ```bash
 # Clear cache and rebuild
 pnpm clean
@@ -668,12 +671,14 @@ pnpm build
 ```
 
 **Database connection issues**:
+
 ```bash
 # Test connection
 psql $DATABASE_URL -c "SELECT version();"
 ```
 
 **Memory issues**:
+
 ```javascript
 // Increase Node.js memory limit
 "scripts": {
@@ -682,6 +687,7 @@ psql $DATABASE_URL -c "SELECT version();"
 ```
 
 **Cold start performance**:
+
 - Use Vercel Pro for reduced cold starts
 - Implement database connection pooling
 - Optimize bundle size with tree shaking
