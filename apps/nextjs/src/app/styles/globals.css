@@ -1,6 +1,7 @@
 @import "tailwindcss" source("../../../../../");
 @import "fumadocs-ui/css/black.css";
 @import "fumadocs-ui/css/preset.css";
+
 @import "./animations.css";
 
 :root {
