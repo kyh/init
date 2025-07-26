@@ -25,27 +25,25 @@ const Page = () => {
             <div className="flex h-full flex-col gap-6 p-8">
               <div>Build</div>
               <p className="text-muted-foreground">
-                Lorem ipsum dolor sit amet consectetur adipisicing elit.
-                Inventore autem alias doloribus quod consequuntur hic, dolorum
-                at itaque iusto porro minima quia nemo reiciendis natus, dolores
-                quam, voluptatum est explicabo?
+                Start with a comprehensive foundation that includes authentication,
+                database setup, UI components, and AI integrations. Skip the
+                boilerplate and focus on what makes your application unique.
               </p>
             </div>
             <div className="flex h-full flex-col gap-6 p-8">
               <div>Launch</div>
               <p className="text-muted-foreground">
-                Lorem ipsum dolor sit amet consectetur adipisicing elit.
-                Inventore autem alias doloribus quod consequuntur hic, dolorum
-                at itaque iusto porro minima quia nemo reiciendis natus, dolores
-                quam, voluptatum est explicabo
+                Deploy with confidence using built-in CI/CD pipelines,
+                monitoring, and performance optimization. Get your MVP to market
+                faster with production-ready infrastructure and best practices.
               </p>
             </div>
             <div className="flex h-full flex-col gap-6 p-8">
               <div>Scale</div>
               <p className="text-muted-foreground">
-                Lorem ipsum dolor sit amet consectetur adipisicing elit.
-                Inventore autem alias doloribus quod consequuntur hic, dolorum
-                at itaque iusto porro minima quia nemo reiciendis natus
+                Built for growth with scalable architecture, caching strategies,
+                and modular components. Easily extend functionality and handle
+                increasing user demands without architectural rewrites.
               </p>
             </div>
           </div>

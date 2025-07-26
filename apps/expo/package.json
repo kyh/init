@@ -35,7 +35,7 @@
     "nativewind": "^4.1.23",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "react-native": "^0.80.1",
+    "react-native": "^0.80.2",
     "react-native-gesture-handler": "^2.27.2",
     "react-native-reanimated": "^3.19.0",
     "react-native-safe-area-context": "^5.5.2",
@@ -45,7 +45,7 @@
   "devDependencies": {
     "@babel/core": "^7.28.0",
     "@babel/preset-env": "^7.28.0",
-    "@babel/runtime": "^7.27.6",
+    "@babel/runtime": "^7.28.2",
     "@kyh/eslint-config": "catalog:",
     "@kyh/prettier-config": "catalog:",
     "@kyh/tsconfig": "catalog:",
