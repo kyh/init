@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { createTeamInput } from "@repo/api/team/team-schema";
 import { ProfileAvatar } from "@repo/ui/avatar";
 import { Button } from "@repo/ui/button";
@@ -32,7 +33,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  useForm,
 } from "@repo/ui/form";
 import { Input } from "@repo/ui/input";
 import { Logo } from "@repo/ui/logo";
@@ -48,6 +48,7 @@ import {
   SettingsIcon,
   Users2Icon,
 } from "lucide-react";
+import { useForm } from "react-hook-form";
 
 import { NavLink } from "@/components/nav";
 import { useTRPC } from "@/trpc/react";
@@ -141,7 +142,7 @@ export const UserDropdown = ({ teamSlug }: { teamSlug?: string }) => {
   );
 
   const form = useForm({
-    schema: createTeamInput,
+    resolver: zodResolver(createTeamInput),
     defaultValues: {
       name: "",
     },

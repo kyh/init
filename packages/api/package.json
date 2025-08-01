@@ -18,7 +18,7 @@
   "dependencies": {
     "@repo/db": "workspace:^",
     "@trpc/server": "catalog:",
-    "stripe": "^18.3.0",
+    "stripe": "^18.4.0",
     "superjson": "catalog:",
     "zod": "catalog:"
   },

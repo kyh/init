@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { updateTeamInput } from "@repo/api/team/team-schema";
 import { Button } from "@repo/ui/button";
 import {
@@ -10,11 +11,11 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  useForm,
 } from "@repo/ui/form";
 import { Input } from "@repo/ui/input";
 import { toast } from "@repo/ui/toast";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
 
 import type { UpdateTeamInput } from "@repo/api/team/team-schema";
 import { useTRPC } from "@/trpc/react";
@@ -40,7 +41,7 @@ export const TeamProfileForm = ({ teamSlug }: TeamProfileFormProps) => {
   );
 
   const form = useForm({
-    schema: updateTeamInput,
+    resolver: zodResolver(updateTeamInput),
     defaultValues: {
       id: team?.id,
       name: team?.name,

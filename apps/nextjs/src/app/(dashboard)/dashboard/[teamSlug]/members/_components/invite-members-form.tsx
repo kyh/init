@@ -1,5 +1,6 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   createTeamInvitationsInput,
   teamMemberRoles,
@@ -20,8 +21,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  useFieldArray,
-  useForm,
 } from "@repo/ui/form";
 import { Input } from "@repo/ui/input";
 import {
@@ -35,8 +34,13 @@ import { toast } from "@repo/ui/toast";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/tooltip";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { PlusIcon, XIcon } from "lucide-react";
+import { useFieldArray, useForm } from "react-hook-form";
 
-import type { CreateTeamInvitationsInput } from "@repo/api/team/team-schema";
+import type {
+  CreateTeamInvitationInput,
+  CreateTeamInvitationsInput,
+  TeamMemberRole,
+} from "@repo/api/team/team-schema";
 import { useTRPC } from "@/trpc/react";
 
 /**
@@ -91,7 +95,7 @@ export const InviteMembersForm = ({ teamId }: InviteMembersFormProps) => {
   );
 
   const form = useForm({
-    schema: createTeamInvitationsInput,
+    resolver: zodResolver(createTeamInvitationsInput),
     defaultValues: {
       teamInvitations: [createEmptyInviteModel(teamId)],
     },
@@ -150,7 +154,10 @@ export const InviteMembersForm = ({ teamId }: InviteMembersFormProps) => {
                           <Select
                             value={field.value}
                             onValueChange={(newRole) =>
-                              form.setValue(field.name, newRole)
+                              form.setValue(
+                                field.name,
+                                newRole as TeamMemberRole,
+                              )
                             }
                           >
                             <SelectTrigger>
@@ -222,8 +229,9 @@ export const InviteMembersForm = ({ teamId }: InviteMembersFormProps) => {
   );
 };
 
-const createEmptyInviteModel = (teamId: string) => ({
+const createEmptyInviteModel = (teamId: string): CreateTeamInvitationInput => ({
   teamId,
   email: "",
   role: "member",
+  status: "pending",
 });

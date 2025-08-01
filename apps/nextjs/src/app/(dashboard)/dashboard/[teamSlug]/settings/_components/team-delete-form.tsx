@@ -1,5 +1,6 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -19,11 +20,11 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  useForm,
 } from "@repo/ui/form";
 import { Input } from "@repo/ui/input";
 import { toast } from "@repo/ui/toast";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import type { RouterOutputs } from "@repo/api";
@@ -70,12 +71,14 @@ const Delete = ({ team }: DeleteProps) => {
   const form = useForm({
     mode: "onChange",
     reValidateMode: "onChange",
-    schema: z.object({
-      name: z.string().refine((value) => value === team.name, {
-        message: "Name does not match",
-        path: ["name"],
+    resolver: zodResolver(
+      z.object({
+        name: z.string().refine((value) => value === team.name, {
+          message: "Name does not match",
+          path: ["name"],
+        }),
       }),
-    }),
+    ),
     defaultValues: {
       name: "",
     },
@@ -175,12 +178,14 @@ const Leave = ({ user, team }: LeaveProps) => {
   const leaveTeam = useMutation(trpc.team.deleteTeamMember.mutationOptions());
 
   const form = useForm({
-    schema: z.object({
-      confirmation: z.string().refine((value) => value === "LEAVE", {
-        message: "Confirmation required to leave team",
-        path: ["confirmation"],
+    resolver: zodResolver(
+      z.object({
+        confirmation: z.string().refine((value) => value === "LEAVE", {
+          message: "Confirmation required to leave team",
+          path: ["confirmation"],
+        }),
       }),
-    }),
+    ),
     defaultValues: {
       confirmation: "",
     },
