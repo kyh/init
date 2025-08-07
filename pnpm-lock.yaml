@@ -40,8 +40,8 @@ catalogs:
       specifier: ^9.32.0
       version: 9.32.0
     next:
-      specifier: ^15.4.5
-      version: 15.4.5
+      specifier: ^15.4.6
+      version: 15.4.6
     prettier:
       specifier: ^3.6.2
       version: 3.6.2
@@ -147,8 +147,8 @@ importers:
         specifier: ^0.80.2
         version: 0.80.2(@babel/core@7.28.0)(@types/react@19.1.9)(react@19.1.1)
       react-native-gesture-handler:
-        specifier: ^2.27.2
-        version: 2.27.2(react-native@0.80.2(@babel/core@7.28.0)(@types/react@19.1.9)(react@19.1.1))(react@19.1.1)
+        specifier: ^2.28.0
+        version: 2.28.0(react-native@0.80.2(@babel/core@7.28.0)(@types/react@19.1.9)(react@19.1.1))(react@19.1.1)
       react-native-reanimated:
         specifier: ^3.19.0
         version: 3.19.0(@babel/core@7.28.0)(react-native@0.80.2(@babel/core@7.28.0)(@types/react@19.1.9)(react@19.1.1))(react@19.1.1)
@@ -202,8 +202,8 @@ importers:
   apps/nextjs:
     dependencies:
       '@ai-sdk/react':
-        specifier: ^2.0.4
-        version: 2.0.4(react@19.1.1)(zod@4.0.15)
+        specifier: ^2.0.5
+        version: 2.0.5(react@19.1.1)(zod@4.0.15)
       '@repo/api':
         specifier: workspace:^
         version: link:../../packages/api
@@ -226,20 +226,20 @@ importers:
         specifier: 'catalog:'
         version: 11.4.4(@tanstack/react-query@5.84.1(react@19.1.1))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.2))(typescript@5.9.2))(@trpc/server@11.4.4(typescript@5.9.2))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(typescript@5.9.2)
       ai:
-        specifier: ^5.0.4
-        version: 5.0.4(zod@4.0.15)
+        specifier: ^5.0.5
+        version: 5.0.5(zod@4.0.15)
       fumadocs-core:
         specifier: ^15.6.9
-        version: 15.6.9(@types/react@19.1.9)(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        version: 15.6.9(@types/react@19.1.9)(next@15.4.6(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       fumadocs-mdx:
         specifier: ^11.7.3
-        version: 11.7.3(acorn@8.15.0)(fumadocs-core@15.6.9(@types/react@19.1.9)(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react@19.1.1)
+        version: 11.7.3(acorn@8.15.0)(fumadocs-core@15.6.9(@types/react@19.1.9)(next@15.4.6(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(next@15.4.6(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react@19.1.1)
       fumadocs-ui:
         specifier: ^15.6.9
-        version: 15.6.9(@types/react-dom@19.1.7(@types/react@19.1.9))(@types/react@19.1.9)(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(tailwindcss@4.1.11)
+        version: 15.6.9(@types/react-dom@19.1.7(@types/react@19.1.9))(@types/react@19.1.9)(next@15.4.6(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(tailwindcss@4.1.11)
       next:
         specifier: 'catalog:'
-        version: 15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        version: 15.4.6(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       react:
         specifier: 'catalog:'
         version: 19.1.1
@@ -343,7 +343,7 @@ importers:
         version: 0.44.4(@opentelemetry/api@1.9.0)(gel@2.0.2)(postgres@3.4.7)
       next:
         specifier: 'catalog:'
-        version: 15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        version: 15.4.6(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       postgres:
         specifier: ^3.4.7
         version: 3.4.7
@@ -483,8 +483,8 @@ packages:
       graphql:
         optional: true
 
-  '@ai-sdk/gateway@1.0.2':
-    resolution: {integrity: sha512-RCE6v6/7JMzSHmjB0R7oWT54y/VYeEv+6NYLtkQKdxN871UawFFHpL7TW7IRnn+/SHdRlr7XoWxxGdHEaGRKiA==}
+  '@ai-sdk/gateway@1.0.3':
+    resolution: {integrity: sha512-QRGz2vH1WR9NvCv8gWocoebAKiXcuqj22mug6i8COeVsp33x5K5cK2DT4TwiQx5SfYbqJbVoBT+UqnHF7A3PHA==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4
@@ -499,8 +499,8 @@ packages:
     resolution: {integrity: sha512-6o7Y2SeO9vFKB8lArHXehNuusnpddKPk7xqL7T2/b+OvXMRIXUO1rR4wcv1hAFUAT9avGZshty3Wlua/XA7TvA==}
     engines: {node: '>=18'}
 
-  '@ai-sdk/react@2.0.4':
-    resolution: {integrity: sha512-l8UkmogLx3vwIs4n7KbPLaaAq2DynSqCX78yVKbrQESYxv/0mdw0+qe+EVMPPxvG2fBjFLlImUxc33l0Dhb19w==}
+  '@ai-sdk/react@2.0.5':
+    resolution: {integrity: sha512-rXcraxZ+cAwKWS/wbCIx9gl1Ep7DNmOXTtB/U2WPSEpez4kc+A/2dwibJqRQ9wujbRv05jsTTVLUjE92Ovzhyg==}
     engines: {node: '>=18'}
     peerDependencies:
       react: ^18 || ^19 || ^19.0.0-rc
@@ -2055,56 +2055,56 @@ packages:
   '@mdx-js/mdx@3.1.0':
     resolution: {integrity: sha512-/QxEhPAvGwbQmy1Px8F899L5Uc2KZ6JtXwlCgJmjSTBedwOZkByYcBG4GceIGPXRDsmfxhHazuS+hlOShRLeDw==}
 
-  '@next/env@15.4.5':
-    resolution: {integrity: sha512-ruM+q2SCOVCepUiERoxOmZY9ZVoecR3gcXNwCYZRvQQWRjhOiPJGmQ2fAiLR6YKWXcSAh7G79KEFxN3rwhs4LQ==}
+  '@next/env@15.4.6':
+    resolution: {integrity: sha512-yHDKVTcHrZy/8TWhj0B23ylKv5ypocuCwey9ZqPyv4rPdUdRzpGCkSi03t04KBPyU96kxVtUqx6O3nE1kpxASQ==}
 
   '@next/eslint-plugin-next@15.3.5':
     resolution: {integrity: sha512-BZwWPGfp9po/rAnJcwUBaM+yT/+yTWIkWdyDwc74G9jcfTrNrmsHe+hXHljV066YNdVs8cxROxX5IgMQGX190w==}
 
-  '@next/swc-darwin-arm64@15.4.5':
-    resolution: {integrity: sha512-84dAN4fkfdC7nX6udDLz9GzQlMUwEMKD7zsseXrl7FTeIItF8vpk1lhLEnsotiiDt+QFu3O1FVWnqwcRD2U3KA==}
+  '@next/swc-darwin-arm64@15.4.6':
+    resolution: {integrity: sha512-667R0RTP4DwxzmrqTs4Lr5dcEda9OxuZsVFsjVtxVMVhzSpo6nLclXejJVfQo2/g7/Z9qF3ETDmN3h65mTjpTQ==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [darwin]
 
-  '@next/swc-darwin-x64@15.4.5':
-    resolution: {integrity: sha512-CL6mfGsKuFSyQjx36p2ftwMNSb8PQog8y0HO/ONLdQqDql7x3aJb/wB+LA651r4we2pp/Ck+qoRVUeZZEvSurA==}
+  '@next/swc-darwin-x64@15.4.6':
+    resolution: {integrity: sha512-KMSFoistFkaiQYVQQnaU9MPWtp/3m0kn2Xed1Ces5ll+ag1+rlac20sxG+MqhH2qYWX1O2GFOATQXEyxKiIscg==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [darwin]
 
-  '@next/swc-linux-arm64-gnu@15.4.5':
-    resolution: {integrity: sha512-1hTVd9n6jpM/thnDc5kYHD1OjjWYpUJrJxY4DlEacT7L5SEOXIifIdTye6SQNNn8JDZrcN+n8AWOmeJ8u3KlvQ==}
+  '@next/swc-linux-arm64-gnu@15.4.6':
+    resolution: {integrity: sha512-PnOx1YdO0W7m/HWFeYd2A6JtBO8O8Eb9h6nfJia2Dw1sRHoHpNf6lN1U4GKFRzRDBi9Nq2GrHk9PF3Vmwf7XVw==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
 
-  '@next/swc-linux-arm64-musl@15.4.5':
-    resolution: {integrity: sha512-4W+D/nw3RpIwGrqpFi7greZ0hjrCaioGErI7XHgkcTeWdZd146NNu1s4HnaHonLeNTguKnL2Urqvj28UJj6Gqw==}
+  '@next/swc-linux-arm64-musl@15.4.6':
+    resolution: {integrity: sha512-XBbuQddtY1p5FGPc2naMO0kqs4YYtLYK/8aPausI5lyOjr4J77KTG9mtlU4P3NwkLI1+OjsPzKVvSJdMs3cFaw==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
 
-  '@next/swc-linux-x64-gnu@15.4.5':
-    resolution: {integrity: sha512-N6Mgdxe/Cn2K1yMHge6pclffkxzbSGOydXVKYOjYqQXZYjLCfN/CuFkaYDeDHY2VBwSHyM2fUjYBiQCIlxIKDA==}
+  '@next/swc-linux-x64-gnu@15.4.6':
+    resolution: {integrity: sha512-+WTeK7Qdw82ez3U9JgD+igBAP75gqZ1vbK6R8PlEEuY0OIe5FuYXA4aTjL811kWPf7hNeslD4hHK2WoM9W0IgA==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
 
-  '@next/swc-linux-x64-musl@15.4.5':
-    resolution: {integrity: sha512-YZ3bNDrS8v5KiqgWE0xZQgtXgCTUacgFtnEgI4ccotAASwSvcMPDLua7BWLuTfucoRv6mPidXkITJLd8IdJplQ==}
+  '@next/swc-linux-x64-musl@15.4.6':
+    resolution: {integrity: sha512-XP824mCbgQsK20jlXKrUpZoh/iO3vUWhMpxCz8oYeagoiZ4V0TQiKy0ASji1KK6IAe3DYGfj5RfKP6+L2020OQ==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
 
-  '@next/swc-win32-arm64-msvc@15.4.5':
-    resolution: {integrity: sha512-9Wr4t9GkZmMNcTVvSloFtjzbH4vtT4a8+UHqDoVnxA5QyfWe6c5flTH1BIWPGNWSUlofc8dVJAE7j84FQgskvQ==}
+  '@next/swc-win32-arm64-msvc@15.4.6':
+    resolution: {integrity: sha512-FxrsenhUz0LbgRkNWx6FRRJIPe/MI1JRA4W4EPd5leXO00AZ6YU8v5vfx4MDXTvN77lM/EqsE3+6d2CIeF5NYg==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [win32]
 
-  '@next/swc-win32-x64-msvc@15.4.5':
-    resolution: {integrity: sha512-voWk7XtGvlsP+w8VBz7lqp8Y+dYw/MTI4KeS0gTVtfdhdJ5QwhXLmNrndFOin/MDoCvUaLWMkYKATaCoUkt2/A==}
+  '@next/swc-win32-x64-msvc@15.4.6':
+    resolution: {integrity: sha512-T4ufqnZ4u88ZheczkBTtOF+eKaM14V8kbjud/XrAakoM5DKQWjW09vD6B9fsdsWS2T7D5EY31hRHdta7QKWOng==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
@@ -3350,8 +3350,8 @@ packages:
     resolution: {integrity: sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ==}
     engines: {node: '>= 14'}
 
-  ai@5.0.4:
-    resolution: {integrity: sha512-nizyqRxFlJShCAh/xPqor9EYpuaiGqCcYqau9A2GaSL+di+Qf6pA+Hos5x1orlodmT+EciZfoC2Sq+I12OmIUg==}
+  ai@5.0.5:
+    resolution: {integrity: sha512-NPQ8Yv4lR7o/1rM+HQ0JT18zKxVFy/DrFDpvxlBQqmemSwsf3FlLNTK0asWXo9YtDAc0BOFL/y4kB56Hffi4yg==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4
@@ -5701,8 +5701,8 @@ packages:
       react: ^16.8 || ^17 || ^18 || ^19 || ^19.0.0-rc
       react-dom: ^16.8 || ^17 || ^18 || ^19 || ^19.0.0-rc
 
-  next@15.4.5:
-    resolution: {integrity: sha512-nJ4v+IO9CPmbmcvsPebIoX3Q+S7f6Fu08/dEWu0Ttfa+wVwQRh9epcmsyCPjmL2b8MxC+CkBR97jgDhUUztI3g==}
+  next@15.4.6:
+    resolution: {integrity: sha512-us++E/Q80/8+UekzB3SAGs71AlLDsadpFMXVNM/uQ0BMwsh9m3mr0UNQIfjKed8vpWXsASe+Qifrnu1oLIcKEQ==}
     engines: {node: ^18.18.0 || ^19.8.0 || >= 20.0.0}
     hasBin: true
     peerDependencies:
@@ -6171,8 +6171,8 @@ packages:
       react: '*'
       react-native: '*'
 
-  react-native-gesture-handler@2.27.2:
-    resolution: {integrity: sha512-+kNaY2m7uQu5+5ls8os6z92DTk9expsEAYsaPv30n08mrqX2r64G8iVGDwNWzZcId54+P7RlDnhyszTql0sQ0w==}
+  react-native-gesture-handler@2.28.0:
+    resolution: {integrity: sha512-0msfJ1vRxXKVgTgvL+1ZOoYw3/0z1R+Ked0+udoJhyplC2jbVKIJ8Z1bzWdpQRCV3QcQ87Op0zJVE5DhKK2A0A==}
     peerDependencies:
       react: '*'
       react-native: '*'
@@ -7225,7 +7225,7 @@ snapshots:
 
   '@0no-co/graphql.web@1.1.2': {}
 
-  '@ai-sdk/gateway@1.0.2(zod@4.0.15)':
+  '@ai-sdk/gateway@1.0.3(zod@4.0.15)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
       '@ai-sdk/provider-utils': 3.0.1(zod@4.0.15)
@@ -7243,10 +7243,10 @@ snapshots:
     dependencies:
       json-schema: 0.4.0
 
-  '@ai-sdk/react@2.0.4(react@19.1.1)(zod@4.0.15)':
+  '@ai-sdk/react@2.0.5(react@19.1.1)(zod@4.0.15)':
     dependencies:
       '@ai-sdk/provider-utils': 3.0.1(zod@4.0.15)
-      ai: 5.0.4(zod@4.0.15)
+      ai: 5.0.5(zod@4.0.15)
       react: 19.1.1
       swr: 2.3.4(react@19.1.1)
       throttleit: 2.1.0
@@ -8999,34 +8999,34 @@ snapshots:
       - acorn
       - supports-color
 
-  '@next/env@15.4.5': {}
+  '@next/env@15.4.6': {}
 
   '@next/eslint-plugin-next@15.3.5':
     dependencies:
       fast-glob: 3.3.1
 
-  '@next/swc-darwin-arm64@15.4.5':
+  '@next/swc-darwin-arm64@15.4.6':
     optional: true
 
-  '@next/swc-darwin-x64@15.4.5':
+  '@next/swc-darwin-x64@15.4.6':
     optional: true
 
-  '@next/swc-linux-arm64-gnu@15.4.5':
+  '@next/swc-linux-arm64-gnu@15.4.6':
     optional: true
 
-  '@next/swc-linux-arm64-musl@15.4.5':
+  '@next/swc-linux-arm64-musl@15.4.6':
     optional: true
 
-  '@next/swc-linux-x64-gnu@15.4.5':
+  '@next/swc-linux-x64-gnu@15.4.6':
     optional: true
 
-  '@next/swc-linux-x64-musl@15.4.5':
+  '@next/swc-linux-x64-musl@15.4.6':
     optional: true
 
-  '@next/swc-win32-arm64-msvc@15.4.5':
+  '@next/swc-win32-arm64-msvc@15.4.6':
     optional: true
 
-  '@next/swc-win32-x64-msvc@15.4.5':
+  '@next/swc-win32-x64-msvc@15.4.6':
     optional: true
 
   '@nodelib/fs.scandir@2.1.5':
@@ -10464,9 +10464,9 @@ snapshots:
 
   agent-base@7.1.4: {}
 
-  ai@5.0.4(zod@4.0.15):
+  ai@5.0.5(zod@4.0.15):
     dependencies:
-      '@ai-sdk/gateway': 1.0.2(zod@4.0.15)
+      '@ai-sdk/gateway': 1.0.3(zod@4.0.15)
       '@ai-sdk/provider': 2.0.0
       '@ai-sdk/provider-utils': 3.0.1(zod@4.0.15)
       '@opentelemetry/api': 1.9.0
@@ -11942,7 +11942,7 @@ snapshots:
   fsevents@2.3.3:
     optional: true
 
-  fumadocs-core@15.6.9(@types/react@19.1.9)(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
+  fumadocs-core@15.6.9(@types/react@19.1.9)(next@15.4.6(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
     dependencies:
       '@formatjs/intl-localematcher': 0.6.1
       '@orama/orama': 3.1.11
@@ -11963,20 +11963,20 @@ snapshots:
       unist-util-visit: 5.0.0
     optionalDependencies:
       '@types/react': 19.1.9
-      next: 15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      next: 15.4.6(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       react: 19.1.1
       react-dom: 19.1.1(react@19.1.1)
     transitivePeerDependencies:
       - supports-color
 
-  fumadocs-mdx@11.7.3(acorn@8.15.0)(fumadocs-core@15.6.9(@types/react@19.1.9)(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react@19.1.1):
+  fumadocs-mdx@11.7.3(acorn@8.15.0)(fumadocs-core@15.6.9(@types/react@19.1.9)(next@15.4.6(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(next@15.4.6(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react@19.1.1):
     dependencies:
       '@mdx-js/mdx': 3.1.0(acorn@8.15.0)
       '@standard-schema/spec': 1.0.0
       chokidar: 4.0.3
       esbuild: 0.25.8
       estree-util-value-to-estree: 3.4.0
-      fumadocs-core: 15.6.9(@types/react@19.1.9)(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      fumadocs-core: 15.6.9(@types/react@19.1.9)(next@15.4.6(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       js-yaml: 4.1.0
       lru-cache: 11.1.0
       picocolors: 1.1.1
@@ -11985,13 +11985,13 @@ snapshots:
       unist-util-visit: 5.0.0
       zod: 4.0.15
     optionalDependencies:
-      next: 15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      next: 15.4.6(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       react: 19.1.1
     transitivePeerDependencies:
       - acorn
       - supports-color
 
-  fumadocs-ui@15.6.9(@types/react-dom@19.1.7(@types/react@19.1.9))(@types/react@19.1.9)(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(tailwindcss@4.1.11):
+  fumadocs-ui@15.6.9(@types/react-dom@19.1.7(@types/react@19.1.9))(@types/react@19.1.9)(next@15.4.6(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(tailwindcss@4.1.11):
     dependencies:
       '@radix-ui/react-accordion': 1.2.11(@types/react-dom@19.1.7(@types/react@19.1.9))(@types/react@19.1.9)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       '@radix-ui/react-collapsible': 1.1.11(@types/react-dom@19.1.7(@types/react@19.1.9))(@types/react@19.1.9)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
@@ -12004,7 +12004,7 @@ snapshots:
       '@radix-ui/react-slot': 1.2.3(@types/react@19.1.9)(react@19.1.1)
       '@radix-ui/react-tabs': 1.1.12(@types/react-dom@19.1.7(@types/react@19.1.9))(@types/react@19.1.9)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       class-variance-authority: 0.7.1
-      fumadocs-core: 15.6.9(@types/react@19.1.9)(next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      fumadocs-core: 15.6.9(@types/react@19.1.9)(next@15.4.6(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       lodash.merge: 4.6.2
       next-themes: 0.4.6(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       postcss-selector-parser: 7.1.0
@@ -12015,7 +12015,7 @@ snapshots:
       tailwind-merge: 3.3.1
     optionalDependencies:
       '@types/react': 19.1.9
-      next: 15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      next: 15.4.6(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       tailwindcss: 4.1.11
     transitivePeerDependencies:
       - '@mixedbread/sdk'
@@ -13458,9 +13458,9 @@ snapshots:
       react: 19.1.1
       react-dom: 19.1.1(react@19.1.1)
 
-  next@15.4.5(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
+  next@15.4.6(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
     dependencies:
-      '@next/env': 15.4.5
+      '@next/env': 15.4.6
       '@swc/helpers': 0.5.15
       caniuse-lite: 1.0.30001727
       postcss: 8.4.31
@@ -13468,14 +13468,14 @@ snapshots:
       react-dom: 19.1.1(react@19.1.1)
       styled-jsx: 5.1.6(react@19.1.1)
     optionalDependencies:
-      '@next/swc-darwin-arm64': 15.4.5
-      '@next/swc-darwin-x64': 15.4.5
-      '@next/swc-linux-arm64-gnu': 15.4.5
-      '@next/swc-linux-arm64-musl': 15.4.5
-      '@next/swc-linux-x64-gnu': 15.4.5
-      '@next/swc-linux-x64-musl': 15.4.5
-      '@next/swc-win32-arm64-msvc': 15.4.5
-      '@next/swc-win32-x64-msvc': 15.4.5
+      '@next/swc-darwin-arm64': 15.4.6
+      '@next/swc-darwin-x64': 15.4.6
+      '@next/swc-linux-arm64-gnu': 15.4.6
+      '@next/swc-linux-arm64-musl': 15.4.6
+      '@next/swc-linux-x64-gnu': 15.4.6
+      '@next/swc-linux-x64-musl': 15.4.6
+      '@next/swc-win32-arm64-msvc': 15.4.6
+      '@next/swc-win32-x64-msvc': 15.4.6
       '@opentelemetry/api': 1.9.0
       sharp: 0.34.3
     transitivePeerDependencies:
@@ -13936,7 +13936,7 @@ snapshots:
       react: 19.1.1
       react-native: 0.80.2(@babel/core@7.28.0)(@types/react@19.1.9)(react@19.1.1)
 
-  react-native-gesture-handler@2.27.2(react-native@0.80.2(@babel/core@7.28.0)(@types/react@19.1.9)(react@19.1.1))(react@19.1.1):
+  react-native-gesture-handler@2.28.0(react-native@0.80.2(@babel/core@7.28.0)(@types/react@19.1.9)(react@19.1.1))(react@19.1.1):
     dependencies:
       '@egjs/hammerjs': 2.0.17
       hoist-non-react-statics: 3.3.2
