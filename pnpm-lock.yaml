@@ -58,8 +58,8 @@ catalogs:
       specifier: ^5.9.2
       version: 5.9.2
     zod:
-      specifier: ^4.0.16
-      version: 4.0.16
+      specifier: ^4.0.17
+      version: 4.0.17
 
 importers:
 
@@ -203,7 +203,7 @@ importers:
     dependencies:
       '@ai-sdk/react':
         specifier: ^2.0.8
-        version: 2.0.8(react@19.1.1)(zod@4.0.16)
+        version: 2.0.8(react@19.1.1)(zod@4.0.17)
       '@repo/api':
         specifier: workspace:^
         version: link:../../packages/api
@@ -227,7 +227,7 @@ importers:
         version: 11.4.4(@tanstack/react-query@5.84.2(react@19.1.1))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.2))(typescript@5.9.2))(@trpc/server@11.4.4(typescript@5.9.2))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(typescript@5.9.2)
       ai:
         specifier: ^5.0.8
-        version: 5.0.8(zod@4.0.16)
+        version: 5.0.8(zod@4.0.17)
       fumadocs-core:
         specifier: ^15.6.9
         version: 15.6.9(@types/react@19.1.9)(next@15.4.6(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
@@ -251,7 +251,7 @@ importers:
         version: 2.2.2
       zod:
         specifier: 'catalog:'
-        version: 4.0.16
+        version: 4.0.17
     devDependencies:
       '@kyh/eslint-config':
         specifier: 'catalog:'
@@ -309,7 +309,7 @@ importers:
         version: 2.2.2
       zod:
         specifier: 'catalog:'
-        version: 4.0.16
+        version: 4.0.17
     devDependencies:
       '@kyh/eslint-config':
         specifier: 'catalog:'
@@ -352,7 +352,7 @@ importers:
         version: 19.1.1
       zod:
         specifier: 'catalog:'
-        version: 4.0.16
+        version: 4.0.17
     devDependencies:
       '@faker-js/faker':
         specifier: ^9.9.0
@@ -449,7 +449,7 @@ importers:
         version: 1.1.2(@types/react-dom@19.1.7(@types/react@19.1.9))(@types/react@19.1.9)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       zod:
         specifier: 'catalog:'
-        version: 4.0.16
+        version: 4.0.17
     devDependencies:
       '@kyh/eslint-config':
         specifier: 'catalog:'
@@ -7207,8 +7207,8 @@ packages:
     peerDependencies:
       zod: ^3.24.1
 
-  zod@4.0.16:
-    resolution: {integrity: sha512-Djo/cM339grjI7/HmN+ixYO2FzEMcWr/On50UlQ/RjrWK1I/hPpWhpC76heCptnRFpH0LMwrEbUY50HDc0V8wg==}
+  zod@4.0.17:
+    resolution: {integrity: sha512-1PHjlYRevNxxdy2JZ8JcNAw7rX8V9P1AKkP+x/xZfxB0K5FYfuV+Ug6P/6NVSR2jHQ+FzDDoDHS04nYUsOIyLQ==}
 
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
@@ -7217,33 +7217,33 @@ snapshots:
 
   '@0no-co/graphql.web@1.1.2': {}
 
-  '@ai-sdk/gateway@1.0.4(zod@4.0.16)':
+  '@ai-sdk/gateway@1.0.4(zod@4.0.17)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.1(zod@4.0.16)
-      zod: 4.0.16
+      '@ai-sdk/provider-utils': 3.0.1(zod@4.0.17)
+      zod: 4.0.17
 
-  '@ai-sdk/provider-utils@3.0.1(zod@4.0.16)':
+  '@ai-sdk/provider-utils@3.0.1(zod@4.0.17)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
       '@standard-schema/spec': 1.0.0
       eventsource-parser: 3.0.3
-      zod: 4.0.16
-      zod-to-json-schema: 3.24.6(zod@4.0.16)
+      zod: 4.0.17
+      zod-to-json-schema: 3.24.6(zod@4.0.17)
 
   '@ai-sdk/provider@2.0.0':
     dependencies:
       json-schema: 0.4.0
 
-  '@ai-sdk/react@2.0.8(react@19.1.1)(zod@4.0.16)':
+  '@ai-sdk/react@2.0.8(react@19.1.1)(zod@4.0.17)':
     dependencies:
-      '@ai-sdk/provider-utils': 3.0.1(zod@4.0.16)
-      ai: 5.0.8(zod@4.0.16)
+      '@ai-sdk/provider-utils': 3.0.1(zod@4.0.17)
+      ai: 5.0.8(zod@4.0.17)
       react: 19.1.1
       swr: 2.3.4(react@19.1.1)
       throttleit: 2.1.0
     optionalDependencies:
-      zod: 4.0.16
+      zod: 4.0.17
 
   '@alloc/quick-lru@5.2.0': {}
 
@@ -10455,13 +10455,13 @@ snapshots:
 
   agent-base@7.1.4: {}
 
-  ai@5.0.8(zod@4.0.16):
+  ai@5.0.8(zod@4.0.17):
     dependencies:
-      '@ai-sdk/gateway': 1.0.4(zod@4.0.16)
+      '@ai-sdk/gateway': 1.0.4(zod@4.0.17)
       '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.1(zod@4.0.16)
+      '@ai-sdk/provider-utils': 3.0.1(zod@4.0.17)
       '@opentelemetry/api': 1.9.0
-      zod: 4.0.16
+      zod: 4.0.17
 
   ajv-formats@2.1.1(ajv@8.17.1):
     optionalDependencies:
@@ -11974,7 +11974,7 @@ snapshots:
       tinyexec: 1.0.1
       tinyglobby: 0.2.14
       unist-util-visit: 5.0.0
-      zod: 4.0.16
+      zod: 4.0.17
     optionalDependencies:
       next: 15.4.6(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       react: 19.1.1
@@ -15133,10 +15133,10 @@ snapshots:
 
   yocto-queue@0.1.0: {}
 
-  zod-to-json-schema@3.24.6(zod@4.0.16):
+  zod-to-json-schema@3.24.6(zod@4.0.17):
     dependencies:
-      zod: 4.0.16
+      zod: 4.0.17
 
-  zod@4.0.16: {}
+  zod@4.0.17: {}
 
   zwitch@2.0.4: {}
