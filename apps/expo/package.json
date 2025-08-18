@@ -39,13 +39,13 @@
     "react-native-gesture-handler": "^2.28.0",
     "react-native-reanimated": "^3.19.1",
     "react-native-safe-area-context": "^5.6.0",
-    "react-native-screens": "^4.13.1",
+    "react-native-screens": "^4.14.1",
     "superjson": "catalog:"
   },
   "devDependencies": {
-    "@babel/core": "^7.28.0",
-    "@babel/preset-env": "^7.28.0",
-    "@babel/runtime": "^7.28.2",
+    "@babel/core": "^7.28.3",
+    "@babel/preset-env": "^7.28.3",
+    "@babel/runtime": "^7.28.3",
     "@kyh/eslint-config": "catalog:",
     "@kyh/prettier-config": "catalog:",
     "@kyh/tsconfig": "catalog:",
