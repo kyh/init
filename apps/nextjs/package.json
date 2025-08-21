@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "postinstall": "fumadocs-mdx",
-    "build": "pnpm with-env next build --turbo",
+    "build": "pnpm with-env next build --turbopack",
     "clean": "git clean -xdf .cache .next .turbo node_modules",
-    "dev": "pnpm with-env next dev --turbo",
+    "dev": "pnpm with-env next dev --turbopack",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
     "start": "pnpm with-env next start",
