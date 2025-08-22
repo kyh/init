@@ -17,7 +17,7 @@
   "prettier": "@acme/prettier-config",
   "dependencies": {
     "@expo/metro-config": "^0.20.17",
-    "@shopify/flash-list": "^1.8.3",
+    "@shopify/flash-list": "^2.0.3",
     "@tanstack/react-query": "catalog:",
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
@@ -35,9 +35,9 @@
     "nativewind": "^4.1.23",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "react-native": "^0.80.2",
+    "react-native": "^0.81.0",
     "react-native-gesture-handler": "^2.28.0",
-    "react-native-reanimated": "^3.19.1",
+    "react-native-reanimated": "^4.0.2",
     "react-native-safe-area-context": "^5.6.1",
     "react-native-screens": "^4.15.2",
     "superjson": "catalog:"
