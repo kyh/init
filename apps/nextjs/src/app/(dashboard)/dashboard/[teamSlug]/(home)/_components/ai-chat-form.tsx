@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import {
   AIConversation,
@@ -65,14 +65,14 @@ export const AIChatForm = ({ teamSlug }: AIFormProps) => {
           {messages.map((message) => (
             <AIMessage from={message.role} key={message.id}>
               <AIMessageContent>
-                {message.parts.map((part) => {
-                  if (part.type === "text") {
-                    if (message.role === "assistant") {
-                      return <AIResponse>{part.text}</AIResponse>;
-                    }
-                    return <>{part.text}</>;
+                {message.parts.map((part, index) => {
+                  switch (part.type) {
+                    case "text":
+                      if (message.role === "assistant") {
+                        return <AIResponse key={index}>{part.text}</AIResponse>;
+                      }
+                      return <Fragment key={index}>{part.text}</Fragment>;
                   }
-                  return null;
                 })}
               </AIMessageContent>
             </AIMessage>

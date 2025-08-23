@@ -10,19 +10,19 @@ const items = [
     id: "radio-light",
     value: "light",
     label: "Light",
-    image: "/profile/ui-light.webp",
+    image: "/assets/ui-light.webp",
   },
   {
     id: "radio-dark",
     value: "dark",
     label: "Dark",
-    image: "/profile/ui-dark.webp",
+    image: "/assets/ui-dark.webp",
   },
   {
     id: "radio-system",
     value: "system",
     label: "System",
-    image: "/profile/ui-system.webp",
+    image: "/assets/ui-system.webp",
   },
 ];
 
@@ -51,7 +51,7 @@ export const AppearanceForm = () => {
             alt={item.label}
             width={120}
             height={120}
-            className="border-input ring-offset-background peer-[:focus-visible]:ring-ring/70 peer-data-[state=checked]:border-ring peer-data-[state=checked]:bg-accent relative overflow-hidden rounded-lg border shadow-sm shadow-black/[.04] transition-colors peer-[:focus-visible]:ring-2 peer-[:focus-visible]:ring-offset-2 peer-data-[disabled]:cursor-not-allowed peer-data-[disabled]:opacity-50"
+            className="border-input ring-offset-background peer-[:focus-visible]:ring-ring/70 peer-data-[state=checked]:border-ring peer-data-[state=checked]:bg-accent relative overflow-hidden rounded-lg border shadow-sm shadow-black/[.04] transition-colors peer-data-[disabled]:cursor-not-allowed peer-data-[disabled]:opacity-50 peer-[:focus-visible]:ring-2 peer-[:focus-visible]:ring-offset-2"
           />
           <span className="peer-data-[state=unchecked]:text-muted-foreground/70 group mt-2 flex items-center gap-1">
             <Check
