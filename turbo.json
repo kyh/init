@@ -42,7 +42,10 @@
     "STRIPE_WEBHOOK_SECRET",
     "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
     "OPENAI_API_KEY",
-    "PORT"
+    "PORT",
+    "BETTER_AUTH_SECRET",
+    "GITHUB_CLIENT_ID",
+    "GITHUB_CLIENT_SECRET"
   ],
   "globalPassThroughEnv": [
     "NODE_ENV",
@@ -50,6 +53,7 @@
     "VERCEL",
     "VERCEL_ENV",
     "VERCEL_URL",
+    "VERCEL_PROJECT_PRODUCTION_URL",
     "npm_lifecycle_event"
   ]
 }
