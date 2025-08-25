@@ -8,7 +8,7 @@ import { user } from "./schema-auth";
 
 export const waitlist = pgTable("waitlist", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
-  userId: t.uuid().references(() => user.id),
+  userId: t.text().references(() => user.id),
   source: t.text(),
   email: t.text(),
 }));
