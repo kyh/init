@@ -1,5 +1,6 @@
 "use client";
 
+import type { User } from "better-auth";
 import type { Invitation, Member, Organization } from "better-auth/plugins";
 import { useMemo } from "react";
 import { alertDialog } from "@repo/ui/alert-dialog";
@@ -24,10 +25,12 @@ import { MoreHorizontalIcon } from "lucide-react";
 import type { Session } from "@repo/api/auth/auth";
 import type { ColumnDef } from "@tanstack/react-table";
 
+type MemberWithUser = Member & { user: User };
+
 type MembersTableProps = {
   user: Session["user"];
   organization: Organization & {
-    members?: Member[];
+    members?: MemberWithUser[];
     invitations?: Invitation[];
   };
 };
@@ -66,7 +69,7 @@ export const getColumns = ({
   userId,
   userRole,
   organizationId,
-}: getColumnsParams): ColumnDef<Member>[] => [
+}: getColumnsParams): ColumnDef<MemberWithUser>[] => [
   {
     header: "Name",
     cell: ({ row }) => {
@@ -89,8 +92,8 @@ export const getColumns = ({
   {
     header: "Email",
     cell: ({ row }) => {
-      // TODO: Get user email from user data when available
-      return "-";
+      const member = row.original;
+      return member.user.email;
     },
   },
   {
@@ -123,7 +126,7 @@ const ActionsDropdown = ({
   userRole,
   organizationId,
 }: {
-  member: Member;
+  member: MemberWithUser;
   userId: string;
   userRole: string | undefined;
   organizationId: string;
@@ -235,7 +238,6 @@ const ActionsDropdown = ({
   );
 };
 
-const getDisplayName = (member: Member) => {
-  // TODO: Get user name from user data when available
-  return member.userId;
+const getDisplayName = (member: MemberWithUser) => {
+  return member.user.name;
 };

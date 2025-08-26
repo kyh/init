@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getOrganization, getSession } from "@repo/api/auth/auth";
 
 import { PageHeader } from "@/components/header";
+import { caller } from "@/trpc/server";
 import { InvitationsTable } from "./_components/invitations-table";
 import { InviteMembersDialog } from "./_components/invite-members-form";
 import { MembersTable } from "./_components/members-table";
@@ -28,6 +29,15 @@ const Page = async (props: PageProps) => {
     return redirect(`/dashboard/account`);
   }
 
+  const memberUsers = await caller.organization.listMemberUser({
+    userIds: organization.members.map((member) => member.userId),
+  });
+  const usersMap = new Map(memberUsers.users.map((user) => [user.id, user]));
+  const members = organization.members.map((member) => ({
+    ...member,
+    user: usersMap.get(member.userId)!,
+  }));
+
   return (
     <main className="flex flex-1 flex-col px-5">
       <PageHeader>Organization Members</PageHeader>
@@ -42,7 +52,10 @@ const Page = async (props: PageProps) => {
             </p>
           </div>
           <div className="md:col-span-2">
-            <MembersTable user={session.user} organization={organization} />
+            <MembersTable
+              user={session.user}
+              organization={{ ...organization, members }}
+            />
           </div>
         </div>
         <div className="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 py-8 md:grid-cols-3">

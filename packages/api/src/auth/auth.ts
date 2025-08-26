@@ -23,7 +23,7 @@ const authConfig = {
     provider: "pg",
   }),
   baseURL: baseUrl,
-  secret: process.env.BETTER_AUTH_SECRET ?? "",
+  secret: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
   plugins: [
     oAuthProxy({
       currentURL: baseUrl,

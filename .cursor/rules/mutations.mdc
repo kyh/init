@@ -12,48 +12,26 @@ alwaysApply: false
 
 ## Zod Schema
 
-Define the crud operations as a Zod schema in the `packages/api/src/[entity]` folder. Name the file `[entity]-schema.ts`.
+Define the crud operations as a Zod schema using `drizzle-zod` in the `packages/api/src/[entity]` folder. Name the file `[entity]-schema.ts`.
 
 Follow the example below to create all api schemas:
 
 ```ts
 // packages/api/src/note/note-schema.ts
-import { z } from "zod";
+import { note } from "@repo/db/drizzle-schema";
+import { createInsertSchema } from "drizzle-zod";
 
-/**
- * Create schema
- */
-export const createNoteInput = z.object({
-  title: z.string().min(1),
-  content: z.string().min(1),
-});
-export type CreateNoteInput = z.infer<typeof createNoteInput>;
+export const createNoteInput = createInsertSchema(note);
+export type CreateNoteInput = typeof createNoteInput.$inferInsert;
 
-/**
- * Update schema
- */
-export const updateNoteInput = z.object({
-  id: z.string().uuid(),
-  title: z.string().min(1),
-  content: z.string().min(1),
-});
-export type UpdateNoteInput = z.infer<typeof updateNoteInput>;
+export const updateNoteInput = createInsertSchema(note);
+export type UpdateNoteInput = typeof updateNoteInput.$inferInsert;
 
-/**
- * Delete schema
- */
-export const deleteNoteInput = z.object({
-  id: z.string().uuid(),
-});
-export type DeleteNoteInput = z.infer<typeof deleteNoteInput>;
+export const deleteNoteInput = createInsertSchema(note);
+export type DeleteNoteInput = typeof deleteNoteInput.$inferInsert;
 
-/**
- * Get schema
- */
-export const getNoteInput = z.object({
-  id: z.string().uuid(),
-});
-export type GetNoteInput = z.infer<typeof getNoteInput>;
+export const getNoteInput = createInsertSchema(note);
+export type GetNoteInput = typeof getNoteInput.$inferInsert;
 ```
 
 ## TRPC Route
