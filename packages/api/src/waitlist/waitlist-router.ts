@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, sql } from "@repo/db";
-import { waitlist } from "@repo/db/schema";
+import { waitlist } from "@repo/db/drizzle-schema";
 
 import type { SQL } from "@repo/db";
 import {

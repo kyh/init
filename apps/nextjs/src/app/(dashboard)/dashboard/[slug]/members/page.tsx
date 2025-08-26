@@ -30,7 +30,7 @@ const Page = async (props: PageProps) => {
 
   return (
     <main className="flex flex-1 flex-col px-5">
-      <PageHeader>Team Members</PageHeader>
+      <PageHeader>Organization Members</PageHeader>
       <section className="divide-border divide-y">
         <div className="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 py-8 md:grid-cols-3">
           <div>
@@ -38,7 +38,7 @@ const Page = async (props: PageProps) => {
               Members
             </h2>
             <p className="text-muted-foreground mt-1 text-sm leading-6">
-              Manage the members of your team.
+              Manage the members of your organization.
             </p>
           </div>
           <div className="md:col-span-2">
@@ -51,7 +51,7 @@ const Page = async (props: PageProps) => {
               Pending Invites
             </h2>
             <p className="text-muted-foreground mt-1 text-sm leading-6">
-              Manage the pending invitations to your team.
+              Manage the pending invitations to your organization.
             </p>
           </div>
           <div className="space-y-3 md:col-span-2">

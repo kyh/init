@@ -4,7 +4,7 @@
 import { relations } from "drizzle-orm";
 import { pgTable } from "drizzle-orm/pg-core";
 
-import { user } from "./schema-auth";
+import { user } from "./drizzle-schema-auth";
 
 export const waitlist = pgTable("waitlist", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),

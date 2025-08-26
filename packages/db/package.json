@@ -27,7 +27,7 @@
     "push-remote": "dotenv -e ../../.env.production.local -- drizzle-kit push",
     "studio": "pnpm with-env drizzle-kit studio",
     "with-env": "dotenv -e ../../.env --",
-    "generate-auth-schema": "pnpm with-env pnpx @better-auth/cli generate --config ../api/src/auth/auth.ts --output ./src/schema-auth.ts"
+    "generate-auth-schema": "pnpm with-env pnpx @better-auth/cli generate --config ../api/src/auth/auth.ts --output ./src/drizzle-schema-auth.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.7.0",

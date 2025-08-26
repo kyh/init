@@ -160,10 +160,10 @@ const ActionsDropdown = ({
     });
   };
 
-  const onRemoveFromTeam = () => {
+  const onRemoveFromOrganization = () => {
     const displayName = getDisplayName(member);
-    alertDialog.open(`Remove ${displayName} from the team?`, {
-      description: `You are about to remove ${displayName} from the team. They will lose access to this workspace.`,
+    alertDialog.open(`Remove ${displayName} from the organization?`, {
+      description: `You are about to remove ${displayName} from the organization. They will lose access to this organization.`,
       action: {
         label: "Remove",
         onClick: () => {
@@ -211,8 +211,8 @@ const ActionsDropdown = ({
         </DropdownMenuItem>
       ),
     !isMemberOwner && ( // Cannot remove owner
-      <DropdownMenuItem key="remove-member" onSelect={onRemoveFromTeam}>
-        Remove from Team
+      <DropdownMenuItem key="remove-member" onSelect={onRemoveFromOrganization}>
+        Remove from Organization
       </DropdownMenuItem>
     ),
   ].filter((action) => !!action);

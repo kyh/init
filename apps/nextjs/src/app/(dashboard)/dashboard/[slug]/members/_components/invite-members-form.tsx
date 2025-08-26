@@ -58,9 +58,10 @@ export const InviteMembersDialog = ({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Invite Members to your Team</DialogTitle>
+          <DialogTitle>Invite Members to your Organization</DialogTitle>
           <DialogDescription>
-            Invite members to your team by entering their email and role.
+            Invite members to your organization by entering their email and
+            role.
           </DialogDescription>
         </DialogHeader>
         <InviteMembersForm organizationId={organization.id} />
@@ -79,7 +80,7 @@ export const InviteMembersForm = ({
   const form = useForm({
     resolver: zodResolver(
       z.object({
-        teamInvitations: z.array(
+        organizationInvitations: z.array(
           z.object({
             email: z.email("Invalid email address"),
             role: z.enum(["owner", "admin", "member"]),
@@ -88,12 +89,12 @@ export const InviteMembersForm = ({
       }),
     ),
     defaultValues: {
-      teamInvitations: [createEmptyInviteModel()],
+      organizationInvitations: [createEmptyInviteModel()],
     },
   });
 
   const fieldArray = useFieldArray({
-    name: "teamInvitations",
+    name: "organizationInvitations",
     control: form.control,
   });
 
@@ -111,8 +112,10 @@ export const InviteMembersForm = ({
       <form onSubmit={handleInviteMembers}>
         <div className="flex flex-col gap-2">
           {fieldArray.fields.map((field, index) => {
-            const emailInputName = `teamInvitations.${index}.email` as const;
-            const roleInputName = `teamInvitations.${index}.role` as const;
+            const emailInputName =
+              `organizationInvitations.${index}.email` as const;
+            const roleInputName =
+              `organizationInvitations.${index}.role` as const;
 
             return (
               <div key={field.id} className="flex items-end gap-2">

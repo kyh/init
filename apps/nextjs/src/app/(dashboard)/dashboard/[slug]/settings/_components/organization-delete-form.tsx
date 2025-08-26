@@ -3,6 +3,7 @@
 import type { Member, Organization } from "better-auth/plugins";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { authMetadataSchema } from "@repo/api/auth/auth-schema";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -45,16 +46,6 @@ export const OrganizationDeleteForm = ({
   const userIsOwner =
     organization.members.find((member) => member.userId === user.id)?.role ===
     "owner";
-
-  if (organization.metadata.personal) {
-    return (
-      <div className="flex flex-col gap-4">
-        <p className="text-muted-foreground text-sm">
-          You cannot delete your personal organization.
-        </p>
-      </div>
-    );
-  }
 
   if (userIsOwner) {
     return <Delete organization={organization} />;
@@ -128,7 +119,7 @@ const Delete = ({ organization }: DeleteProps) => {
             <Form {...form}>
               <form className="flex flex-col gap-4" onSubmit={handleDelete}>
                 <div className="flex flex-col gap-2">
-                  <div className="my-4 flex flex-col gap-2 border-2 border-red-500 p-4 text-sm text-red-500">
+                  <div className="mb-4 flex flex-col gap-2 border-2 border-red-500 p-4 text-sm text-red-500">
                     <div>
                       You are deleting the organization {organization.name}.
                       This action cannot be undone.

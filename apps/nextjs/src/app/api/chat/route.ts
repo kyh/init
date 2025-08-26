@@ -1,7 +1,6 @@
 import type { UIMessage } from "ai";
+import { getOrganization } from "@repo/api/auth/auth";
 import { convertToModelMessages, smoothStream, streamText } from "ai";
-
-import { caller } from "@/trpc/server";
 
 export const maxDuration = 30;
 
@@ -11,8 +10,10 @@ export async function POST(request: Request) {
     slug: string;
   };
 
-  // Ensure the team exists and the user has access to it
-  await caller.team.getTeam({ slug: slug });
+  const organization = await getOrganization({ organizationSlug: slug });
+  if (!organization) {
+    return new Response("Organization not found", { status: 404 });
+  }
 
   const result = streamText({
     model: "gpt-4o-mini",

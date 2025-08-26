@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getOrganization, getSession } from "@repo/api/auth/auth";
+import { authMetadataSchema } from "@repo/api/auth/auth-schema";
 
 import { PageHeader } from "@/components/header";
 import { OrganizationDeleteForm } from "./_components/organization-delete-form";
@@ -27,6 +28,8 @@ const Page = async (props: PageProps) => {
     return redirect(`/dashboard/account`);
   }
 
+  const authMetadata = authMetadataSchema.parse(organization.metadata ?? "{}");
+
   return (
     <main className="flex flex-1 flex-col px-5">
       <PageHeader>Organization Settings</PageHeader>
@@ -44,22 +47,24 @@ const Page = async (props: PageProps) => {
             <OrganizationProfileForm organization={organization} />
           </div>
         </div>
-        <div className="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 py-8 md:grid-cols-3">
-          <div>
-            <h2 className="text-primary text-base leading-7 font-light">
-              Danger Zone
-            </h2>
-            <p className="text-muted-foreground mt-1 text-sm leading-6">
-              This section contains actions that are irreversible
-            </p>
+        {!authMetadata.personal && (
+          <div className="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 py-8 md:grid-cols-3">
+            <div>
+              <h2 className="text-primary text-base leading-7 font-light">
+                Danger Zone
+              </h2>
+              <p className="text-muted-foreground mt-1 text-sm leading-6">
+                This section contains actions that are irreversible
+              </p>
+            </div>
+            <div className="md:col-span-2">
+              <OrganizationDeleteForm
+                user={session.user}
+                organization={organization}
+              />
+            </div>
           </div>
-          <div className="md:col-span-2">
-            <OrganizationDeleteForm
-              user={session.user}
-              organization={organization}
-            />
-          </div>
-        </div>
+        )}
       </section>
     </main>
   );

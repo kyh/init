@@ -1,6 +1,7 @@
 "use client";
 
 import type { Organization } from "better-auth/plugins/organization";
+import { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -129,6 +130,8 @@ type UserDropdownProps = {
 };
 
 const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
+  const [isOrganizationsDialogOpen, setIsOrganizationsDialogOpen] =
+    useState(false);
   const router = useRouter();
 
   const form = useForm({
@@ -151,15 +154,16 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
     });
   };
 
-  const handleCreateTeam = form.handleSubmit(async (data) => {
+  const handleCreateOrganization = form.handleSubmit(async (data) => {
     await authClient.organization.create({
       name: data.name,
       slug: slugify(data.name),
       keepCurrentActiveOrganization: false,
       fetchOptions: {
         onSuccess: (ctx) => {
+          setIsOrganizationsDialogOpen(false);
           router.push(`/dashboard/${ctx.data.slug}`);
-          toast.success("Team created successfully");
+          toast.success("Organization created successfully");
         },
         onError: (ctx) => {
           toast.error(ctx.error.message);
@@ -169,7 +173,10 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
   });
 
   return (
-    <Dialog>
+    <Dialog
+      open={isOrganizationsDialogOpen}
+      onOpenChange={setIsOrganizationsDialogOpen}
+    >
       <DropdownMenu>
         <DropdownMenuTrigger className="mt-auto cursor-pointer">
           <ProfileAvatar displayName={user.email} avatarUrl={undefined} />
@@ -195,13 +202,20 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuSub>
-              <DropdownMenuSubTrigger>Switch Teams</DropdownMenuSubTrigger>
-              <DropdownMenuSubContent>
+              <DropdownMenuSubTrigger>
+                Switch Organizations
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent className="max-h-[300px] max-w-56 overflow-y-auto">
                 {organizations.map((org) => (
                   <DropdownMenuItem key={org.id} asChild>
                     <Link
                       href={`/dashboard/${org.slug}`}
                       className="inline-flex w-full items-center font-normal"
+                      onClick={() => {
+                        void authClient.organization.setActive({
+                          organizationId: org.id,
+                        });
+                      }}
                     >
                       <ProfileAvatar
                         className="size-4"
@@ -218,11 +232,12 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
                     </Link>
                   </DropdownMenuItem>
                 ))}
+                <DropdownMenuSeparator />
                 <DialogTrigger asChild>
                   <DropdownMenuItem className="flex w-full gap-2" asChild>
                     <button type="button">
                       <PlusIcon className="size-4" />
-                      Create a Team
+                      Create a Organization
                     </button>
                   </DropdownMenuItem>
                 </DialogTrigger>
@@ -240,20 +255,20 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
       </DropdownMenu>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create Team</DialogTitle>
+          <DialogTitle>Create Organization</DialogTitle>
           <DialogDescription>
-            Create a new Team to manage your projects and members.
+            Create a new Organization to manage your projects and members.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={handleCreateTeam}>
+          <form onSubmit={handleCreateOrganization}>
             <div className="flex flex-col gap-4">
               <FormField
                 name="name"
                 render={({ field }) => {
                   return (
                     <FormItem>
-                      <FormLabel>Team Name</FormLabel>
+                      <FormLabel>Organization Name</FormLabel>
                       <FormControl>
                         <Input
                           required
@@ -270,7 +285,7 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
               />
               <div className="flex justify-end gap-2">
                 <Button loading={form.formState.isSubmitting}>
-                  Create Team
+                  Create Organization
                 </Button>
               </div>
             </div>

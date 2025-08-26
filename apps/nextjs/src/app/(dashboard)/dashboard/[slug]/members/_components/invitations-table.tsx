@@ -126,7 +126,7 @@ const ActionsDropdown = ({
 
   const onRemoveInvitation = () => {
     alertDialog.open(`Remove ${invitation.email}'s invite?`, {
-      description: `You are about to remove ${invitation.email}'s invite. This will revoke their access to the team.`,
+      description: `You are about to remove ${invitation.email}'s invite. This will revoke their access to the organization.`,
       action: {
         label: "Remove",
         onClick: () => {
