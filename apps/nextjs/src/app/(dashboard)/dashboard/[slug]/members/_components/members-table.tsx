@@ -3,6 +3,7 @@
 import type { User } from "better-auth";
 import type { Invitation, Member, Organization } from "better-auth/plugins";
 import { useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { alertDialog } from "@repo/ui/alert-dialog";
 import { ProfileAvatar } from "@repo/ui/avatar";
 import { Badge } from "@repo/ui/badge";
@@ -19,11 +20,13 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/dropdown-menu";
 import { AutoTable } from "@repo/ui/table";
+import { toast } from "@repo/ui/toast";
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { MoreHorizontalIcon } from "lucide-react";
 
 import type { Session } from "@repo/api/auth/auth";
 import type { ColumnDef } from "@tanstack/react-table";
+import { authClient } from "@/auth/auth-client";
 
 type MemberWithUser = Member & { user: User };
 
@@ -43,8 +46,8 @@ export const MembersTable = ({ user, organization }: MembersTableProps) => {
   )?.role;
 
   const columns = useMemo(() => {
-    return getColumns({ userId, userRole, organizationId: organization.id });
-  }, [userId, userRole, organization]);
+    return getColumns({ userId, userRole });
+  }, [userId, userRole]);
 
   const table = useReactTable({
     data: members,
@@ -62,13 +65,11 @@ export const MembersTable = ({ user, organization }: MembersTableProps) => {
 type getColumnsParams = {
   userId: string;
   userRole: string | undefined;
-  organizationId: string;
 };
 
 export const getColumns = ({
   userId,
   userRole,
-  organizationId,
 }: getColumnsParams): ColumnDef<MemberWithUser>[] => [
   {
     header: "Name",
@@ -114,7 +115,6 @@ export const getColumns = ({
         member={row.original}
         userId={userId}
         userRole={userRole}
-        organizationId={organizationId}
       />
     ),
   },
@@ -124,54 +124,54 @@ const ActionsDropdown = ({
   member,
   userId,
   userRole,
-  organizationId,
 }: {
   member: MemberWithUser;
   userId: string;
   userRole: string | undefined;
-  organizationId: string;
 }) => {
-  const isSelfOwner = userRole === "owner";
+  const router = useRouter();
   const isMemberSelf = member.userId === userId;
   const isMemberOwner = member.role === "owner";
+  const displayName = getDisplayName(member);
 
   const onChangeRole = (newRole: string) => {
-    const displayName = getDisplayName(member);
     alertDialog.open(`Change ${displayName}'s role?`, {
       description: `You are about to change ${displayName}'s role to ${newRole}. This may affect their permissions.`,
       action: {
         label: "Change",
-        onClick: () => {
-          // TODO: Implement role change using better-auth API
-          console.log("Change role to:", newRole);
-        },
-      },
-    });
-  };
-
-  const onTransferOwnership = () => {
-    const displayName = getDisplayName(member);
-    alertDialog.open(`Transfer ownership to ${displayName}?`, {
-      description: `You are about to transfer ownership to ${displayName}. You will lose your ownership permissions.`,
-      action: {
-        label: "Transfer",
-        onClick: () => {
-          // TODO: Implement ownership transfer using better-auth API
-          console.log("Transfer ownership to:", member.userId);
+        onClick: async () => {
+          try {
+            await authClient.organization.updateMemberRole({
+              memberId: member.id,
+              role: newRole as "owner" | "admin" | "member",
+            });
+            toast.success("Member role updated successfully");
+            router.refresh();
+          } catch (error) {
+            console.error("Failed to update member role:", error);
+            toast.error("Failed to update member role. Please try again.");
+          }
         },
       },
     });
   };
 
   const onRemoveFromOrganization = () => {
-    const displayName = getDisplayName(member);
     alertDialog.open(`Remove ${displayName} from the organization?`, {
       description: `You are about to remove ${displayName} from the organization. They will lose access to this organization.`,
       action: {
         label: "Remove",
-        onClick: () => {
-          // TODO: Implement member removal using better-auth API
-          console.log("Remove member:", member.userId);
+        onClick: async () => {
+          try {
+            await authClient.organization.removeMember({
+              memberIdOrEmail: member.id,
+            });
+            toast.success("Member removed successfully");
+            router.refresh();
+          } catch (error) {
+            console.error("Failed to remove member:", error);
+            toast.error("Failed to remove member. Please try again.");
+          }
         },
       },
     });
@@ -204,15 +204,6 @@ const ActionsDropdown = ({
         </DropdownMenuSubContent>
       </DropdownMenuSub>
     ),
-    isSelfOwner &&
-      !isMemberOwner && ( // Only owners can transfer ownership
-        <DropdownMenuItem
-          key="transfer-ownership"
-          onSelect={onTransferOwnership}
-        >
-          Transfer Ownership
-        </DropdownMenuItem>
-      ),
     !isMemberOwner && ( // Cannot remove owner
       <DropdownMenuItem key="remove-member" onSelect={onRemoveFromOrganization}>
         Remove from Organization

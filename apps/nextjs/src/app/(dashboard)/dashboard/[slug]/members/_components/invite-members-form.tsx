@@ -1,6 +1,7 @@
 "use client";
 
 import type { Organization } from "better-auth/plugins";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@repo/ui/button";
 import {
@@ -77,6 +78,7 @@ type InviteMembersFormProps = {
 export const InviteMembersForm = ({
   organizationId,
 }: InviteMembersFormProps) => {
+  const router = useRouter();
   const form = useForm({
     resolver: zodResolver(
       z.object({
@@ -99,12 +101,25 @@ export const InviteMembersForm = ({
   });
 
   const handleInviteMembers = form.handleSubmit(async (data) => {
-    // TODO: Implement invitation creation using better-auth API
-    // For now, just log the data
-    console.log("Invite data:", data);
+    try {
+      // Send invitations for each email/role combination
+      const invitationPromises = data.organizationInvitations.map((invite) =>
+        authClient.organization.inviteMember({
+          email: invite.email,
+          role: invite.role,
+          organizationId: organizationId,
+        }),
+      );
 
-    toast.success("Invitations sent successfully");
-    form.reset();
+      await Promise.all(invitationPromises);
+
+      toast.success("Invitations sent successfully");
+      form.reset();
+      router.refresh();
+    } catch (error) {
+      console.error("Failed to send invitations:", error);
+      toast.error("Failed to send invitations. Please try again.");
+    }
   });
 
   return (
