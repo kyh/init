@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation";
-import { getOrganization, getSession } from "@repo/api/auth/auth";
+import { getSession } from "@repo/api/auth/auth";
 
 import { PageHeader } from "@/components/header";
-import { caller } from "@/trpc/server";
 import { InvitationsTable } from "./_components/invitations-table";
 import { InviteMembersDialog } from "./_components/invite-members-form";
 import { MembersTable } from "./_components/members-table";
@@ -22,22 +21,6 @@ const Page = async (props: PageProps) => {
     return redirect(`/auth/login?nextPath=/dashboard/${slug}/members`);
   }
 
-  const organization = await getOrganization({
-    organizationSlug: slug,
-  });
-  if (!organization) {
-    return redirect(`/dashboard/account`);
-  }
-
-  const memberUsers = await caller.organization.listMemberUser({
-    userIds: organization.members.map((member) => member.userId),
-  });
-  const usersMap = new Map(memberUsers.users.map((user) => [user.id, user]));
-  const members = organization.members.map((member) => ({
-    ...member,
-    user: usersMap.get(member.userId)!,
-  }));
-
   return (
     <main className="flex flex-1 flex-col px-5">
       <PageHeader>Organization Members</PageHeader>
@@ -52,10 +35,7 @@ const Page = async (props: PageProps) => {
             </p>
           </div>
           <div className="md:col-span-2">
-            <MembersTable
-              user={session.user}
-              organization={{ ...organization, members }}
-            />
+            <MembersTable user={session.user} slug={slug} />
           </div>
         </div>
         <div className="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 py-8 md:grid-cols-3">
@@ -69,9 +49,9 @@ const Page = async (props: PageProps) => {
           </div>
           <div className="space-y-3 md:col-span-2">
             <div className="flex justify-end">
-              <InviteMembersDialog organization={organization} />
+              <InviteMembersDialog slug={slug} />
             </div>
-            <InvitationsTable user={session.user} organization={organization} />
+            <InvitationsTable user={session.user} slug={slug} />
           </div>
         </div>
       </section>

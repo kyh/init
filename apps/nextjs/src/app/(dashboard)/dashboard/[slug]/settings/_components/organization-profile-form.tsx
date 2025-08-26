@@ -1,6 +1,5 @@
 "use client";
 
-import type { Organization } from "better-auth/plugins";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { slugify } from "@repo/api/auth/utils";
@@ -18,16 +17,18 @@ import { toast } from "@repo/ui/toast";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { useOrganization } from "@/app/(dashboard)/_components/use-organization";
 import { authClient } from "@/auth/auth-client";
 
 type OrganizationProfileFormProps = {
-  organization: Organization;
+  slug: string;
 };
 
 export const OrganizationProfileForm = ({
-  organization,
+  slug,
 }: OrganizationProfileFormProps) => {
   const router = useRouter();
+  const { data: organization } = useOrganization(slug);
 
   const form = useForm({
     resolver: zodResolver(
@@ -38,7 +39,7 @@ export const OrganizationProfileForm = ({
     ),
     defaultValues: {
       name: organization.name,
-      slug: organization.slug || "",
+      slug: organization.slug,
     },
   });
 

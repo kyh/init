@@ -1,9 +1,6 @@
 "use client";
 
-import type { User } from "better-auth";
-import type { Invitation, Member, Organization } from "better-auth/plugins";
 import { useMemo } from "react";
-import { useRouter } from "next/navigation";
 import { alertDialog } from "@repo/ui/alert-dialog";
 import { ProfileAvatar } from "@repo/ui/avatar";
 import { Badge } from "@repo/ui/badge";
@@ -21,36 +18,90 @@ import {
 } from "@repo/ui/dropdown-menu";
 import { AutoTable } from "@repo/ui/table";
 import { toast } from "@repo/ui/toast";
+import { useQueryClient } from "@tanstack/react-query";
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { MoreHorizontalIcon } from "lucide-react";
 
+import type { MemberWithUser } from "@/app/(dashboard)/_components/use-organization";
 import type { Session } from "@repo/api/auth/auth";
 import type { ColumnDef } from "@tanstack/react-table";
+import { useOrganization } from "@/app/(dashboard)/_components/use-organization";
 import { authClient } from "@/auth/auth-client";
 
-type MemberWithUser = Member & { user: User };
-
 type MembersTableProps = {
+  slug: string;
   user: Session["user"];
-  organization: Organization & {
-    members?: MemberWithUser[];
-    invitations?: Invitation[];
-  };
 };
 
-export const MembersTable = ({ user, organization }: MembersTableProps) => {
+export const MembersTable = ({ user, slug }: MembersTableProps) => {
+  const queryClient = useQueryClient();
+  const { data: organization, queryKey } = useOrganization(slug);
   const userId = user.id;
-  const members = organization.members ?? [];
-  const userRole = members.find(
-    (member: Member) => member.userId === userId,
+  const userRole = organization.members.find(
+    (member) => member.userId === userId,
   )?.role;
 
   const columns = useMemo(() => {
-    return getColumns({ userId, userRole });
-  }, [userId, userRole]);
+    const columnDefs: ColumnDef<MemberWithUser>[] = [
+      {
+        header: "Name",
+        cell: ({ row }) => {
+          const member = row.original;
+          const displayName = getDisplayName(member);
+          const isSelf = member.userId === userId;
+
+          return (
+            <span className="flex items-center gap-4 text-left">
+              <ProfileAvatar
+                displayName={displayName}
+                avatarUrl={undefined} // TODO: Add avatar support when available
+              />
+              <span>{displayName}</span>
+              {isSelf && <Badge variant="outline">You</Badge>}
+            </span>
+          );
+        },
+      },
+      {
+        header: "Email",
+        cell: ({ row }) => {
+          const member = row.original;
+          return member.user.email;
+        },
+      },
+      {
+        header: "Role",
+        cell: ({ row }) => (
+          <Badge className="capitalize">{row.original.role}</Badge>
+        ),
+      },
+      {
+        header: "Joined at",
+        cell: ({ row }) =>
+          new Date(row.original.createdAt).toLocaleDateString(),
+      },
+      {
+        header: "",
+        id: "actions",
+        cell: ({ row }) => (
+          <ActionsDropdown
+            member={row.original}
+            userId={userId}
+            userRole={userRole}
+            onRemoveMember={() => queryClient.invalidateQueries({ queryKey })}
+            onUpdateMemberRole={() =>
+              queryClient.invalidateQueries({ queryKey })
+            }
+          />
+        ),
+      },
+    ];
+
+    return columnDefs;
+  }, [userId, userRole, queryClient, queryKey]);
 
   const table = useReactTable({
-    data: members,
+    data: organization.members,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
@@ -62,116 +113,67 @@ export const MembersTable = ({ user, organization }: MembersTableProps) => {
   );
 };
 
-type getColumnsParams = {
-  userId: string;
-  userRole: string | undefined;
-};
-
-export const getColumns = ({
-  userId,
-  userRole,
-}: getColumnsParams): ColumnDef<MemberWithUser>[] => [
-  {
-    header: "Name",
-    cell: ({ row }) => {
-      const member = row.original;
-      const displayName = getDisplayName(member);
-      const isSelf = member.userId === userId;
-
-      return (
-        <span className="flex items-center gap-4 text-left">
-          <ProfileAvatar
-            displayName={displayName}
-            avatarUrl={undefined} // TODO: Add avatar support when available
-          />
-          <span>{displayName}</span>
-          {isSelf && <Badge variant="outline">You</Badge>}
-        </span>
-      );
-    },
-  },
-  {
-    header: "Email",
-    cell: ({ row }) => {
-      const member = row.original;
-      return member.user.email;
-    },
-  },
-  {
-    header: "Role",
-    cell: ({ row }) => (
-      <Badge className="capitalize">{row.original.role}</Badge>
-    ),
-  },
-  {
-    header: "Joined at",
-    cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString(),
-  },
-  {
-    header: "",
-    id: "actions",
-    cell: ({ row }) => (
-      <ActionsDropdown
-        member={row.original}
-        userId={userId}
-        userRole={userRole}
-      />
-    ),
-  },
-];
-
 const ActionsDropdown = ({
   member,
   userId,
   userRole,
+  onRemoveMember,
+  onUpdateMemberRole,
 }: {
   member: MemberWithUser;
   userId: string;
   userRole: string | undefined;
+  onRemoveMember?: (memberId: string) => Promise<void>;
+  onUpdateMemberRole?: (memberId: string, role: string) => Promise<void>;
 }) => {
-  const router = useRouter();
   const isMemberSelf = member.userId === userId;
   const isMemberOwner = member.role === "owner";
   const displayName = getDisplayName(member);
 
-  const onChangeRole = (newRole: string) => {
+  const handleChangeRole = (newRole: string) => {
     alertDialog.open(`Change ${displayName}'s role?`, {
       description: `You are about to change ${displayName}'s role to ${newRole}. This may affect their permissions.`,
       action: {
         label: "Change",
-        onClick: async () => {
-          try {
-            await authClient.organization.updateMemberRole({
+        onClick: () => {
+          return authClient.organization
+            .updateMemberRole({
               memberId: member.id,
               role: newRole as "owner" | "admin" | "member",
-            });
-            toast.success("Member role updated successfully");
-            router.refresh();
-          } catch (error) {
-            console.error("Failed to update member role:", error);
-            toast.error("Failed to update member role. Please try again.");
-          }
+              fetchOptions: {
+                onSuccess: () => {
+                  toast.success("Member role updated successfully");
+                },
+                onError: ({ error }) => {
+                  toast.error(error.message);
+                },
+              },
+            })
+            .then(() => onUpdateMemberRole?.(member.id, newRole));
         },
       },
     });
   };
 
-  const onRemoveFromOrganization = () => {
+  const handleRemoveFromOrganization = () => {
     alertDialog.open(`Remove ${displayName} from the organization?`, {
       description: `You are about to remove ${displayName} from the organization. They will lose access to this organization.`,
       action: {
         label: "Remove",
-        onClick: async () => {
-          try {
-            await authClient.organization.removeMember({
+        onClick: () => {
+          return authClient.organization
+            .removeMember({
               memberIdOrEmail: member.id,
-            });
-            toast.success("Member removed successfully");
-            router.refresh();
-          } catch (error) {
-            console.error("Failed to remove member:", error);
-            toast.error("Failed to remove member. Please try again.");
-          }
+              fetchOptions: {
+                onSuccess: () => {
+                  toast.success("Member removed successfully");
+                },
+                onError: ({ error }) => {
+                  toast.error(error.message);
+                },
+              },
+            })
+            .then(() => onRemoveMember?.(member.id));
         },
       },
     });
@@ -189,7 +191,7 @@ const ActionsDropdown = ({
         <DropdownMenuSubContent>
           <DropdownMenuRadioGroup
             value={member.role}
-            onValueChange={onChangeRole}
+            onValueChange={handleChangeRole}
           >
             {["owner", "admin", "member"].map((role) => (
               <DropdownMenuRadioItem
@@ -205,7 +207,10 @@ const ActionsDropdown = ({
       </DropdownMenuSub>
     ),
     !isMemberOwner && ( // Cannot remove owner
-      <DropdownMenuItem key="remove-member" onSelect={onRemoveFromOrganization}>
+      <DropdownMenuItem
+        key="remove-member"
+        onSelect={handleRemoveFromOrganization}
+      >
         Remove from Organization
       </DropdownMenuItem>
     ),

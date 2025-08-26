@@ -1,7 +1,6 @@
 "use client";
 
-import type { Organization } from "better-auth/plugins";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@repo/ui/button";
 import {
@@ -30,10 +29,15 @@ import {
 } from "@repo/ui/select";
 import { toast } from "@repo/ui/toast";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/tooltip";
+import { useQueryClient } from "@tanstack/react-query";
 import { PlusIcon, XIcon } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 
+import {
+  getOrganizationQueryKey,
+  useOrganization,
+} from "@/app/(dashboard)/_components/use-organization";
 import { authClient } from "@/auth/auth-client";
 
 /**
@@ -43,14 +47,16 @@ import { authClient } from "@/auth/auth-client";
 const MAX_INVITES = 5;
 
 type InviteMembersDialogProps = {
-  organization: Organization;
+  slug: string;
 };
 
-export const InviteMembersDialog = ({
-  organization,
-}: InviteMembersDialogProps) => {
+export const InviteMembersDialog = ({ slug }: InviteMembersDialogProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const queryKey = getOrganizationQueryKey(slug);
+
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button size="sm">
           <PlusIcon className="mr-1 size-4" />
@@ -65,20 +71,29 @@ export const InviteMembersDialog = ({
             role.
           </DialogDescription>
         </DialogHeader>
-        <InviteMembersForm organizationId={organization.id} />
+        <InviteMembersForm
+          slug={slug}
+          onInviteSuccess={async () => {
+            await queryClient.invalidateQueries({ queryKey });
+            setIsOpen(false);
+          }}
+        />
       </DialogContent>
     </Dialog>
   );
 };
 
 type InviteMembersFormProps = {
-  organizationId: string;
+  slug: string;
+  onInviteSuccess?: () => Promise<void>;
 };
 
 export const InviteMembersForm = ({
-  organizationId,
+  slug,
+  onInviteSuccess,
 }: InviteMembersFormProps) => {
-  const router = useRouter();
+  const { data: organization } = useOrganization(slug);
+
   const form = useForm({
     resolver: zodResolver(
       z.object({
@@ -101,25 +116,19 @@ export const InviteMembersForm = ({
   });
 
   const handleInviteMembers = form.handleSubmit(async (data) => {
-    try {
-      // Send invitations for each email/role combination
-      const invitationPromises = data.organizationInvitations.map((invite) =>
-        authClient.organization.inviteMember({
-          email: invite.email,
-          role: invite.role,
-          organizationId: organizationId,
-        }),
-      );
+    const invitationPromises = data.organizationInvitations.map((invite) =>
+      authClient.organization.inviteMember({
+        email: invite.email,
+        role: invite.role,
+        organizationId: organization.id,
+      }),
+    );
 
-      await Promise.all(invitationPromises);
+    await Promise.all(invitationPromises);
+    await onInviteSuccess?.();
 
-      toast.success("Invitations sent successfully");
-      form.reset();
-      router.refresh();
-    } catch (error) {
-      console.error("Failed to send invitations:", error);
-      toast.error("Failed to send invitations. Please try again.");
-    }
+    form.reset();
+    toast.success("Invitations sent successfully");
   });
 
   return (

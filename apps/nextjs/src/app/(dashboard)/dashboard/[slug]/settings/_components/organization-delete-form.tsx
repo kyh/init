@@ -1,6 +1,5 @@
 "use client";
 
-import type { Member, Organization } from "better-auth/plugins";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { authMetadataSchema } from "@repo/api/auth/auth-schema";
@@ -29,23 +28,30 @@ import { toast } from "@repo/ui/toast";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import type { OrganizationWithMembers } from "@/app/(dashboard)/_components/use-organization";
 import type { Session } from "@repo/api/auth/auth";
+import { useOrganization } from "@/app/(dashboard)/_components/use-organization";
 import { authClient } from "@/auth/auth-client";
 
 type OrganizationDeleteFormProps = {
   user: Session["user"];
-  organization: Organization & {
-    members: Member[];
-  };
+  slug: string;
 };
 
 export const OrganizationDeleteForm = ({
   user,
-  organization,
+  slug,
 }: OrganizationDeleteFormProps) => {
+  const { data: organization } = useOrganization(slug);
+
   const userIsOwner =
     organization.members.find((member) => member.userId === user.id)?.role ===
     "owner";
+  const authMetadata = authMetadataSchema.parse(organization.metadata ?? "{}");
+
+  if (authMetadata.personal) {
+    return null;
+  }
 
   if (userIsOwner) {
     return <Delete organization={organization} />;
@@ -55,7 +61,7 @@ export const OrganizationDeleteForm = ({
 };
 
 type DeleteProps = {
-  organization: OrganizationDeleteFormProps["organization"];
+  organization: OrganizationWithMembers;
 };
 
 const Delete = ({ organization }: DeleteProps) => {
@@ -173,7 +179,7 @@ const Delete = ({ organization }: DeleteProps) => {
 };
 
 type LeaveProps = {
-  organization: OrganizationDeleteFormProps["organization"];
+  organization: OrganizationWithMembers;
 };
 
 const Leave = ({ organization }: LeaveProps) => {
