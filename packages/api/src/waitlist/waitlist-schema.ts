@@ -4,7 +4,7 @@ import { z } from "zod";
  * Create schema
  */
 export const joinWaitlistInput = z.object({
-  email: z.string().email(),
+  email: z.email(),
 });
 export type JoinWaitlistInput = z.infer<typeof joinWaitlistInput>;
 

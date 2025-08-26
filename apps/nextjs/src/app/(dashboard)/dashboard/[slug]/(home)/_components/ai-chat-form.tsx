@@ -21,10 +21,10 @@ import { DefaultChatTransport } from "ai";
 import { GlobeIcon, MicIcon, PlusIcon } from "lucide-react";
 
 export type AIFormProps = {
-  teamSlug: string;
+  slug: string;
 };
 
-export const AIChatForm = ({ teamSlug }: AIFormProps) => {
+export const AIChatForm = ({ slug }: AIFormProps) => {
   const [input, setInput] = useState("");
   const { messages, sendMessage, status, stop } = useChat({
     transport: new DefaultChatTransport({
@@ -34,7 +34,7 @@ export const AIChatForm = ({ teamSlug }: AIFormProps) => {
           body: {
             id,
             messages,
-            teamSlug,
+            slug,
             ...body,
           },
         };
@@ -60,7 +60,7 @@ export const AIChatForm = ({ teamSlug }: AIFormProps) => {
 
   return (
     <>
-      <AIConversation className="relative m-auto w-full max-w-(--breakpoint-md) flex-1 p-4">
+      <AIConversation className="max-w-(--breakpoint-md) relative m-auto w-full flex-1 p-4">
         <AIConversationContent>
           {messages.map((message) => (
             <AIMessage from={message.role} key={message.id}>
@@ -82,7 +82,7 @@ export const AIChatForm = ({ teamSlug }: AIFormProps) => {
       </AIConversation>
       <AIInput
         onSubmit={handleSubmit}
-        className="m-auto w-full max-w-(--breakpoint-md)"
+        className="max-w-(--breakpoint-md) m-auto w-full"
       >
         <AIInputTextarea
           onChange={(e) => setInput(e.target.value)}

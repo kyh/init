@@ -1,8 +1,9 @@
 "use client";
 
+import type { Organization } from "better-auth/plugins";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { updateTeamInput } from "@repo/api/team/team-schema";
+import { slugify } from "@repo/api/auth/utils";
 import { Button } from "@repo/ui/button";
 import {
   Form,
@@ -14,59 +15,61 @@ import {
 } from "@repo/ui/form";
 import { Input } from "@repo/ui/input";
 import { toast } from "@repo/ui/toast";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
+import { z } from "zod";
 
-import type { UpdateTeamInput } from "@repo/api/team/team-schema";
-import { useTRPC } from "@/trpc/react";
+import { authClient } from "@/auth/auth-client";
 
-type TeamProfileFormProps = {
-  teamSlug: string;
+type OrganizationProfileFormProps = {
+  organization: Organization;
 };
 
-export const TeamProfileForm = ({ teamSlug }: TeamProfileFormProps) => {
-  const trpc = useTRPC();
+export const OrganizationProfileForm = ({
+  organization,
+}: OrganizationProfileFormProps) => {
   const router = useRouter();
-  const {
-    data: { team },
-  } = useSuspenseQuery(trpc.team.getTeam.queryOptions({ slug: teamSlug }));
-
-  const updateTeam = useMutation(
-    trpc.team.updateTeam.mutationOptions({
-      onSuccess: ({ team }) => {
-        if (!team) return;
-        router.replace(`/dashboard/${team.slug}/settings`);
-      },
-    }),
-  );
 
   const form = useForm({
-    resolver: zodResolver(updateTeamInput),
+    resolver: zodResolver(
+      z.object({
+        name: z.string().min(1, "Name is required"),
+        slug: z.string().min(1, "Slug is required"),
+      }),
+    ),
     defaultValues: {
-      id: team?.id,
-      name: team?.name,
-      slug: team?.slug,
+      name: organization.name,
+      slug: organization.slug || "",
     },
   });
 
-  const onSubmit = (data: UpdateTeamInput) => {
-    const promise = updateTeam.mutateAsync(data);
-    toast.promise(promise, {
-      loading: "Updating team...",
-      success: "Team successfully updated",
-      error: "Could not update team. Please try again.",
+  const handleUpdateOrganization = form.handleSubmit(async (data) => {
+    await authClient.organization.update({
+      organizationId: organization.id,
+      data: {
+        name: data.name,
+        slug: slugify(data.slug),
+      },
+      fetchOptions: {
+        onSuccess: () => {
+          toast.success("Organization successfully updated");
+          router.replace(`/dashboard/${data.slug}/settings`);
+        },
+        onError: (ctx) => {
+          toast.error(ctx.error.message);
+        },
+      },
     });
-  };
+  });
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={handleUpdateOrganization} className="space-y-8">
         <FormField
           control={form.control}
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Team Name</FormLabel>
+              <FormLabel>Organization Name</FormLabel>
               <FormControl>
                 <Input required {...field} />
               </FormControl>
@@ -79,7 +82,7 @@ export const TeamProfileForm = ({ teamSlug }: TeamProfileFormProps) => {
           name="slug"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Team URL</FormLabel>
+              <FormLabel>Organization URL</FormLabel>
               <FormControl>
                 <div className="flex rounded-lg shadow-sm shadow-black/[.04]">
                   <span className="border-input bg-background text-muted-foreground -z-10 inline-flex items-center rounded-s-lg border px-3 text-sm">
@@ -97,8 +100,8 @@ export const TeamProfileForm = ({ teamSlug }: TeamProfileFormProps) => {
           )}
         />
         <footer className="flex justify-end">
-          <Button type="submit" loading={updateTeam.isPending}>
-            Update Team
+          <Button type="submit" loading={form.formState.isSubmitting}>
+            Update Organization
           </Button>
         </footer>
       </form>

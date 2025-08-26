@@ -1,32 +1,47 @@
+import { redirect } from "next/navigation";
+import { getOrganization, getSession } from "@repo/api/auth/auth";
+
 import { PageHeader } from "@/components/header";
-import { TeamDeleteForm } from "./_components/team-delete-form";
-import { TeamProfileForm } from "./_components/team-profile-form";
+import { OrganizationDeleteForm } from "./_components/organization-delete-form";
+import { OrganizationProfileForm } from "./_components/organization-profile-form";
 
 type PageProps = {
   params: Promise<{
-    teamSlug: string;
+    slug: string;
   }>;
 };
 
 const Page = async (props: PageProps) => {
   const params = await props.params;
-  const teamSlug = params.teamSlug;
+  const slug = params.slug;
+
+  const session = await getSession();
+  if (!session) {
+    return redirect(`/auth/login?nextPath=/dashboard/${slug}/settings`);
+  }
+
+  const organization = await getOrganization({
+    organizationSlug: slug,
+  });
+  if (!organization) {
+    return redirect(`/dashboard/account`);
+  }
 
   return (
     <main className="flex flex-1 flex-col px-5">
-      <PageHeader>Team Settings</PageHeader>
+      <PageHeader>Organization Settings</PageHeader>
       <section className="divide-border divide-y">
         <div className="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 py-8 md:grid-cols-3">
           <div>
             <h2 className="text-primary text-base leading-7 font-light">
-              Team Information
+              Organization Information
             </h2>
             <p className="text-muted-foreground mt-1 text-sm leading-6">
-              Update your team's information
+              Update your organization's information
             </p>
           </div>
           <div className="md:col-span-2">
-            <TeamProfileForm teamSlug={teamSlug} />
+            <OrganizationProfileForm organization={organization} />
           </div>
         </div>
         <div className="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 py-8 md:grid-cols-3">
@@ -39,7 +54,10 @@ const Page = async (props: PageProps) => {
             </p>
           </div>
           <div className="md:col-span-2">
-            <TeamDeleteForm teamSlug={teamSlug} />
+            <OrganizationDeleteForm
+              user={session.user}
+              organization={organization}
+            />
           </div>
         </div>
       </section>

@@ -1,8 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { updateUserInput } from "@repo/api/user/user-schema";
 import { getSupabaseBrowserClient } from "@repo/db/supabase-browser-client";
 import { Button } from "@repo/ui/button";
 import {
@@ -16,50 +16,58 @@ import {
 } from "@repo/ui/form";
 import { Input } from "@repo/ui/input";
 import { toast } from "@repo/ui/toast";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { ImageIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { z } from "zod";
 
-import type { UpdateUserInput } from "@repo/api/user/user-schema";
+import type { Session } from "@repo/api/auth/auth";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { useTRPC } from "@/trpc/react";
+import { authClient } from "@/auth/auth-client";
 
-export const ProfileForm = () => {
+type ProfileFormProps = {
+  user: Session["user"];
+};
+
+export const ProfileForm = ({ user }: ProfileFormProps) => {
   const client = getSupabaseBrowserClient();
-  const trpc = useTRPC();
-  const {
-    data: { user, userMetadata },
-  } = useSuspenseQuery(trpc.auth.workspace.queryOptions());
-  const updateUser = useMutation(trpc.user.updateUser.mutationOptions());
+  const [isUploadingProfileImage, setIsUploadingProfileImage] = useState(false);
 
   const form = useForm({
-    resolver: zodResolver(updateUserInput),
+    resolver: zodResolver(
+      z.object({
+        displayName: z.string().min(1, "Name is required"),
+      }),
+    ),
     defaultValues: {
-      id: user?.id ?? "",
-      displayName: userMetadata?.displayName ?? "",
-      avatarUrl: userMetadata?.avatarUrl ?? "",
-      defaultTeamSlug: userMetadata?.defaultTeamSlug ?? "",
+      displayName: user.name,
     },
   });
 
-  const onSubmit = (data: UpdateUserInput) => {
-    const promise = updateUser.mutateAsync(data);
-    toast.promise(promise, {
-      loading: "Updating profile...",
-      success: "Profile successfully updated",
-      error: "Could not update profile. Please try again.",
+  const handleUpdateProfile = form.handleSubmit(async (data) => {
+    await authClient.updateUser({
+      name: data.displayName,
+      fetchOptions: {
+        onSuccess: () => {
+          toast.success("Profile successfully updated");
+        },
+        onError: (ctx) => {
+          toast.error(ctx.error.message);
+        },
+      },
     });
-  };
+  });
 
-  const onProfileImageChange = async (
+  const handleProfileImageChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
-    if (!file || !user) return;
+    if (!file) return;
+
+    setIsUploadingProfileImage(true);
     const id = toast.loading("Uploading profile image...");
 
-    if (userMetadata?.avatarUrl) {
-      await removeFileFromPublicUrl(client, userMetadata.avatarUrl);
+    if (user.image) {
+      await removeFileFromPublicUrl(client, user.image);
     }
 
     const { data: uploadData, error } = await client.storage
@@ -70,57 +78,60 @@ export const ProfileForm = () => {
       });
 
     if (error) {
-      return toast.error("Could not upload profile image. Please try again.", {
-        id,
-      });
+      toast.error(error.message, { id });
+      setIsUploadingProfileImage(false);
+      return;
     }
 
     const publicUrl = getPublicUrl(client, uploadData.path);
-
-    updateUser.mutate(
-      {
-        id: user.id,
-        avatarUrl: publicUrl,
-      },
-      {
+    await authClient.updateUser({
+      image: publicUrl,
+      fetchOptions: {
         onSuccess: () => {
           toast.success("Profile image uploaded successfully", { id });
         },
-        onError: () => {
-          toast.error("Could not update profile image. Please try again.", {
-            id,
-          });
+        onError: (ctx) => {
+          toast.error(ctx.error.message, { id });
+        },
+        onResponse: () => {
+          setIsUploadingProfileImage(false);
         },
       },
-    );
-  };
-
-  const removeProfileImage = async () => {
-    if (!userMetadata?.avatarUrl) return;
-    await removeFileFromPublicUrl(client, userMetadata.avatarUrl);
-    updateUser.mutate({
-      id: user?.id ?? "",
-      avatarUrl: "",
     });
   };
 
-  if (!user) {
-    return null;
-  }
+  const removeProfileImage = async () => {
+    setIsUploadingProfileImage(true);
+    await authClient.updateUser({
+      image: "",
+      fetchOptions: {
+        onSuccess: () => {
+          toast.success("Profile image removed successfully");
+        },
+        onError: (ctx) => {
+          toast.error(ctx.error.message);
+        },
+        onResponse: () => {
+          setIsUploadingProfileImage(false);
+        },
+      },
+    });
+  };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={handleUpdateProfile} className="space-y-8">
         <div className="col-span-full flex items-center gap-x-8">
           <label className="bg-secondary text-secondary-foreground hover:bg-secondary/80 relative shadow-sm">
             <input
               className="invisible absolute inset-0"
               type="file"
-              onChange={onProfileImageChange}
+              onChange={handleProfileImageChange}
+              disabled={isUploadingProfileImage}
             />
-            {userMetadata?.avatarUrl ? (
+            {user.image ? (
               <Image
-                src={userMetadata.avatarUrl}
+                src={user.image}
                 alt="Profile picture"
                 className="h-24 w-24 flex-none rounded-lg object-cover"
                 width={96}
@@ -133,17 +144,25 @@ export const ProfileForm = () => {
             )}
           </label>
           <div>
-            {userMetadata?.avatarUrl ? (
-              <Button variant="secondary" onClick={removeProfileImage}>
+            {user.image ? (
+              <Button
+                variant="secondary"
+                onClick={removeProfileImage}
+                disabled={isUploadingProfileImage}
+              >
                 Remove Profile Image
               </Button>
             ) : (
-              <Button variant="secondary" asChild>
+              <Button
+                variant="secondary"
+                asChild
+                loading={isUploadingProfileImage}
+              >
                 <label>
                   <input
                     className="invisible absolute inset-0"
                     type="file"
-                    onChange={onProfileImageChange}
+                    onChange={handleProfileImageChange}
                   />
                   Change Profile Image
                 </label>
@@ -179,7 +198,7 @@ export const ProfileForm = () => {
           </FormDescription>
         </FormItem>
         <footer className="flex justify-end">
-          <Button type="submit" loading={updateUser.isPending}>
+          <Button type="submit" loading={form.formState.isSubmitting}>
             Update Profile
           </Button>
         </footer>

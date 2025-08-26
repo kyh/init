@@ -1,9 +1,10 @@
 "use client";
 
+import type { Organization } from "better-auth/plugins/organization";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createTeamInput } from "@repo/api/team/team-schema";
+import { slugify } from "@repo/api/auth/utils";
 import { ProfileAvatar } from "@repo/ui/avatar";
 import { Button } from "@repo/ui/button";
 import {
@@ -38,7 +39,6 @@ import { Input } from "@repo/ui/input";
 import { Logo } from "@repo/ui/logo";
 import { toast } from "@repo/ui/toast";
 import { cn } from "@repo/ui/utils";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import {
   CheckIcon,
   CreditCardIcon,
@@ -49,18 +49,23 @@ import {
   Users2Icon,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { z } from "zod";
 
+import type { Session } from "@repo/api/auth/auth";
+import { authClient } from "@/auth/auth-client";
 import { NavLink } from "@/components/nav";
-import { useTRPC } from "@/trpc/react";
 
-export const Sidebar = () => {
-  const trpc = useTRPC();
-  const params = useParams<{ teamSlug: string | undefined }>();
-  const {
-    data: { defaultTeamSlug },
-  } = useSuspenseQuery(trpc.auth.workspace.queryOptions());
+type SidebarProps = {
+  user: Session["user"];
+};
 
-  const rootUrl = `/dashboard/${params.teamSlug ?? defaultTeamSlug}`;
+export const Sidebar = ({ user }: SidebarProps) => {
+  const params = useParams<{ slug: string | undefined }>();
+
+  const { data: organizations } = authClient.useListOrganizations();
+  const { data: activeOrganization } = authClient.useActiveOrganization();
+
+  const rootUrl = `/dashboard/${params.slug ?? activeOrganization?.slug}`;
   const pageLinks = [
     {
       href: rootUrl,
@@ -108,56 +113,66 @@ export const Sidebar = () => {
           </NavLink>
         ))}
       </div>
-      <UserDropdown teamSlug={params.teamSlug} />
+      <UserDropdown
+        slug={params.slug}
+        user={user}
+        organizations={organizations ?? []}
+      />
     </nav>
   );
 };
 
-export const UserDropdown = ({ teamSlug }: { teamSlug?: string }) => {
-  const trpc = useTRPC();
-  const router = useRouter();
-  const {
-    data: { user, userMetadata, teams },
-  } = useSuspenseQuery(trpc.auth.workspace.queryOptions());
+type UserDropdownProps = {
+  slug?: string;
+  user: Session["user"];
+  organizations: Organization[];
+};
 
-  const signOut = useMutation(
-    trpc.auth.signOut.mutationOptions({
-      onSuccess: () => {
-        router.replace("/");
-      },
-      onError: (error) => toast.error(error.message),
-    }),
-  );
-  const createTeamAccount = useMutation(
-    trpc.team.createTeam.mutationOptions({
-      onSuccess: ({ team }) => {
-        toast.success("Team created successfully");
-        router.push(`/dashboard/${team.slug}`);
-      },
-      onError: () =>
-        toast.error(
-          "We encountered an error creating your team. Please try again.",
-        ),
-    }),
-  );
+const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
+  const router = useRouter();
 
   const form = useForm({
-    resolver: zodResolver(createTeamInput),
+    resolver: zodResolver(z.object({ name: z.string().min(2).max(50) })),
     defaultValues: {
       name: "",
     },
   });
 
-  if (!user) return null;
+  const handleSignOut = async () => {
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.replace("/");
+        },
+        onError: (ctx) => {
+          toast.error(ctx.error.message);
+        },
+      },
+    });
+  };
+
+  const handleCreateTeam = form.handleSubmit(async (data) => {
+    await authClient.organization.create({
+      name: data.name,
+      slug: slugify(data.name),
+      keepCurrentActiveOrganization: false,
+      fetchOptions: {
+        onSuccess: (ctx) => {
+          router.push(`/dashboard/${ctx.data.slug}`);
+          toast.success("Team created successfully");
+        },
+        onError: (ctx) => {
+          toast.error(ctx.error.message);
+        },
+      },
+    });
+  });
 
   return (
     <Dialog>
       <DropdownMenu>
         <DropdownMenuTrigger className="mt-auto cursor-pointer">
-          <ProfileAvatar
-            displayName={userMetadata?.displayName ?? user.email}
-            avatarUrl={userMetadata?.avatarUrl}
-          />
+          <ProfileAvatar displayName={user.email} avatarUrl={undefined} />
         </DropdownMenuTrigger>
         <DropdownMenuContent
           className="w-56"
@@ -168,14 +183,7 @@ export const UserDropdown = ({ teamSlug }: { teamSlug?: string }) => {
         >
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col gap-1">
-              <p className="text-sm leading-none font-medium">
-                {userMetadata?.displayName ?? user.email}
-              </p>
-              {userMetadata?.displayName && (
-                <p className="text-muted-foreground text-xs leading-none">
-                  {user.email}
-                </p>
-              )}
+              <p className="text-sm leading-none font-medium">{user.email}</p>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
@@ -189,22 +197,22 @@ export const UserDropdown = ({ teamSlug }: { teamSlug?: string }) => {
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>Switch Teams</DropdownMenuSubTrigger>
               <DropdownMenuSubContent>
-                {teams.map((team) => (
-                  <DropdownMenuItem key={team.id} asChild>
+                {organizations.map((org) => (
+                  <DropdownMenuItem key={org.id} asChild>
                     <Link
-                      href={`/dashboard/${team.slug}`}
+                      href={`/dashboard/${org.slug}`}
                       className="inline-flex w-full items-center font-normal"
                     >
                       <ProfileAvatar
                         className="size-4"
-                        displayName={team.name}
-                        avatarUrl={team.avatarUrl}
+                        displayName={org.name}
+                        avatarUrl={org.logo}
                       />
-                      <span className="ml-2">{team.name}</span>
+                      <span className="ml-2">{org.name}</span>
                       <CheckIcon
                         className={cn(
                           "ml-auto size-4",
-                          teamSlug === team.slug ? "opacity-100" : "opacity-0",
+                          slug === org.slug ? "opacity-100" : "opacity-0",
                         )}
                       />
                     </Link>
@@ -223,10 +231,7 @@ export const UserDropdown = ({ teamSlug }: { teamSlug?: string }) => {
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
-            <button
-              className="flex w-full gap-2"
-              onClick={() => signOut.mutate()}
-            >
+            <button className="flex w-full gap-2" onClick={handleSignOut}>
               <LogOutIcon className="size-4" />
               Log out
             </button>
@@ -241,11 +246,7 @@ export const UserDropdown = ({ teamSlug }: { teamSlug?: string }) => {
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit((data) => {
-              createTeamAccount.mutate(data);
-            })}
-          >
+          <form onSubmit={handleCreateTeam}>
             <div className="flex flex-col gap-4">
               <FormField
                 name="name"
@@ -268,7 +269,7 @@ export const UserDropdown = ({ teamSlug }: { teamSlug?: string }) => {
                 }}
               />
               <div className="flex justify-end gap-2">
-                <Button loading={createTeamAccount.isPending}>
+                <Button loading={form.formState.isSubmitting}>
                   Create Team
                 </Button>
               </div>

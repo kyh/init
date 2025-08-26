@@ -1,7 +1,7 @@
 "use client";
 
+import type { Invitation, Member, Organization } from "better-auth/plugins";
 import { useMemo } from "react";
-import { teamMemberRoles } from "@repo/api/team/team-schema";
 import { alertDialog } from "@repo/ui/alert-dialog";
 import { Badge } from "@repo/ui/badge";
 import { Button } from "@repo/ui/button";
@@ -17,38 +17,34 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/dropdown-menu";
 import { AutoTable } from "@repo/ui/table";
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { MoreHorizontalIcon } from "lucide-react";
 
-import type { RouterOutputs } from "@repo/api";
-import type { TeamMemberRole } from "@repo/api/team/team-schema";
+import type { Session } from "@repo/api/auth/auth";
 import type { ColumnDef } from "@tanstack/react-table";
-import { useTRPC } from "@/trpc/react";
 
 type InvitationsTableProps = {
-  teamSlug: string;
+  user: Session["user"];
+  organization: Organization & {
+    members?: Member[];
+    invitations?: Invitation[];
+  };
 };
 
-export const InvitationsTable = ({ teamSlug }: InvitationsTableProps) => {
-  const trpc = useTRPC();
-  const {
-    data: { team },
-  } = useSuspenseQuery(trpc.team.getTeam.queryOptions({ slug: teamSlug }));
-  const {
-    data: { user },
-  } = useSuspenseQuery(trpc.auth.workspace.queryOptions());
-
-  const userId = user?.id;
-  const invitations = team?.invitations ?? [];
-  const members = team?.teamMembers ?? [];
-  const userRole = members.find((member) => member.userId === userId)
-    ?.role as TeamMemberRole;
+export const InvitationsTable = ({
+  user,
+  organization,
+}: InvitationsTableProps) => {
+  const userId = user.id;
+  const invitations = organization.invitations ?? [];
+  const members = organization.members ?? [];
+  const userRole = members.find(
+    (member: Member) => member.userId === userId,
+  )?.role;
 
   const columns = useMemo(() => {
-    if (!userId || !team) return [];
-    return getColumns({ userId, userRole, teamId: team.id });
-  }, [userId, userRole, team]);
+    return getColumns({ userId, userRole, organizationId: organization.id });
+  }, [userId, userRole, organization]);
 
   const table = useReactTable({
     data: invitations,
@@ -63,19 +59,16 @@ export const InvitationsTable = ({ teamSlug }: InvitationsTableProps) => {
   );
 };
 
-type Invitation = NonNullable<
-  RouterOutputs["team"]["getTeamInvitation"]["invitation"]
->;
-
 type getColumnsParams = {
   userId: string;
-  userRole: TeamMemberRole;
-  teamId: string;
+  userRole: string | undefined;
+  organizationId: string;
 };
+
 export const getColumns = ({
   userId,
   userRole,
-  teamId,
+  organizationId,
 }: getColumnsParams): ColumnDef<Invitation>[] => [
   {
     header: "Email",
@@ -84,13 +77,13 @@ export const getColumns = ({
   {
     header: "Role",
     cell: ({ row }) => (
-      <Badge className="capitalize">{row.original.role}</Badge>
+      <Badge className="capitalize">{row.original.role || "member"}</Badge>
     ),
   },
   {
-    header: "Invited at",
+    header: "Expires at",
     cell: ({ row }) => {
-      return new Date(row.original.invitedAt).toLocaleDateString();
+      return new Date(row.original.expiresAt).toLocaleDateString();
     },
   },
   {
@@ -101,7 +94,7 @@ export const getColumns = ({
         invitation={row.original}
         userId={userId}
         userRole={userRole}
-        teamId={teamId}
+        organizationId={organizationId}
       />
     ),
   },
@@ -111,12 +104,12 @@ const ActionsDropdown = ({
   invitation,
   userId,
   userRole,
-  teamId,
+  organizationId,
 }: {
   invitation: Invitation;
   userId: string;
-  userRole: TeamMemberRole;
-  teamId: string;
+  userRole: string | undefined;
+  organizationId: string;
 }) => {
   const onChangeRole = (newRole: string) => {
     alertDialog.open(`Change ${invitation.email}'s role?`, {
@@ -124,11 +117,8 @@ const ActionsDropdown = ({
       action: {
         label: "Change",
         onClick: () => {
-          // updateMemberRole.mutate({
-          //   teamId: teamId,
-          //   userId: member.userId,
-          //   role: newRole,
-          // });
+          // TODO: Implement role change using better-auth API
+          console.log("Change invitation role to:", newRole);
         },
       },
     });
@@ -140,7 +130,8 @@ const ActionsDropdown = ({
       action: {
         label: "Remove",
         onClick: () => {
-          // removeMember.mutate({ accountId: teamId, userId: member.userId });
+          // TODO: Implement invitation removal using better-auth API
+          console.log("Remove invitation:", invitation.id);
         },
       },
     });
@@ -163,10 +154,10 @@ const ActionsDropdown = ({
           <DropdownMenuSubTrigger>Change Role</DropdownMenuSubTrigger>
           <DropdownMenuSubContent>
             <DropdownMenuRadioGroup
-              value={invitation.role}
+              value={invitation.role || "member"}
               onValueChange={onChangeRole}
             >
-              {teamMemberRoles.map((role) => (
+              {["owner", "admin", "member"].map((role) => (
                 <DropdownMenuRadioItem
                   key={role}
                   value={role}

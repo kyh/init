@@ -1,5 +1,7 @@
 "use client";
 
+import type { Member, Organization } from "better-auth/plugins";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   AlertDialog,
@@ -23,57 +25,57 @@ import {
 } from "@repo/ui/form";
 import { Input } from "@repo/ui/input";
 import { toast } from "@repo/ui/toast";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import type { RouterOutputs } from "@repo/api";
-import { useTRPC } from "@/trpc/react";
+import type { Session } from "@repo/api/auth/auth";
+import { authClient } from "@/auth/auth-client";
 
-type TeamDeleteFormProps = {
-  teamSlug: string;
+type OrganizationDeleteFormProps = {
+  user: Session["user"];
+  organization: Organization & {
+    members: Member[];
+  };
 };
 
-export const TeamDeleteForm = ({ teamSlug }: TeamDeleteFormProps) => {
-  const trpc = useTRPC();
-  const {
-    data: { user, teams },
-  } = useSuspenseQuery(trpc.auth.workspace.queryOptions());
-  const {
-    data: { team },
-  } = useSuspenseQuery(trpc.team.getTeam.queryOptions({ slug: teamSlug }));
+export const OrganizationDeleteForm = ({
+  user,
+  organization,
+}: OrganizationDeleteFormProps) => {
+  const userIsOwner =
+    organization.members.find((member) => member.userId === user.id)?.role ===
+    "owner";
 
-  const currentTeam = teams.find((t) => t.id === team?.id);
-
-  if (!currentTeam || !user) {
-    return null;
+  if (organization.metadata.personal) {
+    return (
+      <div className="flex flex-col gap-4">
+        <p className="text-muted-foreground text-sm">
+          You cannot delete your personal organization.
+        </p>
+      </div>
+    );
   }
 
-  // Only the primary owner can delete the team
-  const userIsPrimaryOwner = currentTeam.userRole === "owner";
-  if (userIsPrimaryOwner) {
-    return <Delete team={currentTeam} />;
+  if (userIsOwner) {
+    return <Delete organization={organization} />;
   }
 
-  // A primary owner can't leave the team account
-  // but other members can
-  return <Leave user={user} team={currentTeam} />;
+  return <Leave organization={organization} />;
 };
 
 type DeleteProps = {
-  team: NonNullable<RouterOutputs["auth"]["workspace"]["teams"][number]>;
+  organization: OrganizationDeleteFormProps["organization"];
 };
 
-const Delete = ({ team }: DeleteProps) => {
-  const trpc = useTRPC();
-  const deleteTeam = useMutation(trpc.team.deleteTeam.mutationOptions());
+const Delete = ({ organization }: DeleteProps) => {
+  const router = useRouter();
 
   const form = useForm({
     mode: "onChange",
     reValidateMode: "onChange",
     resolver: zodResolver(
       z.object({
-        name: z.string().refine((value) => value === team.name, {
+        name: z.string().refine((value) => value === organization.name, {
           message: "Name does not match",
           path: ["name"],
         }),
@@ -84,55 +86,63 @@ const Delete = ({ team }: DeleteProps) => {
     },
   });
 
-  const onSubmit = () => {
-    const promise = deleteTeam.mutateAsync({ id: team.id });
-    toast.promise(promise, {
-      loading: "Deleting team...",
-      success: "Team successfully deleted",
-      error: "Could not delete the team. Please try again.",
+  const handleDelete = form.handleSubmit(async () => {
+    await authClient.organization.delete({
+      organizationId: organization.id,
+      fetchOptions: {
+        onSuccess: () => {
+          toast.success("Organization successfully deleted");
+          router.replace("/dashboard");
+        },
+        onError: (ctx) => {
+          toast.error(ctx.error.message);
+        },
+      },
     });
-  };
+  });
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <span className="font-medium">Delete Team</span>
+        <span className="font-medium">Delete Organization</span>
         <p className="text-muted-foreground text-sm">
-          You are about to delete the team {team.name}. This action cannot be
-          undone.
+          You are about to delete the organization {organization.name}. This
+          action cannot be undone.
         </p>
       </div>
       <div>
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button type="button" variant="destructive">
-              Delete Team
+              Delete Organization
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Deleting team</AlertDialogTitle>
+              <AlertDialogTitle>Deleting organization</AlertDialogTitle>
               <AlertDialogDescription>
-                You are about to delete the team {team.name}. This action cannot
-                be undone.
+                You are about to delete the organization {organization.name}.
+                This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <Form {...form}>
-              <form className="flex flex-col gap-4" onSubmit={onSubmit}>
+              <form className="flex flex-col gap-4" onSubmit={handleDelete}>
                 <div className="flex flex-col gap-2">
                   <div className="my-4 flex flex-col gap-2 border-2 border-red-500 p-4 text-sm text-red-500">
                     <div>
-                      You are deleting the team {team.name}. This action cannot
-                      be undone.
+                      You are deleting the organization {organization.name}.
+                      This action cannot be undone.
                     </div>
                     <div className="text-sm">
                       Are you sure you want to continue?
                     </div>
                   </div>
                   <FormField
+                    control={form.control}
+                    name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Team Name</FormLabel>
+                        <FormLabel>Organization Name</FormLabel>
                         <FormControl>
                           <Input
                             required
@@ -140,23 +150,26 @@ const Delete = ({ team }: DeleteProps) => {
                             autoComplete="off"
                             className="w-full"
                             placeholder=""
-                            pattern={team.name}
+                            pattern={organization.name}
                             {...field}
                           />
                         </FormControl>
                         <FormDescription>
-                          Type the name of the team to confirm
+                          Type the name of the organization to confirm
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
-                    name="confirm"
                   />
                 </div>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <Button loading={deleteTeam.isPending} variant="destructive">
-                    Delete Team
+                  <Button
+                    type="submit"
+                    variant="destructive"
+                    loading={form.formState.isSubmitting}
+                  >
+                    Delete Organization
                   </Button>
                 </AlertDialogFooter>
               </form>
@@ -169,19 +182,17 @@ const Delete = ({ team }: DeleteProps) => {
 };
 
 type LeaveProps = {
-  user: NonNullable<RouterOutputs["auth"]["workspace"]["user"]>;
-  team: NonNullable<RouterOutputs["auth"]["workspace"]["teams"][number]>;
+  organization: OrganizationDeleteFormProps["organization"];
 };
 
-const Leave = ({ user, team }: LeaveProps) => {
-  const trpc = useTRPC();
-  const leaveTeam = useMutation(trpc.team.deleteTeamMember.mutationOptions());
+const Leave = ({ organization }: LeaveProps) => {
+  const router = useRouter();
 
   const form = useForm({
     resolver: zodResolver(
       z.object({
         confirmation: z.string().refine((value) => value === "LEAVE", {
-          message: "Confirmation required to leave team",
+          message: "Confirmation required to leave organization",
           path: ["confirmation"],
         }),
       }),
@@ -191,44 +202,51 @@ const Leave = ({ user, team }: LeaveProps) => {
     },
   });
 
-  const onSubmit = () => {
-    const promise = leaveTeam.mutateAsync({ userId: user.id, teamId: team.id });
-    toast.promise(promise, {
-      loading: "Leaving team...",
-      success: "Team successfully left",
-      error: "Could not leave the team. Please try again.",
+  const handleLeave = form.handleSubmit(async () => {
+    await authClient.organization.leave({
+      organizationId: organization.id,
+      fetchOptions: {
+        onSuccess: () => {
+          toast.success("Organization successfully left");
+          router.replace("/dashboard");
+        },
+        onError: (ctx) => {
+          toast.error(ctx.error.message);
+        },
+      },
     });
-  };
+  });
 
   return (
     <div className="flex flex-col gap-4">
       <p className="text-muted-foreground text-sm">
-        Click the button below to leave the team. Remember, you will no longer
-        have access to it and will need to be re-invited to join
+        Click the button below to leave the organization. Remember, you will no
+        longer have access to it and will need to be re-invited to join
       </p>
       <AlertDialog>
         <AlertDialogTrigger asChild>
           <Button type="button" variant="destructive">
-            Leave Team
+            Leave Organization
           </Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Leaving Team</AlertDialogTitle>
+            <AlertDialogTitle>Leaving Organization</AlertDialogTitle>
             <AlertDialogDescription>
-              You are about to leave this team. You will no longer have access
-              to it.
+              You are about to leave this organization. You will no longer have
+              access to it.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Form {...form}>
-            <form className="flex flex-col gap-4" onSubmit={onSubmit}>
+            <form className="flex flex-col gap-4" onSubmit={handleLeave}>
               <FormField
+                control={form.control}
                 name="confirmation"
                 render={({ field }) => {
                   return (
                     <FormItem>
                       <FormLabel>
-                        Please type LEAVE to confirm leaving the team.
+                        Please type LEAVE to confirm leaving the organization.
                       </FormLabel>
                       <FormControl>
                         <Input
@@ -242,8 +260,8 @@ const Leave = ({ user, team }: LeaveProps) => {
                         />
                       </FormControl>
                       <FormDescription>
-                        By leaving the team, you will no longer have access to
-                        it.
+                        By leaving the organization, you will no longer have
+                        access to it.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -252,8 +270,12 @@ const Leave = ({ user, team }: LeaveProps) => {
               />
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <Button loading={leaveTeam.isPending} variant="destructive">
-                  Leave Team
+                <Button
+                  type="submit"
+                  loading={form.formState.isSubmitting}
+                  variant="destructive"
+                >
+                  Leave Organization
                 </Button>
               </AlertDialogFooter>
             </form>

@@ -1,7 +1,7 @@
 "use client";
 
+import type { Invitation, Member, Organization } from "better-auth/plugins";
 import { useMemo } from "react";
-import { teamMemberRoles } from "@repo/api/team/team-schema";
 import { alertDialog } from "@repo/ui/alert-dialog";
 import { ProfileAvatar } from "@repo/ui/avatar";
 import { Badge } from "@repo/ui/badge";
@@ -18,38 +18,30 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/dropdown-menu";
 import { AutoTable } from "@repo/ui/table";
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { MoreHorizontalIcon } from "lucide-react";
 
-import type { RouterOutputs } from "@repo/api";
-import type { TeamMemberRole } from "@repo/api/team/team-schema";
-import type { UserMetadata } from "@repo/api/user/user-schema";
+import type { Session } from "@repo/api/auth/auth";
 import type { ColumnDef } from "@tanstack/react-table";
-import { useTRPC } from "@/trpc/react";
 
 type MembersTableProps = {
-  teamSlug: string;
+  user: Session["user"];
+  organization: Organization & {
+    members?: Member[];
+    invitations?: Invitation[];
+  };
 };
 
-export const MembersTable = ({ teamSlug }: MembersTableProps) => {
-  const trpc = useTRPC();
-  const {
-    data: { team },
-  } = useSuspenseQuery(trpc.team.getTeam.queryOptions({ slug: teamSlug }));
-  const {
-    data: { user },
-  } = useSuspenseQuery(trpc.auth.workspace.queryOptions());
-
-  const userId = user?.id;
-  const members = team?.teamMembers ?? [];
-  const userRole = members.find((member) => member.userId === userId)
-    ?.role as TeamMemberRole;
+export const MembersTable = ({ user, organization }: MembersTableProps) => {
+  const userId = user.id;
+  const members = organization.members ?? [];
+  const userRole = members.find(
+    (member: Member) => member.userId === userId,
+  )?.role;
 
   const columns = useMemo(() => {
-    if (!userId || !team) return [];
-    return getColumns({ userId, userRole, teamId: team.id });
-  }, [userId, userRole, team]);
+    return getColumns({ userId, userRole, organizationId: organization.id });
+  }, [userId, userRole, organization]);
 
   const table = useReactTable({
     data: members,
@@ -64,25 +56,21 @@ export const MembersTable = ({ teamSlug }: MembersTableProps) => {
   );
 };
 
-type TeamMember = NonNullable<
-  RouterOutputs["team"]["getTeamMember"]["teamMember"]
->;
-
 type getColumnsParams = {
   userId: string;
-  userRole: TeamMemberRole;
-  teamId: string;
+  userRole: string | undefined;
+  organizationId: string;
 };
+
 export const getColumns = ({
   userId,
   userRole,
-  teamId,
-}: getColumnsParams): ColumnDef<TeamMember>[] => [
+  organizationId,
+}: getColumnsParams): ColumnDef<Member>[] => [
   {
     header: "Name",
     cell: ({ row }) => {
       const member = row.original;
-      const userMetadata = member.user.rawUserMetaData as UserMetadata;
       const displayName = getDisplayName(member);
       const isSelf = member.userId === userId;
 
@@ -90,7 +78,7 @@ export const getColumns = ({
         <span className="flex items-center gap-4 text-left">
           <ProfileAvatar
             displayName={displayName}
-            avatarUrl={userMetadata.avatarUrl}
+            avatarUrl={undefined} // TODO: Add avatar support when available
           />
           <span>{displayName}</span>
           {isSelf && <Badge variant="outline">You</Badge>}
@@ -100,7 +88,10 @@ export const getColumns = ({
   },
   {
     header: "Email",
-    cell: ({ row }) => row.original.user.email ?? "-",
+    cell: ({ row }) => {
+      // TODO: Get user email from user data when available
+      return "-";
+    },
   },
   {
     header: "Role",
@@ -110,7 +101,7 @@ export const getColumns = ({
   },
   {
     header: "Joined at",
-    cell: ({ row }) => new Date(row.original.joinedAt).toLocaleDateString(),
+    cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString(),
   },
   {
     header: "",
@@ -120,7 +111,7 @@ export const getColumns = ({
         member={row.original}
         userId={userId}
         userRole={userRole}
-        teamId={teamId}
+        organizationId={organizationId}
       />
     ),
   },
@@ -130,12 +121,12 @@ const ActionsDropdown = ({
   member,
   userId,
   userRole,
-  teamId,
+  organizationId,
 }: {
-  member: TeamMember;
+  member: Member;
   userId: string;
-  userRole: TeamMemberRole;
-  teamId: string;
+  userRole: string | undefined;
+  organizationId: string;
 }) => {
   const isSelfOwner = userRole === "owner";
   const isMemberSelf = member.userId === userId;
@@ -148,11 +139,8 @@ const ActionsDropdown = ({
       action: {
         label: "Change",
         onClick: () => {
-          // updateMemberRole.mutate({
-          //   teamId: teamId,
-          //   userId: member.userId,
-          //   role: newRole,
-          // });
+          // TODO: Implement role change using better-auth API
+          console.log("Change role to:", newRole);
         },
       },
     });
@@ -165,7 +153,8 @@ const ActionsDropdown = ({
       action: {
         label: "Transfer",
         onClick: () => {
-          // transferOwnership.mutate({ accountId: teamId, userId: member.userId });
+          // TODO: Implement ownership transfer using better-auth API
+          console.log("Transfer ownership to:", member.userId);
         },
       },
     });
@@ -178,7 +167,8 @@ const ActionsDropdown = ({
       action: {
         label: "Remove",
         onClick: () => {
-          // removeMember.mutate({ accountId: teamId, userId: member.userId });
+          // TODO: Implement member removal using better-auth API
+          console.log("Remove member:", member.userId);
         },
       },
     });
@@ -191,14 +181,14 @@ const ActionsDropdown = ({
 
   const actions = [
     !isMemberSelf && ( // Can't change own role
-      <DropdownMenuSub>
+      <DropdownMenuSub key="change-role">
         <DropdownMenuSubTrigger>Change Role</DropdownMenuSubTrigger>
         <DropdownMenuSubContent>
           <DropdownMenuRadioGroup
             value={member.role}
             onValueChange={onChangeRole}
           >
-            {teamMemberRoles.map((role) => (
+            {["owner", "admin", "member"].map((role) => (
               <DropdownMenuRadioItem
                 key={role}
                 value={role}
@@ -213,12 +203,15 @@ const ActionsDropdown = ({
     ),
     isSelfOwner &&
       !isMemberOwner && ( // Only owners can transfer ownership
-        <DropdownMenuItem onSelect={onTransferOwnership}>
+        <DropdownMenuItem
+          key="transfer-ownership"
+          onSelect={onTransferOwnership}
+        >
           Transfer Ownership
         </DropdownMenuItem>
       ),
     !isMemberOwner && ( // Cannot remove owner
-      <DropdownMenuItem onSelect={onRemoveFromTeam}>
+      <DropdownMenuItem key="remove-member" onSelect={onRemoveFromTeam}>
         Remove from Team
       </DropdownMenuItem>
     ),
@@ -236,19 +229,13 @@ const ActionsDropdown = ({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        {actions.map((action) => (
-          <>{action}</>
-        ))}
+        {actions.map((action) => action)}
       </DropdownMenuContent>
     </DropdownMenu>
   );
 };
 
-const getDisplayName = (member: TeamMember) => {
-  const userMetadata = member.user.rawUserMetaData as UserMetadata;
-  return (
-    userMetadata.displayName ??
-    member.user.email?.split("@")[0] ??
-    member.userId
-  );
+const getDisplayName = (member: Member) => {
+  // TODO: Get user name from user data when available
+  return member.userId;
 };

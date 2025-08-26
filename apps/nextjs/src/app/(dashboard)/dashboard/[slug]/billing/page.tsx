@@ -1,14 +1,23 @@
+import { redirect } from "next/navigation";
+import { getSession } from "@repo/api/auth/auth";
+
 import { PageHeader } from "@/components/header";
 
 type PageProps = {
   params: Promise<{
-    teamSlug: string;
+    slug: string;
   }>;
 };
 
 const Page = async (props: PageProps) => {
   const params = await props.params;
-  const teamSlug = params.teamSlug;
+  const slug = params.slug;
+
+  const session = await getSession();
+
+  if (!session) {
+    return redirect(`/auth/login?nextPath=/dashboard/${slug}/billing`);
+  }
 
   return (
     <main className="flex flex-1 flex-col px-5">
