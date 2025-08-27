@@ -18,7 +18,11 @@ import {
 } from "@repo/ui/dropdown-menu";
 import { AutoTable } from "@repo/ui/table";
 import { toast } from "@repo/ui/toast";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { MoreHorizontalIcon } from "lucide-react";
 
@@ -120,43 +124,11 @@ const ActionsDropdown = ({
   userId: string;
   userRole: string | undefined;
 }) => {
-  const { mutate: updateMemberRole } = useMutation({
-    mutationFn: async (newRole: string) => {
-      await authClient.organization.updateMemberRole({
-        memberId: member.id,
-        role: newRole as "owner" | "admin" | "member",
-        fetchOptions: {
-          onSuccess: () => {
-            toast.success("Member role updated successfully");
-          },
-          onError: ({ error }) => {
-            toast.error(error.message);
-          },
-        },
-      });
-    },
-  });
-
-  const { mutate: removeMember } = useMutation({
-    mutationFn: async () => {
-      await authClient.organization.removeMember({
-        memberIdOrEmail: member.id,
-        fetchOptions: {
-          onSuccess: () => {
-            toast.success("Member removed successfully");
-          },
-          onError: ({ error }) => {
-            toast.error(error.message);
-          },
-        },
-      });
-    },
-  });
-
   const isMemberSelf = member.userId === userId;
   const isMemberOwner = member.role === "owner";
   const displayName = getDisplayName(member);
 
+  const { mutateAsync: updateMemberRole } = useUpdateMemberRole(member.id);
   const handleChangeRole = (newRole: string) => {
     alertDialog.open(`Change ${displayName}'s role?`, {
       description: `You are about to change ${displayName}'s role to ${newRole}. This may affect their permissions.`,
@@ -167,6 +139,7 @@ const ActionsDropdown = ({
     });
   };
 
+  const { mutateAsync: removeMember } = useRemoveMember(member.id);
   const handleRemoveFromOrganization = () => {
     alertDialog.open(`Remove ${displayName} from the organization?`, {
       description: `You are about to remove ${displayName} from the organization. They will lose access to this organization.`,
@@ -234,4 +207,43 @@ const ActionsDropdown = ({
 
 const getDisplayName = (member: MemberWithUser) => {
   return member.user?.name ?? member.user?.email ?? "Unknown";
+};
+
+const useUpdateMemberRole = (memberId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (newRole: string) => {
+      await authClient.organization.updateMemberRole({
+        memberId,
+        role: newRole as "owner" | "admin" | "member",
+      });
+    },
+    onSuccess: async () => {
+      toast.success("Member role updated successfully");
+      await queryClient.invalidateQueries();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+};
+
+const useRemoveMember = (memberId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      await authClient.organization.removeMember({
+        memberIdOrEmail: memberId,
+      });
+    },
+    onSuccess: async () => {
+      toast.success("Member removed successfully");
+      await queryClient.invalidateQueries();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
 };

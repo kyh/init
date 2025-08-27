@@ -65,24 +65,6 @@ type DeleteProps = {
 };
 
 const Delete = ({ organization }: DeleteProps) => {
-  const router = useRouter();
-  const { mutate: deleteOrganization } = useMutation({
-    mutationFn: async () => {
-      await authClient.organization.delete({
-        organizationId: organization.id,
-        fetchOptions: {
-          onSuccess: () => {
-            toast.success("Organization successfully deleted");
-            router.replace("/dashboard");
-          },
-          onError: ({ error }) => {
-            toast.error(error.message);
-          },
-        },
-      });
-    },
-  });
-
   const form = useForm({
     mode: "onChange",
     reValidateMode: "onChange",
@@ -99,6 +81,9 @@ const Delete = ({ organization }: DeleteProps) => {
     },
   });
 
+  const { mutate: deleteOrganization, isPending } = useDeleteOrganization(
+    organization.id,
+  );
   const handleDelete = form.handleSubmit(() => {
     deleteOrganization();
   });
@@ -169,7 +154,7 @@ const Delete = ({ organization }: DeleteProps) => {
                   <Button
                     type="submit"
                     variant="destructive"
-                    loading={form.formState.isSubmitting}
+                    loading={isPending}
                   >
                     Delete Organization
                   </Button>
@@ -188,24 +173,6 @@ type LeaveProps = {
 };
 
 const Leave = ({ organization }: LeaveProps) => {
-  const router = useRouter();
-  const { mutate: leaveOrganization } = useMutation({
-    mutationFn: async () => {
-      await authClient.organization.leave({
-        organizationId: organization.id,
-        fetchOptions: {
-          onSuccess: () => {
-            toast.success("Organization successfully left");
-            router.replace("/dashboard");
-          },
-          onError: ({ error }) => {
-            toast.error(error.message);
-          },
-        },
-      });
-    },
-  });
-
   const form = useForm({
     resolver: zodResolver(
       z.object({
@@ -220,6 +187,9 @@ const Leave = ({ organization }: LeaveProps) => {
     },
   });
 
+  const { mutate: leaveOrganization, isPending } = useLeaveOrganization(
+    organization.id,
+  );
   const handleLeave = form.handleSubmit(() => {
     leaveOrganization();
   });
@@ -277,11 +247,7 @@ const Leave = ({ organization }: LeaveProps) => {
               />
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <Button
-                  type="submit"
-                  loading={form.formState.isSubmitting}
-                  variant="destructive"
-                >
+                <Button type="submit" loading={isPending} variant="destructive">
                   Leave Organization
                 </Button>
               </AlertDialogFooter>
@@ -291,4 +257,42 @@ const Leave = ({ organization }: LeaveProps) => {
       </AlertDialog>
     </div>
   );
+};
+
+const useDeleteOrganization = (organizationId: string) => {
+  const router = useRouter();
+
+  return useMutation({
+    mutationFn: async () => {
+      await authClient.organization.delete({
+        organizationId,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Organization successfully deleted");
+      router.replace("/dashboard");
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+};
+
+const useLeaveOrganization = (organizationId: string) => {
+  const router = useRouter();
+
+  return useMutation({
+    mutationFn: async () => {
+      await authClient.organization.leave({
+        organizationId,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Organization successfully left");
+      router.replace("/dashboard");
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
 };

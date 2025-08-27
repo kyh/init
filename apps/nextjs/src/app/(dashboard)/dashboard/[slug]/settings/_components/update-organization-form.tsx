@@ -21,6 +21,11 @@ import { z } from "zod";
 import { authClient } from "@/auth/auth-client";
 import { useTRPC } from "@/trpc/react";
 
+const updateOrganizationSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  slug: z.string().min(1, "Slug is required"),
+});
+
 type UpdateOrganizationFormProps = {
   slug: string;
 };
@@ -28,47 +33,24 @@ type UpdateOrganizationFormProps = {
 export const UpdateOrganizationForm = ({
   slug,
 }: UpdateOrganizationFormProps) => {
-  const router = useRouter();
   const trpc = useTRPC();
   const { data: organizationData } = useSuspenseQuery(
     trpc.organization.get.queryOptions({
       slug,
     }),
   );
-  const { mutate: updateOrganization } = useMutation({
-    mutationFn: async (data: { name: string; slug: string }) => {
-      await authClient.organization.update({
-        organizationId: organizationData.organization.id,
-        data: {
-          name: data.name,
-          slug: slugify(data.slug),
-        },
-        fetchOptions: {
-          onSuccess: () => {
-            toast.success("Organization successfully updated");
-            router.replace(`/dashboard/${data.slug}/settings`);
-          },
-          onError: ({ error }) => {
-            toast.error(error.message);
-          },
-        },
-      });
-    },
-  });
 
   const form = useForm({
-    resolver: zodResolver(
-      z.object({
-        name: z.string().min(1, "Name is required"),
-        slug: z.string().min(1, "Slug is required"),
-      }),
-    ),
+    resolver: zodResolver(updateOrganizationSchema),
     defaultValues: {
       name: organizationData.organization.name,
       slug: organizationData.organization.slug ?? "",
     },
   });
 
+  const { mutate: updateOrganization, isPending } = useUpdateOrganization(
+    organizationData.organization.id,
+  );
   const handleUpdateOrganization = form.handleSubmit((data) => {
     updateOrganization(data);
   });
@@ -112,11 +94,39 @@ export const UpdateOrganizationForm = ({
           )}
         />
         <footer className="flex justify-end">
-          <Button type="submit" loading={form.formState.isSubmitting}>
+          <Button type="submit" loading={isPending}>
             Update Organization
           </Button>
         </footer>
       </form>
     </Form>
   );
+};
+
+const useUpdateOrganization = (organizationId: string) => {
+  const router = useRouter();
+
+  return useMutation({
+    mutationFn: async (data: z.infer<typeof updateOrganizationSchema>) => {
+      const { data: updatedOrganization } =
+        await authClient.organization.update({
+          organizationId,
+          data: {
+            name: data.name,
+            slug: slugify(data.slug),
+          },
+        });
+
+      if (!updatedOrganization) throw new Error("Organization not found");
+
+      return updatedOrganization;
+    },
+    onSuccess: (updatedOrganization) => {
+      toast.success("Organization successfully updated");
+      router.replace(`/dashboard/${updatedOrganization.slug}/settings`);
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
 };

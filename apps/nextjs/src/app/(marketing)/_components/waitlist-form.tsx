@@ -16,7 +16,6 @@ import { cn } from "@repo/ui/utils";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 
-import type { JoinWaitlistInput } from "@repo/api/waitlist/waitlist-schema";
 import { useTRPC } from "@/trpc/react";
 
 export const WaitlistForm = () => {
@@ -30,7 +29,7 @@ export const WaitlistForm = () => {
     },
   });
 
-  const handleJoinWaitlist = (values: JoinWaitlistInput) => {
+  const handleJoinWaitlist = form.handleSubmit((values) => {
     toast.promise(
       joinWaitlist.mutateAsync({ email: values.email }).then(() => {
         form.reset({ email: "" });
@@ -41,12 +40,12 @@ export const WaitlistForm = () => {
         error: "Failed to join waitlist",
       },
     );
-  };
+  });
 
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(handleJoinWaitlist)}
+        onSubmit={handleJoinWaitlist}
         className="bg-input mt-10 flex max-w-sm items-center gap-2 rounded-xl border border-white/10 shadow-lg"
       >
         <FormField
@@ -65,6 +64,7 @@ export const WaitlistForm = () => {
                   autoComplete="email"
                   autoCorrect="off"
                   {...field}
+                  value={field.value ?? ""}
                 />
               </FormControl>
               <FormMessage className="absolute pt-1" />

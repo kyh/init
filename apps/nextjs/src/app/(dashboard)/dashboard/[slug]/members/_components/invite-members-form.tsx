@@ -29,7 +29,11 @@ import {
 } from "@repo/ui/select";
 import { toast } from "@repo/ui/toast";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/tooltip";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { PlusIcon, XIcon } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -77,6 +81,15 @@ export const InviteMembersDialog = ({ slug }: InviteMembersDialogProps) => {
   );
 };
 
+const inviteMembersSchema = z.object({
+  organizationInvitations: z.array(
+    z.object({
+      email: z.email("Invalid email address"),
+      role: z.enum(["owner", "admin", "member"]),
+    }),
+  ),
+});
+
 type InviteMembersFormProps = {
   slug: string;
   onInviteSuccess?: () => void;
@@ -92,40 +105,11 @@ export const InviteMembersForm = ({
       slug,
     }),
   );
-  const { mutate: inviteMembers } = useMutation({
-    mutationFn: async (data: {
-      organizationInvitations: {
-        email: string;
-        role: "member" | "admin" | "owner";
-      }[];
-    }) => {
-      const invitationPromises = data.organizationInvitations.map((invite) =>
-        authClient.organization.inviteMember({
-          email: invite.email,
-          role: invite.role,
-          organizationId: organizationData.organization.id,
-        }),
-      );
-
-      await Promise.all(invitationPromises);
-
-      form.reset();
-      toast.success("Invitations sent successfully");
-      onInviteSuccess?.();
-    },
-  });
+  const { mutateAsync: inviteMembers, isPending: isInvitingMembers } =
+    useInviteMembers(organizationData.organization.id);
 
   const form = useForm({
-    resolver: zodResolver(
-      z.object({
-        organizationInvitations: z.array(
-          z.object({
-            email: z.email("Invalid email address"),
-            role: z.enum(["owner", "admin", "member"]),
-          }),
-        ),
-      }),
-    ),
+    resolver: zodResolver(inviteMembersSchema),
     defaultValues: {
       organizationInvitations: [createEmptyInviteModel()],
     },
@@ -136,8 +120,10 @@ export const InviteMembersForm = ({
     control: form.control,
   });
 
-  const handleInviteMembers = form.handleSubmit((data) => {
-    inviteMembers(data);
+  const handleInviteMembers = form.handleSubmit(async (data) => {
+    await inviteMembers(data);
+    form.reset();
+    onInviteSuccess?.();
   });
 
   return (
@@ -246,7 +232,7 @@ export const InviteMembersForm = ({
         <Button
           className="mt-5 w-full"
           type="submit"
-          loading={form.formState.isSubmitting}
+          loading={isInvitingMembers}
         >
           Send Invites
         </Button>
@@ -259,3 +245,28 @@ const createEmptyInviteModel = () => ({
   email: "",
   role: "member" as const,
 });
+
+const useInviteMembers = (organizationId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: z.infer<typeof inviteMembersSchema>) => {
+      const invitationPromises = data.organizationInvitations.map((invite) =>
+        authClient.organization.inviteMember({
+          email: invite.email,
+          role: invite.role,
+          organizationId,
+        }),
+      );
+
+      await Promise.all(invitationPromises);
+    },
+    onSuccess: async () => {
+      toast.success("Invitations sent successfully");
+      await queryClient.invalidateQueries();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+};

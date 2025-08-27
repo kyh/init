@@ -12,7 +12,11 @@ import {
 } from "@repo/ui/dropdown-menu";
 import { AutoTable } from "@repo/ui/table";
 import { toast } from "@repo/ui/toast";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { MoreHorizontalIcon } from "lucide-react";
 
@@ -86,21 +90,7 @@ const ActionsDropdown = ({
   invitation: Invitation;
   userRole: string | undefined;
 }) => {
-  const { mutate: cancelInvitation } = useMutation({
-    mutationFn: async () => {
-      await authClient.organization.cancelInvitation({
-        invitationId: invitation.id,
-        fetchOptions: {
-          onSuccess: () => {
-            toast.success("Invitation cancelled successfully");
-          },
-          onError: ({ error }) => {
-            toast.error(error.message);
-          },
-        },
-      });
-    },
-  });
+  const { mutateAsync: cancelInvitation } = useCancelInvitation(invitation.id);
 
   const handleRemoveInvitation = () => {
     alertDialog.open(`Remove ${invitation.email}'s invite?`, {
@@ -131,4 +121,23 @@ const ActionsDropdown = ({
       </DropdownMenuContent>
     </DropdownMenu>
   );
+};
+
+const useCancelInvitation = (invitationId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      await authClient.organization.cancelInvitation({
+        invitationId,
+      });
+    },
+    onSuccess: async () => {
+      toast.success("Invitation cancelled successfully");
+      await queryClient.invalidateQueries();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
 };
