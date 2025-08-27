@@ -14,21 +14,47 @@ import {
 } from "@repo/ui/form";
 import { Input } from "@repo/ui/input";
 import { toast } from "@repo/ui/toast";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { useOrganization } from "@/app/(dashboard)/_components/use-organization";
 import { authClient } from "@/auth/auth-client";
+import { useTRPC } from "@/trpc/react";
 
-type OrganizationProfileFormProps = {
+type UpdateOrganizationFormProps = {
   slug: string;
 };
 
-export const OrganizationProfileForm = ({
+export const UpdateOrganizationForm = ({
   slug,
-}: OrganizationProfileFormProps) => {
+}: UpdateOrganizationFormProps) => {
   const router = useRouter();
-  const { data: organization } = useOrganization(slug);
+  const trpc = useTRPC();
+  const { data: organizationData } = useSuspenseQuery(
+    trpc.organization.get.queryOptions({
+      slug,
+    }),
+  );
+  const { mutate: updateOrganization } = useMutation({
+    mutationFn: async (data: { name: string; slug: string }) => {
+      await authClient.organization.update({
+        organizationId: organizationData.organization.id,
+        data: {
+          name: data.name,
+          slug: slugify(data.slug),
+        },
+        fetchOptions: {
+          onSuccess: () => {
+            toast.success("Organization successfully updated");
+            router.replace(`/dashboard/${data.slug}/settings`);
+          },
+          onError: ({ error }) => {
+            toast.error(error.message);
+          },
+        },
+      });
+    },
+  });
 
   const form = useForm({
     resolver: zodResolver(
@@ -38,28 +64,13 @@ export const OrganizationProfileForm = ({
       }),
     ),
     defaultValues: {
-      name: organization.name,
-      slug: organization.slug,
+      name: organizationData.organization.name,
+      slug: organizationData.organization.slug ?? "",
     },
   });
 
-  const handleUpdateOrganization = form.handleSubmit(async (data) => {
-    await authClient.organization.update({
-      organizationId: organization.id,
-      data: {
-        name: data.name,
-        slug: slugify(data.slug),
-      },
-      fetchOptions: {
-        onSuccess: () => {
-          toast.success("Organization successfully updated");
-          router.replace(`/dashboard/${data.slug}/settings`);
-        },
-        onError: (ctx) => {
-          toast.error(ctx.error.message);
-        },
-      },
-    });
+  const handleUpdateOrganization = form.handleSubmit((data) => {
+    updateOrganization(data);
   });
 
   return (

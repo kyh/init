@@ -35,7 +35,7 @@ const Page = async (props: PageProps) => {
             </p>
           </div>
           <div className="md:col-span-2">
-            <MembersTable user={session.user} slug={slug} />
+            <MembersTable slug={slug} />
           </div>
         </div>
         <div className="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 py-8 md:grid-cols-3">
@@ -51,7 +51,7 @@ const Page = async (props: PageProps) => {
             <div className="flex justify-end">
               <InviteMembersDialog slug={slug} />
             </div>
-            <InvitationsTable user={session.user} slug={slug} />
+            <InvitationsTable slug={slug} />
           </div>
         </div>
       </section>

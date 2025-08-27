@@ -1,6 +1,5 @@
 "use client";
 
-import type { Invitation } from "better-auth/plugins";
 import { useMemo } from "react";
 import { alertDialog } from "@repo/ui/alert-dialog";
 import { Badge } from "@repo/ui/badge";
@@ -13,28 +12,29 @@ import {
 } from "@repo/ui/dropdown-menu";
 import { AutoTable } from "@repo/ui/table";
 import { toast } from "@repo/ui/toast";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { MoreHorizontalIcon } from "lucide-react";
 
-import type { Session } from "@repo/api/auth/auth";
+import type { RouterOutputs } from "@repo/api";
 import type { ColumnDef } from "@tanstack/react-table";
-import { useOrganization } from "@/app/(dashboard)/_components/use-organization";
 import { authClient } from "@/auth/auth-client";
+import { useTRPC } from "@/trpc/react";
+
+type Invitation = RouterOutputs["organization"]["get"]["invitations"][number];
 
 type InvitationsTableProps = {
-  user: Session["user"];
   slug: string;
 };
 
-export const InvitationsTable = ({ user, slug }: InvitationsTableProps) => {
-  const queryClient = useQueryClient();
-  const { data: organization, queryKey } = useOrganization(slug);
-
-  const userId = user.id;
-  const userRole =
-    organization.members.find((member) => member.userId === userId)?.role ??
-    "member";
+export const InvitationsTable = ({ slug }: InvitationsTableProps) => {
+  const trpc = useTRPC();
+  const { data: organizationData } = useSuspenseQuery(
+    trpc.organization.get.queryOptions({
+      slug,
+    }),
+  );
+  const userRole = organizationData.currentUserMember.role;
 
   const columns = useMemo(() => {
     const columnDefs: ColumnDef<Invitation>[] = [
@@ -45,7 +45,7 @@ export const InvitationsTable = ({ user, slug }: InvitationsTableProps) => {
       {
         header: "Role",
         cell: ({ row }) => (
-          <Badge className="capitalize">{row.original.role || "member"}</Badge>
+          <Badge className="capitalize">{row.original.role ?? "member"}</Badge>
         ),
       },
       {
@@ -58,22 +58,16 @@ export const InvitationsTable = ({ user, slug }: InvitationsTableProps) => {
         header: "",
         id: "actions",
         cell: ({ row }) => (
-          <ActionsDropdown
-            invitation={row.original}
-            userRole={userRole}
-            onRemoveInvitation={() =>
-              queryClient.invalidateQueries({ queryKey })
-            }
-          />
+          <ActionsDropdown invitation={row.original} userRole={userRole} />
         ),
       },
     ];
 
     return columnDefs;
-  }, [userRole, queryKey, queryClient]);
+  }, [userRole]);
 
   const table = useReactTable({
-    data: organization.invitations,
+    data: organizationData.invitations,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
@@ -88,32 +82,32 @@ export const InvitationsTable = ({ user, slug }: InvitationsTableProps) => {
 const ActionsDropdown = ({
   invitation,
   userRole,
-  onRemoveInvitation,
 }: {
   invitation: Invitation;
   userRole: string | undefined;
-  onRemoveInvitation?: () => Promise<void>;
 }) => {
+  const { mutate: cancelInvitation } = useMutation({
+    mutationFn: async () => {
+      await authClient.organization.cancelInvitation({
+        invitationId: invitation.id,
+        fetchOptions: {
+          onSuccess: () => {
+            toast.success("Invitation cancelled successfully");
+          },
+          onError: ({ error }) => {
+            toast.error(error.message);
+          },
+        },
+      });
+    },
+  });
+
   const handleRemoveInvitation = () => {
     alertDialog.open(`Remove ${invitation.email}'s invite?`, {
       description: `You are about to remove ${invitation.email}'s invite. This will revoke their access to the organization.`,
       action: {
         label: "Remove",
-        onClick: () => {
-          return authClient.organization
-            .cancelInvitation({
-              invitationId: invitation.id,
-              fetchOptions: {
-                onSuccess: () => {
-                  toast.success("Invitation cancelled successfully");
-                },
-                onError: ({ error }) => {
-                  toast.error(error.message);
-                },
-              },
-            })
-            .then(() => onRemoveInvitation?.());
-        },
+        onClick: cancelInvitation,
       },
     });
   };

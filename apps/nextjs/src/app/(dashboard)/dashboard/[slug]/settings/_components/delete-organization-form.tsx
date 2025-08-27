@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { authMetadataSchema } from "@repo/api/auth/auth-schema";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -25,47 +24,64 @@ import {
 } from "@repo/ui/form";
 import { Input } from "@repo/ui/input";
 import { toast } from "@repo/ui/toast";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import type { OrganizationWithMembers } from "@/app/(dashboard)/_components/use-organization";
-import type { Session } from "@repo/api/auth/auth";
-import { useOrganization } from "@/app/(dashboard)/_components/use-organization";
+import type { RouterOutputs } from "@repo/api";
 import { authClient } from "@/auth/auth-client";
+import { useTRPC } from "@/trpc/react";
 
-type OrganizationDeleteFormProps = {
-  user: Session["user"];
+type Organization = RouterOutputs["organization"]["get"]["organization"];
+
+type DeleteOrganizationFormProps = {
   slug: string;
 };
 
-export const OrganizationDeleteForm = ({
-  user,
+export const DeleteOrganizationForm = ({
   slug,
-}: OrganizationDeleteFormProps) => {
-  const { data: organization } = useOrganization(slug);
+}: DeleteOrganizationFormProps) => {
+  const trpc = useTRPC();
+  const { data: organizationData } = useSuspenseQuery(
+    trpc.organization.get.queryOptions({
+      slug,
+    }),
+  );
+  const userIsOwner = organizationData.currentUserMember.role === "owner";
 
-  const userIsOwner =
-    organization.members.find((member) => member.userId === user.id)?.role ===
-    "owner";
-  const authMetadata = authMetadataSchema.parse(organization.metadata ?? "{}");
-
-  if (authMetadata.personal) {
+  if (organizationData.organizationMetadata.personal) {
     return null;
   }
 
   if (userIsOwner) {
-    return <Delete organization={organization} />;
+    return <Delete organization={organizationData.organization} />;
   }
 
-  return <Leave organization={organization} />;
+  return <Leave organization={organizationData.organization} />;
 };
 
 type DeleteProps = {
-  organization: OrganizationWithMembers;
+  organization: Organization;
 };
 
 const Delete = ({ organization }: DeleteProps) => {
   const router = useRouter();
+  const { mutate: deleteOrganization } = useMutation({
+    mutationFn: async () => {
+      await authClient.organization.delete({
+        organizationId: organization.id,
+        fetchOptions: {
+          onSuccess: () => {
+            toast.success("Organization successfully deleted");
+            router.replace("/dashboard");
+          },
+          onError: ({ error }) => {
+            toast.error(error.message);
+          },
+        },
+      });
+    },
+  });
 
   const form = useForm({
     mode: "onChange",
@@ -83,19 +99,8 @@ const Delete = ({ organization }: DeleteProps) => {
     },
   });
 
-  const handleDelete = form.handleSubmit(async () => {
-    await authClient.organization.delete({
-      organizationId: organization.id,
-      fetchOptions: {
-        onSuccess: () => {
-          toast.success("Organization successfully deleted");
-          router.replace("/dashboard");
-        },
-        onError: (ctx) => {
-          toast.error(ctx.error.message);
-        },
-      },
-    });
+  const handleDelete = form.handleSubmit(() => {
+    deleteOrganization();
   });
 
   return (
@@ -179,11 +184,27 @@ const Delete = ({ organization }: DeleteProps) => {
 };
 
 type LeaveProps = {
-  organization: OrganizationWithMembers;
+  organization: Organization;
 };
 
 const Leave = ({ organization }: LeaveProps) => {
   const router = useRouter();
+  const { mutate: leaveOrganization } = useMutation({
+    mutationFn: async () => {
+      await authClient.organization.leave({
+        organizationId: organization.id,
+        fetchOptions: {
+          onSuccess: () => {
+            toast.success("Organization successfully left");
+            router.replace("/dashboard");
+          },
+          onError: ({ error }) => {
+            toast.error(error.message);
+          },
+        },
+      });
+    },
+  });
 
   const form = useForm({
     resolver: zodResolver(
@@ -199,19 +220,8 @@ const Leave = ({ organization }: LeaveProps) => {
     },
   });
 
-  const handleLeave = form.handleSubmit(async () => {
-    await authClient.organization.leave({
-      organizationId: organization.id,
-      fetchOptions: {
-        onSuccess: () => {
-          toast.success("Organization successfully left");
-          router.replace("/dashboard");
-        },
-        onError: (ctx) => {
-          toast.error(ctx.error.message);
-        },
-      },
-    });
+  const handleLeave = form.handleSubmit(() => {
+    leaveOrganization();
   });
 
   return (

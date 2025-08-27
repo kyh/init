@@ -2,8 +2,8 @@ import { redirect } from "next/navigation";
 import { getSession } from "@repo/api/auth/auth";
 
 import { PageHeader } from "@/components/header";
-import { OrganizationDeleteForm } from "./_components/organization-delete-form";
-import { OrganizationProfileForm } from "./_components/organization-profile-form";
+import { DeleteOrganizationForm } from "./_components/delete-organization-form";
+import { UpdateOrganizationForm } from "./_components/update-organization-form";
 
 type PageProps = {
   params: Promise<{
@@ -34,7 +34,7 @@ const Page = async (props: PageProps) => {
             </p>
           </div>
           <div className="md:col-span-2">
-            <OrganizationProfileForm slug={slug} />
+            <UpdateOrganizationForm slug={slug} />
           </div>
         </div>
         <div className="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 py-8 md:grid-cols-3">
@@ -47,7 +47,7 @@ const Page = async (props: PageProps) => {
             </p>
           </div>
           <div className="md:col-span-2">
-            <OrganizationDeleteForm user={session.user} slug={slug} />
+            <DeleteOrganizationForm slug={slug} />
           </div>
         </div>
       </section>

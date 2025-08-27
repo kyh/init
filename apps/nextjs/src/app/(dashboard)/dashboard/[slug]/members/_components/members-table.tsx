@@ -18,28 +18,30 @@ import {
 } from "@repo/ui/dropdown-menu";
 import { AutoTable } from "@repo/ui/table";
 import { toast } from "@repo/ui/toast";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { MoreHorizontalIcon } from "lucide-react";
 
-import type { MemberWithUser } from "@/app/(dashboard)/_components/use-organization";
-import type { Session } from "@repo/api/auth/auth";
+import type { RouterOutputs } from "@repo/api";
 import type { ColumnDef } from "@tanstack/react-table";
-import { useOrganization } from "@/app/(dashboard)/_components/use-organization";
 import { authClient } from "@/auth/auth-client";
+import { useTRPC } from "@/trpc/react";
+
+type MemberWithUser = RouterOutputs["organization"]["get"]["members"][number];
 
 type MembersTableProps = {
   slug: string;
-  user: Session["user"];
 };
 
-export const MembersTable = ({ user, slug }: MembersTableProps) => {
-  const queryClient = useQueryClient();
-  const { data: organization, queryKey } = useOrganization(slug);
-  const userId = user.id;
-  const userRole = organization.members.find(
-    (member) => member.userId === userId,
-  )?.role;
+export const MembersTable = ({ slug }: MembersTableProps) => {
+  const trpc = useTRPC();
+  const { data: organizationData } = useSuspenseQuery(
+    trpc.organization.get.queryOptions({
+      slug,
+    }),
+  );
+  const userId = organizationData.currentUserMember.userId;
+  const userRole = organizationData.currentUserMember.role;
 
   const columns = useMemo(() => {
     const columnDefs: ColumnDef<MemberWithUser>[] = [
@@ -66,7 +68,7 @@ export const MembersTable = ({ user, slug }: MembersTableProps) => {
         header: "Email",
         cell: ({ row }) => {
           const member = row.original;
-          return member.user.email;
+          return member.user?.email;
         },
       },
       {
@@ -88,20 +90,16 @@ export const MembersTable = ({ user, slug }: MembersTableProps) => {
             member={row.original}
             userId={userId}
             userRole={userRole}
-            onRemoveMember={() => queryClient.invalidateQueries({ queryKey })}
-            onUpdateMemberRole={() =>
-              queryClient.invalidateQueries({ queryKey })
-            }
           />
         ),
       },
     ];
 
     return columnDefs;
-  }, [userId, userRole, queryClient, queryKey]);
+  }, [userId, userRole]);
 
   const table = useReactTable({
-    data: organization.members,
+    data: organizationData.members,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
@@ -117,15 +115,44 @@ const ActionsDropdown = ({
   member,
   userId,
   userRole,
-  onRemoveMember,
-  onUpdateMemberRole,
 }: {
   member: MemberWithUser;
   userId: string;
   userRole: string | undefined;
-  onRemoveMember?: (memberId: string) => Promise<void>;
-  onUpdateMemberRole?: (memberId: string, role: string) => Promise<void>;
 }) => {
+  const { mutate: updateMemberRole } = useMutation({
+    mutationFn: async (newRole: string) => {
+      await authClient.organization.updateMemberRole({
+        memberId: member.id,
+        role: newRole as "owner" | "admin" | "member",
+        fetchOptions: {
+          onSuccess: () => {
+            toast.success("Member role updated successfully");
+          },
+          onError: ({ error }) => {
+            toast.error(error.message);
+          },
+        },
+      });
+    },
+  });
+
+  const { mutate: removeMember } = useMutation({
+    mutationFn: async () => {
+      await authClient.organization.removeMember({
+        memberIdOrEmail: member.id,
+        fetchOptions: {
+          onSuccess: () => {
+            toast.success("Member removed successfully");
+          },
+          onError: ({ error }) => {
+            toast.error(error.message);
+          },
+        },
+      });
+    },
+  });
+
   const isMemberSelf = member.userId === userId;
   const isMemberOwner = member.role === "owner";
   const displayName = getDisplayName(member);
@@ -135,22 +162,7 @@ const ActionsDropdown = ({
       description: `You are about to change ${displayName}'s role to ${newRole}. This may affect their permissions.`,
       action: {
         label: "Change",
-        onClick: () => {
-          return authClient.organization
-            .updateMemberRole({
-              memberId: member.id,
-              role: newRole as "owner" | "admin" | "member",
-              fetchOptions: {
-                onSuccess: () => {
-                  toast.success("Member role updated successfully");
-                },
-                onError: ({ error }) => {
-                  toast.error(error.message);
-                },
-              },
-            })
-            .then(() => onUpdateMemberRole?.(member.id, newRole));
-        },
+        onClick: () => updateMemberRole(newRole),
       },
     });
   };
@@ -160,21 +172,7 @@ const ActionsDropdown = ({
       description: `You are about to remove ${displayName} from the organization. They will lose access to this organization.`,
       action: {
         label: "Remove",
-        onClick: () => {
-          return authClient.organization
-            .removeMember({
-              memberIdOrEmail: member.id,
-              fetchOptions: {
-                onSuccess: () => {
-                  toast.success("Member removed successfully");
-                },
-                onError: ({ error }) => {
-                  toast.error(error.message);
-                },
-              },
-            })
-            .then(() => onRemoveMember?.(member.id));
-        },
+        onClick: removeMember,
       },
     });
   };
@@ -235,5 +233,5 @@ const ActionsDropdown = ({
 };
 
 const getDisplayName = (member: MemberWithUser) => {
-  return member.user.name;
+  return member.user?.name ?? member.user?.email ?? "Unknown";
 };

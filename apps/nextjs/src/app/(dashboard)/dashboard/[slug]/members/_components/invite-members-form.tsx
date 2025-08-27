@@ -29,16 +29,13 @@ import {
 } from "@repo/ui/select";
 import { toast } from "@repo/ui/toast";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/tooltip";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { PlusIcon, XIcon } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 
-import {
-  getOrganizationQueryKey,
-  useOrganization,
-} from "@/app/(dashboard)/_components/use-organization";
 import { authClient } from "@/auth/auth-client";
+import { useTRPC } from "@/trpc/react";
 
 /**
  * The maximum number of invites that can be sent at once.
@@ -52,8 +49,6 @@ type InviteMembersDialogProps = {
 
 export const InviteMembersDialog = ({ slug }: InviteMembersDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const queryClient = useQueryClient();
-  const queryKey = getOrganizationQueryKey(slug);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -73,8 +68,7 @@ export const InviteMembersDialog = ({ slug }: InviteMembersDialogProps) => {
         </DialogHeader>
         <InviteMembersForm
           slug={slug}
-          onInviteSuccess={async () => {
-            await queryClient.invalidateQueries({ queryKey });
+          onInviteSuccess={() => {
             setIsOpen(false);
           }}
         />
@@ -85,14 +79,41 @@ export const InviteMembersDialog = ({ slug }: InviteMembersDialogProps) => {
 
 type InviteMembersFormProps = {
   slug: string;
-  onInviteSuccess?: () => Promise<void>;
+  onInviteSuccess?: () => void;
 };
 
 export const InviteMembersForm = ({
   slug,
   onInviteSuccess,
 }: InviteMembersFormProps) => {
-  const { data: organization } = useOrganization(slug);
+  const trpc = useTRPC();
+  const { data: organizationData } = useSuspenseQuery(
+    trpc.organization.get.queryOptions({
+      slug,
+    }),
+  );
+  const { mutate: inviteMembers } = useMutation({
+    mutationFn: async (data: {
+      organizationInvitations: {
+        email: string;
+        role: "member" | "admin" | "owner";
+      }[];
+    }) => {
+      const invitationPromises = data.organizationInvitations.map((invite) =>
+        authClient.organization.inviteMember({
+          email: invite.email,
+          role: invite.role,
+          organizationId: organizationData.organization.id,
+        }),
+      );
+
+      await Promise.all(invitationPromises);
+
+      form.reset();
+      toast.success("Invitations sent successfully");
+      onInviteSuccess?.();
+    },
+  });
 
   const form = useForm({
     resolver: zodResolver(
@@ -115,20 +136,8 @@ export const InviteMembersForm = ({
     control: form.control,
   });
 
-  const handleInviteMembers = form.handleSubmit(async (data) => {
-    const invitationPromises = data.organizationInvitations.map((invite) =>
-      authClient.organization.inviteMember({
-        email: invite.email,
-        role: invite.role,
-        organizationId: organization.id,
-      }),
-    );
-
-    await Promise.all(invitationPromises);
-    await onInviteSuccess?.();
-
-    form.reset();
-    toast.success("Invitations sent successfully");
+  const handleInviteMembers = form.handleSubmit((data) => {
+    inviteMembers(data);
   });
 
   return (
