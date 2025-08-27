@@ -4,16 +4,11 @@ import Link from "next/link";
 import { buttonVariants } from "@repo/ui/button";
 import { Logo } from "@repo/ui/logo";
 import { cn } from "@repo/ui/utils";
-import { useQuery } from "@tanstack/react-query";
 
-import { useTRPC } from "@/trpc/react";
+import { authClient } from "@/auth/auth-client";
 
 export const Header = () => {
-  const trpc = useTRPC();
-  const { data, isLoading } = useQuery(trpc.auth.workspace.queryOptions());
-
-  const user = data?.user;
-  const metaData = data?.userMetadata;
+  const { data, isPending } = authClient.useActiveOrganization();
 
   return (
     <div className="mx-auto w-full justify-center">
@@ -37,20 +32,20 @@ export const Header = () => {
           >
             Github
           </Link>
-          {isLoading ? (
+          {isPending ? (
             <span
               className={cn(
                 buttonVariants({ variant: "secondary", size: "sm" }),
                 "pointer-events-none ml-4 w-24 animate-pulse rounded-full px-5",
               )}
             />
-          ) : user ? (
+          ) : data ? (
             <Link
               className={cn(
                 buttonVariants({ variant: "secondary", size: "sm" }),
                 "ml-4 w-24 rounded-full px-5",
               )}
-              href={`/dashboard/${metaData?.defaultTeamSlug}`}
+              href={`/dashboard/${data.slug}`}
             >
               Dashboard
             </Link>

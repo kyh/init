@@ -43,13 +43,13 @@ import { caller } from "@/trpc/server";
 export const maxDuration = 30;
 
 export async function POST(request: Request) {
-  const { messages, teamSlug } = (await request.json()) as {
+  const { messages, slug } = (await request.json()) as {
     messages: Message[];
-    teamSlug: string;
+    slug: string;
   };
 
   // Ensure the team exists and the user has access to it
-  await caller.team.getTeam({ slug: teamSlug });
+  await caller.team.getTeam({ slug: slug });
 
   const result = streamText({
     model: openai("gpt-4o-mini"),
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
 The main chat interface:
 
 ```typescript
-// apps/nextjs/src/app/(dashboard)/dashboard/[teamSlug]/(home)/_components/ai-chat-form.tsx
+// apps/nextjs/src/app/(dashboard)/dashboard/[slug]/(home)/_components/ai-chat-form.tsx
 "use client";
 
 import { useChat } from "@ai-sdk/react";
@@ -78,13 +78,13 @@ import { Button } from "@repo/ui/button";
 import { toast } from "@repo/ui/toast";
 
 export type AIFormProps = {
-  teamSlug: string;
+  slug: string;
 };
 
-export const AIChatForm = ({ teamSlug }: AIFormProps) => {
+export const AIChatForm = ({ slug }: AIFormProps) => {
   const { messages, append, status, stop, input, setInput } = useChat({
     api: "/api/chat",
-    body: { teamSlug },
+    body: { slug },
     onError: (error) => {
       toast.error(`An error occurred: ${error.message}`);
     },
@@ -147,7 +147,7 @@ export const AIChatForm = ({ teamSlug }: AIFormProps) => {
 Reusable message display components:
 
 ```typescript
-// apps/nextjs/src/app/(dashboard)/dashboard/[teamSlug]/(home)/_components/ai-chat-message.tsx
+// apps/nextjs/src/app/(dashboard)/dashboard/[slug]/(home)/_components/ai-chat-message.tsx
 import type { Message as AIMessage } from "ai";
 import { Avatar } from "@repo/ui/avatar";
 import { cn } from "@repo/ui/utils";
@@ -234,7 +234,7 @@ export const MessagesContainer = ({
 Custom input components for the chat interface:
 
 ```typescript
-// apps/nextjs/src/app/(dashboard)/dashboard/[teamSlug]/(home)/_components/ai-chat-input.tsx
+// apps/nextjs/src/app/(dashboard)/dashboard/[slug]/(home)/_components/ai-chat-input.tsx
 import { forwardRef } from "react";
 import { Textarea } from "@repo/ui/textarea";
 import { cn } from "@repo/ui/utils";
@@ -289,10 +289,10 @@ Each chat session is scoped to a specific team:
 ```typescript
 // In the API route
 export async function POST(request: Request) {
-  const { messages, teamSlug } = await request.json();
+  const { messages, slug } = await request.json();
 
   // Validate team access through tRPC
-  await caller.team.getTeam({ slug: teamSlug });
+  await caller.team.getTeam({ slug: slug });
 
   // If this throws, the user doesn't have access to the team
   // and the chat request will be rejected
@@ -305,7 +305,7 @@ Pass team information to the chat component:
 
 ```typescript
 // In your team dashboard page
-export default function TeamDashboard({ params }: { params: { teamSlug: string } }) {
+export default function TeamDashboard({ params }: { params: { slug: string } }) {
   return (
     <div className="container mx-auto p-6">
       <h1>Team Dashboard</h1>
@@ -314,7 +314,7 @@ export default function TeamDashboard({ params }: { params: { teamSlug: string }
       <div className="mt-8">
         <h2>AI Assistant</h2>
         <div className="h-96 border rounded-lg">
-          <AIChatForm teamSlug={params.teamSlug} />
+          <AIChatForm slug={params.slug} />
         </div>
       </div>
     </div>
@@ -349,7 +349,7 @@ Add context-specific system prompts:
 ```typescript
 const result = streamText({
   model: openai("gpt-4o-mini"),
-  system: `You are a helpful AI assistant for the ${teamSlug} team. 
+  system: `You are a helpful AI assistant for the ${slug} team. 
            Provide concise, professional responses relevant to their work.`,
   messages,
 });
@@ -361,13 +361,13 @@ Process messages before sending to AI:
 
 ```typescript
 export async function POST(request: Request) {
-  const { messages, teamSlug } = await request.json();
+  const { messages, slug } = await request.json();
 
   // Add team context to the conversation
   const contextualizedMessages = [
     {
       role: "system" as const,
-      content: `You are assisting the ${teamSlug} team. Their recent activity includes...`,
+      content: `You are assisting the ${slug} team. Their recent activity includes...`,
     },
     ...messages,
   ];
@@ -400,9 +400,9 @@ export const chatMessages = pgTable("chat_messages", (t) => ({
 
 // In your API route
 export async function POST(request: Request) {
-  const { messages, teamSlug } = await request.json();
+  const { messages, slug } = await request.json();
 
-  const team = await caller.team.getTeam({ slug: teamSlug });
+  const team = await caller.team.getTeam({ slug: slug });
 
   // Load previous messages
   const previousMessages = await db.query.chatMessages.findMany({
@@ -458,7 +458,7 @@ const result = streamText({
       }),
       execute: async ({ includeMembers }) => {
         const team = await caller.team.getTeam({
-          slug: teamSlug,
+          slug: slug,
           includeMembers,
         });
         return team;
@@ -501,7 +501,7 @@ const ratelimit = new Ratelimit({
 });
 
 export async function POST(request: Request) {
-  const identifier = `team-${teamSlug}`;
+  const identifier = `team-${slug}`;
   const { success } = await ratelimit.limit(identifier);
 
   if (!success) {
@@ -605,7 +605,7 @@ Always validate team access:
 ```typescript
 export async function POST(request: Request) {
   try {
-    const team = await caller.team.getTeam({ slug: teamSlug });
+    const team = await caller.team.getTeam({ slug: slug });
     // User has access, continue...
   } catch (error) {
     return new Response("Unauthorized", { status: 403 });

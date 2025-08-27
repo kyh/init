@@ -1,22 +1,26 @@
-import { HydrateClient, prefetch, trpc } from "@/trpc/server";
+import { redirect } from "next/navigation";
+import { getSession } from "@repo/api/auth/auth";
+
 import { Sidebar } from "./_components/sidebar";
 
 export const dynamic = "force-dynamic";
 
 type LayoutProps = {
   children: React.ReactNode;
+  params: Promise<{ slug: string }>;
 };
 
-const Layout = (props: LayoutProps) => {
-  prefetch(trpc.auth.workspace.queryOptions());
+const Layout = async (props: LayoutProps) => {
+  const session = await getSession();
+  if (!session) {
+    return redirect("/auth/login");
+  }
 
   return (
-    <HydrateClient>
-      <div className="flex min-h-dvh">
-        <Sidebar />
-        {props.children}
-      </div>
-    </HydrateClient>
+    <div className="flex min-h-dvh">
+      <Sidebar user={session.user} />
+      {props.children}
+    </div>
   );
 };
 

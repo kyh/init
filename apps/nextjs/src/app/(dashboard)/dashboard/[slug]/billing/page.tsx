@@ -2,44 +2,48 @@ import { redirect } from "next/navigation";
 import { getSession } from "@repo/api/auth/auth";
 
 import { PageHeader } from "@/components/header";
-import { AppearanceForm } from "./_components/appearance-form";
-import { ProfileForm } from "./_components/profile-form";
 
-const Page = async () => {
+type PageProps = {
+  params: Promise<{
+    slug: string;
+  }>;
+};
+
+const Page = async (props: PageProps) => {
+  const params = await props.params;
+  const slug = params.slug;
+
   const session = await getSession();
+
   if (!session) {
-    return redirect("/auth/login?nextPath=/dashboard/account");
+    return redirect(`/auth/login?nextPath=/dashboard/${slug}/billing`);
   }
 
   return (
     <main className="flex flex-1 flex-col px-5">
-      <PageHeader>Profile</PageHeader>
+      <PageHeader>Billing</PageHeader>
       <section className="divide-border divide-y">
         <div className="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 py-8 md:grid-cols-3">
           <div>
             <h2 className="text-primary text-base leading-7 font-light">
-              Personal Information
+              Your Plan
             </h2>
             <p className="text-muted-foreground mt-1 text-sm leading-6">
-              Use a permanent address where you can receive mail.
+              Manage your subscription and billing details.
             </p>
           </div>
-          <div className="md:col-span-2">
-            <ProfileForm user={session.user} />
-          </div>
+          <div className="md:col-span-2"></div>
         </div>
         <div className="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 py-8 md:grid-cols-3">
           <div>
             <h2 className="text-primary text-base leading-7 font-light">
-              Appearance
+              Order History
             </h2>
             <p className="text-muted-foreground mt-1 text-sm leading-6">
-              Select the theme for the dashboard.
+              Download invoices and view your order history.
             </p>
           </div>
-          <div className="md:col-span-2">
-            <AppearanceForm />
-          </div>
+          <div className="space-y-3 md:col-span-2"></div>
         </div>
       </section>
     </main>
