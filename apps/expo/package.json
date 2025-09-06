@@ -43,9 +43,9 @@
     "superjson": "catalog:"
   },
   "devDependencies": {
-    "@babel/core": "^7.28.3",
+    "@babel/core": "^7.28.4",
     "@babel/preset-env": "^7.28.3",
-    "@babel/runtime": "^7.28.3",
+    "@babel/runtime": "^7.28.4",
     "@kyh/eslint-config": "catalog:",
     "@kyh/prettier-config": "catalog:",
     "@kyh/tsconfig": "catalog:",
