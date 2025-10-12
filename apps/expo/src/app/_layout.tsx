@@ -1,17 +1,16 @@
+import { useColorScheme } from "react-native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useColorScheme } from "nativewind";
+import { QueryClientProvider } from "@tanstack/react-query";
 
-import { queryClient } from "@/trpc/react";
+import { queryClient } from "~/utils/api";
 
 import "../styles.css";
 
-import { QueryClientProvider } from "@tanstack/react-query";
-
 // This is the main layout of the app
 // It wraps your pages with the providers they need
-const RootLayout = () => {
-  const { colorScheme } = useColorScheme();
+export default function RootLayout() {
+  const colorScheme = useColorScheme();
   return (
     <QueryClientProvider client={queryClient}>
       {/*
@@ -20,6 +19,9 @@ const RootLayout = () => {
         */}
       <Stack
         screenOptions={{
+          headerStyle: {
+            backgroundColor: "#c03484",
+          },
           contentStyle: {
             backgroundColor: colorScheme == "dark" ? "#09090B" : "#FFFFFF",
           },
@@ -28,6 +30,4 @@ const RootLayout = () => {
       <StatusBar />
     </QueryClientProvider>
   );
-};
-
-export default RootLayout;
+}
