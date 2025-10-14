@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@better-auth/expo": "^1.3.27",
-    "@legendapp/list": "^2.0.11",
+    "@legendapp/list": "^2.0.12",
     "@tanstack/react-query": "catalog:",
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
