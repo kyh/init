@@ -22,7 +22,7 @@ import { z } from "zod";
 
 import type { Session } from "@repo/api/auth/auth";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { authClient } from "@/auth/auth-client";
+import { authClient } from "@/lib/auth-client";
 
 type ProfileFormProps = {
   user: Session["user"];

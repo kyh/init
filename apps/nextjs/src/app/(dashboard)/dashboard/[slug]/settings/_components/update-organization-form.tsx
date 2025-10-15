@@ -18,7 +18,7 @@ import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { authClient } from "@/auth/auth-client";
+import { authClient } from "@/lib/auth-client";
 import { useTRPC } from "@/trpc/react";
 
 const updateOrganizationSchema = z.object({

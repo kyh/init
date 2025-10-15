@@ -53,8 +53,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import type { Session } from "@repo/api/auth/auth";
-import { authClient } from "@/auth/auth-client";
 import { NavLink } from "@/components/nav";
+import { authClient } from "@/lib/auth-client";
 
 type SidebarProps = {
   user: Session["user"];
