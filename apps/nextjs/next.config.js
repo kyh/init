@@ -46,8 +46,6 @@ const withMDX = createMDX();
 
 /** @type {import("next").NextConfig} */
 const config = {
-  cacheComponents: true,
-  reactStrictMode: true,
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
   transpilePackages,
   images: {

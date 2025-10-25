@@ -3,6 +3,8 @@ import { getSession } from "@repo/api/auth/auth";
 
 import { Sidebar } from "./_components/sidebar";
 
+export const dynamic = "force-dynamic";
+
 type LayoutProps = {
   children: React.ReactNode;
   params: Promise<{ slug: string }>;
@@ -10,7 +12,6 @@ type LayoutProps = {
 
 const Layout = async (props: LayoutProps) => {
   const session = await getSession();
-
   if (!session) {
     return redirect("/auth/login");
   }
