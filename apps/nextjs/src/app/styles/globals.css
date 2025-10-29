@@ -116,9 +116,7 @@
   ::file-selector-button {
     border-color: var(--border, currentColor);
   }
-}
 
-@layer base {
   * {
     @apply border-border outline-ring/50;
   }
