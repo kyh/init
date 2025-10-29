@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { zodResolver } from "@hookform/resolvers/zod";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -14,18 +13,17 @@ import {
 } from "@repo/ui/alert-dialog";
 import { Button } from "@repo/ui/button";
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@repo/ui/form";
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@repo/ui/field";
 import { Input } from "@repo/ui/input";
 import { toast } from "@repo/ui/toast";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
 
 import type { RouterOutputs } from "@repo/api";
@@ -65,27 +63,24 @@ type DeleteProps = {
 };
 
 const Delete = ({ organization }: DeleteProps) => {
+  const { mutateAsync: deleteOrganization, isPending } = useDeleteOrganization(
+    organization.id,
+  );
+
   const form = useForm({
-    mode: "onChange",
-    reValidateMode: "onChange",
-    resolver: zodResolver(
-      z.object({
-        name: z.string().refine((value) => value === organization.name, {
-          message: "Name does not match",
-          path: ["name"],
-        }),
-      }),
-    ),
     defaultValues: {
       name: "",
     },
-  });
-
-  const { mutate: deleteOrganization, isPending } = useDeleteOrganization(
-    organization.id,
-  );
-  const handleDelete = form.handleSubmit(() => {
-    deleteOrganization();
+    validators: {
+      onSubmit: z.object({
+        name: z.string().refine((value) => value === organization.name, {
+          message: "Name does not match",
+        }),
+      }),
+    },
+    onSubmit: async () => {
+      await deleteOrganization();
+    },
   });
 
   return (
@@ -112,55 +107,85 @@ const Delete = ({ organization }: DeleteProps) => {
                 This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <Form {...form}>
-              <form className="flex flex-col gap-4" onSubmit={handleDelete}>
-                <div className="flex flex-col gap-2">
-                  <div className="mb-4 flex flex-col gap-2 border-2 border-red-500 p-4 text-sm text-red-500">
-                    <div>
-                      You are deleting the organization {organization.name}.
-                      This action cannot be undone.
-                    </div>
-                    <div className="text-sm">
-                      Are you sure you want to continue?
-                    </div>
+            <form
+              className="flex flex-col gap-4"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void form.handleSubmit();
+              }}
+            >
+              <div className="flex flex-col gap-2">
+                <div className="mb-4 flex flex-col gap-2 border-2 border-red-500 p-4 text-sm text-red-500">
+                  <div>
+                    You are deleting the organization {organization.name}.
+                    This action cannot be undone.
                   </div>
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Organization Name</FormLabel>
-                        <FormControl>
-                          <Input
-                            required
-                            type="text"
-                            autoComplete="off"
-                            className="w-full"
-                            placeholder=""
-                            pattern={organization.name}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Type the name of the organization to confirm
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="text-sm">
+                    Are you sure you want to continue?
+                  </div>
                 </div>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <Button
-                    type="submit"
-                    variant="destructive"
-                    loading={isPending}
+                <FieldGroup className="gap-2">
+                  <form.Field
+                    name="name"
+                    validators={{
+                      onChange: z
+                        .string()
+                        .refine((value) => value === organization.name, {
+                          message: "Name does not match",
+                        }),
+                    }}
                   >
-                    Delete Organization
-                  </Button>
-                </AlertDialogFooter>
-              </form>
-            </Form>
+                    {(field) => {
+                      const isInvalid =
+                        field.state.meta.isTouched &&
+                        !field.state.meta.isValid;
+
+                      return (
+                        <Field data-invalid={isInvalid} className="gap-1">
+                          <FieldLabel htmlFor="delete-organization-name">
+                            Organization Name
+                          </FieldLabel>
+                          <FieldContent>
+                            <Input
+                              id="delete-organization-name"
+                              name={field.name}
+                              value={field.state.value}
+                              onBlur={field.handleBlur}
+                              onChange={(event) =>
+                                field.handleChange(event.target.value)
+                              }
+                              aria-invalid={isInvalid}
+                              required
+                              type="text"
+                              autoComplete="off"
+                              className="w-full"
+                              placeholder=""
+                              pattern={organization.name}
+                            />
+                          </FieldContent>
+                          <FieldDescription>
+                            Type the name of the organization to confirm
+                          </FieldDescription>
+                          {isInvalid && (
+                            <FieldError errors={field.state.meta.errors} />
+                          )}
+                        </Field>
+                      );
+                    }}
+                  </form.Field>
+                </FieldGroup>
+              </div>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <Button
+                  type="submit"
+                  variant="destructive"
+                  loading={isPending}
+                >
+                  Delete Organization
+                </Button>
+              </AlertDialogFooter>
+            </form>
           </AlertDialogContent>
         </AlertDialog>
       </div>
@@ -173,25 +198,24 @@ type LeaveProps = {
 };
 
 const Leave = ({ organization }: LeaveProps) => {
+  const { mutateAsync: leaveOrganization, isPending } = useLeaveOrganization(
+    organization.id,
+  );
+
   const form = useForm({
-    resolver: zodResolver(
-      z.object({
-        confirmation: z.string().refine((value) => value === "LEAVE", {
-          message: "Confirmation required to leave organization",
-          path: ["confirmation"],
-        }),
-      }),
-    ),
     defaultValues: {
       confirmation: "",
     },
-  });
-
-  const { mutate: leaveOrganization, isPending } = useLeaveOrganization(
-    organization.id,
-  );
-  const handleLeave = form.handleSubmit(() => {
-    leaveOrganization();
+    validators: {
+      onSubmit: z.object({
+        confirmation: z.string().refine((value) => value === "LEAVE", {
+          message: "Confirmation required to leave organization",
+        }),
+      }),
+    },
+    onSubmit: async () => {
+      await leaveOrganization();
+    },
   });
 
   return (
@@ -214,45 +238,70 @@ const Leave = ({ organization }: LeaveProps) => {
               access to it.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <Form {...form}>
-            <form className="flex flex-col gap-4" onSubmit={handleLeave}>
-              <FormField
-                control={form.control}
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void form.handleSubmit();
+            }}
+          >
+            <FieldGroup className="gap-4">
+              <form.Field
                 name="confirmation"
-                render={({ field }) => {
+                validators={{
+                  onChange: z
+                    .string()
+                    .refine((value) => value === "LEAVE", {
+                      message: "Confirmation required to leave organization",
+                    }),
+                }}
+              >
+                {(field) => {
+                  const isInvalid =
+                    field.state.meta.isTouched && !field.state.meta.isValid;
+
                   return (
-                    <FormItem>
-                      <FormLabel>
+                    <Field data-invalid={isInvalid} className="gap-1">
+                      <FieldLabel htmlFor="leave-organization-confirmation">
                         Please type LEAVE to confirm leaving the organization.
-                      </FormLabel>
-                      <FormControl>
+                      </FieldLabel>
+                      <FieldContent>
                         <Input
+                          id="leave-organization-confirmation"
+                          name={field.name}
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(event) =>
+                            field.handleChange(event.target.value)
+                          }
+                          aria-invalid={isInvalid}
                           type="text"
                           className="w-full"
                           autoComplete="off"
                           placeholder=""
                           pattern="LEAVE"
                           required
-                          {...field}
                         />
-                      </FormControl>
-                      <FormDescription>
+                      </FieldContent>
+                      <FieldDescription>
                         By leaving the organization, you will no longer have
                         access to it.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
+                      </FieldDescription>
+                      {isInvalid && (
+                        <FieldError errors={field.state.meta.errors} />
+                      )}
+                    </Field>
                   );
                 }}
-              />
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <Button type="submit" loading={isPending} variant="destructive">
-                  Leave Organization
-                </Button>
-              </AlertDialogFooter>
-            </form>
-          </Form>
+              </form.Field>
+            </FieldGroup>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <Button type="submit" loading={isPending} variant="destructive">
+                Leave Organization
+              </Button>
+            </AlertDialogFooter>
+          </form>
         </AlertDialogContent>
       </AlertDialog>
     </div>
