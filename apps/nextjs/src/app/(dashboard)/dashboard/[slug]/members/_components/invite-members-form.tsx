@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Button } from "@repo/ui/button";
-import { Field, FieldContent, FieldError, FieldLabel } from "@repo/ui/field";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@repo/ui/dialog";
+import { Field, FieldContent, FieldError, FieldLabel } from "@repo/ui/field";
 import { Input } from "@repo/ui/input";
 import {
   Select,
@@ -21,13 +21,13 @@ import {
 } from "@repo/ui/select";
 import { toast } from "@repo/ui/toast";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/tooltip";
+import { useForm } from "@tanstack/react-form";
 import {
   useMutation,
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
 import { PlusIcon, XIcon } from "lucide-react";
-import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
 
 import { authClient } from "@/lib/auth-client";
@@ -134,13 +134,12 @@ export const InviteMembersForm = ({
                   <form.Field
                     name={`organizationInvitations[${index}].email`}
                     validators={{
-                      onBlur: z.string().email("Invalid email address"),
+                      onBlur: z.email("Invalid email address"),
                     }}
                   >
                     {(field) => {
                       const isInvalid =
-                        field.state.meta.isTouched &&
-                        !field.state.meta.isValid;
+                        field.state.meta.isTouched && !field.state.meta.isValid;
 
                       return (
                         <Field
@@ -184,8 +183,7 @@ export const InviteMembersForm = ({
                   >
                     {(field) => {
                       const isInvalid =
-                        field.state.meta.isTouched &&
-                        !field.state.meta.isValid;
+                        field.state.meta.isTouched && !field.state.meta.isValid;
 
                       return (
                         <Field

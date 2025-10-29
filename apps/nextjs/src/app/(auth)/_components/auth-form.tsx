@@ -34,7 +34,7 @@ export const AuthForm = ({ className, type, ...props }: AuthFormProps) => {
     },
     validators: {
       onSubmit: z.object({
-        email: z.string().email("Invalid email address"),
+        email: z.email("Invalid email address"),
         password: z.string().min(1, "Password is required"),
       }),
     },
@@ -120,7 +120,7 @@ export const AuthForm = ({ className, type, ...props }: AuthFormProps) => {
           <form.Field
             name="email"
             validators={{
-              onBlur: z.string().email("Invalid email address"),
+              onBlur: z.email("Invalid email address"),
             }}
           >
             {(field) => {
@@ -151,9 +151,7 @@ export const AuthForm = ({ className, type, ...props }: AuthFormProps) => {
                       autoCorrect="off"
                     />
                   </FieldContent>
-                  {isInvalid && (
-                    <FieldError errors={field.state.meta.errors} />
-                  )}
+                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
                 </Field>
               );
             }}
@@ -192,9 +190,7 @@ export const AuthForm = ({ className, type, ...props }: AuthFormProps) => {
                       autoCorrect="off"
                     />
                   </FieldContent>
-                  {isInvalid && (
-                    <FieldError errors={field.state.meta.errors} />
-                  )}
+                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
                 </Field>
               );
             }}
@@ -215,7 +211,7 @@ export const RequestPasswordResetForm = () => {
     },
     validators: {
       onSubmit: z.object({
-        email: z.string().email("Invalid email address"),
+        email: z.email("Invalid email address"),
       }),
     },
     onSubmit: async ({ value }) => {
@@ -258,7 +254,7 @@ export const RequestPasswordResetForm = () => {
         <form.Field
           name="email"
           validators={{
-            onBlur: z.string().email("Invalid email address"),
+            onBlur: z.email("Invalid email address"),
           }}
         >
           {(field) => {
@@ -276,9 +272,7 @@ export const RequestPasswordResetForm = () => {
                     name={field.name}
                     value={field.state.value}
                     onBlur={field.handleBlur}
-                    onChange={(event) =>
-                      field.handleChange(event.target.value)
-                    }
+                    onChange={(event) => field.handleChange(event.target.value)}
                     aria-invalid={isInvalid}
                     required
                     type="email"
@@ -288,17 +282,13 @@ export const RequestPasswordResetForm = () => {
                     autoCorrect="off"
                   />
                 </FieldContent>
-                {isInvalid && (
-                  <FieldError errors={field.state.meta.errors} />
-                )}
+                {isInvalid && <FieldError errors={field.state.meta.errors} />}
               </Field>
             );
           }}
         </form.Field>
       </FieldGroup>
-      <Button loading={form.state.isSubmitting}>
-        Request Password Reset
-      </Button>
+      <Button loading={form.state.isSubmitting}>Request Password Reset</Button>
     </form>
   );
 };
@@ -314,9 +304,7 @@ export const UpdatePasswordForm = () => {
     validators: {
       onSubmit: z
         .object({
-          password: z
-            .string()
-            .min(8, "Password must be at least 8 characters"),
+          password: z.string().min(8, "Password must be at least 8 characters"),
           confirmPassword: z.string(),
         })
         .refine((data) => data.password === data.confirmPassword, {
@@ -352,9 +340,7 @@ export const UpdatePasswordForm = () => {
         <form.Field
           name="password"
           validators={{
-            onBlur: z
-              .string()
-              .min(8, "Password must be at least 8 characters"),
+            onBlur: z.string().min(8, "Password must be at least 8 characters"),
           }}
         >
           {(field) => {
@@ -372,9 +358,7 @@ export const UpdatePasswordForm = () => {
                     name={field.name}
                     value={field.state.value}
                     onBlur={field.handleBlur}
-                    onChange={(event) =>
-                      field.handleChange(event.target.value)
-                    }
+                    onChange={(event) => field.handleChange(event.target.value)}
                     aria-invalid={isInvalid}
                     required
                     type="password"
@@ -384,9 +368,7 @@ export const UpdatePasswordForm = () => {
                     autoCorrect="off"
                   />
                 </FieldContent>
-                {isInvalid && (
-                  <FieldError errors={field.state.meta.errors} />
-                )}
+                {isInvalid && <FieldError errors={field.state.meta.errors} />}
               </Field>
             );
           }}
@@ -421,9 +403,7 @@ export const UpdatePasswordForm = () => {
                     name={field.name}
                     value={field.state.value}
                     onBlur={field.handleBlur}
-                    onChange={(event) =>
-                      field.handleChange(event.target.value)
-                    }
+                    onChange={(event) => field.handleChange(event.target.value)}
                     aria-invalid={isInvalid}
                     required
                     type="password"
@@ -434,7 +414,11 @@ export const UpdatePasswordForm = () => {
                   />
                 </FieldContent>
                 {isInvalid && (
-                  <FieldError errors={field.state.meta.errors} />
+                  <FieldError
+                    errors={field.state.meta.errors.map((error) =>
+                      typeof error === "string" ? { message: error } : error,
+                    )}
+                  />
                 )}
               </Field>
             );
