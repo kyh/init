@@ -1,6 +1,6 @@
+import { and, eq } from "@repo/db";
 import { todo } from "@repo/db/drizzle-schema";
 import { TRPCError } from "@trpc/server";
-import { and, eq } from "drizzle-orm";
 
 import type { TRPCContext } from "../trpc";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
