@@ -15,7 +15,6 @@ const Page = async (props: PageProps) => {
   const slug = params.slug;
 
   const session = await getSession();
-
   if (!session) {
     return redirect(`/auth/login?nextPath=/dashboard/${slug}`);
   }
