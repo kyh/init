@@ -40,6 +40,7 @@ import { toast } from "@repo/ui/toast";
 import { cn } from "@repo/ui/utils";
 import {
   CheckIcon,
+  CheckSquareIcon,
   CreditCardIcon,
   HomeIcon,
   LogOutIcon,
@@ -71,6 +72,11 @@ export const Sidebar = ({ user }: SidebarProps) => {
       label: "Home",
       exact: true,
       icon: HomeIcon,
+    },
+    {
+      href: `${rootUrl}/todos`,
+      label: "Todos",
+      icon: CheckSquareIcon,
     },
     {
       href: `${rootUrl}/members`,
