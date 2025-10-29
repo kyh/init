@@ -13,7 +13,10 @@ import { getMDXComponents } from "@/mdx-components";
 const Page = async (props: { params: Promise<{ slug?: string[] }> }) => {
   const params = await props.params;
   const page = source.getPage(params.slug);
-  if (!page) notFound();
+
+  if (!page) {
+    notFound();
+  }
 
   const MDXContent = page.data.body;
 

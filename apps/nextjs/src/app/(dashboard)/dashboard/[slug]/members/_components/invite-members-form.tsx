@@ -38,7 +38,7 @@ import { PlusIcon, XIcon } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { authClient } from "@/auth/auth-client";
+import { authClient } from "@/lib/auth-client";
 import { useTRPC } from "@/trpc/react";
 
 /**

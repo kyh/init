@@ -28,7 +28,7 @@ import { MoreHorizontalIcon } from "lucide-react";
 
 import type { RouterOutputs } from "@repo/api";
 import type { ColumnDef } from "@tanstack/react-table";
-import { authClient } from "@/auth/auth-client";
+import { authClient } from "@/lib/auth-client";
 import { useTRPC } from "@/trpc/react";
 
 type MemberWithUser = RouterOutputs["organization"]["get"]["members"][number];
