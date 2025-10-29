@@ -1,21 +1,19 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { slugify } from "@repo/api/auth/utils";
 import { Button } from "@repo/ui/button";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@repo/ui/form";
+  Field,
+  FieldContent,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@repo/ui/field";
 import { Input } from "@repo/ui/input";
 import { toast } from "@repo/ui/toast";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
 
 import { authClient } from "@/lib/auth-client";
@@ -40,66 +38,112 @@ export const UpdateOrganizationForm = ({
     }),
   );
 
+  const { mutateAsync: updateOrganization, isPending } = useUpdateOrganization(
+    organizationData.organization.id,
+  );
+
   const form = useForm({
-    resolver: zodResolver(updateOrganizationSchema),
     defaultValues: {
       name: organizationData.organization.name,
       slug: organizationData.organization.slug ?? "",
     },
-  });
-
-  const { mutate: updateOrganization, isPending } = useUpdateOrganization(
-    organizationData.organization.id,
-  );
-  const handleUpdateOrganization = form.handleSubmit((data) => {
-    updateOrganization(data);
+    validators: {
+      onSubmit: updateOrganizationSchema,
+    },
+    onSubmit: async ({ value }) => {
+      await updateOrganization(value);
+    },
   });
 
   return (
-    <Form {...form}>
-      <form onSubmit={handleUpdateOrganization} className="space-y-8">
-        <FormField
-          control={form.control}
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        void form.handleSubmit();
+      }}
+    >
+      <FieldGroup className="gap-8">
+        <form.Field
           name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Organization Name</FormLabel>
-              <FormControl>
-                <Input required {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="slug"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Organization URL</FormLabel>
-              <FormControl>
-                <div className="flex rounded-lg shadow-sm shadow-black/[.04]">
-                  <span className="border-input bg-background text-muted-foreground -z-10 inline-flex items-center rounded-s-lg border px-3 text-sm">
-                    dashboard/
-                  </span>
+          validators={{
+            onBlur: z.string().min(1, "Name is required"),
+          }}
+        >
+          {(field) => {
+            const isInvalid =
+              field.state.meta.isTouched && !field.state.meta.isValid;
+
+            return (
+              <Field data-invalid={isInvalid} className="gap-1">
+                <FieldLabel htmlFor="organization-name">
+                  Organization Name
+                </FieldLabel>
+                <FieldContent>
                   <Input
-                    className="-ms-px rounded-s-none shadow-none"
-                    required
-                    {...field}
+                    id="organization-name"
+                    name={field.name}
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(event) =>
+                      field.handleChange(event.target.value)
+                    }
+                    aria-invalid={isInvalid}
                   />
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <footer className="flex justify-end">
-          <Button type="submit" loading={isPending}>
-            Update Organization
-          </Button>
-        </footer>
-      </form>
-    </Form>
+                </FieldContent>
+                {isInvalid && (
+                  <FieldError errors={field.state.meta.errors} />
+                )}
+              </Field>
+            );
+          }}
+        </form.Field>
+        <form.Field
+          name="slug"
+          validators={{
+            onBlur: z.string().min(1, "Slug is required"),
+          }}
+        >
+          {(field) => {
+            const isInvalid =
+              field.state.meta.isTouched && !field.state.meta.isValid;
+
+            return (
+              <Field data-invalid={isInvalid} className="gap-1">
+                <FieldLabel htmlFor="organization-slug">
+                  Organization URL
+                </FieldLabel>
+                <FieldContent>
+                  <div className="flex rounded-lg shadow-sm shadow-black/[.04]">
+                    <span className="border-input bg-background text-muted-foreground -z-10 inline-flex items-center rounded-s-lg border px-3 text-sm">
+                      dashboard/
+                    </span>
+                    <Input
+                      id="organization-slug"
+                      className="-ms-px rounded-s-none shadow-none"
+                      name={field.name}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(event) =>
+                        field.handleChange(event.target.value)
+                      }
+                      aria-invalid={isInvalid}
+                    />
+                  </div>
+                </FieldContent>
+                {isInvalid && (
+                  <FieldError errors={field.state.meta.errors} />
+                )}
+              </Field>
+            );
+          }}
+        </form.Field>
+      </FieldGroup>
+      <footer className="mt-8 flex justify-end">
+        <Button type="submit" loading={isPending}>
+          Update Organization
+        </Button>
+      </footer>
+    </form>
   );
 };
 

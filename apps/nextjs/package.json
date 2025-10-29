@@ -20,6 +20,7 @@
     "@repo/api": "workspace:^",
     "@repo/db": "workspace:^",
     "@repo/ui": "workspace:^",
+    "@tanstack/react-form": "^1.23.8",
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-query-devtools": "^5.90.2",
     "@trpc/client": "catalog:",
