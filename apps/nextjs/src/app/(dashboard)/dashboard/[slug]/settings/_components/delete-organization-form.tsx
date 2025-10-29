@@ -14,14 +14,13 @@ import {
 } from "@repo/ui/alert-dialog";
 import { Button } from "@repo/ui/button";
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@repo/ui/form";
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@repo/ui/field";
 import { Input } from "@repo/ui/input";
 import { toast } from "@repo/ui/toast";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
@@ -112,55 +111,55 @@ const Delete = ({ organization }: DeleteProps) => {
                 This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <Form {...form}>
-              <form className="flex flex-col gap-4" onSubmit={handleDelete}>
-                <div className="flex flex-col gap-2">
-                  <div className="mb-4 flex flex-col gap-2 border-2 border-red-500 p-4 text-sm text-red-500">
-                    <div>
-                      You are deleting the organization {organization.name}.
-                      This action cannot be undone.
-                    </div>
-                    <div className="text-sm">
-                      Are you sure you want to continue?
-                    </div>
+            <form className="flex flex-col gap-4" onSubmit={handleDelete}>
+              <div className="flex flex-col gap-2">
+                <div className="mb-4 flex flex-col gap-2 border-2 border-red-500 p-4 text-sm text-red-500">
+                  <div>
+                    You are deleting the organization {organization.name}.
+                    This action cannot be undone.
                   </div>
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Organization Name</FormLabel>
-                        <FormControl>
-                          <Input
-                            required
-                            type="text"
-                            autoComplete="off"
-                            className="w-full"
-                            placeholder=""
-                            pattern={organization.name}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Type the name of the organization to confirm
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="text-sm">
+                    Are you sure you want to continue?
+                  </div>
                 </div>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <Button
-                    type="submit"
-                    variant="destructive"
-                    loading={isPending}
+                <FieldGroup className="gap-2">
+                  <Field
+                    data-invalid={Boolean(form.formState.errors.name)}
+                    className="gap-1"
                   >
-                    Delete Organization
-                  </Button>
-                </AlertDialogFooter>
-              </form>
-            </Form>
+                    <FieldLabel htmlFor="delete-organization-name">
+                      Organization Name
+                    </FieldLabel>
+                    <FieldContent>
+                      <Input
+                        id="delete-organization-name"
+                        required
+                        type="text"
+                        autoComplete="off"
+                        className="w-full"
+                        placeholder=""
+                        pattern={organization.name}
+                        {...form.register("name")}
+                      />
+                    </FieldContent>
+                    <FieldDescription>
+                      Type the name of the organization to confirm
+                    </FieldDescription>
+                    <FieldError>{form.formState.errors.name?.message}</FieldError>
+                  </Field>
+                </FieldGroup>
+              </div>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <Button
+                  type="submit"
+                  variant="destructive"
+                  loading={isPending}
+                >
+                  Delete Organization
+                </Button>
+              </AlertDialogFooter>
+            </form>
           </AlertDialogContent>
         </AlertDialog>
       </div>
@@ -214,45 +213,43 @@ const Leave = ({ organization }: LeaveProps) => {
               access to it.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <Form {...form}>
-            <form className="flex flex-col gap-4" onSubmit={handleLeave}>
-              <FormField
-                control={form.control}
-                name="confirmation"
-                render={({ field }) => {
-                  return (
-                    <FormItem>
-                      <FormLabel>
-                        Please type LEAVE to confirm leaving the organization.
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          type="text"
-                          className="w-full"
-                          autoComplete="off"
-                          placeholder=""
-                          pattern="LEAVE"
-                          required
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        By leaving the organization, you will no longer have
-                        access to it.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  );
-                }}
-              />
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <Button type="submit" loading={isPending} variant="destructive">
-                  Leave Organization
-                </Button>
-              </AlertDialogFooter>
-            </form>
-          </Form>
+          <form className="flex flex-col gap-4" onSubmit={handleLeave}>
+            <FieldGroup className="gap-4">
+              <Field
+                data-invalid={Boolean(form.formState.errors.confirmation)}
+                className="gap-1"
+              >
+                <FieldLabel htmlFor="leave-organization-confirmation">
+                  Please type LEAVE to confirm leaving the organization.
+                </FieldLabel>
+                <FieldContent>
+                  <Input
+                    id="leave-organization-confirmation"
+                    type="text"
+                    className="w-full"
+                    autoComplete="off"
+                    placeholder=""
+                    pattern="LEAVE"
+                    required
+                    {...form.register("confirmation")}
+                  />
+                </FieldContent>
+                <FieldDescription>
+                  By leaving the organization, you will no longer have access to
+                  it.
+                </FieldDescription>
+                <FieldError>
+                  {form.formState.errors.confirmation?.message}
+                </FieldError>
+              </Field>
+            </FieldGroup>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <Button type="submit" loading={isPending} variant="destructive">
+                Leave Organization
+              </Button>
+            </AlertDialogFooter>
+          </form>
         </AlertDialogContent>
       </AlertDialog>
     </div>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@repo/ui/button";
+import { Field, FieldContent, FieldError, FieldLabel } from "@repo/ui/field";
 import {
   Dialog,
   DialogContent,
@@ -11,14 +12,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@repo/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@repo/ui/form";
 import { Input } from "@repo/ui/input";
 import {
   Select,
@@ -127,93 +120,97 @@ export const InviteMembersForm = ({
   });
 
   return (
-    <Form {...form}>
-      <form onSubmit={handleInviteMembers}>
-        <div className="flex flex-col gap-2">
-          {fieldArray.fields.map((field, index) => {
-            const emailInputName =
-              `organizationInvitations.${index}.email` as const;
-            const roleInputName =
-              `organizationInvitations.${index}.role` as const;
+    <form onSubmit={handleInviteMembers}>
+      <div className="flex flex-col gap-2">
+        {fieldArray.fields.map((field, index) => {
+          const emailInputName =
+            `organizationInvitations.${index}.email` as const;
+          const roleInputName =
+            `organizationInvitations.${index}.role` as const;
+          const emailError =
+            form.formState.errors.organizationInvitations?.[index]?.email?.message;
+          const roleError =
+            form.formState.errors.organizationInvitations?.[index]?.role?.message;
 
-            return (
-              <div key={field.id} className="flex items-end gap-2">
-                <FormField
-                  name={emailInputName}
-                  render={({ field }) => {
-                    return (
-                      <FormItem className="w-7/12">
-                        {index === 0 && <FormLabel>Email</FormLabel>}
-                        <FormControl>
-                          <Input
-                            placeholder="member@email.com"
-                            type="email"
-                            required
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    );
-                  }}
-                />
-                <FormField
-                  name={roleInputName}
-                  render={({ field }) => {
-                    return (
-                      <FormItem className="w-4/12">
-                        {index === 0 && <FormLabel>Role</FormLabel>}
-                        <FormControl>
-                          <Select
-                            value={field.value}
-                            onValueChange={(newRole) =>
-                              form.setValue(
-                                field.name,
-                                newRole as "owner" | "admin" | "member",
-                              )
-                            }
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {["owner", "admin", "member"].map((role) => (
-                                <SelectItem
-                                  className="text-sm capitalize"
-                                  key={role}
-                                  value={role}
-                                >
-                                  {role}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    );
-                  }}
-                />
-                <div className="flex w-[40px] justify-end">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        type="button"
-                        disabled={fieldArray.fields.length <= 1}
-                        aria-label="Remove invite"
-                        onClick={() => {
-                          fieldArray.remove(index);
-                          form.clearErrors(emailInputName);
-                        }}
-                      >
-                        <XIcon className="h-4 lg:h-5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Remove invite</TooltipContent>
-                  </Tooltip>
-                </div>
+          return (
+            <div key={field.id} className="flex items-end gap-2">
+              <Field
+                data-invalid={Boolean(emailError)}
+                className="w-7/12 gap-1"
+              >
+                {index === 0 && (
+                  <FieldLabel htmlFor={`invite-${index}-email`}>
+                    Email
+                  </FieldLabel>
+                )}
+                <FieldContent>
+                  <Input
+                    id={`invite-${index}-email`}
+                    placeholder="member@email.com"
+                    type="email"
+                    required
+                    {...form.register(emailInputName)}
+                  />
+                </FieldContent>
+                <FieldError>{emailError}</FieldError>
+              </Field>
+              <Field
+                data-invalid={Boolean(roleError)}
+                className="w-4/12 gap-1"
+              >
+                {index === 0 && <FieldLabel>Role</FieldLabel>}
+                <FieldContent>
+                  <Select
+                    value={form.watch(roleInputName) ?? ""}
+                    onValueChange={(newRole) =>
+                      form.setValue(
+                        roleInputName,
+                        newRole as "owner" | "admin" | "member",
+                        {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        },
+                      )
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {["owner", "admin", "member"].map((role) => (
+                        <SelectItem
+                          className="text-sm capitalize"
+                          key={role}
+                          value={role}
+                        >
+                          {role}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FieldContent>
+                <FieldError>{roleError}</FieldError>
+              </Field>
+              <div className="flex w-[40px] justify-end">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      type="button"
+                      disabled={fieldArray.fields.length <= 1}
+                      aria-label="Remove invite"
+                      onClick={() => {
+                        fieldArray.remove(index);
+                        form.clearErrors(emailInputName);
+                      }}
+                    >
+                      <XIcon className="h-4 lg:h-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Remove invite</TooltipContent>
+                </Tooltip>
+              </div>
               </div>
             );
           })}
@@ -236,8 +233,8 @@ export const InviteMembersForm = ({
         >
           Send Invites
         </Button>
-      </form>
-    </Form>
+      </div>
+    </form>
   );
 };
 

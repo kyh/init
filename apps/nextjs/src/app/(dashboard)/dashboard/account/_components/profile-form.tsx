@@ -6,14 +6,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { getSupabaseBrowserClient } from "@repo/db/supabase-browser-client";
 import { Button } from "@repo/ui/button";
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@repo/ui/form";
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@repo/ui/field";
 import { Input } from "@repo/ui/input";
 import { toast } from "@repo/ui/toast";
 import { ImageIcon } from "lucide-react";
@@ -119,8 +118,7 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={handleUpdateProfile} className="space-y-8">
+    <form onSubmit={handleUpdateProfile} className="space-y-8">
         <div className="col-span-full flex items-center gap-x-8">
           <label className="bg-secondary text-secondary-foreground hover:bg-secondary/80 relative shadow-sm">
             <input
@@ -173,37 +171,48 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
             </p>
           </div>
         </div>
-        <FormField
-          control={form.control}
-          name="displayName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Your name" {...field} />
-              </FormControl>
-              <FormDescription>
-                This is the name that will be displayed on your profile and in
-                emails.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormItem>
-          <FormLabel>Email</FormLabel>
-          <Input placeholder="Email" value={user.email} disabled />
-          <FormDescription>
-            Please contact support if you need to change your email address.
-          </FormDescription>
-        </FormItem>
+        <FieldGroup className="gap-6">
+          <Field
+            data-invalid={Boolean(form.formState.errors.displayName)}
+            className="gap-1"
+          >
+            <FieldLabel htmlFor="profile-display-name">Name</FieldLabel>
+            <FieldContent>
+              <Input
+                id="profile-display-name"
+                placeholder="Your name"
+                {...form.register("displayName")}
+              />
+            </FieldContent>
+            <FieldDescription>
+              This is the name that will be displayed on your profile and in
+              emails.
+            </FieldDescription>
+            <FieldError>
+              {form.formState.errors.displayName?.message}
+            </FieldError>
+          </Field>
+          <Field className="gap-1">
+            <FieldLabel htmlFor="profile-email">Email</FieldLabel>
+            <FieldContent>
+              <Input
+                id="profile-email"
+                placeholder="Email"
+                value={user.email}
+                disabled
+              />
+            </FieldContent>
+            <FieldDescription>
+              Please contact support if you need to change your email address.
+            </FieldDescription>
+          </Field>
+        </FieldGroup>
         <footer className="flex justify-end">
           <Button type="submit" loading={form.formState.isSubmitting}>
             Update Profile
           </Button>
         </footer>
       </form>
-    </Form>
   );
 };
 

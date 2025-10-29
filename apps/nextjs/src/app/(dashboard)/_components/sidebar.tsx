@@ -29,13 +29,12 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/dropdown-menu";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@repo/ui/form";
+  Field,
+  FieldContent,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@repo/ui/field";
 import { Input } from "@repo/ui/input";
 import { Logo } from "@repo/ui/logo";
 import { toast } from "@repo/ui/toast";
@@ -260,37 +259,34 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
             Create a new Organization to manage your projects and members.
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={handleCreateOrganization}>
-            <div className="flex flex-col gap-4">
-              <FormField
-                name="name"
-                render={({ field }) => {
-                  return (
-                    <FormItem>
-                      <FormLabel>Organization Name</FormLabel>
-                      <FormControl>
-                        <Input
-                          required
-                          minLength={2}
-                          maxLength={50}
-                          placeholder=""
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  );
-                }}
-              />
-              <div className="flex justify-end gap-2">
-                <Button loading={form.formState.isSubmitting}>
-                  Create Organization
-                </Button>
-              </div>
+        <form onSubmit={handleCreateOrganization}>
+          <FieldGroup className="flex flex-col gap-4">
+            <Field
+              data-invalid={Boolean(form.formState.errors.name)}
+              className="gap-1"
+            >
+              <FieldLabel htmlFor="organization-name">
+                Organization Name
+              </FieldLabel>
+              <FieldContent>
+                <Input
+                  id="organization-name"
+                  required
+                  minLength={2}
+                  maxLength={50}
+                  placeholder=""
+                  {...form.register("name")}
+                />
+              </FieldContent>
+              <FieldError>{form.formState.errors.name?.message}</FieldError>
+            </Field>
+            <div className="flex justify-end gap-2">
+              <Button loading={form.formState.isSubmitting}>
+                Create Organization
+              </Button>
             </div>
-          </form>
-        </Form>
+          </FieldGroup>
+        </form>
       </DialogContent>
     </Dialog>
   );
