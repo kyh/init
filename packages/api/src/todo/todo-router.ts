@@ -1,7 +1,6 @@
-import { and, eq } from "drizzle-orm";
-
 import { todo } from "@repo/db/drizzle-schema";
 import { TRPCError } from "@trpc/server";
+import { and, eq } from "drizzle-orm";
 
 import type { TRPCContext } from "../trpc";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
@@ -13,6 +12,15 @@ import {
 } from "./todo-schema";
 
 const ensureOrganizationAccess = async (ctx: TRPCContext, slug: string) => {
+  if (!ctx.session?.user) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "You must be logged in to access this resource",
+    });
+  }
+
+  const userId = ctx.session.user.id;
+
   const organization = await ctx.db.query.organization.findFirst({
     where: (org, { eq }) => eq(org.slug, slug),
   });
@@ -26,7 +34,10 @@ const ensureOrganizationAccess = async (ctx: TRPCContext, slug: string) => {
 
   const membership = await ctx.db.query.member.findFirst({
     where: (member, { and, eq }) =>
-      and(eq(member.organizationId, organization.id), eq(member.userId, ctx.session.user.id)),
+      and(
+        eq(member.organizationId, organization.id),
+        eq(member.userId, userId),
+      ),
   });
 
   if (!membership) {
@@ -46,7 +57,8 @@ export const todoRouter = createTRPCRouter({
       const organization = await ensureOrganizationAccess(ctx, input.slug);
 
       const todos = await ctx.db.query.todo.findMany({
-        where: (todoTable, { eq }) => eq(todoTable.organizationId, organization.id),
+        where: (todoTable, { eq }) =>
+          eq(todoTable.organizationId, organization.id),
         orderBy: (todoTable, { desc }) => desc(todoTable.createdAt),
       });
 
@@ -87,7 +99,9 @@ export const todoRouter = createTRPCRouter({
       const [updatedTodo] = await ctx.db
         .update(todo)
         .set(updateData)
-        .where(and(eq(todo.id, input.id), eq(todo.organizationId, organization.id)))
+        .where(
+          and(eq(todo.id, input.id), eq(todo.organizationId, organization.id)),
+        )
         .returning();
 
       if (!updatedTodo) {
@@ -106,7 +120,9 @@ export const todoRouter = createTRPCRouter({
 
       const [deletedTodo] = await ctx.db
         .delete(todo)
-        .where(and(eq(todo.id, input.id), eq(todo.organizationId, organization.id)))
+        .where(
+          and(eq(todo.id, input.id), eq(todo.organizationId, organization.id)),
+        )
         .returning();
 
       if (!deletedTodo) {

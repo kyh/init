@@ -19,40 +19,42 @@ type TodoListProps = {
 };
 
 type Todo = RouterOutputs["todo"]["list"]["todos"][number];
-type CreateTodoInput = RouterInputs["todo"]["create"]; 
+type CreateTodoInput = RouterInputs["todo"]["create"];
 type UpdateTodoInput = RouterInputs["todo"]["update"];
 type DeleteTodoInput = RouterInputs["todo"]["delete"];
 
 export const TodoList = ({ slug }: TodoListProps) => {
   const trpc = useTRPC();
   const trpcClient = useTRPCClient();
-  const todoListQuery = trpc.todo.list.queryOptions({ slug });
-  const { data } = useSuspenseQuery(todoListQuery);
+  const { data } = useSuspenseQuery(trpc.todo.list.queryOptions({ slug }));
   const todos = data.todos;
 
   const createTodo = useMutation({
-    mutationFn: (input: CreateTodoInput) => trpcClient.todo.create.mutate(input),
+    mutationFn: (input: CreateTodoInput) =>
+      trpcClient.todo.create.mutate(input),
     onError: (error) => {
       toast.error(error.message);
     },
   });
 
   const updateTodo = useMutation({
-    mutationFn: (input: UpdateTodoInput) => trpcClient.todo.update.mutate(input),
+    mutationFn: (input: UpdateTodoInput) =>
+      trpcClient.todo.update.mutate(input),
     onError: (error) => {
       toast.error(error.message);
     },
   });
 
   const deleteTodo = useMutation({
-    mutationFn: (input: DeleteTodoInput) => trpcClient.todo.delete.mutate(input),
+    mutationFn: (input: DeleteTodoInput) =>
+      trpcClient.todo.delete.mutate(input),
     onError: (error) => {
       toast.error(error.message);
     },
   });
 
-  const [newTitle, setNewTitle] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [newTitle, setNewTitle] = useState("");
   const [editingTitle, setEditingTitle] = useState("");
 
   const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
@@ -142,7 +144,11 @@ export const TodoList = ({ slug }: TodoListProps) => {
           aria-label="Todo title"
           disabled={createTodo.isPending}
         />
-        <Button type="submit" loading={createTodo.isPending} className="sm:w-auto">
+        <Button
+          type="submit"
+          loading={createTodo.isPending}
+          className="sm:w-auto"
+        >
           Add
         </Button>
       </form>
@@ -158,7 +164,10 @@ export const TodoList = ({ slug }: TodoListProps) => {
               deleteTodo.isPending && deleteTodo.variables.id === todo.id;
 
             return (
-              <li key={todo.id} className="border-border bg-background rounded-lg border p-4">
+              <li
+                key={todo.id}
+                className="border-border bg-background rounded-lg border p-4"
+              >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-start gap-3">
                     <Checkbox
@@ -175,7 +184,9 @@ export const TodoList = ({ slug }: TodoListProps) => {
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                         <Input
                           value={editingTitle}
-                          onChange={(event) => setEditingTitle(event.target.value)}
+                          onChange={(event) =>
+                            setEditingTitle(event.target.value)
+                          }
                           aria-label="Edit todo title"
                           disabled={updateTodo.isPending}
                         />
@@ -204,12 +215,13 @@ export const TodoList = ({ slug }: TodoListProps) => {
                         <span
                           className={cn(
                             "text-base font-medium",
-                            todo.completed && "text-muted-foreground line-through",
+                            todo.completed &&
+                              "text-muted-foreground line-through",
                           )}
                         >
                           {todo.title}
                         </span>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-muted-foreground text-xs">
                           {todo.completed ? "Completed" : "Pending"}
                         </span>
                       </div>
