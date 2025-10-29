@@ -4,7 +4,6 @@ import type { Organization } from "better-auth/plugins/organization";
 import { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { slugify } from "@repo/api/auth/utils";
 import { ProfileAvatar } from "@repo/ui/avatar";
 import { Button } from "@repo/ui/button";
@@ -29,13 +28,12 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/dropdown-menu";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@repo/ui/form";
+  Field,
+  FieldContent,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@repo/ui/field";
 import { Input } from "@repo/ui/input";
 import { Logo } from "@repo/ui/logo";
 import { toast } from "@repo/ui/toast";
@@ -49,7 +47,7 @@ import {
   SettingsIcon,
   Users2Icon,
 } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
 
 import type { Session } from "@repo/api/auth/auth";
@@ -135,9 +133,35 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
   const router = useRouter();
 
   const form = useForm({
-    resolver: zodResolver(z.object({ name: z.string().min(2).max(50) })),
     defaultValues: {
       name: "",
+    },
+    validators: {
+      onSubmit: z.object({
+        name: z
+          .string()
+          .min(2, "Organization name must be at least 2 characters")
+          .max(50, "Organization name must be at most 50 characters"),
+      }),
+    },
+    onSubmit: async ({ value, formApi }) => {
+      await authClient.organization.create({
+        name: value.name,
+        slug: slugify(value.name),
+        keepCurrentActiveOrganization: false,
+        fetchOptions: {
+          onSuccess: (ctx) => {
+            setIsOrganizationsDialogOpen(false);
+            router.push(`/dashboard/${ctx.data.slug}`);
+            toast.success("Organization created successfully");
+          },
+          onError: (ctx) => {
+            toast.error(ctx.error.message);
+          },
+        },
+      });
+
+      formApi.reset({ name: "" });
     },
   });
 
@@ -153,24 +177,6 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
       },
     });
   };
-
-  const handleCreateOrganization = form.handleSubmit(async (data) => {
-    await authClient.organization.create({
-      name: data.name,
-      slug: slugify(data.name),
-      keepCurrentActiveOrganization: false,
-      fetchOptions: {
-        onSuccess: (ctx) => {
-          setIsOrganizationsDialogOpen(false);
-          router.push(`/dashboard/${ctx.data.slug}`);
-          toast.success("Organization created successfully");
-        },
-        onError: (ctx) => {
-          toast.error(ctx.error.message);
-        },
-      },
-    });
-  });
 
   return (
     <Dialog
@@ -260,37 +266,58 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
             Create a new Organization to manage your projects and members.
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={handleCreateOrganization}>
-            <div className="flex flex-col gap-4">
-              <FormField
-                name="name"
-                render={({ field }) => {
-                  return (
-                    <FormItem>
-                      <FormLabel>Organization Name</FormLabel>
-                      <FormControl>
-                        <Input
-                          required
-                          minLength={2}
-                          maxLength={50}
-                          placeholder=""
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  );
-                }}
-              />
-              <div className="flex justify-end gap-2">
-                <Button loading={form.formState.isSubmitting}>
-                  Create Organization
-                </Button>
-              </div>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            void form.handleSubmit();
+          }}
+        >
+          <FieldGroup className="flex flex-col gap-4">
+            <form.Field
+              name="name"
+              validators={{
+                onBlur: z
+                  .string()
+                  .min(2, "Organization name must be at least 2 characters")
+                  .max(50, "Organization name must be at most 50 characters"),
+              }}
+            >
+              {(field) => {
+                const isInvalid =
+                  field.state.meta.isTouched && !field.state.meta.isValid;
+
+                return (
+                  <Field data-invalid={isInvalid} className="gap-1">
+                    <FieldLabel htmlFor="organization-name">
+                      Organization Name
+                    </FieldLabel>
+                    <FieldContent>
+                      <Input
+                        id="organization-name"
+                        name={field.name}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(event) =>
+                          field.handleChange(event.target.value)
+                        }
+                        aria-invalid={isInvalid}
+                        placeholder=""
+                      />
+                    </FieldContent>
+                    {isInvalid && (
+                      <FieldError errors={field.state.meta.errors} />
+                    )}
+                  </Field>
+                );
+              }}
+            </form.Field>
+            <div className="flex justify-end gap-2">
+              <Button loading={form.state.isSubmitting}>
+                Create Organization
+              </Button>
             </div>
-          </form>
-        </Form>
+          </FieldGroup>
+        </form>
       </DialogContent>
     </Dialog>
   );

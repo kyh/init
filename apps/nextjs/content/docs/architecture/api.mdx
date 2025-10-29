@@ -71,7 +71,7 @@ export const publicProcedure = t.procedure;
 // Usage
 export const waitlistRouter = createTRPCRouter({
   join: publicProcedure
-    .input(z.object({ email: z.string().email() }))
+    .input(z.object({ email: z.email() }))
     .mutation(async ({ input, ctx }) => {
       return ctx.db.insert(waitlist).values(input);
     }),
@@ -232,14 +232,12 @@ The same API works on web and mobile:
 
 ```typescript
 // Next.js (apps/nextjs/src/trpc/react.tsx)
-import { createTRPCReact } from "@trpc/react-query";
-import type { AppRouter } from "@repo/api";
+// Expo (apps/expo/src/trpc/react.tsx)
+import { createTRPCReact, createTRPCReact } from "@trpc/react-query";
+
+import type { AppRouter, AppRouter } from "@repo/api";
 
 export const api = createTRPCReact<AppRouter>();
-
-// Expo (apps/expo/src/trpc/react.tsx)
-import { createTRPCReact } from "@trpc/react-query";
-import type { AppRouter } from "@repo/api";
 
 export const api = createTRPCReact<AppRouter>();
 ```
@@ -251,7 +249,7 @@ All procedures use Zod for input validation:
 ```typescript
 // Schema definition (auth-schema.ts)
 export const signUpInput = z.object({
-  email: z.string().email(),
+  email: z.email(),
   password: z.string().min(8),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
@@ -470,7 +468,7 @@ Always validate inputs with Zod:
 
 ```typescript
 const input = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z.email("Invalid email address"),
   age: z.number().min(18, "Must be 18 or older"),
 });
 ```
