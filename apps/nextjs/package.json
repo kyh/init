@@ -29,7 +29,7 @@
     "ai": "^5.0.86",
     "better-auth": "catalog:",
     "fumadocs-core": "^16.0.7",
-    "fumadocs-mdx": "^13.0.4",
+    "fumadocs-mdx": "^13.0.5",
     "fumadocs-ui": "^16.0.7",
     "next": "catalog:",
     "react": "catalog:",
