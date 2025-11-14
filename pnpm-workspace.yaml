@@ -3,25 +3,25 @@ packages:
   - packages/*
 
 catalog:
-  "@better-auth/cli": ^1.4.0-beta.9
-  "@better-auth/expo": ^1.4.0-beta.9
+  "@better-auth/cli": ^1.4.0-beta.20
+  "@better-auth/expo": ^1.4.0-beta.20
   "@kyh/eslint-config": ^1.1.10
   "@kyh/prettier-config": ^1.1.10
   "@kyh/tsconfig": ^1.1.10
   "@tailwindcss/postcss": ^4.1.17
   "@tailwindcss/vite": ^4.1.17
-  "@tanstack/react-form": ^1.23.8
-  "@tanstack/react-query": ^5.90.8
+  "@tanstack/react-form": ^1.25.0
+  "@tanstack/react-query": ^5.90.9
   "@trpc/client": ^11.7.1
   "@trpc/server": ^11.7.1
   "@trpc/tanstack-react-query": ^11.7.1
   "@types/node": ^24.10.1
-  "@types/react": ^19.2.3
+  "@types/react": ^19.2.4
   "@types/react-dom": ^19.2.3
   "@vitejs/plugin-react": ^5.1.1
-  better-auth: ^1.4.0-beta.9
+  better-auth: ^1.4.0-beta.20
   eslint: ^9.39.1
-  next: ^16.0.1
+  next: ^16.0.3
   prettier: ^3.6.2
   react: ^19.2.0
   react-dom: ^19.2.0
