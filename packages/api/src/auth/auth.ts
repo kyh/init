@@ -1,4 +1,4 @@
-import type { User } from "better-auth";
+import type { BetterAuthPlugin, User } from "better-auth";
 import { cache } from "react";
 import { headers } from "next/headers";
 import { expo } from "@better-auth/expo";
@@ -35,7 +35,7 @@ export const auth: ReturnType<typeof betterAuth> = betterAuth({
     organization(),
     admin(),
     nextCookies(),
-    reactStartCookies(),
+    reactStartCookies() as unknown as BetterAuthPlugin,
   ],
   emailAndPassword: {
     enabled: true,
