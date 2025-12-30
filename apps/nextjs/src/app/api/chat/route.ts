@@ -17,7 +17,7 @@ export async function POST(request: Request) {
 
   const result = streamText({
     model: "gpt-4o-mini",
-    messages: convertToModelMessages(messages),
+    messages: await convertToModelMessages(messages),
     experimental_transform: smoothStream({ chunking: "word" }),
   });
 
