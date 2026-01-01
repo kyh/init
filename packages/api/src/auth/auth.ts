@@ -1,4 +1,4 @@
-import type { BetterAuthPlugin, User } from "better-auth";
+import type { User } from "better-auth";
 import { cache } from "react";
 import { headers } from "next/headers";
 import { expo } from "@better-auth/expo";
@@ -9,7 +9,6 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { admin, oAuthProxy, organization } from "better-auth/plugins";
-import { reactStartCookies } from "better-auth/react-start";
 
 import { slugify } from "./utils";
 
@@ -35,7 +34,6 @@ export const auth: ReturnType<typeof betterAuth> = betterAuth({
     organization(),
     admin(),
     nextCookies(),
-    reactStartCookies() as unknown as BetterAuthPlugin,
   ],
   emailAndPassword: {
     enabled: true,
