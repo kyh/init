@@ -9,15 +9,27 @@ import { cn } from "@repo/ui/utils";
 import { PencilIcon, Trash2Icon } from "lucide-react";
 
 import { PageHeader } from "../components/page-header";
-import { useTodoStore, type Todo } from "../lib/stores/todo-store";
+import {
+  useCreateTodo,
+  useDeleteTodo,
+  useTodos,
+  useUpdateTodo,
+  type Todo,
+} from "../lib/todos";
 
 export function TodosPage() {
-  const { todos, addTodo, updateTodo, deleteTodo } = useTodoStore();
+  const { data } = useTodos();
+  const todos = data.todos;
+
+  const createTodo = useCreateTodo();
+  const updateTodo = useUpdateTodo();
+  const deleteTodo = useDeleteTodo();
+
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState("");
   const [editingTitle, setEditingTitle] = useState("");
 
-  const handleCreate = (event: FormEvent<HTMLFormElement>) => {
+  const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const trimmed = newTitle.trim();
     if (!trimmed) {
@@ -25,9 +37,13 @@ export function TodosPage() {
       return;
     }
 
-    addTodo(trimmed);
-    toast.success("Todo created");
-    setNewTitle("");
+    try {
+      await createTodo.mutateAsync(trimmed);
+      toast.success("Todo created");
+      setNewTitle("");
+    } catch {
+      toast.error("Failed to create todo");
+    }
   };
 
   const startEditing = (todo: Todo) => {
@@ -40,7 +56,7 @@ export function TodosPage() {
     setEditingTitle("");
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editingId) return;
 
     const trimmed = editingTitle.trim();
@@ -49,13 +65,21 @@ export function TodosPage() {
       return;
     }
 
-    updateTodo(editingId, { title: trimmed });
-    toast.success("Todo updated");
-    cancelEditing();
+    try {
+      await updateTodo.mutateAsync({ id: editingId, title: trimmed });
+      toast.success("Todo updated");
+      cancelEditing();
+    } catch {
+      toast.error("Failed to update todo");
+    }
   };
 
-  const handleToggle = (todo: Todo) => {
-    updateTodo(todo.id, { completed: !todo.completed });
+  const handleToggle = async (todo: Todo) => {
+    try {
+      await updateTodo.mutateAsync({ id: todo.id, completed: !todo.completed });
+    } catch {
+      toast.error("Failed to update todo");
+    }
   };
 
   const handleDelete = (todo: Todo) => {
@@ -63,9 +87,13 @@ export function TodosPage() {
       description: "This action cannot be undone.",
       action: {
         label: "Delete",
-        onClick: () => {
-          deleteTodo(todo.id);
-          toast.success("Todo deleted");
+        onClick: async () => {
+          try {
+            await deleteTodo.mutateAsync(todo.id);
+            toast.success("Todo deleted");
+          } catch {
+            toast.error("Failed to delete todo");
+          }
         },
       },
       cancel: {
@@ -89,8 +117,13 @@ export function TodosPage() {
             onChange={(event) => setNewTitle(event.target.value)}
             placeholder="Add a new todo"
             aria-label="Todo title"
+            disabled={createTodo.isPending}
           />
-          <Button type="submit" className="sm:w-auto">
+          <Button
+            type="submit"
+            className="sm:w-auto"
+            loading={createTodo.isPending}
+          >
             Add
           </Button>
         </form>
@@ -102,6 +135,8 @@ export function TodosPage() {
           <ul className="space-y-3">
             {todos.map((todo) => {
               const isEditing = editingId === todo.id;
+              const isDeleting =
+                deleteTodo.isPending && deleteTodo.variables === todo.id;
 
               return (
                 <li
@@ -118,6 +153,7 @@ export function TodosPage() {
                             ? "Mark todo as incomplete"
                             : "Mark todo as complete"
                         }
+                        disabled={updateTodo.isPending}
                       />
                       {isEditing ? (
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -127,12 +163,14 @@ export function TodosPage() {
                               setEditingTitle(event.target.value)
                             }
                             aria-label="Edit todo title"
+                            disabled={updateTodo.isPending}
                           />
                           <div className="flex items-center gap-2">
                             <Button
                               type="button"
                               size="sm"
                               onClick={handleSaveEdit}
+                              loading={updateTodo.isPending}
                             >
                               Save
                             </Button>
@@ -141,6 +179,7 @@ export function TodosPage() {
                               size="sm"
                               variant="outline"
                               onClick={cancelEditing}
+                              disabled={updateTodo.isPending}
                             >
                               Cancel
                             </Button>
@@ -170,6 +209,7 @@ export function TodosPage() {
                           size="icon"
                           variant="ghost"
                           onClick={() => startEditing(todo)}
+                          disabled={updateTodo.isPending || createTodo.isPending}
                           aria-label={`Edit ${todo.title}`}
                         >
                           <PencilIcon className="size-4" />
@@ -179,6 +219,7 @@ export function TodosPage() {
                           size="icon"
                           variant="ghost"
                           onClick={() => handleDelete(todo)}
+                          loading={isDeleting}
                           aria-label={`Delete ${todo.title}`}
                         >
                           <Trash2Icon className="size-4" />

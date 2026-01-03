@@ -5,8 +5,7 @@ import { cn } from "@repo/ui/utils";
 import { MonitorIcon, MoonIcon, SunIcon, TrashIcon } from "lucide-react";
 
 import { PageHeader } from "../components/page-header";
-import { useTodoStore } from "../lib/stores/todo-store";
-import { useChatStore } from "../lib/stores/chat-store";
+import { useClearAllTodos } from "../lib/todos";
 
 const themes = [
   { value: "light", label: "Light", icon: SunIcon },
@@ -16,13 +15,15 @@ const themes = [
 
 export function SettingsPage() {
   const { theme, setTheme } = useTheme();
-  const clearTodos = useTodoStore((state) => state.clearCompleted);
-  const clearMessages = useChatStore((state) => state.clearMessages);
+  const clearAllTodos = useClearAllTodos();
 
-  const handleClearData = () => {
-    clearTodos();
-    clearMessages();
-    toast.success("All data has been cleared");
+  const handleClearData = async () => {
+    try {
+      await clearAllTodos.mutateAsync();
+      toast.success("All data has been cleared");
+    } catch {
+      toast.error("Failed to clear data");
+    }
   };
 
   return (
@@ -67,13 +68,16 @@ export function SettingsPage() {
           <div className="border-border rounded-lg border p-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-medium">Clear All Data</h3>
+                <h3 className="font-medium">Clear All Todos</h3>
                 <p className="text-muted-foreground text-sm">
-                  This will remove all todos and chat history. This action
-                  cannot be undone.
+                  This will remove all todos. This action cannot be undone.
                 </p>
               </div>
-              <Button variant="destructive" onClick={handleClearData}>
+              <Button
+                variant="destructive"
+                onClick={handleClearData}
+                loading={clearAllTodos.isPending}
+              >
                 <TrashIcon className="mr-2 size-4" />
                 Clear Data
               </Button>

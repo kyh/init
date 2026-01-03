@@ -13,15 +13,22 @@ import {
   AIMessageContent,
   AIResponse,
 } from "@repo/ui/ai";
-import { toast } from "@repo/ui/toast";
 import { GlobeIcon, MicIcon, PlusIcon } from "lucide-react";
 
 import { PageHeader } from "../components/page-header";
-import { useChatStore } from "../lib/stores/chat-store";
+
+type ChatMessage = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+};
+
+type ChatStatus = "ready" | "streaming" | "submitted";
 
 export function HomePage() {
   const [input, setInput] = useState("");
-  const { messages, addMessage, status, setStatus } = useChatStore();
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [status, setStatus] = useState<ChatStatus>("ready");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -35,22 +42,24 @@ export function HomePage() {
     }
 
     // Add user message
-    addMessage({
+    const userMessage: ChatMessage = {
       id: crypto.randomUUID(),
       role: "user",
       content: trimmedInput,
-    });
+    };
+    setMessages((prev) => [...prev, userMessage]);
 
     setInput("");
     setStatus("streaming");
 
     // Simulate AI response (in a real app, this would call an API)
     setTimeout(() => {
-      addMessage({
+      const assistantMessage: ChatMessage = {
         id: crypto.randomUUID(),
         role: "assistant",
         content: `This is a simulated response to: "${trimmedInput}"\n\nIn a production environment, this would connect to an AI service like OpenAI to generate real responses.`,
-      });
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
       setStatus("ready");
     }, 1000);
   };
