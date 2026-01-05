@@ -1,164 +1,63 @@
-import { useState } from "react";
-import { Button } from "@repo/ui/button";
-import { cn } from "@repo/ui/utils";
-import {
-  LogOut,
-  Settings,
-  ListTodo,
-  MessageSquare,
-  RefreshCw,
-} from "lucide-react";
+import { useEffect, useState } from "react";
+import { Settings, RefreshCw } from "lucide-react";
 
-import { AIChat } from "@/components/ai-chat";
-import { LoginForm } from "@/components/login-form";
-import { OrganizationSelector } from "@/components/organization-selector";
-import { TodoList } from "@/components/todo-list";
-import { useAuth } from "@/hooks/use-auth";
-import { useOrganizations } from "@/hooks/use-organizations";
+import { getStorageData, onStorageChange } from "@/lib/storage";
 
-type Tab = "todos" | "chat";
+const App = () => {
+  const [appUrl, setAppUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-function App() {
-  const {
-    isLoading: authLoading,
-    isAuthenticated,
-    session,
-    signOut,
-    refreshSession,
-  } = useAuth();
-  const {
-    isLoading: orgsLoading,
-    organizations,
-    activeOrganization,
-    setActiveOrganization,
-    fetchOrganizations,
-  } = useOrganizations();
+  useEffect(() => {
+    const loadUrl = async () => {
+      const url = await getStorageData("apiBaseUrl");
+      setAppUrl(url);
+      setIsLoading(false);
+    };
 
-  const [activeTab, setActiveTab] = useState<Tab>("todos");
+    loadUrl();
 
-  const handleSignOut = async () => {
-    await signOut();
-  };
+    // Listen for URL changes from options page
+    const unsubscribe = onStorageChange((changes) => {
+      if (changes.apiBaseUrl?.newValue) {
+        setAppUrl(changes.apiBaseUrl.newValue);
+      }
+    });
 
-  const handleLoginSuccess = () => {
-    refreshSession();
-    fetchOrganizations();
-  };
+    return unsubscribe;
+  }, []);
 
   const openOptions = () => {
     chrome.runtime.openOptionsPage();
   };
 
-  // Loading state
-  if (authLoading) {
+  if (isLoading) {
     return (
-      <div className="flex h-[500px] w-[360px] items-center justify-center">
-        <RefreshCw className="size-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  // Not authenticated
-  if (!isAuthenticated) {
-    return (
-      <div className="h-[500px] w-[360px]">
-        <LoginForm onSuccess={handleLoginSuccess} />
+      <div className="bg-background flex h-[600px] w-[400px] items-center justify-center">
+        <RefreshCw className="text-muted-foreground size-6 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="flex h-[500px] w-[360px] flex-col">
-      {/* Header */}
-      <header className="flex items-center justify-between border-b p-2">
-        <div className="flex items-center gap-2">
-          <h1 className="text-sm font-semibold">Init</h1>
-          {session?.user && (
-            <span className="max-w-[120px] truncate text-xs text-muted-foreground">
-              {session.user.name}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-1">
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={openOptions}
-            title="Settings"
-            className="size-7"
-          >
-            <Settings className="size-4" />
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={handleSignOut}
-            title="Sign out"
-            className="size-7"
-          >
-            <LogOut className="size-4" />
-          </Button>
-        </div>
-      </header>
+    <div className="bg-background flex h-[600px] w-[400px] flex-col">
+      {/* Settings button - floating in corner */}
+      <button
+        onClick={openOptions}
+        className="bg-background/80 text-muted-foreground hover:bg-accent hover:text-foreground absolute top-2 right-2 z-10 rounded-md p-1.5 backdrop-blur-sm transition-colors"
+        title="Settings"
+      >
+        <Settings className="size-4" />
+      </button>
 
-      {/* Organization Selector */}
-      <div className="border-b p-2">
-        <OrganizationSelector
-          organizations={organizations}
-          activeOrganization={activeOrganization}
-          onSelect={setActiveOrganization}
-          isLoading={orgsLoading}
-        />
-      </div>
-
-      {/* Tabs */}
-      <div className="flex border-b">
-        <button
-          onClick={() => setActiveTab("todos")}
-          className={cn(
-            "flex flex-1 items-center justify-center gap-1.5 py-2 text-sm font-medium transition-colors",
-            activeTab === "todos"
-              ? "border-b-2 border-primary text-primary"
-              : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          <ListTodo className="size-4" />
-          Todos
-        </button>
-        <button
-          onClick={() => setActiveTab("chat")}
-          className={cn(
-            "flex flex-1 items-center justify-center gap-1.5 py-2 text-sm font-medium transition-colors",
-            activeTab === "chat"
-              ? "border-b-2 border-primary text-primary"
-              : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          <MessageSquare className="size-4" />
-          Chat
-        </button>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 overflow-hidden">
-        {activeOrganization ? (
-          activeTab === "todos" ? (
-            <div className="h-full overflow-y-auto p-2">
-              <TodoList slug={activeOrganization.slug} />
-            </div>
-          ) : (
-            <AIChat slug={activeOrganization.slug} />
-          )
-        ) : (
-          <div className="flex h-full items-center justify-center">
-            <p className="text-sm text-muted-foreground">
-              Select an organization to get started
-            </p>
-          </div>
-        )}
-      </div>
+      {/* Iframe loading the Next.js app */}
+      <iframe
+        src={appUrl || "http://localhost:3000"}
+        className="h-full w-full border-0"
+        title="Init App"
+        allow="clipboard-read; clipboard-write"
+      />
     </div>
   );
-}
+};
 
 export default App;

@@ -2,28 +2,11 @@
 
 export type StorageData = {
   apiBaseUrl: string;
-  session: {
-    token: string;
-    user: {
-      id: string;
-      name: string;
-      email: string;
-      image?: string;
-    };
-    activeOrganizationId?: string;
-  } | null;
-  activeOrganization: {
-    id: string;
-    name: string;
-    slug: string;
-  } | null;
   theme: "light" | "dark" | "system";
 };
 
 const DEFAULT_DATA: StorageData = {
   apiBaseUrl: "http://localhost:3000",
-  session: null,
-  activeOrganization: null,
   theme: "system",
 };
 
@@ -39,18 +22,6 @@ export async function setStorageData<K extends keyof StorageData>(
   value: StorageData[K],
 ): Promise<void> {
   await chrome.storage.local.set({ [key]: value });
-}
-
-export async function getAllStorageData(): Promise<StorageData> {
-  const result = await chrome.storage.local.get(null);
-  return {
-    ...DEFAULT_DATA,
-    ...result,
-  };
-}
-
-export async function clearStorageData(): Promise<void> {
-  await chrome.storage.local.clear();
 }
 
 // Listen for storage changes

@@ -39,4 +39,5 @@ onlyBuiltDependencies:
 
 publicHoistPattern:
   - "@ianvs/prettier-plugin-sort-imports"
+  - "@radix-ui/*"
   - prettier-plugin-tailwindcss

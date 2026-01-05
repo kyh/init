@@ -26,9 +26,10 @@ export default defineManifest({
     service_worker: "src/background/index.ts",
     type: "module",
   },
-  permissions: ["storage", "activeTab"],
+  permissions: ["storage"],
   host_permissions: ["http://localhost:3000/*", "https://*.vercel.app/*"],
   content_security_policy: {
-    extension_pages: "script-src 'self'; object-src 'self'",
+    extension_pages:
+      "script-src 'self'; object-src 'self'; frame-src http://localhost:3000 https://*.vercel.app",
   },
 });
