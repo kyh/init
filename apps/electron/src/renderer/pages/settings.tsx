@@ -1,11 +1,8 @@
 import { useTheme } from "@repo/ui/theme";
-import { Button } from "@repo/ui/button";
-import { toast } from "@repo/ui/toast";
 import { cn } from "@repo/ui/utils";
-import { MonitorIcon, MoonIcon, SunIcon, TrashIcon } from "lucide-react";
+import { MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
 
 import { PageHeader } from "../components/page-header";
-import { useClearAllTodos } from "../lib/todos";
 
 const themes = [
   { value: "light", label: "Light", icon: SunIcon },
@@ -15,16 +12,6 @@ const themes = [
 
 export function SettingsPage() {
   const { theme, setTheme } = useTheme();
-  const clearAllTodos = useClearAllTodos();
-
-  const handleClearData = async () => {
-    try {
-      await clearAllTodos.mutateAsync();
-      toast.success("All data has been cleared");
-    } catch {
-      toast.error("Failed to clear data");
-    }
-  };
 
   return (
     <div className="flex h-full flex-col px-5">
@@ -55,33 +42,6 @@ export function SettingsPage() {
                 <span className="text-sm font-medium">{label}</span>
               </button>
             ))}
-          </div>
-        </section>
-
-        <section className="space-y-4">
-          <div>
-            <h2 className="text-lg font-semibold">Data Management</h2>
-            <p className="text-muted-foreground text-sm">
-              Manage your local data stored in the application.
-            </p>
-          </div>
-          <div className="border-border rounded-lg border p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-medium">Clear All Todos</h3>
-                <p className="text-muted-foreground text-sm">
-                  This will remove all todos. This action cannot be undone.
-                </p>
-              </div>
-              <Button
-                variant="destructive"
-                onClick={handleClearData}
-                loading={clearAllTodos.isPending}
-              >
-                <TrashIcon className="mr-2 size-4" />
-                Clear Data
-              </Button>
-            </div>
           </div>
         </section>
       </div>

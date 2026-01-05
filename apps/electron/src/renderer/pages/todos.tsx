@@ -6,24 +6,48 @@ import { Checkbox } from "@repo/ui/checkbox";
 import { Input } from "@repo/ui/input";
 import { toast } from "@repo/ui/toast";
 import { cn } from "@repo/ui/utils";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { PencilIcon, Trash2Icon } from "lucide-react";
 
+import type { RouterInputs, RouterOutputs } from "@repo/api";
 import { PageHeader } from "../components/page-header";
-import {
-  useCreateTodo,
-  useDeleteTodo,
-  useTodos,
-  useUpdateTodo,
-  type Todo,
-} from "../lib/todos";
+import { useTRPC, useTRPCClient } from "../lib/trpc";
+
+// TODO: This should come from user settings or auth context
+const DEFAULT_SLUG = "default";
+
+type Todo = RouterOutputs["todo"]["list"]["todos"][number];
+type CreateTodoInput = RouterInputs["todo"]["create"];
+type UpdateTodoInput = RouterInputs["todo"]["update"];
+type DeleteTodoInput = RouterInputs["todo"]["delete"];
 
 export function TodosPage() {
-  const { data } = useTodos();
+  const slug = DEFAULT_SLUG;
+  const trpc = useTRPC();
+  const trpcClient = useTRPCClient();
+  const { data } = useSuspenseQuery(trpc.todo.list.queryOptions({ slug }));
   const todos = data.todos;
 
-  const createTodo = useCreateTodo();
-  const updateTodo = useUpdateTodo();
-  const deleteTodo = useDeleteTodo();
+  const createTodo = useMutation({
+    mutationFn: (input: CreateTodoInput) => trpcClient.todo.create.mutate(input),
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const updateTodo = useMutation({
+    mutationFn: (input: UpdateTodoInput) => trpcClient.todo.update.mutate(input),
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const deleteTodo = useMutation({
+    mutationFn: (input: DeleteTodoInput) => trpcClient.todo.delete.mutate(input),
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState("");
@@ -38,11 +62,11 @@ export function TodosPage() {
     }
 
     try {
-      await createTodo.mutateAsync(trimmed);
+      await createTodo.mutateAsync({ slug, title: trimmed });
       toast.success("Todo created");
       setNewTitle("");
     } catch {
-      toast.error("Failed to create todo");
+      // Error handled in onError
     }
   };
 
@@ -66,19 +90,23 @@ export function TodosPage() {
     }
 
     try {
-      await updateTodo.mutateAsync({ id: editingId, title: trimmed });
+      await updateTodo.mutateAsync({ slug, id: editingId, title: trimmed });
       toast.success("Todo updated");
       cancelEditing();
     } catch {
-      toast.error("Failed to update todo");
+      // Error handled in onError
     }
   };
 
   const handleToggle = async (todo: Todo) => {
     try {
-      await updateTodo.mutateAsync({ id: todo.id, completed: !todo.completed });
+      await updateTodo.mutateAsync({
+        slug,
+        id: todo.id,
+        completed: !todo.completed,
+      });
     } catch {
-      toast.error("Failed to update todo");
+      // Error handled in onError
     }
   };
 
@@ -89,10 +117,10 @@ export function TodosPage() {
         label: "Delete",
         onClick: async () => {
           try {
-            await deleteTodo.mutateAsync(todo.id);
+            await deleteTodo.mutateAsync({ slug, id: todo.id });
             toast.success("Todo deleted");
           } catch {
-            toast.error("Failed to delete todo");
+            // Error handled in onError
           }
         },
       },
@@ -136,7 +164,7 @@ export function TodosPage() {
             {todos.map((todo) => {
               const isEditing = editingId === todo.id;
               const isDeleting =
-                deleteTodo.isPending && deleteTodo.variables === todo.id;
+                deleteTodo.isPending && deleteTodo.variables?.id === todo.id;
 
               return (
                 <li

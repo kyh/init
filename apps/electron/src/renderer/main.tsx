@@ -1,11 +1,11 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { HashRouter, Route, Routes } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GlobalToaster } from "@repo/ui/toast";
 import { ThemeProvider } from "@repo/ui/theme";
 
 import { DashboardLayout } from "./components/dashboard-layout";
+import { TRPCReactProvider } from "./lib/trpc";
 import { HomePage } from "./pages/home";
 import { TodosPage } from "./pages/todos";
 import { SettingsPage } from "./pages/settings";
@@ -13,17 +13,9 @@ import { AboutPage } from "./pages/about";
 
 import "./styles/globals.css";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 60 * 1000,
-    },
-  },
-});
-
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
+    <TRPCReactProvider>
       <ThemeProvider defaultTheme="system" storageKey="init-theme">
         <HashRouter>
           <Routes>
@@ -37,6 +29,6 @@ createRoot(document.getElementById("root")!).render(
         </HashRouter>
         <GlobalToaster />
       </ThemeProvider>
-    </QueryClientProvider>
+    </TRPCReactProvider>
   </StrictMode>,
 );
