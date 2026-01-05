@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { Settings, RefreshCw } from "lucide-react";
+import { Button } from "@repo/ui/button";
+import { Spinner } from "@repo/ui/spinner";
+import { Settings } from "lucide-react";
 
 import { getStorageData, onStorageChange } from "@/lib/storage";
 
@@ -33,23 +35,23 @@ const App = () => {
   if (isLoading) {
     return (
       <div className="bg-background flex h-[600px] w-[400px] items-center justify-center">
-        <RefreshCw className="text-muted-foreground size-6 animate-spin" />
+        <Spinner className="text-muted-foreground size-6" />
       </div>
     );
   }
 
   return (
     <div className="bg-background flex h-[600px] w-[400px] flex-col">
-      {/* Settings button - floating in corner */}
-      <button
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={openOptions}
-        className="bg-background/80 text-muted-foreground hover:bg-accent hover:text-foreground absolute top-2 right-2 z-10 rounded-md p-1.5 backdrop-blur-sm transition-colors"
+        className="absolute top-2 right-2 z-10 size-8 backdrop-blur-sm"
         title="Settings"
       >
         <Settings className="size-4" />
-      </button>
+      </Button>
 
-      {/* Iframe loading the Next.js app */}
       <iframe
         src={appUrl || "http://localhost:3000"}
         className="h-full w-full border-0"

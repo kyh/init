@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@repo/ui/button";
 import { Input } from "@repo/ui/input";
 import { Label } from "@repo/ui/label";
-import { Save, RefreshCw, ExternalLink } from "lucide-react";
+import { Spinner } from "@repo/ui/spinner";
+import { Save, ExternalLink } from "lucide-react";
 
 import { getStorageData, setStorageData } from "@/lib/storage";
 
@@ -68,7 +69,7 @@ const App = () => {
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <RefreshCw className="text-muted-foreground size-6 animate-spin" />
+        <Spinner className="text-muted-foreground size-6" />
       </div>
     );
   }

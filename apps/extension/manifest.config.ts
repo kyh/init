@@ -27,9 +27,9 @@ export default defineManifest({
     type: "module",
   },
   permissions: ["storage"],
-  host_permissions: ["http://localhost:3000/*", "https://*.vercel.app/*"],
-  content_security_policy: {
-    extension_pages:
-      "script-src 'self'; object-src 'self'; frame-src http://localhost:3000 https://*.vercel.app",
-  },
+  host_permissions: [
+    "http://localhost:3000/*",
+    "http://localhost:5173/*",
+    "https://*.vercel.app/*",
+  ],
 });

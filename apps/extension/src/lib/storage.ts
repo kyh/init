@@ -14,7 +14,7 @@ export async function getStorageData<K extends keyof StorageData>(
   key: K,
 ): Promise<StorageData[K]> {
   const result = await chrome.storage.local.get(key);
-  return result[key] ?? DEFAULT_DATA[key];
+  return (result[key] as StorageData[K]) ?? DEFAULT_DATA[key];
 }
 
 export async function setStorageData<K extends keyof StorageData>(
