@@ -15,6 +15,7 @@
     "dev": "turbo watch dev --continue",
     "dev-nextjs": "turbo watch dev -F @repo/nextjs...",
     "dev-expo": "turbo watch dev -F @repo/expo...",
+    "dev-extension": "turbo watch dev -F @repo/extension...",
     "dev-electron": "turbo watch dev -F @repo/electron...",
     "format": "turbo run format --continue -- --cache --cache-location .cache/.prettiercache",
     "format-fix": "turbo run format --continue -- --write --cache --cache-location .cache/.prettiercache",
