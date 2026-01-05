@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from "react";
-import { SendIcon, Loader2, StopCircle } from "lucide-react";
+import { Button } from "@repo/ui/button";
+import { Textarea } from "@repo/ui/textarea";
+import { cn } from "@repo/ui/utils";
+import { SendIcon, StopCircle } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { getStorageData } from "@/lib/storage";
-import { cn } from "@/lib/utils";
 
 type Message = {
   id: string;
@@ -175,7 +175,7 @@ export function AIChat({ slug }: AIChatProps) {
                   )}
                 >
                   {message.role === "assistant" ? (
-                    <div className="prose prose-sm dark:prose-invert max-w-none [&_p]:m-0 [&_pre]:bg-background/50 [&_pre]:p-2 [&_pre]:rounded [&_code]:text-xs">
+                    <div className="prose prose-sm max-w-none dark:prose-invert [&_code]:text-xs [&_p]:m-0 [&_pre]:rounded [&_pre]:bg-background/50 [&_pre]:p-2">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {message.content || "..."}
                       </ReactMarkdown>
@@ -218,7 +218,7 @@ export function AIChat({ slug }: AIChatProps) {
               onClick={handleStop}
               className="shrink-0"
             >
-              <StopCircle className="h-4 w-4" />
+              <StopCircle className="size-4" />
             </Button>
           ) : (
             <Button
@@ -227,7 +227,7 @@ export function AIChat({ slug }: AIChatProps) {
               disabled={!input.trim()}
               className="shrink-0"
             >
-              <SendIcon className="h-4 w-4" />
+              <SendIcon className="size-4" />
             </Button>
           )}
         </div>

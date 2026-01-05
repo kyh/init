@@ -1,8 +1,7 @@
-import { ChevronDown, Building2, Check } from "lucide-react";
 import { useState } from "react";
-
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Button } from "@repo/ui/button";
+import { cn } from "@repo/ui/utils";
+import { ChevronDown, Building2, Check } from "lucide-react";
 
 type Organization = {
   id: string;
@@ -29,8 +28,8 @@ export function OrganizationSelector({
   if (isLoading) {
     return (
       <div className="flex h-9 items-center gap-2 rounded-md border px-3">
-        <Building2 className="h-4 w-4 animate-pulse" />
-        <span className="text-muted-foreground text-sm">Loading...</span>
+        <Building2 className="size-4 animate-pulse" />
+        <span className="text-sm text-muted-foreground">Loading...</span>
       </div>
     );
   }
@@ -38,8 +37,8 @@ export function OrganizationSelector({
   if (organizations.length === 0) {
     return (
       <div className="flex h-9 items-center gap-2 rounded-md border px-3">
-        <Building2 className="h-4 w-4" />
-        <span className="text-muted-foreground text-sm">No organizations</span>
+        <Building2 className="size-4" />
+        <span className="text-sm text-muted-foreground">No organizations</span>
       </div>
     );
   }
@@ -56,17 +55,17 @@ export function OrganizationSelector({
             <img
               src={activeOrganization.logo}
               alt={activeOrganization.name}
-              className="h-4 w-4 rounded"
+              className="size-4 rounded"
             />
           ) : (
-            <Building2 className="h-4 w-4" />
+            <Building2 className="size-4" />
           )}
           <span className="truncate">
             {activeOrganization?.name ?? "Select organization"}
           </span>
         </div>
         <ChevronDown
-          className={cn("h-4 w-4 transition-transform", isOpen && "rotate-180")}
+          className={cn("size-4 transition-transform", isOpen && "rotate-180")}
         />
       </Button>
 
@@ -93,14 +92,14 @@ export function OrganizationSelector({
                   <img
                     src={org.logo}
                     alt={org.name}
-                    className="h-4 w-4 rounded"
+                    className="size-4 rounded"
                   />
                 ) : (
-                  <Building2 className="h-4 w-4" />
+                  <Building2 className="size-4" />
                 )}
                 <span className="flex-1 truncate text-left">{org.name}</span>
                 {activeOrganization?.id === org.id && (
-                  <Check className="h-4 w-4" />
+                  <Check className="size-4" />
                 )}
               </button>
             ))}

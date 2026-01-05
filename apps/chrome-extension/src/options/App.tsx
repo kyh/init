@@ -1,11 +1,21 @@
 import { useState, useEffect } from "react";
+import { Button } from "@repo/ui/button";
+import { Input } from "@repo/ui/input";
+import { Label } from "@repo/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/select";
 import { Save, RefreshCw, ExternalLink } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
-import { getStorageData, setStorageData, type StorageData } from "@/lib/storage";
+import {
+  getStorageData,
+  setStorageData,
+  type StorageData,
+} from "@/lib/storage";
 
 function App() {
   const [apiBaseUrl, setApiBaseUrl] = useState("");
@@ -27,7 +37,7 @@ function App() {
         ]);
         setApiBaseUrl(savedApiBaseUrl);
         setTheme(savedTheme);
-      } catch (error) {
+      } catch {
         setMessage({
           type: "error",
           text: "Failed to load settings",
@@ -76,7 +86,7 @@ function App() {
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+        <RefreshCw className="size-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -112,15 +122,19 @@ function App() {
           <div className="space-y-2">
             <Label htmlFor="theme">Theme</Label>
             <Select
-              id="theme"
               value={theme}
-              onChange={(e) =>
-                setTheme(e.target.value as StorageData["theme"])
+              onValueChange={(value) =>
+                setTheme(value as StorageData["theme"])
               }
             >
-              <option value="system">System</option>
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select theme" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="system">System</SelectItem>
+                <SelectItem value="light">Light</SelectItem>
+                <SelectItem value="dark">Dark</SelectItem>
+              </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
               Choose your preferred color scheme.
@@ -143,11 +157,11 @@ function App() {
           {/* Actions */}
           <div className="flex gap-2">
             <Button onClick={handleSave} loading={isSaving}>
-              <Save className="h-4 w-4" />
+              <Save className="size-4" />
               Save Settings
             </Button>
             <Button variant="outline" onClick={openWebApp}>
-              <ExternalLink className="h-4 w-4" />
+              <ExternalLink className="size-4" />
               Open Web App
             </Button>
           </div>

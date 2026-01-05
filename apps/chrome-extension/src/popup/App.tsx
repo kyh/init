@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Button } from "@repo/ui/button";
+import { cn } from "@repo/ui/utils";
 import {
   LogOut,
   Settings,
@@ -11,16 +13,19 @@ import { AIChat } from "@/components/ai-chat";
 import { LoginForm } from "@/components/login-form";
 import { OrganizationSelector } from "@/components/organization-selector";
 import { TodoList } from "@/components/todo-list";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useOrganizations } from "@/hooks/use-organizations";
-import { cn } from "@/lib/utils";
 
 type Tab = "todos" | "chat";
 
 function App() {
-  const { isLoading: authLoading, isAuthenticated, session, signOut, refreshSession } =
-    useAuth();
+  const {
+    isLoading: authLoading,
+    isAuthenticated,
+    session,
+    signOut,
+    refreshSession,
+  } = useAuth();
   const {
     isLoading: orgsLoading,
     organizations,
@@ -48,7 +53,7 @@ function App() {
   if (authLoading) {
     return (
       <div className="flex h-[500px] w-[360px] items-center justify-center">
-        <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+        <RefreshCw className="size-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -69,7 +74,7 @@ function App() {
         <div className="flex items-center gap-2">
           <h1 className="text-sm font-semibold">Init</h1>
           {session?.user && (
-            <span className="text-xs text-muted-foreground truncate max-w-[120px]">
+            <span className="max-w-[120px] truncate text-xs text-muted-foreground">
               {session.user.name}
             </span>
           )}
@@ -80,18 +85,18 @@ function App() {
             variant="ghost"
             onClick={openOptions}
             title="Settings"
-            className="h-7 w-7"
+            className="size-7"
           >
-            <Settings className="h-4 w-4" />
+            <Settings className="size-4" />
           </Button>
           <Button
             size="icon"
             variant="ghost"
             onClick={handleSignOut}
             title="Sign out"
-            className="h-7 w-7"
+            className="size-7"
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="size-4" />
           </Button>
         </div>
       </header>
@@ -117,7 +122,7 @@ function App() {
               : "text-muted-foreground hover:text-foreground",
           )}
         >
-          <ListTodo className="h-4 w-4" />
+          <ListTodo className="size-4" />
           Todos
         </button>
         <button
@@ -129,7 +134,7 @@ function App() {
               : "text-muted-foreground hover:text-foreground",
           )}
         >
-          <MessageSquare className="h-4 w-4" />
+          <MessageSquare className="size-4" />
           Chat
         </button>
       </div>

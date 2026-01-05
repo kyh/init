@@ -1,11 +1,11 @@
 import { useState, useEffect, type FormEvent } from "react";
+import { Button } from "@repo/ui/button";
+import { Checkbox } from "@repo/ui/checkbox";
+import { Input } from "@repo/ui/input";
+import { cn } from "@repo/ui/utils";
 import { PencilIcon, Trash2Icon, Loader2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { getTrpcClient, type RouterOutputs } from "@/lib/api";
-import { cn } from "@/lib/utils";
+import { getTrpcClient, type RouterOutputs } from "@/trpc/react";
 
 type Todo = RouterOutputs["todo"]["list"]["todos"][number];
 
@@ -161,7 +161,7 @@ export function TodoList({ slug }: TodoListProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -188,7 +188,7 @@ export function TodoList({ slug }: TodoListProps) {
       </form>
 
       {todos.length === 0 ? (
-        <p className="text-center text-sm text-muted-foreground py-4">
+        <p className="py-4 text-center text-sm text-muted-foreground">
           No todos yet. Add your first one above.
         </p>
       ) : (
@@ -238,11 +238,11 @@ export function TodoList({ slug }: TodoListProps) {
                   </div>
                 ) : (
                   <>
-                    <div className="flex-1 min-w-0">
+                    <div className="min-w-0 flex-1">
                       <span
                         className={cn(
-                          "text-sm break-words",
-                          todo.completed && "line-through text-muted-foreground",
+                          "break-words text-sm",
+                          todo.completed && "text-muted-foreground line-through",
                         )}
                       >
                         {todo.title}
@@ -254,18 +254,18 @@ export function TodoList({ slug }: TodoListProps) {
                         variant="ghost"
                         onClick={() => startEditing(todo)}
                         disabled={isUpdating || isDeleting}
-                        className="h-7 w-7"
+                        className="size-7"
                       >
-                        <PencilIcon className="h-3 w-3" />
+                        <PencilIcon className="size-3" />
                       </Button>
                       <Button
                         size="icon"
                         variant="ghost"
                         onClick={() => handleDelete(todo)}
                         loading={isDeleting}
-                        className="h-7 w-7"
+                        className="size-7"
                       >
-                        <Trash2Icon className="h-3 w-3" />
+                        <Trash2Icon className="size-3" />
                       </Button>
                     </div>
                   </>

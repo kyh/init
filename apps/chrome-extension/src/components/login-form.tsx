@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Loader2, LogIn, ExternalLink } from "lucide-react";
+import { Button } from "@repo/ui/button";
+import { Input } from "@repo/ui/input";
+import { Label } from "@repo/ui/label";
+import { LogIn, ExternalLink } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { getAuthClient } from "@/lib/auth";
 import { getStorageData } from "@/lib/storage";
 
@@ -50,7 +50,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     <div className="flex flex-col gap-4 p-4">
       <div className="text-center">
         <h2 className="text-lg font-semibold">Sign In</h2>
-        <p className="text-muted-foreground text-sm">
+        <p className="text-sm text-muted-foreground">
           Sign in to access your todos and chat
         </p>
       </div>
@@ -82,19 +82,11 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           />
         </div>
 
-        {error && (
-          <p className="text-destructive text-sm">{error}</p>
-        )}
+        {error && <p className="text-sm text-destructive">{error}</p>}
 
-        <Button type="submit" disabled={isLoading} className="w-full">
-          {isLoading ? (
-            <Loader2 className="animate-spin" />
-          ) : (
-            <>
-              <LogIn className="h-4 w-4" />
-              Sign In
-            </>
-          )}
+        <Button type="submit" loading={isLoading} className="w-full">
+          <LogIn className="size-4" />
+          Sign In
         </Button>
       </form>
 
@@ -103,12 +95,12 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           <span className="w-full border-t" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background text-muted-foreground px-2">Or</span>
+          <span className="bg-background px-2 text-muted-foreground">Or</span>
         </div>
       </div>
 
       <Button variant="outline" onClick={openWebApp} className="w-full">
-        <ExternalLink className="h-4 w-4" />
+        <ExternalLink className="size-4" />
         Open Web App
       </Button>
     </div>

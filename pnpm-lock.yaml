@@ -110,33 +110,24 @@ importers:
 
   apps/chrome-extension:
     dependencies:
-      '@ai-sdk/react':
-        specifier: ^3.0.5
-        version: 3.0.5(react@19.2.3)(zod@4.3.4)
+      '@repo/api':
+        specifier: workspace:*
+        version: link:../../packages/api
+      '@repo/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@tanstack/react-query':
         specifier: 'catalog:'
         version: 5.90.16(react@19.2.3)
       '@trpc/client':
         specifier: 'catalog:'
         version: 11.8.1(@trpc/server@11.8.1(typescript@5.9.3))(typescript@5.9.3)
-      '@trpc/server':
-        specifier: 'catalog:'
-        version: 11.8.1(typescript@5.9.3)
       '@trpc/tanstack-react-query':
         specifier: 'catalog:'
         version: 11.8.1(@tanstack/react-query@5.90.16(react@19.2.3))(@trpc/client@11.8.1(@trpc/server@11.8.1(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.8.1(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
-      ai:
-        specifier: ^6.0.5
-        version: 6.0.5(zod@4.3.4)
       better-auth:
         specifier: 'catalog:'
         version: 1.4.10(@tanstack/react-start@1.145.3(crossws@0.4.1(srvx@0.10.0))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vite@7.3.0(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1)))(better-sqlite3@12.4.1)(drizzle-kit@0.31.8)(drizzle-orm@0.45.1(@opentelemetry/api@1.9.0)(better-sqlite3@12.4.1)(gel@2.0.2)(kysely@0.28.5)(postgres@3.4.7))(next@16.1.1(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.10)
-      class-variance-authority:
-        specifier: ^0.7.1
-        version: 0.7.1
-      clsx:
-        specifier: ^2.1.1
-        version: 2.1.1
       lucide-react:
         specifier: ^0.559.0
         version: 0.559.0(react@19.2.3)
@@ -155,9 +146,6 @@ importers:
       superjson:
         specifier: 'catalog:'
         version: 2.2.6
-      tailwind-merge:
-        specifier: ^3.4.0
-        version: 3.4.0
       zod:
         specifier: 'catalog:'
         version: 4.3.4
@@ -174,9 +162,6 @@ importers:
       '@kyh/tsconfig':
         specifier: 'catalog:'
         version: 1.1.10
-      '@repo/api':
-        specifier: workspace:*
-        version: link:../../packages/api
       '@tailwindcss/vite':
         specifier: 'catalog:'
         version: 4.1.18(vite@7.3.0(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.43.1)(tsx@4.21.0)(yaml@2.8.1))
@@ -8287,7 +8272,7 @@ snapshots:
   '@babel/helper-module-imports@7.27.1':
     dependencies:
       '@babel/traverse': 7.28.5
-      '@babel/types': 7.28.4
+      '@babel/types': 7.28.5
     transitivePeerDependencies:
       - supports-color
 
