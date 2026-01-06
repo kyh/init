@@ -18,15 +18,15 @@
     "typecheck": "tsc --noEmit -p tsconfig.node.json"
   },
   "dependencies": {
-    "@electron-toolkit/utils": "^3.0.0"
+    "@electron-toolkit/utils": "^4.0.0"
   },
   "devDependencies": {
-    "@electron-toolkit/tsconfig": "^1.0.1",
+    "@electron-toolkit/tsconfig": "^2.0.0",
     "@kyh/eslint-config": "catalog:",
     "@kyh/prettier-config": "catalog:",
     "@types/node": "catalog:",
-    "electron": "^35.2.1",
-    "electron-builder": "^26.0.12",
+    "electron": "^39.2.7",
+    "electron-builder": "^26.4.0",
     "electron-vite": "^5.0.0",
     "eslint": "catalog:",
     "prettier": "catalog:",
