@@ -9,7 +9,7 @@ export default defineConfig({
     version: "0.1.0",
     description:
       "Chrome extension for Init - your AI-native starter kit for building, launching, and scaling applications.",
-    permissions: ["storage", "tabs"],
+    permissions: ["storage"],
     host_permissions: [
       "http://localhost:3000/*",
       "http://localhost:5173/*",
@@ -18,10 +18,5 @@ export default defineConfig({
   },
   vite: () => ({
     plugins: [react(), tailwindcss()],
-    resolve: {
-      alias: {
-        "@": new URL("./src", import.meta.url).pathname,
-      },
-    },
   }),
 });
