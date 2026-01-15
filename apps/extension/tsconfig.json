@@ -7,9 +7,8 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "types": ["chrome"],
     "module": "esnext"
   },
-  "include": ["src", "vite.config.ts", "manifest.config.ts"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src", ".wxt/wxt.d.ts", "wxt.config.ts"],
+  "exclude": ["node_modules", ".output"]
 }
