@@ -4,7 +4,7 @@ This project uses **bd** (beads) for issue tracking. Run `bd onboard` to get sta
 
 ## Project Overview
 
-**init** - pnpm monorepo with Turborepo. Multi-platform starter: Next.js web, Expo mobile, Chrome extension, Electron desktop.
+**init** - pnpm monorepo with Turborepo. Multi-platform starter: Next.js web, Expo mobile, Chrome extension, Tauri desktop.
 
 ## Tech Stack
 
@@ -23,7 +23,7 @@ apps/
   nextjs/      # Next.js 16 web app (fumadocs for docs)
   expo/        # React Native mobile (nativewind)
   extension/   # Chrome extension (crxjs + vite)
-  electron/    # Desktop app (electron-vite)
+  tauri/       # Desktop app (Tauri v2)
 packages/
   api/         # tRPC router + better-auth
   db/          # Drizzle schema + Supabase client

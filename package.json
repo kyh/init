@@ -16,7 +16,7 @@
     "dev-nextjs": "turbo watch dev -F @repo/nextjs...",
     "dev-expo": "turbo watch dev -F @repo/expo...",
     "dev-extension": "turbo watch dev -F @repo/extension...",
-    "dev-electron": "turbo watch dev -F @repo/electron...",
+    "dev-tauri": "turbo watch dev -F @repo/tauri...",
     "format": "turbo run format --continue -- --cache --cache-location .cache/.prettiercache",
     "format-fix": "turbo run format --continue -- --write --cache --cache-location .cache/.prettiercache",
     "lint": "turbo run lint --continue -- --cache --cache-location .cache/.eslintcache",
@@ -39,7 +39,6 @@
     "onlyBuiltDependencies": [
       "@tailwindcss/oxide",
       "esbuild",
-      "electron",
       "supabase"
     ]
   }

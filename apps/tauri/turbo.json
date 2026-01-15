@@ -3,7 +3,7 @@
   "extends": ["//"],
   "tasks": {
     "build": {
-      "outputs": ["out/**", "dist/**"]
+      "outputs": ["src-tauri/target/**"]
     },
     "dev": {
       "cache": false,
