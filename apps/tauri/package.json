@@ -1,22 +1,13 @@
 {
   "name": "@repo/tauri",
   "version": "0.1.0",
-  "type": "module",
   "private": true,
   "scripts": {
     "dev": "tauri dev",
     "build": "tauri build",
-    "build:debug": "tauri build --debug",
-    "clean": "git clean -xdf .cache target node_modules",
-    "format": "prettier --check . --ignore-path ../../.gitignore",
-    "lint": "eslint"
+    "clean": "git clean -xdf target node_modules"
   },
   "devDependencies": {
-    "@kyh/eslint-config": "catalog:",
-    "@kyh/prettier-config": "catalog:",
-    "@tauri-apps/cli": "^2.5.0",
-    "eslint": "catalog:",
-    "prettier": "catalog:"
-  },
-  "prettier": "@kyh/prettier-config"
+    "@tauri-apps/cli": "^2.5.0"
+  }
 }

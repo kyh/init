@@ -8,18 +8,13 @@
     "frontendDist": "http://localhost:3000"
   },
   "app": {
-    "withGlobalTauri": false,
     "windows": [
       {
         "title": "Init",
         "width": 1200,
         "height": 800,
         "minWidth": 800,
-        "minHeight": 600,
-        "resizable": true,
-        "fullscreen": false,
-        "decorations": true,
-        "transparent": false
+        "minHeight": 600
       }
     ],
     "security": {
@@ -27,35 +22,13 @@
     }
   },
   "bundle": {
-    "active": true,
-    "targets": "all",
-    "icon": [
-      "icons/icon.png",
-      "icons/icon.icns",
-      "icons/icon.ico"
-    ],
-    "category": "Utility",
-    "shortDescription": "Init Desktop App",
-    "longDescription": "Init - Multi-platform starter application",
-    "publisher": "Init",
+    "icon": ["icons/icon.png", "icons/icon.icns", "icons/icon.ico"],
     "macOS": {
-      "entitlements": null,
       "minimumSystemVersion": "10.13"
     },
     "windows": {
-      "certificateThumbprint": null,
-      "timestampUrl": null,
-      "wix": null,
       "nsis": {
         "installMode": "currentUser"
-      }
-    },
-    "linux": {
-      "appimage": {
-        "bundleMediaFramework": false
-      },
-      "deb": {
-        "depends": []
       }
     }
   },
