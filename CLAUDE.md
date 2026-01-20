@@ -20,7 +20,7 @@
 apps/
   nextjs/      # Next.js 16 web app (fumadocs for docs)
   expo/        # React Native mobile (nativewind)
-  extension/   # Chrome extension (crxjs + vite)
+  wxt/         # Chrome extension (wxt)
   tauri/       # Desktop app (Tauri v2)
 packages/
   api/         # tRPC router + better-auth
