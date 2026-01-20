@@ -1,4 +1,4 @@
-// Chrome extension storage utilities
+// Browser extension storage utilities
 
 export type StorageData = {
   apiBaseUrl: string;
@@ -13,15 +13,16 @@ const DEFAULT_DATA: StorageData = {
 export async function getStorageData<K extends keyof StorageData>(
   key: K,
 ): Promise<StorageData[K]> {
-  const result = await chrome.storage.local.get(key);
-  return (result[key] as StorageData[K]) ?? DEFAULT_DATA[key];
+  const result = await browser.storage.local.get(key);
+  const value = result[key] as StorageData[K] | undefined;
+  return value ?? DEFAULT_DATA[key];
 }
 
 export async function setStorageData<K extends keyof StorageData>(
   key: K,
   value: StorageData[K],
 ): Promise<void> {
-  await chrome.storage.local.set({ [key]: value });
+  await browser.storage.local.set({ [key]: value });
 }
 
 // Listen for storage changes
@@ -34,7 +35,7 @@ export function onStorageChange(
   }) => void,
 ): () => void {
   const listener = (
-    changes: { [key: string]: chrome.storage.StorageChange },
+    changes: Record<string, { oldValue?: unknown; newValue?: unknown }>,
     areaName: string,
   ) => {
     if (areaName === "local") {
@@ -42,6 +43,6 @@ export function onStorageChange(
     }
   };
 
-  chrome.storage.onChanged.addListener(listener);
-  return () => chrome.storage.onChanged.removeListener(listener);
+  browser.storage.onChanged.addListener(listener);
+  return () => browser.storage.onChanged.removeListener(listener);
 }

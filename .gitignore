@@ -24,6 +24,9 @@ dist/
 expo-env.d.ts
 apps/expo/.gitignore
 
+# wxt
+.wxt/
+
 # production
 packages/mdx/.content-collections/cache
 
