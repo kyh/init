@@ -16,7 +16,7 @@ const App = () => {
       setIsLoading(false);
     };
 
-    loadUrl();
+    void loadUrl();
 
     // Listen for URL changes from options page
     const unsubscribe = onStorageChange((changes) => {
@@ -29,7 +29,7 @@ const App = () => {
   }, []);
 
   const openOptions = () => {
-    chrome.runtime.openOptionsPage();
+    void browser.runtime.openOptionsPage();
   };
 
   if (isLoading) {
@@ -53,7 +53,7 @@ const App = () => {
       </Button>
 
       <iframe
-        src={appUrl || "http://localhost:3000"}
+        src={appUrl ?? "http://localhost:3000"}
         className="h-full w-full border-0"
         title="Init App"
         allow="clipboard-read; clipboard-write"

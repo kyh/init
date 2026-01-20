@@ -32,7 +32,7 @@ const App = () => {
       }
     };
 
-    loadSettings();
+    void loadSettings();
   }, []);
 
   const handleSave = async () => {
@@ -63,7 +63,7 @@ const App = () => {
   };
 
   const openWebApp = () => {
-    chrome.tabs.create({ url: apiBaseUrl });
+    void browser.tabs.create({ url: apiBaseUrl });
   };
 
   if (isLoading) {
