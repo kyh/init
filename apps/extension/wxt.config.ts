@@ -4,6 +4,11 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   srcDir: "src",
+  dev: {
+    server: {
+      port: 3001,
+    },
+  },
   manifest: {
     name: "Init - AI Starter Kit",
     version: "0.1.0",
