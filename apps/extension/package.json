@@ -27,7 +27,7 @@
     "@kyh/prettier-config": "catalog:",
     "@kyh/tsconfig": "catalog:",
     "@tailwindcss/vite": "catalog:",
-    "@types/chrome": "^0.1.33",
+    "@types/chrome": "^0.1.35",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
