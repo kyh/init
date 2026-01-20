@@ -27,6 +27,10 @@ apps/expo/.gitignore
 # wxt
 .wxt/
 
+# tauri
+**/src-tauri/target/
+**/src-tauri/gen/
+
 # production
 packages/mdx/.content-collections/cache
 
