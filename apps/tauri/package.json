@@ -1,0 +1,13 @@
+{
+  "name": "@repo/tauri",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "clean": "git clean -xdf target node_modules"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.5.0"
+  }
+}
