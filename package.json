@@ -16,7 +16,7 @@
     "dev-nextjs": "turbo watch dev -F @repo/nextjs...",
     "dev-expo": "turbo watch dev -F @repo/expo...",
     "dev-wxt": "turbo watch dev -F @repo/wxt...",
-    "dev-tauri": "turbo watch dev -F @repo/tauri...",
+    "dev-electron": "turbo watch dev -F @repo/electron...",
     "format": "turbo run format --continue -- --cache --cache-location .cache/.prettiercache",
     "format-fix": "turbo run format --continue -- --write --cache --cache-location .cache/.prettiercache",
     "lint": "turbo run lint --continue -- --cache --cache-location .cache/.eslintcache",
