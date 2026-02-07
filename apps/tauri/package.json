@@ -8,6 +8,6 @@
     "clean": "git clean -xdf target node_modules"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.9.6"
+    "@tauri-apps/cli": "^2.10.0"
   }
 }
