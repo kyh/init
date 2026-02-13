@@ -16,7 +16,7 @@
   },
   "prettier": "@kyh/prettier-config",
   "dependencies": {
-    "@ai-sdk/react": "^3.0.84",
+    "@ai-sdk/react": "^3.0.87",
     "@repo/api": "workspace:*",
     "@repo/db": "workspace:*",
     "@repo/ui": "workspace:*",
@@ -27,7 +27,7 @@
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
     "@trpc/tanstack-react-query": "catalog:",
-    "ai": "^6.0.82",
+    "ai": "^6.0.85",
     "better-auth": "catalog:",
     "fumadocs-core": "^16.6.0",
     "fumadocs-mdx": "^14.2.7",
