@@ -9,18 +9,17 @@ echo "Removing Electron app..."
 # Remove the electron app directory
 rm -rf "$ROOT_DIR/apps/electron"
 
-# Remove dev-electron script from package.json
 cd "$ROOT_DIR"
+
+# Remove dev-electron script and electron-winstaller from package.json
 node -e "
 const fs = require('fs');
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
-// Remove electron-related scripts
 delete pkg.scripts['dev-electron'];
 
-// Remove electron from onlyBuiltDependencies
 if (pkg.pnpm?.onlyBuiltDependencies) {
-  pkg.pnpm.onlyBuiltDependencies = pkg.pnpm.onlyBuiltDependencies.filter(d => d !== 'electron');
+  pkg.pnpm.onlyBuiltDependencies = pkg.pnpm.onlyBuiltDependencies.filter(d => d !== 'electron-winstaller');
 }
 
 fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');

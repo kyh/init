@@ -7,18 +7,28 @@ ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 echo "Removing Chrome extension..."
 
 # Remove the extension app directory
-rm -rf "$ROOT_DIR/apps/extension"
+rm -rf "$ROOT_DIR/apps/wxt"
 
-# Remove dev-extension script from package.json
 cd "$ROOT_DIR"
+
+# Remove dev-wxt script from package.json
 node -e "
 const fs = require('fs');
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
-// Remove extension-related scripts
-delete pkg.scripts['dev-extension'];
+delete pkg.scripts['dev-wxt'];
 
 fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+"
+
+# Remove .wxt/ from .gitignore
+node -e "
+const fs = require('fs');
+let content = fs.readFileSync('.gitignore', 'utf8');
+
+content = content.replace(/\n# wxt\n\.wxt\/\n/, '\n');
+
+fs.writeFileSync('.gitignore', content);
 "
 
 echo "Running pnpm install to update lockfile..."
