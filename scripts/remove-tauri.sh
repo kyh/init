@@ -4,23 +4,19 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
-echo "Removing Electron app..."
+echo "Removing Tauri app..."
 
-# Remove the electron app directory
-rm -rf "$ROOT_DIR/apps/electron"
+# Remove the tauri app directory
+rm -rf "$ROOT_DIR/apps/tauri"
 
 cd "$ROOT_DIR"
 
-# Remove dev-electron script and electron-winstaller from package.json
+# Remove dev-tauri script from package.json
 node -e "
 const fs = require('fs');
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
-delete pkg.scripts['dev-electron'];
-
-if (pkg.pnpm?.onlyBuiltDependencies) {
-  pkg.pnpm.onlyBuiltDependencies = pkg.pnpm.onlyBuiltDependencies.filter(d => d !== 'electron-winstaller');
-}
+delete pkg.scripts['dev-tauri'];
 
 fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
 "
@@ -28,7 +24,7 @@ fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
 echo "Running pnpm install to update lockfile..."
 pnpm install
 
-echo "Electron app removed successfully!"
+echo "Tauri app removed successfully!"
 
 # Remove this script
 rm -- "$0"

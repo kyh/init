@@ -1,0 +1,16 @@
+[package]
+name = "init"
+version = "0.1.0"
+description = "Init Desktop App"
+edition = "2021"
+
+[lib]
+name = "init_lib"
+crate-type = ["lib", "cdylib", "staticlib"]
+
+[build-dependencies]
+tauri-build = "2"
+
+[dependencies]
+tauri = "2"
+tauri-plugin-shell = "2"

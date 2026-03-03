@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**init** - pnpm monorepo with Turborepo. Multi-platform starter: Next.js web, Expo mobile, Chrome extension, Electron desktop.
+**init** - pnpm monorepo with Turborepo. Multi-platform starter: Next.js web, Expo mobile, Chrome extension, Tauri desktop.
 
 ## Tech Stack
 
@@ -21,7 +21,7 @@ apps/
   nextjs/      # Next.js 16 web app (fumadocs for docs)
   expo/        # React Native mobile (nativewind)
   wxt/         # Chrome extension (wxt)
-  electron/    # Desktop app (Electron)
+  tauri/       # Desktop app (Tauri)
 packages/
   api/         # tRPC router + better-auth
   db/          # Drizzle schema + Supabase client
