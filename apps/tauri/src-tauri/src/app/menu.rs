@@ -40,10 +40,6 @@ pub fn build_menu(app: &AppHandle) -> tauri::Result<tauri::menu::Menu<Wry>> {
         .item(&clear_cache)
         .build()?;
 
-    let copy_url = MenuItemBuilder::with_id("copy_url", "Copy URL")
-        .accelerator("CmdOrCtrl+L")
-        .build(app)?;
-
     let edit_menu = SubmenuBuilder::new(app, "Edit")
         .undo()
         .redo()
@@ -53,13 +49,8 @@ pub fn build_menu(app: &AppHandle) -> tauri::Result<tauri::menu::Menu<Wry>> {
         .paste()
         .separator()
         .select_all()
-        .separator()
-        .item(&copy_url)
         .build()?;
 
-    let reload = MenuItemBuilder::with_id("reload", "Reload")
-        .accelerator("CmdOrCtrl+R")
-        .build(app)?;
     let zoom_in = MenuItemBuilder::with_id("zoom_in", "Zoom In")
         .accelerator("CmdOrCtrl+=")
         .build(app)?;
@@ -73,8 +64,6 @@ pub fn build_menu(app: &AppHandle) -> tauri::Result<tauri::menu::Menu<Wry>> {
 
     let view_menu = {
         let mut builder = SubmenuBuilder::new(app, "View")
-            .item(&reload)
-            .separator()
             .item(&zoom_in)
             .item(&zoom_out)
             .item(&zoom_reset)
@@ -93,23 +82,6 @@ pub fn build_menu(app: &AppHandle) -> tauri::Result<tauri::menu::Menu<Wry>> {
         builder.build()?
     };
 
-    let go_back = MenuItemBuilder::with_id("go_back", "Back")
-        .accelerator("CmdOrCtrl+[")
-        .build(app)?;
-    let go_forward = MenuItemBuilder::with_id("go_forward", "Forward")
-        .accelerator("CmdOrCtrl+]")
-        .build(app)?;
-    let go_home = MenuItemBuilder::with_id("go_home", "Go Home")
-        .accelerator("CmdOrCtrl+Shift+H")
-        .build(app)?;
-
-    let nav_menu = SubmenuBuilder::new(app, "Navigation")
-        .item(&go_back)
-        .item(&go_forward)
-        .separator()
-        .item(&go_home)
-        .build()?;
-
     let always_on_top = MenuItemBuilder::with_id("always_on_top", "Toggle Always on Top")
         .build(app)?;
 
@@ -127,7 +99,6 @@ pub fn build_menu(app: &AppHandle) -> tauri::Result<tauri::menu::Menu<Wry>> {
         .item(&file_menu)
         .item(&edit_menu)
         .item(&view_menu)
-        .item(&nav_menu)
         .item(&window_menu)
         .build()?;
 
@@ -138,11 +109,6 @@ pub fn handle_menu_event(app: &AppHandle, event_id: &str) {
     match event_id {
         "new_window" => {
             let _ = open_new_window(app);
-        }
-        "reload" => {
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.eval("window.location.reload()");
-            }
         }
         #[cfg(debug_assertions)]
         "toggle_devtools" => {
@@ -192,26 +158,6 @@ pub fn handle_menu_event(app: &AppHandle, event_id: &str) {
                     })()
                     "#,
                 );
-            }
-        }
-        "go_back" => {
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.eval("window.history.back()");
-            }
-        }
-        "go_forward" => {
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.eval("window.history.forward()");
-            }
-        }
-        "go_home" => {
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.eval("window.location.href = window.location.origin");
-            }
-        }
-        "copy_url" => {
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.eval("navigator.clipboard.writeText(window.location.href)");
             }
         }
         "clear_cache_restart" => {
