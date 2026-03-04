@@ -8,8 +8,10 @@
     "frontendDist": "http://localhost:3000"
   },
   "app": {
+    "withGlobalTauri": true,
     "windows": [
       {
+        "label": "main",
         "title": "Init",
         "width": 1200,
         "height": 800,
@@ -19,6 +21,11 @@
     ],
     "security": {
       "csp": null
+    },
+    "trayIcon": {
+      "iconPath": "icons/icon.png",
+      "iconAsTemplate": false,
+      "id": "init-tray"
     }
   },
   "bundle": {
