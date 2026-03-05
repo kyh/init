@@ -1,10 +1,6 @@
 mod app;
 
-use app::invoke::{
-    clear_cache_and_restart, download_file, download_file_by_binary, send_notification,
-    update_theme_mode,
-};
-use app::window::AppState;
+use app::invoke::clear_cache_and_restart;
 use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -15,8 +11,6 @@ pub fn run() {
     let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_window_state::Builder::default().build())
-        .plugin(tauri_plugin_http::init())
-        .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(
             tauri_plugin_single_instance::init(|app, _args, _cwd| {
@@ -26,27 +20,27 @@ pub fn run() {
                 }
             }),
         )
-        .manage(AppState::new())
-        .invoke_handler(tauri::generate_handler![
-            download_file,
-            download_file_by_binary,
-            send_notification,
-            update_theme_mode,
-            clear_cache_and_restart,
-        ])
+        .invoke_handler(tauri::generate_handler![clear_cache_and_restart])
         .setup(|app| {
+            let config = app::config::AppConfig::load(app.handle());
+
             // Set up system tray
             app::setup::setup_system_tray(app.handle())?;
 
-            // Register global activation shortcut (Ctrl/Cmd+Shift+K)
-            app::setup::setup_global_shortcut(app.handle(), "CmdOrCtrl+Shift+K")?;
+            // Register global activation shortcut if configured
+            if let Some(ref shortcut) = config.activation_shortcut {
+                app::setup::setup_global_shortcut(app.handle(), shortcut)?;
+            }
 
             // Set up macOS menu
             #[cfg(target_os = "macos")]
             {
-                let menu = app::menu::build_menu(app.handle())?;
+                let menu = app::menu::build_menu(app.handle(), &config)?;
                 app.set_menu(menu)?;
             }
+
+            // Store config for use in window event handler
+            app.manage(config);
 
             Ok(())
         });
@@ -61,11 +55,13 @@ pub fn run() {
 
     builder
         .on_window_event(|window, event| {
-            // Hide on close instead of quitting (main window only)
             if window.label() == "main" {
                 if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                    api.prevent_close();
-                    let _ = window.hide();
+                    let config = window.state::<app::config::AppConfig>();
+                    if config.hide_on_close {
+                        api.prevent_close();
+                        let _ = window.hide();
+                    }
                 }
             }
         })

@@ -24,9 +24,6 @@
     "core:window:allow-set-always-on-top",
     "core:window:allow-is-visible",
     "core:webview:allow-internal-toggle-devtools",
-    "notification:default",
-    "notification:allow-is-permission-granted",
-    "notification:allow-notify",
     "global-shortcut:allow-register",
     "global-shortcut:allow-unregister",
     "core:path:default"
