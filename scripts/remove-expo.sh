@@ -7,7 +7,7 @@ ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 echo "Removing Expo app..."
 
 # Remove the expo app directory
-rm -rf "$ROOT_DIR/apps/expo"
+rm -rf "$ROOT_DIR/apps/mobile"
 
 cd "$ROOT_DIR"
 
@@ -16,7 +16,7 @@ node -e "
 const fs = require('fs');
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
-delete pkg.scripts['dev-expo'];
+delete pkg.scripts['dev-mobile'];
 
 fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
 "
@@ -53,7 +53,7 @@ node -e "
 const fs = require('fs');
 let content = fs.readFileSync('.gitignore', 'utf8');
 
-content = content.replace(/\n# expo\n\.expo\/\ndist\/\nexpo-env\.d\.ts\napps\/expo\/\.gitignore\n/, '\n');
+content = content.replace(/\n# expo\n\.expo\/\ndist\/\nexpo-env\.d\.ts\napps\/mobile\/\.gitignore\n/, '\n');
 
 fs.writeFileSync('.gitignore', content);
 "

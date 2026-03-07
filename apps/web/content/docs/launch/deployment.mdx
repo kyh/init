@@ -41,19 +41,19 @@ Create `vercel.json` in the project root:
 {
   "builds": [
     {
-      "src": "apps/nextjs/package.json",
+      "src": "apps/web/package.json",
       "use": "@vercel/next"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "apps/nextjs/$1"
+      "dest": "apps/web/$1"
     }
   ],
   "installCommand": "pnpm install",
   "buildCommand": "cd apps/nextjs && pnpm build",
-  "outputDirectory": "apps/nextjs/.next"
+  "outputDirectory": "apps/web/.next"
 }
 ```
 
@@ -142,7 +142,7 @@ RUN corepack enable
 FROM base AS deps
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/nextjs/package.json ./apps/nextjs/
+COPY apps/web/package.json ./apps/web/
 COPY packages/*/package.json ./packages/*/
 RUN pnpm install --frozen-lockfile
 
@@ -151,7 +151,7 @@ FROM base AS builder
 WORKDIR /app
 COPY . .
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/nextjs/node_modules ./apps/nextjs/node_modules
+COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
 RUN pnpm build
 
 # Production runtime
@@ -164,14 +164,14 @@ ENV HOSTNAME "0.0.0.0"
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-COPY --from=builder /app/apps/nextjs/public ./apps/nextjs/public
-COPY --from=builder --chown=nextjs:nodejs /app/apps/nextjs/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/apps/nextjs/.next/static ./apps/nextjs/.next/static
+COPY --from=builder /app/apps/web/public ./apps/web/public
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
 
 USER nextjs
 EXPOSE 3000
 
-CMD ["node", "apps/nextjs/server.js"]
+CMD ["node", "apps/web/server.js"]
 ```
 
 #### 2. Docker Compose

@@ -33,7 +33,7 @@ graph LR
 The API route handles chat requests:
 
 ```typescript
-// apps/nextjs/src/app/api/chat/route.ts
+// apps/web/src/app/api/chat/route.ts
 import type { Message } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { streamText } from "ai";
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
 The main chat interface:
 
 ```typescript
-// apps/nextjs/src/app/(dashboard)/dashboard/[slug]/(home)/_components/ai-chat-form.tsx
+// apps/web/src/app/(dashboard)/dashboard/[slug]/(home)/_components/ai-chat-form.tsx
 "use client";
 
 import { useChat } from "@ai-sdk/react";
@@ -147,7 +147,7 @@ export const AIChatForm = ({ slug }: AIFormProps) => {
 Reusable message display components:
 
 ```typescript
-// apps/nextjs/src/app/(dashboard)/dashboard/[slug]/(home)/_components/ai-chat-message.tsx
+// apps/web/src/app/(dashboard)/dashboard/[slug]/(home)/_components/ai-chat-message.tsx
 import type { Message as AIMessage } from "ai";
 import { Avatar } from "@repo/ui/avatar";
 import { cn } from "@repo/ui/utils";
@@ -234,7 +234,7 @@ export const MessagesContainer = ({
 Custom input components for the chat interface:
 
 ```typescript
-// apps/nextjs/src/app/(dashboard)/dashboard/[slug]/(home)/_components/ai-chat-input.tsx
+// apps/web/src/app/(dashboard)/dashboard/[slug]/(home)/_components/ai-chat-input.tsx
 import { forwardRef } from "react";
 import { Textarea } from "@repo/ui/textarea";
 import { cn } from "@repo/ui/utils";

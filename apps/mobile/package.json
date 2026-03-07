@@ -1,5 +1,5 @@
 {
-  "name": "@repo/expo",
+  "name": "@repo/mobile",
   "private": true,
   "main": "index.ts",
   "scripts": {
