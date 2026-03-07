@@ -266,7 +266,7 @@ signInWithOAuth: publicProcedure
 Reusable authentication form component:
 
 ```typescript
-// apps/nextjs/src/app/(auth)/_components/auth-form.tsx
+// apps/web/src/app/(auth)/_components/auth-form.tsx
 "use client";
 
 import { useState } from "react";
@@ -347,7 +347,7 @@ export function AuthForm({ type }: AuthFormProps) {
 Protect routes at the middleware level:
 
 ```typescript
-// apps/nextjs/src/middleware.ts
+// apps/web/src/middleware.ts
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { getSupabaseMiddlewareClient } from "@repo/db/supabase-middleware-client";

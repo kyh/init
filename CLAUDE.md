@@ -18,10 +18,10 @@
 
 ```
 apps/
-  nextjs/      # Next.js 16 web app (fumadocs for docs)
-  expo/        # React Native mobile (nativewind)
-  wxt/         # Chrome extension (wxt)
-  electron/    # Desktop app (Electron)
+  web/         # Next.js 16 web app (fumadocs for docs)
+  mobile/      # React Native mobile (nativewind)
+  extension/   # Chrome extension (wxt)
+  desktop/     # Desktop app (Electron)
 packages/
   api/         # tRPC router + better-auth
   db/          # Drizzle schema + Supabase client
@@ -32,8 +32,8 @@ packages/
 
 ```bash
 pnpm dev              # Run all apps
-pnpm dev-nextjs       # Run Next.js only
-pnpm dev-expo         # Run Expo only
+pnpm dev-web          # Run Next.js only
+pnpm dev-mobile       # Run Expo only
 pnpm typecheck        # Type check all packages
 pnpm lint             # Lint all packages
 pnpm build            # Build all packages

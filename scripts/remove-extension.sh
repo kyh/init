@@ -7,7 +7,7 @@ ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 echo "Removing Chrome extension..."
 
 # Remove the extension app directory
-rm -rf "$ROOT_DIR/apps/wxt"
+rm -rf "$ROOT_DIR/apps/extension"
 
 cd "$ROOT_DIR"
 
@@ -16,7 +16,7 @@ node -e "
 const fs = require('fs');
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
-delete pkg.scripts['dev-wxt'];
+delete pkg.scripts['dev-extension'];
 
 fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
 "
