@@ -7,7 +7,7 @@ ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 echo "Removing Electron app..."
 
 # Remove the electron app directory
-rm -rf "$ROOT_DIR/apps/electron"
+rm -rf "$ROOT_DIR/apps/desktop"
 
 cd "$ROOT_DIR"
 
@@ -16,7 +16,7 @@ node -e "
 const fs = require('fs');
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
-delete pkg.scripts['dev-electron'];
+delete pkg.scripts['dev-desktop'];
 
 if (pkg.pnpm?.onlyBuiltDependencies) {
   pkg.pnpm.onlyBuiltDependencies = pkg.pnpm.onlyBuiltDependencies.filter(d => d !== 'electron-winstaller');

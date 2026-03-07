@@ -162,7 +162,7 @@ const createPost = api.post.create.useMutation();
 The web app uses Next.js 15 with App Router:
 
 ```
-apps/nextjs/src/app/
+apps/web/src/app/
 ├── (auth)/           # Authentication pages
 ├── (dashboard)/      # Protected dashboard pages
 ├── (marketing)/      # Public marketing pages
@@ -174,7 +174,7 @@ apps/nextjs/src/app/
 The mobile app shares components and logic:
 
 ```
-apps/expo/src/app/
+apps/mobile/src/app/
 ├── (tabs)/           # Tab navigation
 ├── auth/             # Authentication screens
 └── _layout.tsx       # Root layout
@@ -331,7 +331,7 @@ pnpm clean && pnpm install && pnpm build
 
 ```bash
 # Development (local)
-apps/nextjs/.env.local
+apps/web/.env.local
 packages/db/.env
 
 # Production
