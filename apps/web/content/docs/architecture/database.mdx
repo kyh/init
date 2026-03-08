@@ -170,10 +170,7 @@ export default defineConfig({
 const teams = await db.select().from(teams);
 
 // Select with conditions
-const activeTeams = await db
-  .select()
-  .from(teams)
-  .where(eq(teams.subscriptionStatus, "active"));
+const activeTeams = await db.select().from(teams).where(eq(teams.subscriptionStatus, "active"));
 
 // Select with relations
 const teamsWithMembers = await db.query.teams.findMany({
@@ -213,10 +210,7 @@ const newMembers = await db
 
 ```typescript
 // Update single field
-await db
-  .update(teams)
-  .set({ name: "New Team Name" })
-  .where(eq(teams.id, teamId));
+await db.update(teams).set({ name: "New Team Name" }).where(eq(teams.id, teamId));
 
 // Update multiple fields
 await db
@@ -380,13 +374,9 @@ Enable real-time updates:
 // Enable real-time for table
 await supabase
   .channel("teams")
-  .on(
-    "postgres_changes",
-    { event: "*", schema: "public", table: "teams" },
-    (payload) => {
-      console.log("Team changed:", payload);
-    },
-  )
+  .on("postgres_changes", { event: "*", schema: "public", table: "teams" }, (payload) => {
+    console.log("Team changed:", payload);
+  })
   .subscribe();
 ```
 
@@ -492,10 +482,7 @@ const teamWithMembers = await db.query.teams.findFirst({
 const team = await db.query.teams.findFirst({
   where: eq(teams.id, teamId),
 });
-const members = await db
-  .select()
-  .from(teamMembers)
-  .where(eq(teamMembers.teamId, teamId));
+const members = await db.select().from(teamMembers).where(eq(teamMembers.teamId, teamId));
 ```
 
 ### 4. Connection Management

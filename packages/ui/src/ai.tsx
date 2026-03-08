@@ -1,10 +1,6 @@
 "use client";
 
-import type {
-  ComponentProps,
-  HTMLAttributes,
-  KeyboardEventHandler,
-} from "react";
+import type { ComponentProps, HTMLAttributes, KeyboardEventHandler } from "react";
 import type { Options } from "react-markdown";
 import {
   Children,
@@ -19,13 +15,7 @@ import {
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/avatar";
 import { Button } from "@repo/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@repo/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/select";
 import { Textarea } from "@repo/ui/textarea";
 import { cn } from "@repo/ui/utils";
 import {
@@ -56,18 +46,11 @@ import {
   CodeBlockSelectTrigger,
   CodeBlockSelectValue,
 } from "./code-block";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "./collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./collapsible";
 
 export type AIConversationProps = ComponentProps<typeof StickToBottom>;
 
-export const AIConversation = ({
-  className,
-  ...props
-}: AIConversationProps) => (
+export const AIConversation = ({ className, ...props }: AIConversationProps) => (
   <StickToBottom
     className={cn("relative flex-1 overflow-y-auto", className)}
     initial="smooth"
@@ -76,13 +59,8 @@ export const AIConversation = ({
     {...props}
   />
 );
-export type AIConversationContentProps = ComponentProps<
-  typeof StickToBottom.Content
->;
-export const AIConversationContent = ({
-  className,
-  ...props
-}: AIConversationContentProps) => (
+export type AIConversationContentProps = ComponentProps<typeof StickToBottom.Content>;
+export const AIConversationContent = ({ className, ...props }: AIConversationContentProps) => (
   <StickToBottom.Content className={cn("p-4", className)} {...props} />
 );
 export const AIConversationScrollButton = () => {
@@ -120,11 +98,7 @@ export const AIMessage = ({ className, from, ...props }: AIMessageProps) => (
   />
 );
 export type AIMessageContentProps = HTMLAttributes<HTMLDivElement>;
-export const AIMessageContent = ({
-  children,
-  className,
-  ...props
-}: AIMessageContentProps) => (
+export const AIMessageContent = ({ children, className, ...props }: AIMessageContentProps) => (
   <div
     className={cn(
       "flex flex-col gap-2 rounded-lg px-4 py-3 text-sm",
@@ -141,12 +115,7 @@ export type AIMessageAvatarProps = ComponentProps<typeof Avatar> & {
   src: string;
   name?: string;
 };
-export const AIMessageAvatar = ({
-  src,
-  name,
-  className,
-  ...props
-}: AIMessageAvatarProps) => (
+export const AIMessageAvatar = ({ src, name, className, ...props }: AIMessageAvatarProps) => (
   <Avatar className={cn("size-8", className)} {...props}>
     <AvatarImage alt="" className="mt-0 mb-0" src={src} />
     <AvatarFallback>{name?.slice(0, 2) || "ME"}</AvatarFallback>
@@ -157,10 +126,7 @@ type UseAutoResizeTextareaProps = {
   minHeight: number;
   maxHeight?: number;
 };
-const useAutoResizeTextarea = ({
-  minHeight,
-  maxHeight,
-}: UseAutoResizeTextareaProps) => {
+const useAutoResizeTextarea = ({ minHeight, maxHeight }: UseAutoResizeTextareaProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const adjustHeight = useCallback(
     (reset?: boolean) => {
@@ -254,23 +220,13 @@ export const AIInputTextarea = ({
   );
 };
 export type AIInputToolbarProps = HTMLAttributes<HTMLDivElement>;
-export const AIInputToolbar = ({
-  className,
-  ...props
-}: AIInputToolbarProps) => (
-  <div
-    className={cn("flex items-center justify-between p-1", className)}
-    {...props}
-  />
+export const AIInputToolbar = ({ className, ...props }: AIInputToolbarProps) => (
+  <div className={cn("flex items-center justify-between p-1", className)} {...props} />
 );
 export type AIInputToolsProps = HTMLAttributes<HTMLDivElement>;
 export const AIInputTools = ({ className, ...props }: AIInputToolsProps) => (
   <div
-    className={cn(
-      "flex items-center gap-1",
-      "[&_button:first-child]:rounded-bl-xl",
-      className,
-    )}
+    className={cn("flex items-center gap-1", "[&_button:first-child]:rounded-bl-xl", className)}
     {...props}
   />
 );
@@ -281,8 +237,7 @@ export const AIInputButton = ({
   size,
   ...props
 }: AIInputButtonProps) => {
-  const newSize =
-    (size ?? Children.count(props.children) > 1) ? "default" : "icon";
+  const newSize = (size ?? Children.count(props.children) > 1) ? "default" : "icon";
   return (
     <Button
       className={cn(
@@ -330,12 +285,8 @@ export const AIInputSubmit = ({
   );
 };
 export type AIInputModelSelectProps = ComponentProps<typeof Select>;
-export const AIInputModelSelect = (props: AIInputModelSelectProps) => (
-  <Select {...props} />
-);
-export type AIInputModelSelectTriggerProps = ComponentProps<
-  typeof SelectTrigger
->;
+export const AIInputModelSelect = (props: AIInputModelSelectProps) => <Select {...props} />;
+export type AIInputModelSelectTriggerProps = ComponentProps<typeof SelectTrigger>;
 export const AIInputModelSelectTrigger = ({
   className,
   ...props
@@ -349,27 +300,17 @@ export const AIInputModelSelectTrigger = ({
     {...props}
   />
 );
-export type AIInputModelSelectContentProps = ComponentProps<
-  typeof SelectContent
->;
+export type AIInputModelSelectContentProps = ComponentProps<typeof SelectContent>;
 export const AIInputModelSelectContent = ({
   className,
   ...props
-}: AIInputModelSelectContentProps) => (
-  <SelectContent className={cn(className)} {...props} />
-);
+}: AIInputModelSelectContentProps) => <SelectContent className={cn(className)} {...props} />;
 export type AIInputModelSelectItemProps = ComponentProps<typeof SelectItem>;
-export const AIInputModelSelectItem = ({
-  className,
-  ...props
-}: AIInputModelSelectItemProps) => (
+export const AIInputModelSelectItem = ({ className, ...props }: AIInputModelSelectItemProps) => (
   <SelectItem className={cn(className)} {...props} />
 );
 export type AIInputModelSelectValueProps = ComponentProps<typeof SelectValue>;
-export const AIInputModelSelectValue = ({
-  className,
-  ...props
-}: AIInputModelSelectValueProps) => (
+export const AIInputModelSelectValue = ({ className, ...props }: AIInputModelSelectValueProps) => (
   <SelectValue className={cn(className)} {...props} />
 );
 
@@ -409,18 +350,12 @@ const components: Options["components"] = {
     </a>
   ),
   h1: ({ node, children, className, ...props }) => (
-    <h1
-      className={cn("mt-6 mb-2 text-3xl font-semibold", className)}
-      {...props}
-    >
+    <h1 className={cn("mt-6 mb-2 text-3xl font-semibold", className)} {...props}>
       {children}
     </h1>
   ),
   h2: ({ node, children, className, ...props }) => (
-    <h2
-      className={cn("mt-6 mb-2 text-2xl font-semibold", className)}
-      {...props}
-    >
+    <h2 className={cn("mt-6 mb-2 text-2xl font-semibold", className)} {...props}>
       {children}
     </h2>
   ),
@@ -435,10 +370,7 @@ const components: Options["components"] = {
     </h4>
   ),
   h5: ({ node, children, className, ...props }) => (
-    <h5
-      className={cn("mt-6 mb-2 text-base font-semibold", className)}
-      {...props}
-    >
+    <h5 className={cn("mt-6 mb-2 text-base font-semibold", className)} {...props}>
       {children}
     </h5>
   ),
@@ -514,17 +446,10 @@ const components: Options["components"] = {
 export const AIResponse = memo(
   ({ className, options, children, ...props }: AIResponseProps) => (
     <div
-      className={cn(
-        "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
-        className,
-      )}
+      className={cn("size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0", className)}
       {...props}
     >
-      <ReactMarkdown
-        components={components}
-        remarkPlugins={[remarkGfm]}
-        {...options}
-      >
+      <ReactMarkdown components={components} remarkPlugins={[remarkGfm]} {...options}>
         {children}
       </ReactMarkdown>
     </div>
@@ -603,9 +528,7 @@ export const AIReasoning = memo(
       setIsOpen(open);
     };
     return (
-      <AIReasoningContext.Provider
-        value={{ isStreaming, isOpen, setIsOpen, duration }}
-      >
+      <AIReasoningContext.Provider value={{ isStreaming, isOpen, setIsOpen, duration }}>
         <Collapsible
           className={cn("not-prose mb-4", className)}
           onOpenChange={handleOpenChange}
@@ -618,25 +541,15 @@ export const AIReasoning = memo(
     );
   },
 );
-export type AIReasoningTriggerProps = ComponentProps<
-  typeof CollapsibleTrigger
-> & {
+export type AIReasoningTriggerProps = ComponentProps<typeof CollapsibleTrigger> & {
   title?: string;
 };
 export const AIReasoningTrigger = memo(
-  ({
-    className,
-    title = "Reasoning",
-    children,
-    ...props
-  }: AIReasoningTriggerProps) => {
+  ({ className, title = "Reasoning", children, ...props }: AIReasoningTriggerProps) => {
     const { isStreaming, isOpen, duration } = useAIReasoning();
     return (
       <CollapsibleTrigger
-        className={cn(
-          "text-muted-foreground flex items-center gap-2 text-sm",
-          className,
-        )}
+        className={cn("text-muted-foreground flex items-center gap-2 text-sm", className)}
         {...props}
       >
         {children ?? (
@@ -658,17 +571,12 @@ export const AIReasoningTrigger = memo(
     );
   },
 );
-export type AIReasoningContentProps = ComponentProps<
-  typeof CollapsibleContent
-> & {
+export type AIReasoningContentProps = ComponentProps<typeof CollapsibleContent> & {
   children: string;
 };
 export const AIReasoningContent = memo(
   ({ className, children, ...props }: AIReasoningContentProps) => (
-    <CollapsibleContent
-      className={cn("text-muted-foreground mt-4 text-sm", className)}
-      {...props}
-    >
+    <CollapsibleContent className={cn("text-muted-foreground mt-4 text-sm", className)} {...props}>
       <AIResponse className="grid gap-2">{children}</AIResponse>
     </CollapsibleContent>
   ),

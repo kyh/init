@@ -29,14 +29,8 @@ export const todo = pgTable("todo", (t) => ({
   title: t.text().notNull(),
   description: t.text(),
   completed: t.boolean().notNull().default(false),
-  createdAt: t
-    .timestamp({ withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: t
-    .timestamp({ withTimezone: true })
-    .notNull()
-    .defaultNow(),
+  createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+  updatedAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
 }));
 
 export const todoRelations = relations(todo, ({ one }) => ({

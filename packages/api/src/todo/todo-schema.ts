@@ -26,13 +26,10 @@ export const updateTodoInput = todoSlugInput
     title: titleField.optional(),
     completed: completedField.optional(),
   })
-  .refine(
-    (data) => data.title !== undefined || data.completed !== undefined,
-    {
-      message: "Nothing to update",
-      path: ["title"],
-    },
-  );
+  .refine((data) => data.title !== undefined || data.completed !== undefined, {
+    message: "Nothing to update",
+    path: ["title"],
+  });
 
 export const deleteTodoInput = todoSlugInput.extend({
   id: idField,

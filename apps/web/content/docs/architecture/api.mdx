@@ -70,11 +70,9 @@ export const publicProcedure = t.procedure;
 
 // Usage
 export const waitlistRouter = createTRPCRouter({
-  join: publicProcedure
-    .input(z.object({ email: z.email() }))
-    .mutation(async ({ input, ctx }) => {
-      return ctx.db.insert(waitlist).values(input);
-    }),
+  join: publicProcedure.input(z.object({ email: z.email() })).mutation(async ({ input, ctx }) => {
+    return ctx.db.insert(waitlist).values(input);
+  }),
 });
 ```
 
@@ -176,29 +174,27 @@ export const teamRouter = createTRPCRouter({
   }),
 
   // Create new team
-  create: protectedProcedure
-    .input(createTeamInput)
-    .mutation(async ({ input, ctx }) => {
-      return ctx.db.transaction(async (tx) => {
-        // Create team
-        const [team] = await tx
-          .insert(teams)
-          .values({
-            name: input.name,
-            slug: input.slug,
-          })
-          .returning();
+  create: protectedProcedure.input(createTeamInput).mutation(async ({ input, ctx }) => {
+    return ctx.db.transaction(async (tx) => {
+      // Create team
+      const [team] = await tx
+        .insert(teams)
+        .values({
+          name: input.name,
+          slug: input.slug,
+        })
+        .returning();
 
-        // Add creator as owner
-        await tx.insert(teamMembers).values({
-          teamId: team.id,
-          userId: ctx.user.id,
-          role: "OWNER",
-        });
-
-        return team;
+      // Add creator as owner
+      await tx.insert(teamMembers).values({
+        teamId: team.id,
+        userId: ctx.user.id,
+        role: "OWNER",
       });
-    }),
+
+      return team;
+    });
+  }),
 });
 ```
 
@@ -259,13 +255,11 @@ export type SignUpInput = z.infer<typeof signUpInput>;
 
 // Router usage
 export const authRouter = createTRPCRouter({
-  signUp: publicProcedure
-    .input(signUpInput)
-    .mutation(async ({ input, ctx }) => {
-      // input is fully typed and validated
-      const { email, password, firstName, lastName } = input;
-      // ...
-    }),
+  signUp: publicProcedure.input(signUpInput).mutation(async ({ input, ctx }) => {
+    // input is fully typed and validated
+    const { email, password, firstName, lastName } = input;
+    // ...
+  }),
 });
 ```
 
@@ -317,14 +311,12 @@ export const postsRouter = createTRPCRouter({
     });
   }),
 
-  create: protectedProcedure
-    .input(createPostInput)
-    .mutation(async ({ input, ctx }) => {
-      return ctx.db.insert(posts).values({
-        ...input,
-        authorId: ctx.user.id,
-      });
-    }),
+  create: protectedProcedure.input(createPostInput).mutation(async ({ input, ctx }) => {
+    return ctx.db.insert(posts).values({
+      ...input,
+      authorId: ctx.user.id,
+    });
+  }),
 });
 ```
 
@@ -405,10 +397,8 @@ export const postsRouter = createTRPCRouter({
       // WebSocket or Supabase real-time logic
       const channel = supabase
         .channel("posts")
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "posts" },
-          (payload) => emit.next(payload.new as Post),
+        .on("postgres_changes", { event: "*", schema: "public", table: "posts" }, (payload) =>
+          emit.next(payload.new as Post),
         );
 
       return () => channel.unsubscribe();

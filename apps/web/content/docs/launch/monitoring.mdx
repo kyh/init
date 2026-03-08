@@ -396,11 +396,7 @@ export class PerformanceTracker {
     });
   }
 
-  trackAPICall(
-    endpoint: string,
-    duration: number,
-    status: "success" | "error",
-  ) {
+  trackAPICall(endpoint: string, duration: number, status: "success" | "error") {
     this.sendMetric({
       name: "api.call",
       value: duration,
@@ -473,8 +469,7 @@ export async function checkErrorRate() {
     [last24h],
   );
 
-  const errorRate =
-    errorCount.rows[0].error_count / totalRequests.rows[0].total_requests;
+  const errorRate = errorCount.rows[0].error_count / totalRequests.rows[0].total_requests;
 
   if (errorRate > 0.05) {
     // 5% error rate threshold

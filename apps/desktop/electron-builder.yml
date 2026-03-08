@@ -4,11 +4,11 @@ directories:
   buildResources: resources
   output: release
 files:
-  - '!**/.vscode/*'
-  - '!src/*'
-  - '!tsdown.config.*'
-  - '!{.eslintignore,.eslintrc.js,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
-  - '!{tsconfig.json,tsconfig.web.json}'
+  - "!**/.vscode/*"
+  - "!src/*"
+  - "!tsdown.config.*"
+  - "!{.eslintignore,.eslintrc.js,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}"
+  - "!{tsconfig.json,tsconfig.web.json}"
 asarUnpack:
   - resources/**
 win:

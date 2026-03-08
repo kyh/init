@@ -18,11 +18,7 @@ import {
 } from "@repo/ui/dropdown-menu";
 import { AutoTable } from "@repo/ui/table";
 import { toast } from "@repo/ui/toast";
-import {
-  useMutation,
-  useQueryClient,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { MoreHorizontalIcon } from "lucide-react";
 
@@ -77,24 +73,17 @@ export const MembersTable = ({ slug }: MembersTableProps) => {
       },
       {
         header: "Role",
-        cell: ({ row }) => (
-          <Badge className="capitalize">{row.original.role}</Badge>
-        ),
+        cell: ({ row }) => <Badge className="capitalize">{row.original.role}</Badge>,
       },
       {
         header: "Joined at",
-        cell: ({ row }) =>
-          new Date(row.original.createdAt).toLocaleDateString(),
+        cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString(),
       },
       {
         header: "",
         id: "actions",
         cell: ({ row }) => (
-          <ActionsDropdown
-            member={row.original}
-            userId={userId}
-            userRole={userRole}
-          />
+          <ActionsDropdown member={row.original} userId={userId} userRole={userRole} />
         ),
       },
     ];
@@ -160,16 +149,9 @@ const ActionsDropdown = ({
       <DropdownMenuSub key="change-role">
         <DropdownMenuSubTrigger>Change Role</DropdownMenuSubTrigger>
         <DropdownMenuSubContent>
-          <DropdownMenuRadioGroup
-            value={member.role}
-            onValueChange={handleChangeRole}
-          >
+          <DropdownMenuRadioGroup value={member.role} onValueChange={handleChangeRole}>
             {["owner", "admin", "member"].map((role) => (
-              <DropdownMenuRadioItem
-                key={role}
-                value={role}
-                className="capitalize"
-              >
+              <DropdownMenuRadioItem key={role} value={role} className="capitalize">
                 {role}
               </DropdownMenuRadioItem>
             ))}
@@ -178,10 +160,7 @@ const ActionsDropdown = ({
       </DropdownMenuSub>
     ),
     !isMemberOwner && ( // Cannot remove owner
-      <DropdownMenuItem
-        key="remove-member"
-        onSelect={handleRemoveFromOrganization}
-      >
+      <DropdownMenuItem key="remove-member" onSelect={handleRemoveFromOrganization}>
         Remove from Organization
       </DropdownMenuItem>
     ),
@@ -198,9 +177,7 @@ const ActionsDropdown = ({
           <MoreHorizontalIcon />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent>
-        {actions.map((action) => action)}
-      </DropdownMenuContent>
+      <DropdownMenuContent>{actions.map((action) => action)}</DropdownMenuContent>
     </DropdownMenu>
   );
 };

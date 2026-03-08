@@ -36,9 +36,7 @@ type DeleteOrganizationFormProps = {
   slug: string;
 };
 
-export const DeleteOrganizationForm = ({
-  slug,
-}: DeleteOrganizationFormProps) => {
+export const DeleteOrganizationForm = ({ slug }: DeleteOrganizationFormProps) => {
   const trpc = useTRPC();
   const { data: organizationData } = useSuspenseQuery(
     trpc.organization.get.queryOptions({
@@ -63,9 +61,7 @@ type DeleteProps = {
 };
 
 const Delete = ({ organization }: DeleteProps) => {
-  const { mutateAsync: deleteOrganization, isPending } = useDeleteOrganization(
-    organization.id,
-  );
+  const { mutateAsync: deleteOrganization, isPending } = useDeleteOrganization(organization.id);
 
   const form = useForm({
     defaultValues: {
@@ -88,8 +84,8 @@ const Delete = ({ organization }: DeleteProps) => {
       <div className="flex flex-col gap-1">
         <span className="font-medium">Delete Organization</span>
         <p className="text-muted-foreground text-sm">
-          You are about to delete the organization {organization.name}. This
-          action cannot be undone.
+          You are about to delete the organization {organization.name}. This action cannot be
+          undone.
         </p>
       </div>
       <div>
@@ -103,8 +99,8 @@ const Delete = ({ organization }: DeleteProps) => {
             <AlertDialogHeader>
               <AlertDialogTitle>Deleting organization</AlertDialogTitle>
               <AlertDialogDescription>
-                You are about to delete the organization {organization.name}.
-                This action cannot be undone.
+                You are about to delete the organization {organization.name}. This action cannot be
+                undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <form
@@ -117,28 +113,22 @@ const Delete = ({ organization }: DeleteProps) => {
               <div className="flex flex-col gap-2">
                 <div className="mb-4 flex flex-col gap-2 border-2 border-red-500 p-4 text-sm text-red-500">
                   <div>
-                    You are deleting the organization {organization.name}.
-                    This action cannot be undone.
+                    You are deleting the organization {organization.name}. This action cannot be
+                    undone.
                   </div>
-                  <div className="text-sm">
-                    Are you sure you want to continue?
-                  </div>
+                  <div className="text-sm">Are you sure you want to continue?</div>
                 </div>
                 <FieldGroup className="gap-2">
                   <form.Field
                     name="name"
                     validators={{
-                      onChange: z
-                        .string()
-                        .refine((value) => value === organization.name, {
-                          message: "Name does not match",
-                        }),
+                      onChange: z.string().refine((value) => value === organization.name, {
+                        message: "Name does not match",
+                      }),
                     }}
                   >
                     {(field) => {
-                      const isInvalid =
-                        field.state.meta.isTouched &&
-                        !field.state.meta.isValid;
+                      const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
 
                       return (
                         <Field data-invalid={isInvalid} className="gap-1">
@@ -151,9 +141,7 @@ const Delete = ({ organization }: DeleteProps) => {
                               name={field.name}
                               value={field.state.value}
                               onBlur={field.handleBlur}
-                              onChange={(event) =>
-                                field.handleChange(event.target.value)
-                              }
+                              onChange={(event) => field.handleChange(event.target.value)}
                               aria-invalid={isInvalid}
                               required
                               type="text"
@@ -166,9 +154,7 @@ const Delete = ({ organization }: DeleteProps) => {
                           <FieldDescription>
                             Type the name of the organization to confirm
                           </FieldDescription>
-                          {isInvalid && (
-                            <FieldError errors={field.state.meta.errors} />
-                          )}
+                          {isInvalid && <FieldError errors={field.state.meta.errors} />}
                         </Field>
                       );
                     }}
@@ -177,11 +163,7 @@ const Delete = ({ organization }: DeleteProps) => {
               </div>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <Button
-                  type="submit"
-                  variant="destructive"
-                  loading={isPending}
-                >
+                <Button type="submit" variant="destructive" loading={isPending}>
                   Delete Organization
                 </Button>
               </AlertDialogFooter>
@@ -198,9 +180,7 @@ type LeaveProps = {
 };
 
 const Leave = ({ organization }: LeaveProps) => {
-  const { mutateAsync: leaveOrganization, isPending } = useLeaveOrganization(
-    organization.id,
-  );
+  const { mutateAsync: leaveOrganization, isPending } = useLeaveOrganization(organization.id);
 
   const form = useForm({
     defaultValues: {
@@ -221,8 +201,8 @@ const Leave = ({ organization }: LeaveProps) => {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-muted-foreground text-sm">
-        Click the button below to leave the organization. Remember, you will no
-        longer have access to it and will need to be re-invited to join
+        Click the button below to leave the organization. Remember, you will no longer have access
+        to it and will need to be re-invited to join
       </p>
       <AlertDialog>
         <AlertDialogTrigger asChild>
@@ -234,8 +214,7 @@ const Leave = ({ organization }: LeaveProps) => {
           <AlertDialogHeader>
             <AlertDialogTitle>Leaving Organization</AlertDialogTitle>
             <AlertDialogDescription>
-              You are about to leave this organization. You will no longer have
-              access to it.
+              You are about to leave this organization. You will no longer have access to it.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <form
@@ -249,16 +228,13 @@ const Leave = ({ organization }: LeaveProps) => {
               <form.Field
                 name="confirmation"
                 validators={{
-                  onChange: z
-                    .string()
-                    .refine((value) => value === "LEAVE", {
-                      message: "Confirmation required to leave organization",
-                    }),
+                  onChange: z.string().refine((value) => value === "LEAVE", {
+                    message: "Confirmation required to leave organization",
+                  }),
                 }}
               >
                 {(field) => {
-                  const isInvalid =
-                    field.state.meta.isTouched && !field.state.meta.isValid;
+                  const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
 
                   return (
                     <Field data-invalid={isInvalid} className="gap-1">
@@ -271,9 +247,7 @@ const Leave = ({ organization }: LeaveProps) => {
                           name={field.name}
                           value={field.state.value}
                           onBlur={field.handleBlur}
-                          onChange={(event) =>
-                            field.handleChange(event.target.value)
-                          }
+                          onChange={(event) => field.handleChange(event.target.value)}
                           aria-invalid={isInvalid}
                           type="text"
                           className="w-full"
@@ -284,12 +258,9 @@ const Leave = ({ organization }: LeaveProps) => {
                         />
                       </FieldContent>
                       <FieldDescription>
-                        By leaving the organization, you will no longer have
-                        access to it.
+                        By leaving the organization, you will no longer have access to it.
                       </FieldDescription>
-                      {isInvalid && (
-                        <FieldError errors={field.state.meta.errors} />
-                      )}
+                      {isInvalid && <FieldError errors={field.state.meta.errors} />}
                     </Field>
                   );
                 }}
