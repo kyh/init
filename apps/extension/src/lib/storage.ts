@@ -10,9 +10,7 @@ const DEFAULT_DATA: StorageData = {
   theme: "system",
 };
 
-export async function getStorageData<K extends keyof StorageData>(
-  key: K,
-): Promise<StorageData[K]> {
+export async function getStorageData<K extends keyof StorageData>(key: K): Promise<StorageData[K]> {
   const result = await browser.storage.local.get(key);
   const value = result[key] as StorageData[K] | undefined;
   return value ?? DEFAULT_DATA[key];

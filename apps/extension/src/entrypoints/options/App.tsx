@@ -54,8 +54,7 @@ const App = () => {
     } catch (error) {
       setMessage({
         type: "error",
-        text:
-          error instanceof Error ? error.message : "Failed to save settings",
+        text: error instanceof Error ? error.message : "Failed to save settings",
       });
     } finally {
       setIsSaving(false);
@@ -79,9 +78,7 @@ const App = () => {
       <div className="mx-auto max-w-lg">
         <div className="mb-8">
           <h1 className="text-2xl font-bold">Init Extension Settings</h1>
-          <p className="text-muted-foreground">
-            Configure the URL of your Init application.
-          </p>
+          <p className="text-muted-foreground">Configure the URL of your Init application.</p>
         </div>
 
         <div className="space-y-6">
@@ -96,8 +93,8 @@ const App = () => {
               placeholder="http://localhost:3000"
             />
             <p className="text-muted-foreground text-xs">
-              The URL of your Init application. Use http://localhost:3000 for
-              local development or your production URL for deployed apps.
+              The URL of your Init application. Use http://localhost:3000 for local development or
+              your production URL for deployed apps.
             </p>
           </div>
 
@@ -131,9 +128,9 @@ const App = () => {
         <div className="mt-12 rounded-lg border p-4">
           <h2 className="font-semibold">How it works</h2>
           <p className="text-muted-foreground mt-1 text-sm">
-            The extension popup displays your Init application in an iframe.
-            Make sure your application is running at the configured URL.
-            Authentication and all features work the same as in the browser.
+            The extension popup displays your Init application in an iframe. Make sure your
+            application is running at the configured URL. Authentication and all features work the
+            same as in the browser.
           </p>
         </div>
       </div>

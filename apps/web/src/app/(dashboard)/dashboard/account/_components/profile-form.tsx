@@ -54,9 +54,7 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
     },
   });
 
-  const handleProfileImageChange = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleProfileImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -155,11 +153,7 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
               Remove Profile Image
             </Button>
           ) : (
-            <Button
-              variant="secondary"
-              asChild
-              loading={isUploadingProfileImage}
-            >
+            <Button variant="secondary" asChild loading={isUploadingProfileImage}>
               <label>
                 <input
                   className="invisible absolute inset-0"
@@ -170,9 +164,7 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
               </label>
             </Button>
           )}
-          <p className="text-muted-foreground mt-2 text-xs leading-5">
-            JPG, GIF or PNG. 1MB max.
-          </p>
+          <p className="text-muted-foreground mt-2 text-xs leading-5">JPG, GIF or PNG. 1MB max.</p>
         </div>
       </div>
       <FieldGroup className="gap-6">
@@ -183,8 +175,7 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
           }}
         >
           {(field) => {
-            const isInvalid =
-              field.state.meta.isTouched && !field.state.meta.isValid;
+            const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
 
             return (
               <Field data-invalid={isInvalid} className="gap-1">
@@ -201,29 +192,21 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
                   />
                 </FieldContent>
                 <FieldDescription>
-                  This is the name that will be displayed on your profile and in
-                  emails.
+                  This is the name that will be displayed on your profile and in emails.
                 </FieldDescription>
-                {isInvalid && (
-                  <FieldError errors={field.state.meta.errors} />
-                )}
+                {isInvalid && <FieldError errors={field.state.meta.errors} />}
               </Field>
             );
           }}
         </form.Field>
         <Field className="gap-1">
-            <FieldLabel htmlFor="profile-email">Email</FieldLabel>
-            <FieldContent>
-              <Input
-                id="profile-email"
-                placeholder="Email"
-                value={user.email}
-                disabled
-              />
-            </FieldContent>
-            <FieldDescription>
-              Please contact support if you need to change your email address.
-            </FieldDescription>
+          <FieldLabel htmlFor="profile-email">Email</FieldLabel>
+          <FieldContent>
+            <Input id="profile-email" placeholder="Email" value={user.email} disabled />
+          </FieldContent>
+          <FieldDescription>
+            Please contact support if you need to change your email address.
+          </FieldDescription>
         </Field>
       </FieldGroup>
       <footer className="flex justify-end">
@@ -235,10 +218,7 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
   );
 };
 
-const removeFileFromPublicUrl = async (
-  client: SupabaseClient,
-  publicUrl: string,
-) => {
+const removeFileFromPublicUrl = async (client: SupabaseClient, publicUrl: string) => {
   const pathSegments = publicUrl.split("/avatars/");
   const filePath = pathSegments[1];
 

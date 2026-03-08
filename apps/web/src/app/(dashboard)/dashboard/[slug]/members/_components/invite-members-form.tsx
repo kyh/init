@@ -12,21 +12,11 @@ import {
 } from "@repo/ui/dialog";
 import { Field, FieldContent, FieldError, FieldLabel } from "@repo/ui/field";
 import { Input } from "@repo/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@repo/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/select";
 import { toast } from "@repo/ui/toast";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/tooltip";
 import { useForm } from "@tanstack/react-form";
-import {
-  useMutation,
-  useQueryClient,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { PlusIcon, XIcon } from "lucide-react";
 import { z } from "zod";
 
@@ -58,8 +48,7 @@ export const InviteMembersDialog = ({ slug }: InviteMembersDialogProps) => {
         <DialogHeader>
           <DialogTitle>Invite Members to your Organization</DialogTitle>
           <DialogDescription>
-            Invite members to your organization by entering their email and
-            role.
+            Invite members to your organization by entering their email and role.
           </DialogDescription>
         </DialogHeader>
         <InviteMembersForm
@@ -89,18 +78,16 @@ type InviteMembersFormProps = {
   onInviteSuccess?: () => void;
 };
 
-export const InviteMembersForm = ({
-  slug,
-  onInviteSuccess,
-}: InviteMembersFormProps) => {
+export const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormProps) => {
   const trpc = useTRPC();
   const { data: organizationData } = useSuspenseQuery(
     trpc.organization.get.queryOptions({
       slug,
     }),
   );
-  const { mutateAsync: inviteMembers, isPending: isInvitingMembers } =
-    useInviteMembers(organizationData.organization.id);
+  const { mutateAsync: inviteMembers, isPending: isInvitingMembers } = useInviteMembers(
+    organizationData.organization.id,
+  );
 
   const form = useForm({
     defaultValues: {
@@ -138,18 +125,12 @@ export const InviteMembersForm = ({
                     }}
                   >
                     {(field) => {
-                      const isInvalid =
-                        field.state.meta.isTouched && !field.state.meta.isValid;
+                      const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
 
                       return (
-                        <Field
-                          data-invalid={isInvalid}
-                          className="w-7/12 gap-1"
-                        >
+                        <Field data-invalid={isInvalid} className="w-7/12 gap-1">
                           {index === 0 && (
-                            <FieldLabel htmlFor={`invite-${index}-email`}>
-                              Email
-                            </FieldLabel>
+                            <FieldLabel htmlFor={`invite-${index}-email`}>Email</FieldLabel>
                           )}
                           <FieldContent>
                             <Input
@@ -157,18 +138,14 @@ export const InviteMembersForm = ({
                               name={field.name}
                               value={field.state.value}
                               onBlur={field.handleBlur}
-                              onChange={(event) =>
-                                field.handleChange(event.target.value)
-                              }
+                              onChange={(event) => field.handleChange(event.target.value)}
                               aria-invalid={isInvalid}
                               placeholder="member@email.com"
                               type="email"
                               required
                             />
                           </FieldContent>
-                          {isInvalid && (
-                            <FieldError errors={field.state.meta.errors} />
-                          )}
+                          {isInvalid && <FieldError errors={field.state.meta.errors} />}
                         </Field>
                       );
                     }}
@@ -182,22 +159,16 @@ export const InviteMembersForm = ({
                     }}
                   >
                     {(field) => {
-                      const isInvalid =
-                        field.state.meta.isTouched && !field.state.meta.isValid;
+                      const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
 
                       return (
-                        <Field
-                          data-invalid={isInvalid}
-                          className="w-4/12 gap-1"
-                        >
+                        <Field data-invalid={isInvalid} className="w-4/12 gap-1">
                           {index === 0 && <FieldLabel>Role</FieldLabel>}
                           <FieldContent>
                             <Select
                               value={field.state.value ?? ""}
                               onValueChange={(newRole) => {
-                                field.handleChange(
-                                  newRole as "owner" | "admin" | "member",
-                                );
+                                field.handleChange(newRole as "owner" | "admin" | "member");
                                 field.handleBlur();
                               }}
                             >
@@ -217,9 +188,7 @@ export const InviteMembersForm = ({
                               </SelectContent>
                             </Select>
                           </FieldContent>
-                          {isInvalid && (
-                            <FieldError errors={field.state.meta.errors} />
-                          )}
+                          {isInvalid && <FieldError errors={field.state.meta.errors} />}
                         </Field>
                       );
                     }}
@@ -259,11 +228,7 @@ export const InviteMembersForm = ({
             </>
           )}
         </form.Field>
-        <Button
-          className="mt-5 w-full"
-          type="submit"
-          loading={isInvitingMembers}
-        >
+        <Button className="mt-5 w-full" type="submit" loading={isInvitingMembers}>
           Send Invites
         </Button>
       </div>

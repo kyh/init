@@ -61,9 +61,7 @@ export const getSupabaseServerClient = () => {
         },
         setAll: async (cookiesToSet) => {
           const cookieStore = await cookies();
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options),
-          );
+          cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
         },
       },
     },
@@ -136,9 +134,7 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
 
   // Handle both header tokens (mobile) and cookies (web)
   const token = opts.headers.get("authorization");
-  const { data } = token
-    ? await supabase.auth.getUser(token)
-    : await supabase.auth.getUser();
+  const { data } = token ? await supabase.auth.getUser(token) : await supabase.auth.getUser();
 
   return {
     headers: opts.headers,
@@ -360,9 +356,7 @@ export async function middleware(request: NextRequest) {
 
   // Protected routes
   const protectedPaths = ["/dashboard", "/account"];
-  const isProtectedPath = protectedPaths.some((path) =>
-    request.nextUrl.pathname.startsWith(path),
-  );
+  const isProtectedPath = protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path));
 
   if (isProtectedPath && !user) {
     const redirectUrl = new URL("/auth/login", request.url);
@@ -382,9 +376,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
 };
 ```
 

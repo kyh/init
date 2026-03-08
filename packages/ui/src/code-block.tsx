@@ -1,19 +1,8 @@
 "use client";
 
-import type {
-  ComponentProps,
-  HTMLAttributes,
-  ReactElement,
-  ReactNode,
-} from "react";
+import type { ComponentProps, HTMLAttributes, ReactElement, ReactNode } from "react";
 import type { BundledLanguage, CodeOptionsMultipleThemes } from "shiki";
-import {
-  cloneElement,
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { cloneElement, createContext, useContext, useEffect, useState } from "react";
 import {
   SiAstro,
   SiBiome,
@@ -97,13 +86,7 @@ import { codeToHtml } from "shiki";
 
 import type { IconType } from "@icons-pack/react-simple-icons";
 import { Button } from "./button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select";
 import { cn } from "./utils";
 
 export type { BundledLanguage } from "shiki";
@@ -315,43 +298,24 @@ export const CodeBlock = ({
   });
   return (
     <CodeBlockContext.Provider value={{ value, onValueChange, data }}>
-      <div
-        className={cn("size-full overflow-hidden rounded-md border", className)}
-        {...props}
-      />
+      <div className={cn("size-full overflow-hidden rounded-md border", className)} {...props} />
     </CodeBlockContext.Provider>
   );
 };
 export type CodeBlockHeaderProps = HTMLAttributes<HTMLDivElement>;
-export const CodeBlockHeader = ({
-  className,
-  ...props
-}: CodeBlockHeaderProps) => (
+export const CodeBlockHeader = ({ className, ...props }: CodeBlockHeaderProps) => (
   <div
-    className={cn(
-      "bg-secondary flex flex-row items-center border-b p-1",
-      className,
-    )}
+    className={cn("bg-secondary flex flex-row items-center border-b p-1", className)}
     {...props}
   />
 );
-export type CodeBlockFilesProps = Omit<
-  HTMLAttributes<HTMLDivElement>,
-  "children"
-> & {
+export type CodeBlockFilesProps = Omit<HTMLAttributes<HTMLDivElement>, "children"> & {
   children: (item: CodeBlockData) => ReactNode;
 };
-export const CodeBlockFiles = ({
-  className,
-  children,
-  ...props
-}: CodeBlockFilesProps) => {
+export const CodeBlockFiles = ({ className, children, ...props }: CodeBlockFilesProps) => {
   const { data } = useContext(CodeBlockContext);
   return (
-    <div
-      className={cn("flex grow flex-row items-center gap-2", className)}
-      {...props}
-    >
+    <div className={cn("flex grow flex-row items-center gap-2", className)} {...props}>
       {data.map(children)}
     </div>
   );
@@ -394,15 +358,9 @@ export const CodeBlockSelect = (props: CodeBlockSelectProps) => {
   return <Select onValueChange={onValueChange} value={value} {...props} />;
 };
 export type CodeBlockSelectTriggerProps = ComponentProps<typeof SelectTrigger>;
-export const CodeBlockSelectTrigger = ({
-  className,
-  ...props
-}: CodeBlockSelectTriggerProps) => (
+export const CodeBlockSelectTrigger = ({ className, ...props }: CodeBlockSelectTriggerProps) => (
   <SelectTrigger
-    className={cn(
-      "text-muted-foreground w-fit border-none text-xs shadow-none",
-      className,
-    )}
+    className={cn("text-muted-foreground w-fit border-none text-xs shadow-none", className)}
     {...props}
   />
 );
@@ -410,24 +368,15 @@ export type CodeBlockSelectValueProps = ComponentProps<typeof SelectValue>;
 export const CodeBlockSelectValue = (props: CodeBlockSelectValueProps) => (
   <SelectValue {...props} />
 );
-export type CodeBlockSelectContentProps = Omit<
-  ComponentProps<typeof SelectContent>,
-  "children"
-> & {
+export type CodeBlockSelectContentProps = Omit<ComponentProps<typeof SelectContent>, "children"> & {
   children: (item: CodeBlockData) => ReactNode;
 };
-export const CodeBlockSelectContent = ({
-  children,
-  ...props
-}: CodeBlockSelectContentProps) => {
+export const CodeBlockSelectContent = ({ children, ...props }: CodeBlockSelectContentProps) => {
   const { data } = useContext(CodeBlockContext);
   return <SelectContent {...props}>{data.map(children)}</SelectContent>;
 };
 export type CodeBlockSelectItemProps = ComponentProps<typeof SelectItem>;
-export const CodeBlockSelectItem = ({
-  className,
-  ...props
-}: CodeBlockSelectItemProps) => (
+export const CodeBlockSelectItem = ({ className, ...props }: CodeBlockSelectItemProps) => (
   <SelectItem className={cn("text-sm", className)} {...props} />
 );
 export type CodeBlockCopyButtonProps = ComponentProps<typeof Button> & {
@@ -448,11 +397,7 @@ export const CodeBlockCopyButton = ({
   const { data, value } = useContext(CodeBlockContext);
   const code = data.find((item) => item.language === value)?.code;
   const copyToClipboard = () => {
-    if (
-      typeof window === "undefined" ||
-      !navigator.clipboard.writeText ||
-      !code
-    ) {
+    if (typeof window === "undefined" || !navigator.clipboard.writeText || !code) {
       return;
     }
     navigator.clipboard.writeText(code).then(() => {
@@ -497,10 +442,7 @@ const CodeBlockFallback = ({ children, ...props }: CodeBlockFallbackProps) => (
     </pre>
   </div>
 );
-export type CodeBlockBodyProps = Omit<
-  HTMLAttributes<HTMLDivElement>,
-  "children"
-> & {
+export type CodeBlockBodyProps = Omit<HTMLAttributes<HTMLDivElement>, "children"> & {
   children: (item: CodeBlockData) => ReactNode;
 };
 export const CodeBlockBody = ({ children, ...props }: CodeBlockBodyProps) => {

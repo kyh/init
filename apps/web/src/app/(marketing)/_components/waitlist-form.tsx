@@ -23,11 +23,9 @@ export const WaitlistForm = () => {
     },
     onSubmit: ({ value, formApi }) => {
       toast.promise(
-        joinWaitlist
-          .mutateAsync({ email: value.email })
-          .then(() => {
-            formApi.reset({ email: "" });
-          }),
+        joinWaitlist.mutateAsync({ email: value.email }).then(() => {
+          formApi.reset({ email: "" });
+        }),
         {
           loading: "Submitting...",
           success: "Waitlist joined!",
@@ -52,14 +50,10 @@ export const WaitlistForm = () => {
         }}
       >
         {(field) => {
-          const isInvalid =
-            field.state.meta.isTouched && !field.state.meta.isValid;
+          const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
 
           return (
-            <Field
-              data-invalid={isInvalid}
-              className="relative min-w-0 flex-1"
-            >
+            <Field data-invalid={isInvalid} className="relative min-w-0 flex-1">
               <FieldLabel className="sr-only" htmlFor="waitlist-email">
                 Email
               </FieldLabel>
@@ -70,9 +64,7 @@ export const WaitlistForm = () => {
                   name={field.name}
                   value={field.state.value ?? ""}
                   onBlur={field.handleBlur}
-                  onChange={(event) =>
-                    field.handleChange(event.target.value)
-                  }
+                  onChange={(event) => field.handleChange(event.target.value)}
                   aria-invalid={isInvalid}
                   required
                   type="email"
@@ -83,17 +75,17 @@ export const WaitlistForm = () => {
                 />
               </FieldContent>
               {isInvalid && (
-                <FieldError className="absolute left-0 top-full pt-1" errors={field.state.meta.errors} />
+                <FieldError
+                  className="absolute left-0 top-full pt-1"
+                  errors={field.state.meta.errors}
+                />
               )}
             </Field>
           );
         }}
       </form.Field>
       <Button
-        className={cn(
-          "text-xs",
-          joinWaitlist.isPending && "[&>:first-child]:bg-input",
-        )}
+        className={cn("text-xs", joinWaitlist.isPending && "[&>:first-child]:bg-input")}
         variant="ghost"
         loading={joinWaitlist.isPending}
       >

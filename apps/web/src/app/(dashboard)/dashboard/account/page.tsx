@@ -17,9 +17,7 @@ const Page = async () => {
       <section className="divide-border divide-y">
         <div className="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 py-8 md:grid-cols-3">
           <div>
-            <h2 className="text-primary text-base leading-7 font-light">
-              Personal Information
-            </h2>
+            <h2 className="text-primary text-base leading-7 font-light">Personal Information</h2>
             <p className="text-muted-foreground mt-1 text-sm leading-6">
               Use a permanent address where you can receive mail.
             </p>
@@ -30,9 +28,7 @@ const Page = async () => {
         </div>
         <div className="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 py-8 md:grid-cols-3">
           <div>
-            <h2 className="text-primary text-base leading-7 font-light">
-              Appearance
-            </h2>
+            <h2 className="text-primary text-base leading-7 font-light">Appearance</h2>
             <p className="text-muted-foreground mt-1 text-sm leading-6">
               Select the theme for the dashboard.
             </p>

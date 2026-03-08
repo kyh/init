@@ -80,14 +80,8 @@ export const AIChatForm = ({ slug }: AIFormProps) => {
         </AIConversationContent>
         <AIConversationScrollButton />
       </AIConversation>
-      <AIInput
-        onSubmit={handleSubmit}
-        className="max-w-(--breakpoint-md) m-auto w-full"
-      >
-        <AIInputTextarea
-          onChange={(e) => setInput(e.target.value)}
-          value={input}
-        />
+      <AIInput onSubmit={handleSubmit} className="max-w-(--breakpoint-md) m-auto w-full">
+        <AIInputTextarea onChange={(e) => setInput(e.target.value)} value={input} />
         <AIInputToolbar>
           <AIInputTools>
             <AIInputButton>
