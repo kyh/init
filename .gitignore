@@ -32,7 +32,7 @@ apps/mobile/.gitignore
 **/src-tauri/gen/
 
 # electron
-dist-electron/
+release/
 
 # production
 packages/mdx/.content-collections/cache

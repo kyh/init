@@ -2,7 +2,7 @@ import { defineConfig } from "tsdown";
 
 const shared = {
   format: "cjs" as const,
-  outDir: "dist-electron",
+  outDir: "dist",
   sourcemap: true,
   outExtensions: () => ({ js: ".js" }),
 };

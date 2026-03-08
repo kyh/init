@@ -2,7 +2,7 @@ appId: com.init.electron
 productName: Init
 directories:
   buildResources: resources
-  output: dist
+  output: release
 files:
   - '!**/.vscode/*'
   - '!src/*'
