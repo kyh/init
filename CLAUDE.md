@@ -35,7 +35,8 @@ pnpm dev              # Run all apps
 pnpm dev-web          # Run Next.js only
 pnpm dev-mobile       # Run Expo only
 pnpm typecheck        # Type check all packages
-pnpm lint             # Lint all packages
+pnpm lint             # Lint all packages (oxlint)
+pnpm fmt              # Format all packages (oxfmt)
 pnpm build            # Build all packages
 
 # Database

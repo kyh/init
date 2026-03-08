@@ -27,13 +27,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@repo/ui/dropdown-menu";
-import {
-  Field,
-  FieldContent,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@repo/ui/field";
+import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from "@repo/ui/field";
 import { Input } from "@repo/ui/input";
 import { Logo } from "@repo/ui/logo";
 import { toast } from "@repo/ui/toast";
@@ -118,11 +112,7 @@ export const Sidebar = ({ user }: SidebarProps) => {
           </NavLink>
         ))}
       </div>
-      <UserDropdown
-        slug={params.slug}
-        user={user}
-        organizations={organizations ?? []}
-      />
+      <UserDropdown slug={params.slug} user={user} organizations={organizations ?? []} />
     </nav>
   );
 };
@@ -134,8 +124,7 @@ type UserDropdownProps = {
 };
 
 const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
-  const [isOrganizationsDialogOpen, setIsOrganizationsDialogOpen] =
-    useState(false);
+  const [isOrganizationsDialogOpen, setIsOrganizationsDialogOpen] = useState(false);
   const router = useRouter();
 
   const form = useForm({
@@ -185,10 +174,7 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
   };
 
   return (
-    <Dialog
-      open={isOrganizationsDialogOpen}
-      onOpenChange={setIsOrganizationsDialogOpen}
-    >
+    <Dialog open={isOrganizationsDialogOpen} onOpenChange={setIsOrganizationsDialogOpen}>
       <DropdownMenu>
         <DropdownMenuTrigger className="mt-auto cursor-pointer">
           <ProfileAvatar displayName={user.email} avatarUrl={undefined} />
@@ -214,9 +200,7 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuSub>
-              <DropdownMenuSubTrigger>
-                Switch Organizations
-              </DropdownMenuSubTrigger>
+              <DropdownMenuSubTrigger>Switch Organizations</DropdownMenuSubTrigger>
               <DropdownMenuSubContent className="max-h-[300px] max-w-56 overflow-y-auto">
                 {organizations.map((org) => (
                   <DropdownMenuItem key={org.id} asChild>
@@ -289,38 +273,29 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
               }}
             >
               {(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid;
+                const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
 
                 return (
                   <Field data-invalid={isInvalid} className="gap-1">
-                    <FieldLabel htmlFor="organization-name">
-                      Organization Name
-                    </FieldLabel>
+                    <FieldLabel htmlFor="organization-name">Organization Name</FieldLabel>
                     <FieldContent>
                       <Input
                         id="organization-name"
                         name={field.name}
                         value={field.state.value}
                         onBlur={field.handleBlur}
-                        onChange={(event) =>
-                          field.handleChange(event.target.value)
-                        }
+                        onChange={(event) => field.handleChange(event.target.value)}
                         aria-invalid={isInvalid}
                         placeholder=""
                       />
                     </FieldContent>
-                    {isInvalid && (
-                      <FieldError errors={field.state.meta.errors} />
-                    )}
+                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
                   </Field>
                 );
               }}
             </form.Field>
             <div className="flex justify-end gap-2">
-              <Button loading={form.state.isSubmitting}>
-                Create Organization
-              </Button>
+              <Button loading={form.state.isSubmitting}>Create Organization</Button>
             </div>
           </FieldGroup>
         </form>

@@ -34,11 +34,7 @@ export const AppearanceForm = () => {
   };
 
   return (
-    <RadioGroup
-      className="flex gap-5"
-      onValueChange={onChange}
-      defaultValue={theme}
-    >
+    <RadioGroup className="flex gap-5" onValueChange={onChange} defaultValue={theme}>
       {items.map((item) => (
         <label key={item.id}>
           <RadioGroupItem

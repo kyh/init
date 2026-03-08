@@ -12,11 +12,7 @@ import {
 } from "@repo/ui/dropdown-menu";
 import { AutoTable } from "@repo/ui/table";
 import { toast } from "@repo/ui/toast";
-import {
-  useMutation,
-  useQueryClient,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { MoreHorizontalIcon } from "lucide-react";
 
@@ -48,9 +44,7 @@ export const InvitationsTable = ({ slug }: InvitationsTableProps) => {
       },
       {
         header: "Role",
-        cell: ({ row }) => (
-          <Badge className="capitalize">{row.original.role ?? "member"}</Badge>
-        ),
+        cell: ({ row }) => <Badge className="capitalize">{row.original.role ?? "member"}</Badge>,
       },
       {
         header: "Expires at",
@@ -61,9 +55,7 @@ export const InvitationsTable = ({ slug }: InvitationsTableProps) => {
       {
         header: "",
         id: "actions",
-        cell: ({ row }) => (
-          <ActionsDropdown invitation={row.original} userRole={userRole} />
-        ),
+        cell: ({ row }) => <ActionsDropdown invitation={row.original} userRole={userRole} />,
       },
     ];
 
@@ -115,9 +107,7 @@ const ActionsDropdown = ({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        <DropdownMenuItem onSelect={handleRemoveInvitation}>
-          Remove Invitation
-        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={handleRemoveInvitation}>Remove Invitation</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

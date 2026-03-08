@@ -1,8 +1,8 @@
 {
   "name": "@repo/desktop",
   "version": "0.1.0",
-  "type": "module",
   "private": true,
+  "type": "module",
   "main": "./out/main/index.js",
   "scripts": {
     "build": "electron-vite build",
@@ -11,8 +11,6 @@
     "build:win": "pnpm build && electron-builder --win",
     "clean": "git clean -xdf .cache out dist node_modules",
     "dev": "electron-vite dev",
-    "format": "prettier --check . --ignore-path ../../.gitignore",
-    "lint": "eslint",
     "preview": "electron-vite preview",
     "start": "electron-vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.node.json"
@@ -22,16 +20,11 @@
   },
   "devDependencies": {
     "@electron-toolkit/tsconfig": "^2.0.0",
-    "@kyh/eslint-config": "catalog:",
-    "@kyh/prettier-config": "catalog:",
     "@types/node": "catalog:",
     "electron": "^40.8.0",
     "electron-builder": "^26.8.1",
     "electron-vite": "^5.0.0",
-    "eslint": "catalog:",
-    "prettier": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:"
-  },
-  "prettier": "@kyh/prettier-config"
+  }
 }
