@@ -3,33 +3,31 @@
   "version": "0.1.0",
   "type": "module",
   "private": true,
-  "main": "./out/main/index.js",
+  "main": "./dist-electron/main.js",
   "scripts": {
-    "build": "electron-vite build",
+    "build": "tsdown",
     "build:linux": "pnpm build && electron-builder --linux",
     "build:mac": "pnpm build && electron-builder --mac",
     "build:win": "pnpm build && electron-builder --win",
-    "clean": "git clean -xdf .cache out dist node_modules",
-    "dev": "electron-vite dev",
+    "clean": "git clean -xdf .cache dist-electron dist node_modules",
+    "dev": "tsdown --watch",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
-    "preview": "electron-vite preview",
-    "start": "electron-vite preview",
-    "typecheck": "tsc --noEmit -p tsconfig.node.json"
+    "start": "electron .",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@electron-toolkit/utils": "^4.0.0"
+    "electron-updater": "^6.6.2"
   },
   "devDependencies": {
-    "@electron-toolkit/tsconfig": "^2.0.0",
     "@kyh/eslint-config": "catalog:",
     "@kyh/prettier-config": "catalog:",
     "@types/node": "catalog:",
     "electron": "^40.8.0",
     "electron-builder": "^26.8.1",
-    "electron-vite": "^5.0.0",
     "eslint": "catalog:",
     "prettier": "catalog:",
+    "tsdown": "^0.12.4",
     "typescript": "catalog:",
     "vite": "catalog:"
   },
