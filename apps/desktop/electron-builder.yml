@@ -8,7 +8,7 @@ files:
   - '!src/*'
   - '!tsdown.config.*'
   - '!{.eslintignore,.eslintrc.js,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
-  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+  - '!{tsconfig.json,tsconfig.web.json}'
 asarUnpack:
   - resources/**
 win:

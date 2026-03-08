@@ -11,6 +11,8 @@ import {
 import type { MenuItemConstructorOptions } from "electron";
 import { autoUpdater } from "electron-updater";
 
+import type { UpdateState } from "./types";
+
 const PICK_FOLDER_CHANNEL = "desktop:pick-folder";
 const CONFIRM_CHANNEL = "desktop:confirm";
 const OPEN_EXTERNAL_CHANNEL = "desktop:open-external";
@@ -21,9 +23,19 @@ const UPDATE_DOWNLOAD_CHANNEL = "desktop:update-download";
 const UPDATE_INSTALL_CHANNEL = "desktop:update-install";
 
 const WEBAPP_DEV_URL = "http://localhost:3000";
-const WEBAPP_PROD_URL =
-  process.env["WEBAPP_URL"] ?? "http://localhost:3000";
 const isDevelopment = !app.isPackaged;
+
+function getWebAppUrl(): string {
+  if (isDevelopment) return WEBAPP_DEV_URL;
+  const url = process.env["WEBAPP_URL"];
+  if (!url) {
+    console.warn(
+      "[desktop] WEBAPP_URL is not set in a packaged build, falling back to localhost:3000",
+    );
+    return WEBAPP_DEV_URL;
+  }
+  return url;
+}
 const APP_DISPLAY_NAME = isDevelopment ? "Init (Dev)" : "Init";
 const APP_USER_MODEL_ID = "com.init.electron";
 
@@ -33,20 +45,6 @@ let isQuitting = false;
 // ---------------------------------------------------------------------------
 // Auto-updater state
 // ---------------------------------------------------------------------------
-
-interface UpdateState {
-  status:
-    | "idle"
-    | "checking"
-    | "available"
-    | "not-available"
-    | "downloading"
-    | "downloaded"
-    | "error";
-  version: string | null;
-  downloadPercent: number | null;
-  message: string | null;
-}
 
 let updateState: UpdateState = {
   status: "idle",
@@ -310,7 +308,7 @@ function registerIpcHandlers(): void {
 // ---------------------------------------------------------------------------
 
 async function checkForUpdates(): Promise<void> {
-  if (isDevelopment || !app.isPackaged) return;
+  if (isDevelopment) return;
 
   setUpdateState({
     status: "checking",
@@ -328,7 +326,7 @@ async function checkForUpdates(): Promise<void> {
 }
 
 function configureAutoUpdater(): void {
-  if (isDevelopment || !app.isPackaged) return;
+  if (isDevelopment) return;
 
   autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = false;
@@ -389,7 +387,14 @@ function createWindow(): BrowserWindow {
   });
 
   window.webContents.setWindowOpenHandler((details) => {
-    void shell.openExternal(details.url);
+    try {
+      const parsed = new URL(details.url);
+      if (parsed.protocol === "https:" || parsed.protocol === "http:") {
+        void shell.openExternal(details.url);
+      }
+    } catch {
+      // Ignore malformed URLs
+    }
     return { action: "deny" };
   });
 
@@ -402,8 +407,7 @@ function createWindow(): BrowserWindow {
     window.show();
   });
 
-  const url = isDevelopment ? WEBAPP_DEV_URL : WEBAPP_PROD_URL;
-  void window.loadURL(url);
+  void window.loadURL(getWebAppUrl());
 
   if (isDevelopment) {
     window.webContents.openDevTools({ mode: "detach" });
@@ -421,8 +425,6 @@ function createWindow(): BrowserWindow {
 // ---------------------------------------------------------------------------
 // App lifecycle
 // ---------------------------------------------------------------------------
-
-configureAppIdentity();
 
 app.on("before-quit", () => {
   isQuitting = true;

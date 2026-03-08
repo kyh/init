@@ -1,5 +1,7 @@
 import { contextBridge, ipcRenderer } from "electron";
 
+import type { UpdateState } from "./types";
+
 const PICK_FOLDER_CHANNEL = "desktop:pick-folder";
 const CONFIRM_CHANNEL = "desktop:confirm";
 const OPEN_EXTERNAL_CHANNEL = "desktop:open-external";
@@ -17,7 +19,7 @@ export interface DesktopBridge {
   checkForUpdates: () => Promise<unknown>;
   downloadUpdate: () => Promise<unknown>;
   installUpdate: () => Promise<unknown>;
-  onUpdateState: (listener: (state: unknown) => void) => () => void;
+  onUpdateState: (listener: (state: UpdateState) => void) => () => void;
 }
 
 contextBridge.exposeInMainWorld("desktopBridge", {
@@ -42,13 +44,13 @@ contextBridge.exposeInMainWorld("desktopBridge", {
   checkForUpdates: () => ipcRenderer.invoke(UPDATE_CHECK_CHANNEL),
   downloadUpdate: () => ipcRenderer.invoke(UPDATE_DOWNLOAD_CHANNEL),
   installUpdate: () => ipcRenderer.invoke(UPDATE_INSTALL_CHANNEL),
-  onUpdateState: (listener: (state: unknown) => void) => {
+  onUpdateState: (listener: (state: UpdateState) => void) => {
     const wrappedListener = (
       _event: Electron.IpcRendererEvent,
       state: unknown,
     ) => {
       if (typeof state !== "object" || state === null) return;
-      listener(state);
+      listener(state as UpdateState);
     };
 
     ipcRenderer.on(UPDATE_STATE_CHANNEL, wrappedListener);
