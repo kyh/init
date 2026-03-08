@@ -11,8 +11,6 @@
     "build:win": "pnpm build && electron-builder --win",
     "clean": "git clean -xdf .cache dist release node_modules",
     "dev": "concurrently -k \"tsdown --watch\" \"electron .\"",
-    "format": "prettier --check . --ignore-path ../../.gitignore",
-    "lint": "eslint",
     "start": "electron .",
     "typecheck": "tsc --noEmit"
   },
@@ -20,17 +18,12 @@
     "electron-updater": "^6.6.2"
   },
   "devDependencies": {
-    "@kyh/eslint-config": "catalog:",
-    "@kyh/prettier-config": "catalog:",
     "@types/node": "catalog:",
     "concurrently": "^9.1.2",
     "electron": "^40.8.0",
     "electron-builder": "^26.8.1",
-    "eslint": "catalog:",
-    "prettier": "catalog:",
     "tsdown": "^0.12.4",
     "typescript": "catalog:",
     "vite": "catalog:"
-  },
-  "prettier": "@kyh/prettier-config"
+  }
 }
