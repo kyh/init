@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from "electron";
 
-import { IPC_CHANNELS } from "./types";
+import { IPC_CHANNELS, isUpdateState } from "./types";
 import type { DesktopBridge, UpdateState } from "./types";
 
 contextBridge.exposeInMainWorld("desktopBridge", {
@@ -31,8 +31,8 @@ contextBridge.exposeInMainWorld("desktopBridge", {
       _event: Electron.IpcRendererEvent,
       state: unknown,
     ) => {
-      if (typeof state !== "object" || state === null) return;
-      listener(state as UpdateState);
+      if (!isUpdateState(state)) return;
+      listener(state);
     };
 
     ipcRenderer.on(IPC_CHANNELS.UPDATE_STATE, wrappedListener);

@@ -10,7 +10,7 @@
     "build:mac": "pnpm build && electron-builder --mac",
     "build:win": "pnpm build && electron-builder --win",
     "clean": "git clean -xdf .cache dist release node_modules",
-    "dev": "concurrently -k \"tsdown --watch\" \"electron .\"",
+    "dev": "tsdown && concurrently -k \"tsdown --watch\" \"electron .\"",
     "start": "electron .",
     "typecheck": "tsc --noEmit"
   },
@@ -23,7 +23,6 @@
     "electron": "^40.8.0",
     "electron-builder": "^26.8.1",
     "tsdown": "^0.12.4",
-    "typescript": "catalog:",
-    "vite": "catalog:"
+    "typescript": "catalog:"
   }
 }

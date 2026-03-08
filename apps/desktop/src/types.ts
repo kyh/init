@@ -23,16 +23,37 @@ export type UpdateState = {
   message: string | null;
 };
 
+export type UpdateResponse = {
+  accepted: boolean;
+  state: UpdateState;
+};
+
 export type DesktopBridge = {
   pickFolder: () => Promise<string | null>;
   confirm: (message: string) => Promise<boolean>;
   openExternal: (url: string) => Promise<boolean>;
   onMenuAction: (listener: (action: string) => void) => () => void;
-  checkForUpdates: () => Promise<unknown>;
-  downloadUpdate: () => Promise<unknown>;
-  installUpdate: () => Promise<unknown>;
+  checkForUpdates: () => Promise<UpdateState>;
+  downloadUpdate: () => Promise<UpdateResponse>;
+  installUpdate: () => Promise<UpdateResponse>;
   onUpdateState: (listener: (state: UpdateState) => void) => () => void;
 };
+
+const UPDATE_STATUSES = new Set([
+  "idle",
+  "checking",
+  "available",
+  "not-available",
+  "downloading",
+  "downloaded",
+  "error",
+]);
+
+export function isUpdateState(value: unknown): value is UpdateState {
+  if (typeof value !== "object" || value === null) return false;
+  const obj = value as Record<string, unknown>;
+  return typeof obj.status === "string" && UPDATE_STATUSES.has(obj.status);
+}
 
 export function toErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
