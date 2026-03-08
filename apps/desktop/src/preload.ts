@@ -1,32 +1,14 @@
 import { contextBridge, ipcRenderer } from "electron";
 
-import type { UpdateState } from "./types";
-
-const PICK_FOLDER_CHANNEL = "desktop:pick-folder";
-const CONFIRM_CHANNEL = "desktop:confirm";
-const OPEN_EXTERNAL_CHANNEL = "desktop:open-external";
-const MENU_ACTION_CHANNEL = "desktop:menu-action";
-const UPDATE_STATE_CHANNEL = "desktop:update-state";
-const UPDATE_CHECK_CHANNEL = "desktop:update-check";
-const UPDATE_DOWNLOAD_CHANNEL = "desktop:update-download";
-const UPDATE_INSTALL_CHANNEL = "desktop:update-install";
-
-export interface DesktopBridge {
-  pickFolder: () => Promise<string | null>;
-  confirm: (message: string) => Promise<boolean>;
-  openExternal: (url: string) => Promise<boolean>;
-  onMenuAction: (listener: (action: string) => void) => () => void;
-  checkForUpdates: () => Promise<unknown>;
-  downloadUpdate: () => Promise<unknown>;
-  installUpdate: () => Promise<unknown>;
-  onUpdateState: (listener: (state: UpdateState) => void) => () => void;
-}
+import { IPC_CHANNELS } from "./types";
+import type { DesktopBridge, UpdateState } from "./types";
 
 contextBridge.exposeInMainWorld("desktopBridge", {
-  pickFolder: () => ipcRenderer.invoke(PICK_FOLDER_CHANNEL),
-  confirm: (message: string) => ipcRenderer.invoke(CONFIRM_CHANNEL, message),
+  pickFolder: () => ipcRenderer.invoke(IPC_CHANNELS.PICK_FOLDER),
+  confirm: (message: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.CONFIRM, message),
   openExternal: (url: string) =>
-    ipcRenderer.invoke(OPEN_EXTERNAL_CHANNEL, url),
+    ipcRenderer.invoke(IPC_CHANNELS.OPEN_EXTERNAL, url),
   onMenuAction: (listener: (action: string) => void) => {
     const wrappedListener = (
       _event: Electron.IpcRendererEvent,
@@ -36,14 +18,14 @@ contextBridge.exposeInMainWorld("desktopBridge", {
       listener(action);
     };
 
-    ipcRenderer.on(MENU_ACTION_CHANNEL, wrappedListener);
+    ipcRenderer.on(IPC_CHANNELS.MENU_ACTION, wrappedListener);
     return () => {
-      ipcRenderer.removeListener(MENU_ACTION_CHANNEL, wrappedListener);
+      ipcRenderer.removeListener(IPC_CHANNELS.MENU_ACTION, wrappedListener);
     };
   },
-  checkForUpdates: () => ipcRenderer.invoke(UPDATE_CHECK_CHANNEL),
-  downloadUpdate: () => ipcRenderer.invoke(UPDATE_DOWNLOAD_CHANNEL),
-  installUpdate: () => ipcRenderer.invoke(UPDATE_INSTALL_CHANNEL),
+  checkForUpdates: () => ipcRenderer.invoke(IPC_CHANNELS.UPDATE_CHECK),
+  downloadUpdate: () => ipcRenderer.invoke(IPC_CHANNELS.UPDATE_DOWNLOAD),
+  installUpdate: () => ipcRenderer.invoke(IPC_CHANNELS.UPDATE_INSTALL),
   onUpdateState: (listener: (state: UpdateState) => void) => {
     const wrappedListener = (
       _event: Electron.IpcRendererEvent,
@@ -53,9 +35,12 @@ contextBridge.exposeInMainWorld("desktopBridge", {
       listener(state as UpdateState);
     };
 
-    ipcRenderer.on(UPDATE_STATE_CHANNEL, wrappedListener);
+    ipcRenderer.on(IPC_CHANNELS.UPDATE_STATE, wrappedListener);
     return () => {
-      ipcRenderer.removeListener(UPDATE_STATE_CHANNEL, wrappedListener);
+      ipcRenderer.removeListener(
+        IPC_CHANNELS.UPDATE_STATE,
+        wrappedListener,
+      );
     };
   },
 } satisfies DesktopBridge);

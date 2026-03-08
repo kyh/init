@@ -1,3 +1,4 @@
+import * as fs from "node:fs";
 import * as Path from "node:path";
 
 import {
@@ -11,16 +12,12 @@ import {
 import type { MenuItemConstructorOptions } from "electron";
 import { autoUpdater } from "electron-updater";
 
+import {
+  IPC_CHANNELS,
+  isHttpUrl,
+  toErrorMessage,
+} from "./types";
 import type { UpdateState } from "./types";
-
-const PICK_FOLDER_CHANNEL = "desktop:pick-folder";
-const CONFIRM_CHANNEL = "desktop:confirm";
-const OPEN_EXTERNAL_CHANNEL = "desktop:open-external";
-const MENU_ACTION_CHANNEL = "desktop:menu-action";
-const UPDATE_STATE_CHANNEL = "desktop:update-state";
-const UPDATE_CHECK_CHANNEL = "desktop:update-check";
-const UPDATE_DOWNLOAD_CHANNEL = "desktop:update-download";
-const UPDATE_INSTALL_CHANNEL = "desktop:update-install";
 
 const WEBAPP_DEV_URL = "http://localhost:3000";
 const isDevelopment = !app.isPackaged;
@@ -57,7 +54,7 @@ function setUpdateState(patch: Partial<UpdateState>): void {
   updateState = { ...updateState, ...patch };
   for (const window of BrowserWindow.getAllWindows()) {
     if (!window.isDestroyed()) {
-      window.webContents.send(UPDATE_STATE_CHANNEL, updateState);
+      window.webContents.send(IPC_CHANNELS.UPDATE_STATE, updateState);
     }
   }
 }
@@ -94,7 +91,7 @@ function dispatchMenuAction(action: string): void {
 
   const send = () => {
     if (targetWindow.isDestroyed()) return;
-    targetWindow.webContents.send(MENU_ACTION_CHANNEL, action);
+    targetWindow.webContents.send(IPC_CHANNELS.MENU_ACTION, action);
     if (!targetWindow.isVisible()) {
       targetWindow.show();
     }
@@ -188,8 +185,7 @@ function resolveIconPath(ext: "ico" | "icns" | "png"): string | null {
 
   for (const candidate of candidates) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      require("node:fs").accessSync(candidate);
+      fs.accessSync(candidate);
       return candidate;
     } catch {
       continue;
@@ -199,11 +195,19 @@ function resolveIconPath(ext: "ico" | "icns" | "png"): string | null {
   return null;
 }
 
+let cachedIconOption: { icon: string } | Record<string, never> | null =
+  null;
+
 function getIconOption(): { icon: string } | Record<string, never> {
-  if (process.platform === "darwin") return {};
-  const ext = process.platform === "win32" ? "ico" : "png";
-  const iconPath = resolveIconPath(ext);
-  return iconPath ? { icon: iconPath } : {};
+  if (cachedIconOption) return cachedIconOption;
+  if (process.platform === "darwin") {
+    cachedIconOption = {};
+  } else {
+    const ext = process.platform === "win32" ? "ico" : "png";
+    const iconPath = resolveIconPath(ext);
+    cachedIconOption = iconPath ? { icon: iconPath } : {};
+  }
+  return cachedIconOption;
 }
 
 // ---------------------------------------------------------------------------
@@ -211,7 +215,7 @@ function getIconOption(): { icon: string } | Record<string, never> {
 // ---------------------------------------------------------------------------
 
 function registerIpcHandlers(): void {
-  ipcMain.handle(PICK_FOLDER_CHANNEL, async () => {
+  ipcMain.handle(IPC_CHANNELS.PICK_FOLDER, async () => {
     const owner = BrowserWindow.getFocusedWindow() ?? mainWindow;
     const result = owner
       ? await dialog.showOpenDialog(owner, {
@@ -225,7 +229,7 @@ function registerIpcHandlers(): void {
   });
 
   ipcMain.handle(
-    CONFIRM_CHANNEL,
+    IPC_CHANNELS.CONFIRM,
     async (_event, message: unknown) => {
       if (typeof message !== "string") return false;
       const owner = BrowserWindow.getFocusedWindow() ?? mainWindow;
@@ -245,26 +249,13 @@ function registerIpcHandlers(): void {
   );
 
   ipcMain.handle(
-    OPEN_EXTERNAL_CHANNEL,
+    IPC_CHANNELS.OPEN_EXTERNAL,
     async (_event, rawUrl: unknown) => {
       if (typeof rawUrl !== "string" || rawUrl.length === 0) return false;
-
-      let parsedUrl: URL;
-      try {
-        parsedUrl = new URL(rawUrl);
-      } catch {
-        return false;
-      }
-
-      if (
-        parsedUrl.protocol !== "https:" &&
-        parsedUrl.protocol !== "http:"
-      ) {
-        return false;
-      }
+      if (!isHttpUrl(rawUrl)) return false;
 
       try {
-        await shell.openExternal(parsedUrl.toString());
+        await shell.openExternal(rawUrl);
         return true;
       } catch {
         return false;
@@ -272,12 +263,12 @@ function registerIpcHandlers(): void {
     },
   );
 
-  ipcMain.handle(UPDATE_CHECK_CHANNEL, async () => {
+  ipcMain.handle(IPC_CHANNELS.UPDATE_CHECK, async () => {
     await checkForUpdates();
     return updateState;
   });
 
-  ipcMain.handle(UPDATE_DOWNLOAD_CHANNEL, async () => {
+  ipcMain.handle(IPC_CHANNELS.UPDATE_DOWNLOAD, async () => {
     if (updateState.status !== "available") {
       return { accepted: false, state: updateState };
     }
@@ -286,14 +277,12 @@ function registerIpcHandlers(): void {
       await autoUpdater.downloadUpdate();
       return { accepted: true, state: updateState };
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : String(error);
-      setUpdateState({ status: "error", message });
+      setUpdateState({ status: "error", message: toErrorMessage(error) });
       return { accepted: true, state: updateState };
     }
   });
 
-  ipcMain.handle(UPDATE_INSTALL_CHANNEL, async () => {
+  ipcMain.handle(IPC_CHANNELS.UPDATE_INSTALL, async () => {
     if (updateState.status !== "downloaded") {
       return { accepted: false, state: updateState };
     }
@@ -319,9 +308,7 @@ async function checkForUpdates(): Promise<void> {
   try {
     await autoUpdater.checkForUpdates();
   } catch (error: unknown) {
-    const message =
-      error instanceof Error ? error.message : String(error);
-    setUpdateState({ status: "error", message });
+    setUpdateState({ status: "error", message: toErrorMessage(error) });
   }
 }
 
@@ -387,13 +374,8 @@ function createWindow(): BrowserWindow {
   });
 
   window.webContents.setWindowOpenHandler((details) => {
-    try {
-      const parsed = new URL(details.url);
-      if (parsed.protocol === "https:" || parsed.protocol === "http:") {
-        void shell.openExternal(details.url);
-      }
-    } catch {
-      // Ignore malformed URLs
+    if (isHttpUrl(details.url)) {
+      void shell.openExternal(details.url);
     }
     return { action: "deny" };
   });
@@ -448,10 +430,7 @@ app
   })
   .catch((error) => {
     console.error("[desktop] fatal startup error", error);
-    dialog.showErrorBox(
-      "Init failed to start",
-      error instanceof Error ? error.message : String(error),
-    );
+    dialog.showErrorBox("Init failed to start", toErrorMessage(error));
     app.quit();
   });
 
@@ -463,15 +442,11 @@ app.on("window-all-closed", () => {
 
 // Handle POSIX signals for clean shutdown
 if (process.platform !== "win32") {
-  process.on("SIGINT", () => {
+  const handleSignal = () => {
     if (isQuitting) return;
     isQuitting = true;
     app.quit();
-  });
-
-  process.on("SIGTERM", () => {
-    if (isQuitting) return;
-    isQuitting = true;
-    app.quit();
-  });
+  };
+  process.on("SIGINT", handleSignal);
+  process.on("SIGTERM", handleSignal);
 }

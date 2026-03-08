@@ -10,7 +10,7 @@
     "build:mac": "pnpm build && electron-builder --mac",
     "build:win": "pnpm build && electron-builder --win",
     "clean": "git clean -xdf .cache dist release node_modules",
-    "dev": "tsdown && concurrently -k \"tsdown --watch\" \"electron .\"",
+    "dev": "concurrently -k \"tsdown --watch\" \"electron .\"",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
     "start": "electron .",
