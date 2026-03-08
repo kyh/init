@@ -24,7 +24,8 @@
     "lint-ws": "pnpm dlx sherif@latest",
     "postinstall": "pnpm lint-ws",
     "typecheck": "turbo run typecheck",
-    "gen-ui": "pnpm -F ui gen-ui"
+    "gen-ui": "pnpm -F ui gen-ui",
+    "setup": "tsx scripts/setup.ts"
   },
   "devDependencies": {
     "@kyh/prettier-config": "catalog:",
