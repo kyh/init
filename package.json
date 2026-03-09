@@ -20,7 +20,6 @@
     "lint-fix": "oxlint --fix",
     "format": "oxfmt",
     "format-fix": "oxfmt --write",
-    "postinstall": "pnpm lint-ws",
     "typecheck": "turbo run typecheck",
     "gen-ui": "pnpm -F ui gen-ui",
     "setup": "tsx scripts/setup.ts"
