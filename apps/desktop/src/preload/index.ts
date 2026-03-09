@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer } from "electron";
 
-import { IPC_CHANNELS, isUpdateState } from "./types";
-import type { DesktopBridge, UpdateState } from "./types";
+import { IPC_CHANNELS, isUpdateState } from "../types";
+import type { DesktopBridge, UpdateState } from "../types";
 
 contextBridge.exposeInMainWorld("desktopBridge", {
   pickFolder: () => ipcRenderer.invoke(IPC_CHANNELS.PICK_FOLDER),

@@ -1,4 +1,0 @@
-# Copy to dev-app-update.yml to test auto-updates locally.
-# See: https://www.electron.build/auto-update#debugging
-provider: generic
-url: https://example.com/releases

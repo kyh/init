@@ -1,14 +1,4 @@
 {
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "CommonJS",
-    "moduleResolution": "node",
-    "esModuleInterop": true,
-    "strict": true,
-    "skipLibCheck": true,
-    "outDir": "dist",
-    "types": ["node"],
-    "lib": ["ES2022"]
-  },
-  "include": ["src", "tsdown.config.ts"]
+  "files": [],
+  "references": [{ "path": "./tsconfig.node.json" }]
 }

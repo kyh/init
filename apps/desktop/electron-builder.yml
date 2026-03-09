@@ -2,13 +2,13 @@ appId: com.init.electron
 productName: Init
 directories:
   buildResources: resources
-  output: release
+  output: dist
 files:
   - "!**/.vscode/*"
   - "!src/*"
-  - "!tsdown.config.*"
+  - "!electron.vite.config.*"
   - "!{.eslintignore,.eslintrc.js,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}"
-  - "!{tsconfig.json,tsconfig.web.json}"
+  - "!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}"
 asarUnpack:
   - resources/**
 win:

@@ -3,26 +3,27 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "main": "./dist/main.js",
+  "main": "./out/main/index.js",
   "scripts": {
-    "build": "tsdown",
+    "build": "electron-vite build",
     "build:linux": "pnpm build && electron-builder --linux",
     "build:mac": "pnpm build && electron-builder --mac",
     "build:win": "pnpm build && electron-builder --win",
-    "clean": "git clean -xdf .cache dist release node_modules",
-    "dev": "tsdown && concurrently -k \"tsdown --watch\" \"electron .\"",
-    "start": "electron .",
-    "typecheck": "tsc --noEmit"
+    "clean": "git clean -xdf .cache out dist node_modules",
+    "dev": "electron-vite dev",
+    "start": "electron-vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.node.json"
   },
   "dependencies": {
     "electron-updater": "^6.6.2"
   },
   "devDependencies": {
+    "@electron-toolkit/tsconfig": "^2.0.0",
     "@types/node": "catalog:",
-    "concurrently": "^9.1.2",
     "electron": "^40.8.0",
     "electron-builder": "^26.8.1",
-    "tsdown": "^0.12.4",
-    "typescript": "catalog:"
+    "electron-vite": "^5.0.0",
+    "typescript": "catalog:",
+    "vite": "catalog:"
   }
 }

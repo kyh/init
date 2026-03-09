@@ -1,7 +1,3 @@
-// Dev: tsdown --watch rebuilds on file changes but Electron does not
-// auto-restart. Use Ctrl+R to reload the renderer, or restart the
-// process for main-process changes.
-
 import * as fs from "node:fs";
 import * as Path from "node:path";
 
@@ -20,8 +16,8 @@ import {
   IPC_CHANNELS,
   isHttpUrl,
   toErrorMessage,
-} from "./types";
-import type { UpdateState } from "./types";
+} from "../types";
+import type { UpdateState } from "../types";
 
 const WEBAPP_DEV_URL = "http://localhost:3000";
 const isDevelopment = !app.isPackaged;
@@ -182,7 +178,7 @@ function configureApplicationMenu(): void {
 
 function resolveIconPath(ext: "ico" | "icns" | "png"): string | null {
   const candidates = [
-    Path.join(__dirname, "../resources", `icon.${ext}`),
+    Path.join(__dirname, "../../resources", `icon.${ext}`),
     Path.join(process.resourcesPath, "resources", `icon.${ext}`),
     Path.join(process.resourcesPath, `icon.${ext}`),
   ];
@@ -370,7 +366,7 @@ function createWindow(): BrowserWindow {
     titleBarStyle: "hiddenInset",
     trafficLightPosition: { x: 16, y: 16 },
     webPreferences: {
-      preload: Path.join(__dirname, "preload.js"),
+      preload: Path.join(__dirname, "../preload/index.js"),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
