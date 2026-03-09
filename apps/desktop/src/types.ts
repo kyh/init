@@ -49,6 +49,8 @@ const UPDATE_STATUSES = new Set([
   "error",
 ]);
 
+/** Intentionally validates only `status` — called in a sandboxed preload
+ *  where the value always originates from the main process via IPC. */
 export function isUpdateState(value: unknown): value is UpdateState {
   if (typeof value !== "object" || value === null) return false;
   const obj = value as Record<string, unknown>;

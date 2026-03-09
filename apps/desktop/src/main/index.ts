@@ -96,11 +96,9 @@ function dispatchMenuAction(action: string): void {
 
   const send = () => {
     if (win.isDestroyed()) return;
-    win.webContents.send(IPC_CHANNELS.MENU_ACTION, action);
-    if (!win.isVisible()) {
-      win.show();
-    }
+    if (!win.isVisible()) win.show();
     win.focus();
+    win.webContents.send(IPC_CHANNELS.MENU_ACTION, action);
   };
 
   if (win.webContents.isLoadingMainFrame()) {
@@ -285,13 +283,16 @@ function registerIpcHandlers(): void {
     }
   });
 
-  ipcMain.handle(IPC_CHANNELS.UPDATE_INSTALL, async () => {
+  ipcMain.handle(IPC_CHANNELS.UPDATE_INSTALL, (_event) => {
     if (updateState.status !== "downloaded") {
       return { accepted: false, state: updateState };
     }
-    isQuitting = true;
-    autoUpdater.quitAndInstall();
-    throw new Error("unreachable: quitAndInstall exits the app");
+    // Defer quitAndInstall so the IPC response reaches the renderer first
+    setImmediate(() => {
+      isQuitting = true;
+      autoUpdater.quitAndInstall();
+    });
+    return { accepted: true, state: updateState };
   });
 }
 
@@ -431,6 +432,7 @@ app
         mainWindow = createWindow();
       } else {
         mainWindow?.show();
+        mainWindow?.focus();
       }
     });
   })
