@@ -1,3 +1,7 @@
+// Dev: tsdown --watch rebuilds on file changes but Electron does not
+// auto-restart. Use Ctrl+R to reload the renderer, or restart the
+// process for main-process changes.
+
 import * as fs from "node:fs";
 import * as Path from "node:path";
 
