@@ -11,12 +11,11 @@
     "build:win": "pnpm build && electron-builder --win",
     "clean": "git clean -xdf .cache out dist node_modules",
     "dev": "electron-vite dev",
-    "preview": "electron-vite preview",
     "start": "electron-vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.node.json"
   },
   "dependencies": {
-    "@electron-toolkit/utils": "^4.0.0"
+    "electron-updater": "^6.6.2"
   },
   "devDependencies": {
     "@electron-toolkit/tsconfig": "^2.0.0",
