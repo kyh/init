@@ -1,22 +1,11 @@
 import * as fs from "node:fs";
 import path from "node:path";
 
-import {
-  app,
-  BrowserWindow,
-  dialog,
-  ipcMain,
-  Menu,
-  shell,
-} from "electron";
+import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from "electron";
 import type { MenuItemConstructorOptions } from "electron";
 import { autoUpdater } from "electron-updater";
 
-import {
-  IPC_CHANNELS,
-  isHttpUrl,
-  toErrorMessage,
-} from "../types";
+import { IPC_CHANNELS, isHttpUrl, toErrorMessage } from "../types";
 import type { UpdateState } from "../types";
 
 const WEBAPP_DEV_URL = "http://localhost:3000";
@@ -83,9 +72,7 @@ function configureAppIdentity(): void {
 
 function ensureWindow(): BrowserWindow {
   const existing =
-    BrowserWindow.getFocusedWindow() ??
-    mainWindow ??
-    BrowserWindow.getAllWindows()[0];
+    BrowserWindow.getFocusedWindow() ?? mainWindow ?? BrowserWindow.getAllWindows()[0];
   if (existing) return existing;
   mainWindow = createWindow();
   return mainWindow;
@@ -230,40 +217,34 @@ function registerIpcHandlers(): void {
     return result.filePaths[0] ?? null;
   });
 
-  ipcMain.handle(
-    IPC_CHANNELS.CONFIRM,
-    async (_event, message: unknown) => {
-      if (typeof message !== "string") return false;
-      const owner = BrowserWindow.getFocusedWindow() ?? mainWindow;
-      const options = {
-        type: "question" as const,
-        buttons: ["No", "Yes"],
-        defaultId: 1,
-        cancelId: 0,
-        noLink: true,
-        message: message.trim(),
-      };
-      const result = owner
-        ? await dialog.showMessageBox(owner, options)
-        : await dialog.showMessageBox(options);
-      return result.response === 1;
-    },
-  );
+  ipcMain.handle(IPC_CHANNELS.CONFIRM, async (_event, message: unknown) => {
+    if (typeof message !== "string") return false;
+    const owner = BrowserWindow.getFocusedWindow() ?? mainWindow;
+    const options = {
+      type: "question" as const,
+      buttons: ["No", "Yes"],
+      defaultId: 1,
+      cancelId: 0,
+      noLink: true,
+      message: message.trim(),
+    };
+    const result = owner
+      ? await dialog.showMessageBox(owner, options)
+      : await dialog.showMessageBox(options);
+    return result.response === 1;
+  });
 
-  ipcMain.handle(
-    IPC_CHANNELS.OPEN_EXTERNAL,
-    async (_event, rawUrl: unknown) => {
-      if (typeof rawUrl !== "string" || rawUrl.length === 0) return false;
-      if (!isHttpUrl(rawUrl)) return false;
+  ipcMain.handle(IPC_CHANNELS.OPEN_EXTERNAL, async (_event, rawUrl: unknown) => {
+    if (typeof rawUrl !== "string" || rawUrl.length === 0) return false;
+    if (!isHttpUrl(rawUrl)) return false;
 
-      try {
-        await shell.openExternal(rawUrl);
-        return true;
-      } catch {
-        return false;
-      }
-    },
-  );
+    try {
+      await shell.openExternal(rawUrl);
+      return true;
+    } catch {
+      return false;
+    }
+  });
 
   ipcMain.handle(IPC_CHANNELS.UPDATE_CHECK, async () => {
     await checkForUpdates();
