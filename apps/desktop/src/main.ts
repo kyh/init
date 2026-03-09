@@ -282,7 +282,7 @@ function registerIpcHandlers(): void {
       return { accepted: true, state: updateState };
     } catch (error: unknown) {
       setUpdateState({ status: "error", message: toErrorMessage(error) });
-      return { accepted: true, state: updateState };
+      return { accepted: false, state: updateState };
     }
   });
 

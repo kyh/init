@@ -10,11 +10,7 @@ const shared = {
 export default defineConfig([
   {
     ...shared,
-    entry: ["src/main.ts"],
+    entry: ["src/main.ts", "src/preload.ts"],
     clean: true,
-  },
-  {
-    ...shared,
-    entry: ["src/preload.ts"],
   },
 ]);

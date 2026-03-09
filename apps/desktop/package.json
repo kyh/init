@@ -1,8 +1,8 @@
 {
   "name": "@repo/desktop",
   "version": "0.1.0",
-  "type": "module",
   "private": true,
+  "type": "module",
   "main": "./dist/main.js",
   "scripts": {
     "build": "tsdown",
