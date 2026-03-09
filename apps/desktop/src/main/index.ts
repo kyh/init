@@ -161,19 +161,20 @@ function configureApplicationMenu(): void {
     { role: "editMenu" },
     { role: "viewMenu" },
     { role: "windowMenu" },
-    {
-      role: "help",
-      submenu: [
-        ...(process.platform !== "darwin"
-          ? [
+    // On macOS "Check for Updates" lives in the app menu, so skip Help entirely.
+    ...(process.platform !== "darwin"
+      ? [
+          {
+            role: "help" as const,
+            submenu: [
               {
                 label: "Check for Updates...",
                 click: () => void checkForUpdates(),
               },
-            ]
-          : []),
-      ],
-    },
+            ],
+          },
+        ]
+      : []),
   );
 
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
@@ -288,11 +289,15 @@ function registerIpcHandlers(): void {
       return { accepted: false, state: updateState };
     }
     // Defer so the IPC reply reaches the renderer before the process exits.
-    // If quitAndInstall errors after this point the renderer already has a
-    // success response, but the app would remain running for the user to retry.
     setImmediate(() => {
       isQuitting = true;
-      autoUpdater.quitAndInstall();
+      try {
+        autoUpdater.quitAndInstall();
+      } catch (error: unknown) {
+        // Reset so the user can retry without restarting the app.
+        isQuitting = false;
+        setUpdateState({ status: "error", message: toErrorMessage(error) });
+      }
     });
     return { accepted: true, state: updateState };
   });
@@ -365,8 +370,10 @@ function createWindow(): BrowserWindow {
     minWidth: 800,
     minHeight: 600,
     show: false,
-    // Hidden by default on Windows/Linux (Alt to reveal) since the app is web-embedded
-    autoHideMenuBar: true,
+    // On macOS the hidden inset title bar replaces the menu bar; on
+    // Windows/Linux keep the menu visible so Settings (CmdOrCtrl+,) is
+    // discoverable.
+    autoHideMenuBar: process.platform === "darwin",
     ...getIconOption(),
     title: APP_DISPLAY_NAME,
     titleBarStyle: "hiddenInset",

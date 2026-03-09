@@ -33,6 +33,7 @@ apps/mobile/.gitignore
 
 # electron
 out/
+dev-app-update.yml
 
 # production
 packages/mdx/.content-collections/cache
