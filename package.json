@@ -17,12 +17,13 @@
     "dev-extension": "turbo watch dev -F @repo/extension...",
     "dev-desktop": "turbo watch dev -F @repo/desktop...",
     "lint": "oxlint --report-unused-disable-directives",
-    "lint-ws": "pnpm dlx sherif@latest",
+    "lint-fix": "oxlint --fix",
+    "format": "oxfmt",
+    "format-fix": "oxfmt --write",
     "postinstall": "pnpm lint-ws",
     "typecheck": "turbo run typecheck",
     "gen-ui": "pnpm -F ui gen-ui",
-    "setup": "tsx scripts/setup.ts",
-    "format": "oxfmt"
+    "setup": "tsx scripts/setup.ts"
   },
   "devDependencies": {
     "dotenv-cli": "^11.0.0",
