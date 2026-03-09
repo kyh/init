@@ -81,12 +81,18 @@ function configureAppIdentity(): void {
 // Application menu
 // ---------------------------------------------------------------------------
 
-function dispatchMenuAction(action: string): void {
-  const win =
+function getOrCreateWindow(): BrowserWindow {
+  const existing =
     BrowserWindow.getFocusedWindow() ??
     mainWindow ??
-    BrowserWindow.getAllWindows()[0] ??
-    (mainWindow = createWindow());
+    BrowserWindow.getAllWindows()[0];
+  if (existing) return existing;
+  mainWindow = createWindow();
+  return mainWindow;
+}
+
+function dispatchMenuAction(action: string): void {
+  const win = getOrCreateWindow();
 
   const send = () => {
     if (win.isDestroyed()) return;
@@ -187,12 +193,7 @@ function resolveIconPath(ext: "ico" | "icns" | "png"): string | null {
   ];
 
   for (const candidate of candidates) {
-    try {
-      fs.accessSync(candidate);
-      return candidate;
-    } catch {
-      // Not accessible, try next candidate
-    }
+    if (fs.existsSync(candidate)) return candidate;
   }
 
   return null;
@@ -290,8 +291,7 @@ function registerIpcHandlers(): void {
     }
     isQuitting = true;
     autoUpdater.quitAndInstall();
-    // Unreachable — quitAndInstall exits the app
-    return { accepted: true, state: updateState };
+    throw new Error("unreachable: quitAndInstall exits the app");
   });
 }
 
@@ -373,6 +373,7 @@ function createWindow(): BrowserWindow {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
+      webSecurity: true,
     },
   });
 

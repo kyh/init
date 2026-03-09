@@ -37,3 +37,7 @@ linux:
 appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
+# Required for electron-updater — configure before shipping.
+# See: https://www.electron.build/publish
+# publish:
+#   provider: github
