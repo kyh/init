@@ -81,7 +81,7 @@ function configureAppIdentity(): void {
 // Application menu
 // ---------------------------------------------------------------------------
 
-function getOrCreateWindow(): BrowserWindow {
+function ensureWindow(): BrowserWindow {
   const existing =
     BrowserWindow.getFocusedWindow() ??
     mainWindow ??
@@ -92,7 +92,7 @@ function getOrCreateWindow(): BrowserWindow {
 }
 
 function dispatchMenuAction(action: string): void {
-  const win = getOrCreateWindow();
+  const win = ensureWindow();
 
   const send = () => {
     if (win.isDestroyed()) return;
@@ -287,7 +287,9 @@ function registerIpcHandlers(): void {
     if (updateState.status !== "downloaded") {
       return { accepted: false, state: updateState };
     }
-    // Defer quitAndInstall so the IPC response reaches the renderer first
+    // Defer so the IPC reply reaches the renderer before the process exits.
+    // If quitAndInstall errors after this point the renderer already has a
+    // success response, but the app would remain running for the user to retry.
     setImmediate(() => {
       isQuitting = true;
       autoUpdater.quitAndInstall();
@@ -397,7 +399,11 @@ function createWindow(): BrowserWindow {
   void window.loadURL(getWebAppUrl());
 
   if (isDevelopment) {
-    window.webContents.openDevTools({ mode: "detach" });
+    window.webContents.on("before-input-event", (_event, input) => {
+      if (input.key === "F12" && input.type === "keyDown") {
+        window.webContents.toggleDevTools();
+      }
+    });
   }
 
   window.on("closed", () => {
