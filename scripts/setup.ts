@@ -6,17 +6,11 @@ const ROOT_DIR = path.resolve(import.meta.dirname, "..");
 // ── Helpers ──────────────────────────────────────────────
 
 const fileExists = (p: string) => fs.existsSync(path.resolve(ROOT_DIR, p));
-const readJson = (p: string) =>
-  JSON.parse(fs.readFileSync(path.resolve(ROOT_DIR, p), "utf8"));
+const readJson = (p: string) => JSON.parse(fs.readFileSync(path.resolve(ROOT_DIR, p), "utf8"));
 const writeJson = (p: string, data: unknown) =>
-  fs.writeFileSync(
-    path.resolve(ROOT_DIR, p),
-    JSON.stringify(data, null, 2) + "\n",
-  );
-const readText = (p: string) =>
-  fs.readFileSync(path.resolve(ROOT_DIR, p), "utf8");
-const writeText = (p: string, data: string) =>
-  fs.writeFileSync(path.resolve(ROOT_DIR, p), data);
+  fs.writeFileSync(path.resolve(ROOT_DIR, p), JSON.stringify(data, null, 2) + "\n");
+const readText = (p: string) => fs.readFileSync(path.resolve(ROOT_DIR, p), "utf8");
+const writeText = (p: string, data: string) => fs.writeFileSync(path.resolve(ROOT_DIR, p), data);
 const rmDir = (p: string) => {
   const full = path.resolve(ROOT_DIR, p);
   if (fs.existsSync(full)) fs.rmSync(full, { recursive: true, force: true });
@@ -42,10 +36,7 @@ interface CheckboxItem {
   checked: boolean;
 }
 
-function checkbox(
-  message: string,
-  items: CheckboxItem[],
-): Promise<boolean[]> {
+function checkbox(message: string, items: CheckboxItem[]): Promise<boolean[]> {
   return new Promise((resolve) => {
     const { stdin, stdout } = process;
     stdin.setRawMode(true);
@@ -61,18 +52,12 @@ function checkbox(
         stdout.write(CLEAR_LINE);
         const isActive = i === cursor;
         const item = items[i];
-        const checkbox = item.checked
-          ? `${GREEN}◼${RESET}`
-          : `${DIM}◻${RESET}`;
-        const label = isActive
-          ? `${CYAN}${BOLD}${item.label}${RESET}`
-          : item.label;
+        const checkbox = item.checked ? `${GREEN}◼${RESET}` : `${DIM}◻${RESET}`;
+        const label = isActive ? `${CYAN}${BOLD}${item.label}${RESET}` : item.label;
         const pointer = isActive ? `${CYAN}❯${RESET}` : " ";
         stdout.write(`  ${pointer} ${checkbox} ${label}\n`);
       }
-      stdout.write(
-        `${DIM}  ↑/↓ navigate · space toggle · enter confirm${RESET}`,
-      );
+      stdout.write(`${DIM}  ↑/↓ navigate · space toggle · enter confirm${RESET}`);
       // Move cursor back up to top of list
       stdout.write(`\x1b[${items.length}A\r`);
     };
@@ -219,9 +204,7 @@ function removeMobile() {
 
   if (fileExists(".vscode/extensions.json")) {
     const ext = readJson(".vscode/extensions.json");
-    ext.recommendations = ext.recommendations.filter(
-      (r: string) => r !== "expo.vscode-expo-tools",
-    );
+    ext.recommendations = ext.recommendations.filter((r: string) => r !== "expo.vscode-expo-tools");
     writeJson(".vscode/extensions.json", ext);
   }
 }
@@ -264,12 +247,8 @@ async function checkDependencies(kept: App[]) {
       execSync("docker --version", { stdio: "ignore" });
       console.log("  ✓ Docker found (required by Supabase)");
     } catch {
-      console.log(
-        "  ⚠ Docker not found. Supabase requires Docker for local development.",
-      );
-      console.log(
-        "    Install Docker: https://docs.docker.com/get-docker/",
-      );
+      console.log("  ⚠ Docker not found. Supabase requires Docker for local development.");
+      console.log("    Install Docker: https://docs.docker.com/get-docker/");
     }
   }
 }
@@ -284,10 +263,7 @@ function cleanupSelf() {
   rmFile("scripts/setup.ts");
 
   const scriptsDir = path.resolve(ROOT_DIR, "scripts");
-  if (
-    fs.existsSync(scriptsDir) &&
-    fs.readdirSync(scriptsDir).length === 0
-  ) {
+  if (fs.existsSync(scriptsDir) && fs.readdirSync(scriptsDir).length === 0) {
     fs.rmdirSync(scriptsDir);
   }
 }
