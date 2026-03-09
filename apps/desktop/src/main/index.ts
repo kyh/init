@@ -1,5 +1,5 @@
 import * as fs from "node:fs";
-import * as Path from "node:path";
+import path from "node:path";
 
 import {
   app,
@@ -181,9 +181,9 @@ function configureApplicationMenu(): void {
 
 function resolveIconPath(ext: "ico" | "icns" | "png"): string | null {
   const candidates = [
-    Path.join(__dirname, "../../resources", `icon.${ext}`),
-    Path.join(process.resourcesPath, "resources", `icon.${ext}`),
-    Path.join(process.resourcesPath, `icon.${ext}`),
+    path.join(__dirname, "../../resources", `icon.${ext}`),
+    path.join(process.resourcesPath, "resources", `icon.${ext}`),
+    path.join(process.resourcesPath, `icon.${ext}`),
   ];
 
   for (const candidate of candidates) {
@@ -191,17 +191,16 @@ function resolveIconPath(ext: "ico" | "icns" | "png"): string | null {
       fs.accessSync(candidate);
       return candidate;
     } catch {
-      continue;
+      // Not accessible, try next candidate
     }
   }
 
   return null;
 }
 
-let cachedIconOption: { icon: string } | Record<string, never> | null =
-  null;
+let cachedIconOption: Partial<{ icon: string }> | null = null;
 
-function getIconOption(): { icon: string } | Record<string, never> {
+function getIconOption(): Partial<{ icon: string }> {
   if (cachedIconOption) return cachedIconOption;
   if (process.platform === "darwin") {
     cachedIconOption = {};
@@ -291,6 +290,7 @@ function registerIpcHandlers(): void {
     }
     isQuitting = true;
     autoUpdater.quitAndInstall();
+    // Unreachable — quitAndInstall exits the app
     return { accepted: true, state: updateState };
   });
 }
@@ -369,7 +369,7 @@ function createWindow(): BrowserWindow {
     titleBarStyle: "hiddenInset",
     trafficLightPosition: { x: 16, y: 16 },
     webPreferences: {
-      preload: Path.join(__dirname, "../preload/index.js"),
+      preload: path.join(__dirname, "../preload/index.js"),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
