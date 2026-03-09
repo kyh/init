@@ -6,7 +6,7 @@ directories:
 files:
   - "!**/.vscode/*"
   - "!src/*"
-  - "!electron-vite.config.*"
+  - "!electron.vite.config.*"
   - "!{.eslintignore,.eslintrc.js,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}"
   - "!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}"
 asarUnpack:
@@ -37,3 +37,7 @@ linux:
 appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
+# Required for electron-updater — configure before shipping.
+# See: https://www.electron.build/publish
+# publish:
+#   provider: github

@@ -31,6 +31,10 @@ apps/mobile/.gitignore
 **/src-tauri/target/
 **/src-tauri/gen/
 
+# electron
+out/
+dev-app-update.yml
+
 # production
 packages/mdx/.content-collections/cache
 
