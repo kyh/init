@@ -33,6 +33,8 @@ function getWebAppUrl(): string {
   }
   return url;
 }
+/** Delay before first update check so the app finishes loading first. */
+const STARTUP_UPDATE_DELAY_MS = 15_000;
 const APP_DISPLAY_NAME = isDevelopment ? "Init (Dev)" : "Init";
 const APP_USER_MODEL_ID = "com.init.electron";
 
@@ -80,26 +82,23 @@ function configureAppIdentity(): void {
 // ---------------------------------------------------------------------------
 
 function dispatchMenuAction(action: string): void {
-  const existingWindow =
+  const win =
     BrowserWindow.getFocusedWindow() ??
     mainWindow ??
-    BrowserWindow.getAllWindows()[0];
-  const targetWindow = existingWindow ?? createWindow();
-  if (!existingWindow) {
-    mainWindow = targetWindow;
-  }
+    BrowserWindow.getAllWindows()[0] ??
+    (mainWindow = createWindow());
 
   const send = () => {
-    if (targetWindow.isDestroyed()) return;
-    targetWindow.webContents.send(IPC_CHANNELS.MENU_ACTION, action);
-    if (!targetWindow.isVisible()) {
-      targetWindow.show();
+    if (win.isDestroyed()) return;
+    win.webContents.send(IPC_CHANNELS.MENU_ACTION, action);
+    if (!win.isVisible()) {
+      win.show();
     }
-    targetWindow.focus();
+    win.focus();
   };
 
-  if (targetWindow.webContents.isLoadingMainFrame()) {
-    targetWindow.webContents.once("did-finish-load", send);
+  if (win.webContents.isLoadingMainFrame()) {
+    win.webContents.once("did-finish-load", send);
     return;
   }
 
@@ -161,10 +160,14 @@ function configureApplicationMenu(): void {
     {
       role: "help",
       submenu: [
-        {
-          label: "Check for Updates...",
-          click: () => void checkForUpdates(),
-        },
+        ...(process.platform !== "darwin"
+          ? [
+              {
+                label: "Check for Updates...",
+                click: () => void checkForUpdates(),
+              },
+            ]
+          : []),
       ],
     },
   );
@@ -345,8 +348,7 @@ function configureAutoUpdater(): void {
     setUpdateState({ status: "error", message: error.message });
   });
 
-  // Check for updates after a short delay on startup
-  setTimeout(() => void checkForUpdates(), 15_000);
+  setTimeout(() => void checkForUpdates(), STARTUP_UPDATE_DELAY_MS);
 }
 
 // ---------------------------------------------------------------------------
@@ -360,6 +362,7 @@ function createWindow(): BrowserWindow {
     minWidth: 800,
     minHeight: 600,
     show: false,
+    // Hidden by default on Windows/Linux (Alt to reveal) since the app is web-embedded
     autoHideMenuBar: true,
     ...getIconOption(),
     title: APP_DISPLAY_NAME,
@@ -425,6 +428,8 @@ app
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) {
         mainWindow = createWindow();
+      } else {
+        mainWindow?.show();
       }
     });
   })
