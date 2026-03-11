@@ -36,6 +36,7 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "@tailwindcss/oxide",
+      "electron",
       "electron-winstaller",
       "esbuild",
       "sharp",

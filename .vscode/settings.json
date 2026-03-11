@@ -2,7 +2,6 @@
   "files.associations": {
     "*.css": "tailwindcss"
   },
-  "prettier.ignorePath": ".gitignore",
   "tailwindCSS.classFunctions": ["cva", "cx", "cn"],
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "typescript.preferences.autoImportFileExcludePatterns": [

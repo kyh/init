@@ -2,14 +2,16 @@
   "name": "@repo/desktop",
   "version": "0.1.0",
   "private": true,
+  "description": "Init desktop app",
+  "author": "kyh",
   "type": "module",
   "main": "./out/main/index.js",
   "scripts": {
     "build": "electron-vite build",
     "build:linux": "pnpm build && electron-builder --linux",
-    "build:mac": "pnpm build && electron-builder --mac",
+    "build:mac": "node --import tsx ./scripts/build-mac.ts",
     "build:win": "pnpm build && electron-builder --win",
-    "clean": "git clean -xdf .cache out dist node_modules",
+    "clean": "rm -rf .cache out dist",
     "dev": "electron-vite dev",
     "start": "electron-vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.node.json"

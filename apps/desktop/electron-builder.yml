@@ -7,11 +7,12 @@ files:
   - "!**/.vscode/*"
   - "!src/*"
   - "!electron.vite.config.*"
-  - "!{.eslintignore,.eslintrc.js,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}"
+  - "!{dev-app-update.yml,CHANGELOG.md,README.md}"
   - "!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}"
 asarUnpack:
   - resources/**
 win:
+  icon: resources/icon.ico
   executableName: Init
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
@@ -19,6 +20,9 @@ nsis:
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
 mac:
+  artifactName: Init-${version}-${arch}-mac.${ext}
+  category: public.app-category.productivity
+  icon: resources/icon.icns
   entitlementsInherit: resources/entitlements.mac.plist
   extendInfo:
     - NSCameraUsageDescription: Application requests access to the device's camera.
@@ -27,8 +31,9 @@ mac:
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
   notarize: false
 dmg:
-  artifactName: ${name}-${version}.${ext}
+  artifactName: Init-${version}-${arch}.${ext}
 linux:
+  icon: resources/icon.png
   target:
     - AppImage
     - deb

@@ -3,24 +3,20 @@ import path from "node:path";
 
 import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from "electron";
 import type { MenuItemConstructorOptions } from "electron";
-import { autoUpdater } from "electron-updater";
+import electronUpdater from "electron-updater";
 
 import { IPC_CHANNELS, isHttpUrl, toErrorMessage } from "../types";
 import type { UpdateState } from "../types";
+
+const { autoUpdater } = electronUpdater;
+declare const __PACKAGED_WEBAPP_URL__: string;
 
 const WEBAPP_DEV_URL = "http://localhost:3000";
 const isDevelopment = !app.isPackaged;
 
 function getWebAppUrl(): string {
   if (isDevelopment) return WEBAPP_DEV_URL;
-  const url = process.env["WEBAPP_URL"];
-  if (!url) {
-    console.warn(
-      "[desktop] WEBAPP_URL is not set in a packaged build, falling back to localhost:3000",
-    );
-    return WEBAPP_DEV_URL;
-  }
-  return url;
+  return __PACKAGED_WEBAPP_URL__;
 }
 /** Delay before first update check so the app finishes loading first. */
 const STARTUP_UPDATE_DELAY_MS = 15_000;
@@ -191,11 +187,12 @@ function getIconOption(): Partial<{ icon: string }> {
   if (cachedIconOption) return cachedIconOption;
   if (process.platform === "darwin") {
     cachedIconOption = {};
-  } else {
-    const ext = process.platform === "win32" ? "ico" : "png";
-    const iconPath = resolveIconPath(ext);
-    cachedIconOption = iconPath ? { icon: iconPath } : {};
+    return cachedIconOption;
   }
+
+  const ext = process.platform === "win32" ? "ico" : "png";
+  const iconPath = resolveIconPath(ext);
+  cachedIconOption = iconPath ? { icon: iconPath } : {};
   return cachedIconOption;
 }
 
