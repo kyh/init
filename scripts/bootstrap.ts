@@ -1,23 +1,29 @@
+import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const ROOT_DIR = path.resolve(import.meta.dirname, "..");
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT_DIR = path.resolve(__dirname, "..");
+const DRY_RUN = process.argv.includes("--dry-run");
 
 // ── Helpers ──────────────────────────────────────────────
 
 const fileExists = (p: string) => fs.existsSync(path.resolve(ROOT_DIR, p));
 const readJson = (p: string) => JSON.parse(fs.readFileSync(path.resolve(ROOT_DIR, p), "utf8"));
-const writeJson = (p: string, data: unknown) =>
+const writeJson = (p: string, data: unknown) => {
+  if (DRY_RUN) return console.log(`  [dry-run] write ${p}`);
   fs.writeFileSync(path.resolve(ROOT_DIR, p), JSON.stringify(data, null, 2) + "\n");
+};
 const readText = (p: string) => fs.readFileSync(path.resolve(ROOT_DIR, p), "utf8");
-const writeText = (p: string, data: string) => fs.writeFileSync(path.resolve(ROOT_DIR, p), data);
+const writeText = (p: string, data: string) => {
+  if (DRY_RUN) return console.log(`  [dry-run] write ${p}`);
+  fs.writeFileSync(path.resolve(ROOT_DIR, p), data);
+};
 const rmDir = (p: string) => {
+  if (DRY_RUN) return console.log(`  [dry-run] rm -rf ${p}`);
   const full = path.resolve(ROOT_DIR, p);
   if (fs.existsSync(full)) fs.rmSync(full, { recursive: true, force: true });
-};
-const rmFile = (p: string) => {
-  const full = path.resolve(ROOT_DIR, p);
-  if (fs.existsSync(full)) fs.unlinkSync(full);
 };
 
 // ── Checkbox prompt ──────────────────────────────────────
@@ -238,34 +244,77 @@ function removeDesktop() {
 
 // ── Dependency checks ────────────────────────────────────
 
-async function checkDependencies(kept: App[]) {
-  const keptDirs = new Set(kept.map((a) => a.dir));
+function exec(cmd: string, opts?: { stdio?: "inherit" | "ignore" | "pipe" }): Buffer {
+  if (DRY_RUN) {
+    console.log(`  [dry-run] exec: ${cmd}`);
+    return Buffer.from("");
+  }
+  return execSync(cmd, { cwd: ROOT_DIR, ...opts });
+}
 
-  if (keptDirs.has("apps/web") || keptDirs.has("apps/mobile")) {
-    const { execSync } = await import("node:child_process");
-    try {
-      execSync("docker --version", { stdio: "ignore" });
-      console.log("  ✓ Docker found (required by Supabase)");
-    } catch {
-      console.log("  ⚠ Docker not found. Supabase requires Docker for local development.");
-      console.log("    Install Docker: https://docs.docker.com/get-docker/");
-    }
+function commandExists(cmd: string): boolean {
+  try {
+    execSync(`command -v ${cmd}`, { cwd: ROOT_DIR, stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
   }
 }
 
-// ── Self-cleanup ─────────────────────────────────────────
-
-function cleanupSelf() {
-  const pkg = readJson("package.json");
-  delete pkg.scripts["setup"];
-  writeJson("package.json", pkg);
-
-  rmFile("scripts/setup.ts");
-
-  const scriptsDir = path.resolve(ROOT_DIR, "scripts");
-  if (fs.existsSync(scriptsDir) && fs.readdirSync(scriptsDir).length === 0) {
-    fs.rmdirSync(scriptsDir);
+function checkDocker() {
+  if (!commandExists("docker")) {
+    console.log("  ✗ Docker not found. Supabase requires Docker for local development.");
+    console.log("    Install Docker: https://docs.docker.com/get-docker/");
+    process.exit(1);
   }
+  console.log("  ✓ Docker found");
+}
+
+// ── Supabase + env setup ─────────────────────────────────
+
+function startSupabase(): Record<string, string> {
+  console.log("\nStarting Supabase...");
+  const output = exec("pnpm -F db supabase start", { stdio: "pipe" }).toString();
+
+  const values: Record<string, string> = {};
+  for (const line of output.split("\n")) {
+    const match = line.match(/^\s*(.+?):\s+(.+)$/);
+    if (match) {
+      values[match[1].trim()] = match[2].trim();
+    }
+  }
+  console.log("  ✓ Supabase started");
+  return values;
+}
+
+function createEnv(supabaseValues: Record<string, string>) {
+  const envPath = ".env";
+  if (fileExists(envPath)) {
+    console.log("  ✓ .env already exists, skipping");
+    return;
+  }
+
+  const apiUrl = supabaseValues["API URL"] ?? "";
+  const anonKey = supabaseValues["anon key"] ?? "";
+  const serviceRoleKey = supabaseValues["service_role key"] ?? "";
+
+  const env = [
+    `NEXT_PUBLIC_SUPABASE_URL="${apiUrl}"`,
+    `NEXT_PUBLIC_SUPABASE_ANON_KEY="${anonKey}"`,
+    `SUPABASE_SERVICE_ROLE_KEY="${serviceRoleKey}"`,
+    `POSTGRES_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"`,
+    `AI_GATEWAY_API_KEY=""`,
+    "",
+  ].join("\n");
+
+  writeText(envPath, env);
+  console.log("  ✓ .env created with Supabase credentials");
+}
+
+function pushSchema() {
+  console.log("\nPushing database schema...");
+  exec("pnpm db-push", { stdio: "inherit" });
+  console.log("  ✓ Schema pushed");
 }
 
 // ── Main ─────────────────────────────────────────────────
@@ -273,18 +322,20 @@ function cleanupSelf() {
 async function main() {
   console.log("\n  Welcome to init setup!\n");
 
+  // ── Step 1: Select apps ──
   const available = apps.filter((app) => fileExists(app.dir));
 
   if (available.length === 0) {
-    console.log("No apps left to configure. Cleaning up setup script...");
-    cleanupSelf();
+    console.log("No apps found to configure.");
     return;
   }
 
-  const selected = await checkbox(
-    "Which apps do you want to include?",
-    available.map((app) => ({ label: app.name, checked: true })),
-  );
+  const selected = DRY_RUN
+    ? available.map(() => true)
+    : await checkbox(
+        "Which apps do you want to include?",
+        available.map((app) => ({ label: app.name, checked: true })),
+      );
 
   const toKeep = available.filter((_, i) => selected[i]);
   const toRemove = available.filter((_, i) => !selected[i]);
@@ -301,19 +352,25 @@ async function main() {
       console.log(`  Removing ${app.name}...`);
       app.remove();
     }
+
+    console.log("\nReinstalling dependencies...");
+    exec("pnpm install", { stdio: "inherit" });
   }
 
+  // ── Step 2: Check dependencies ──
   console.log("\nChecking dependencies...");
-  await checkDependencies(toKeep);
+  checkDocker();
 
-  console.log("\nRunning pnpm install...");
-  const { execSync } = await import("node:child_process");
-  execSync("pnpm install", { cwd: ROOT_DIR, stdio: "inherit" });
+  // ── Step 3: Start Supabase + create .env ──
+  const supabaseValues = startSupabase();
+  console.log("\nConfiguring environment...");
+  createEnv(supabaseValues);
 
-  console.log("\nCleaning up setup script...");
-  cleanupSelf();
+  // ── Step 4: Push database schema ──
+  pushSchema();
 
-  console.log("\nSetup complete!\n");
+  console.log(`\n  ${GREEN}Setup complete!${RESET}\n`);
+  console.log(`  Run ${CYAN}pnpm dev${RESET} to start developing.\n`);
 }
 
 main().catch((err) => {

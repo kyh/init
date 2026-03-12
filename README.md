@@ -4,41 +4,14 @@ A comprehensive boilerplate to build, launch, and scale your next project 🚀
 
 ## Getting Started
 
-1. Install dependencies:
+**Prerequisites**: [Node.js 20+](https://nodejs.org), [pnpm 10+](https://pnpm.io), [Docker](https://docs.docker.com/get-docker/)
 
 ```sh
 pnpm install
+pnpm bootstrap
 ```
 
-2. Run the setup script to pick which apps to include (web, mobile, extension, desktop):
-
-```sh
-pnpm setup
-```
-
-3. Copy `.env.example` to `.env.local` and update the variables:
-
-```sh
-cp .env.example .env.local
-```
-
-4. Start your local database:
-
-```sh
-pnpm db-start
-```
-
-5. Push the database schema:
-
-```sh
-pnpm db-push
-```
-
-6. Start the development server:
-
-```sh
-pnpm dev
-```
+The bootstrap script will select apps, start Supabase, configure your `.env`, and push the database schema.
 
 ## Project Structure
 
@@ -68,19 +41,22 @@ packages/
 
 ## Scripts
 
-| Command           | Description                   |
-| ----------------- | ----------------------------- |
-| `pnpm dev`        | Run all apps                  |
-| `pnpm dev-web`    | Run Next.js only              |
-| `pnpm dev-mobile` | Run Expo only                 |
-| `pnpm build`      | Build all packages            |
-| `pnpm typecheck`  | Type check all packages       |
-| `pnpm lint`       | Lint all packages             |
-| `pnpm db-start`   | Start local Supabase (Docker) |
-| `pnpm db-stop`    | Stop local Supabase           |
-| `pnpm db-push`    | Push Drizzle schema           |
-| `pnpm db-reset`   | Reset and push schema         |
-| `pnpm gen-ui`     | Add shadcn components         |
+| Command              | Description                   |
+| -------------------- | ----------------------------- |
+| `pnpm dev`           | Run all apps                  |
+| `pnpm dev-web`       | Run Next.js only              |
+| `pnpm dev-mobile`    | Run Expo only                 |
+| `pnpm dev-extension` | Run Chrome extension only     |
+| `pnpm dev-desktop`   | Run Electron only             |
+| `pnpm build`         | Build all packages            |
+| `pnpm typecheck`     | Type check all packages       |
+| `pnpm lint`          | Lint all packages (oxlint)    |
+| `pnpm format`        | Format all packages (oxfmt)   |
+| `pnpm db-start`      | Start local Supabase (Docker) |
+| `pnpm db-stop`       | Stop local Supabase           |
+| `pnpm db-push`       | Push Drizzle schema           |
+| `pnpm db-reset`      | Reset and push schema         |
+| `pnpm gen-ui`        | Add shadcn components         |
 
 ## License
 

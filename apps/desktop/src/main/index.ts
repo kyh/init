@@ -1,4 +1,3 @@
-import * as fs from "node:fs";
 import path from "node:path";
 
 import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from "electron";
@@ -21,7 +20,6 @@ function getWebAppUrl(): string {
 /** Delay before first update check so the app finishes loading first. */
 const STARTUP_UPDATE_DELAY_MS = 15_000;
 const APP_DISPLAY_NAME = isDevelopment ? "Init (Dev)" : "Init";
-const APP_USER_MODEL_ID = "com.init.electron";
 
 let mainWindow: BrowserWindow | null = null;
 let isQuitting = false;
@@ -56,10 +54,6 @@ function configureAppIdentity(): void {
     applicationName: APP_DISPLAY_NAME,
     applicationVersion: app.getVersion(),
   });
-
-  if (process.platform === "win32") {
-    app.setAppUserModelId(APP_USER_MODEL_ID);
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -93,10 +87,8 @@ function dispatchMenuAction(action: string): void {
 }
 
 function configureApplicationMenu(): void {
-  const template: MenuItemConstructorOptions[] = [];
-
-  if (process.platform === "darwin") {
-    template.push({
+  const template: MenuItemConstructorOptions[] = [
+    {
       label: app.name,
       submenu: [
         { role: "about" },
@@ -119,81 +111,19 @@ function configureApplicationMenu(): void {
         { type: "separator" },
         { role: "quit" },
       ],
-    });
-  }
-
-  template.push(
+    },
     {
       label: "File",
       submenu: [
-        ...(process.platform === "darwin"
-          ? []
-          : [
-              {
-                label: "Settings...",
-                accelerator: "CmdOrCtrl+,",
-                click: () => dispatchMenuAction("open-settings"),
-              },
-              { type: "separator" as const },
-            ]),
-        {
-          role: process.platform === "darwin" ? ("close" as const) : ("quit" as const),
-        },
+        { role: "close" },
       ],
     },
     { role: "editMenu" },
     { role: "viewMenu" },
     { role: "windowMenu" },
-    // On macOS "Check for Updates" lives in the app menu, so skip Help entirely.
-    ...(process.platform !== "darwin"
-      ? [
-          {
-            role: "help" as const,
-            submenu: [
-              {
-                label: "Check for Updates...",
-                click: () => void checkForUpdates(),
-              },
-            ],
-          },
-        ]
-      : []),
-  );
-
-  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
-}
-
-// ---------------------------------------------------------------------------
-// Icon resolution
-// ---------------------------------------------------------------------------
-
-function resolveIconPath(ext: "ico" | "icns" | "png"): string | null {
-  const candidates = [
-    path.join(__dirname, "../../../resources", `icon.${ext}`),
-    path.join(process.resourcesPath, "resources", `icon.${ext}`),
-    path.join(process.resourcesPath, `icon.${ext}`),
   ];
 
-  for (const candidate of candidates) {
-    if (fs.existsSync(candidate)) return candidate;
-  }
-
-  return null;
-}
-
-let cachedIconOption: Partial<{ icon: string }> | null = null;
-
-function getIconOption(): Partial<{ icon: string }> {
-  if (cachedIconOption) return cachedIconOption;
-  if (process.platform === "darwin") {
-    cachedIconOption = {};
-    return cachedIconOption;
-  }
-
-  const ext = process.platform === "win32" ? "ico" : "png";
-  const iconPath = resolveIconPath(ext);
-  cachedIconOption = iconPath ? { icon: iconPath } : {};
-  return cachedIconOption;
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
 // ---------------------------------------------------------------------------
@@ -348,11 +278,7 @@ function createWindow(): BrowserWindow {
     minWidth: 800,
     minHeight: 600,
     show: false,
-    // On macOS the hidden inset title bar replaces the menu bar; on
-    // Windows/Linux keep the menu visible so Settings (CmdOrCtrl+,) is
-    // discoverable.
-    autoHideMenuBar: process.platform === "darwin",
-    ...getIconOption(),
+    autoHideMenuBar: true,
     title: APP_DISPLAY_NAME,
     titleBarStyle: "hiddenInset",
     trafficLightPosition: { x: 16, y: 16 },
@@ -433,19 +359,11 @@ app
     app.quit();
   });
 
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
-});
-
 // Handle POSIX signals for clean shutdown
-if (process.platform !== "win32") {
-  const handleSignal = () => {
-    if (isQuitting) return;
-    isQuitting = true;
-    app.quit();
-  };
-  process.on("SIGINT", handleSignal);
-  process.on("SIGTERM", handleSignal);
-}
+const handleSignal = () => {
+  if (isQuitting) return;
+  isQuitting = true;
+  app.quit();
+};
+process.on("SIGINT", handleSignal);
+process.on("SIGTERM", handleSignal);
