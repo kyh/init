@@ -12,7 +12,7 @@
     "clean": "rm -rf .cache .output",
     "dev": "electron-vite dev",
     "start": "electron-vite preview",
-    "typecheck": "tsc --noEmit -p tsconfig.node.json"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "electron-updater": "^6.8.3"
