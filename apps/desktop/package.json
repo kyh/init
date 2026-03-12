@@ -20,7 +20,7 @@
   "devDependencies": {
     "@electron-toolkit/tsconfig": "^2.0.0",
     "@types/node": "catalog:",
-    "electron": "^40.8.0",
+    "electron": "^40.8.1",
     "electron-builder": "^26.8.1",
     "electron-vite": "^5.0.0",
     "typescript": "catalog:",
