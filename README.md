@@ -2,18 +2,6 @@
 
 A comprehensive boilerplate to build, launch, and scale your next project 🚀
 
-## Stack
-
-- [Next.js](https://nextjs.org)
-- [Expo](https://expo.dev)
-- [Chrome Extension (WXT)](https://wxt.dev)
-- [Electron](https://www.electronjs.org)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Supabase](https://supabase.com)
-- [better-auth](https://www.better-auth.com)
-
 ## Getting Started
 
 1. Install dependencies:
@@ -58,13 +46,25 @@ pnpm dev
 apps/
   web/         # Next.js web app
   mobile/      # Expo/React Native mobile app
-  extension/   # Chrome extension (WXT)
+  extension/   # WXT Chrome extension
   desktop/     # Electron desktop app
 packages/
   api/         # tRPC router + better-auth
   db/          # Drizzle schema + Supabase client
   ui/          # Shared React components
 ```
+
+## Links
+
+- [Next.js](https://nextjs.org)
+- [Expo](https://expo.dev)
+- [Chrome Extension (WXT)](https://wxt.dev)
+- [Electron](https://www.electronjs.org)
+- [Tailwind CSS](https://tailwindcss.com)
+- [tRPC](https://trpc.io)
+- [Drizzle](https://orm.drizzle.team)
+- [Supabase](https://supabase.com)
+- [better-auth](https://www.better-auth.com)
 
 ## Scripts
 

@@ -9,13 +9,14 @@ type PackageJson = {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const appDir = path.resolve(__dirname, "..");
-const distDir = path.join(appDir, "dist");
-const outDir = path.join(appDir, "out");
+const outputDir = path.join(appDir, ".output");
+const appBuildDir = path.join(outputDir, "app");
+const binaryOutputDir = path.join(outputDir, "bin");
 const packageJsonPath = path.join(appDir, "package.json");
 const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as PackageJson;
 const version = packageJson.version;
-const appBundlePath = path.join(distDir, "mac-arm64", "Init.app");
-const zipPath = path.join(distDir, `Init-${version}-arm64-mac.zip`);
+const appBundlePath = path.join(binaryOutputDir, "mac-arm64", "Init.app");
+const zipPath = path.join(binaryOutputDir, `Init-${version}-arm64-mac.zip`);
 
 function run(command: string, args: string[]): void {
   execFileSync(command, args, {
@@ -25,8 +26,7 @@ function run(command: string, args: string[]): void {
 }
 
 function cleanOutputs(): void {
-  rmSync(outDir, { force: true, recursive: true });
-  rmSync(distDir, { force: true, recursive: true });
+  rmSync(outputDir, { force: true, recursive: true });
 }
 
 cleanOutputs();
@@ -36,6 +36,10 @@ run("electron-builder", ["--mac", "dir"]);
 
 if (!existsSync(appBundlePath)) {
   throw new Error(`Expected app bundle at ${appBundlePath}`);
+}
+
+if (!existsSync(appBuildDir)) {
+  throw new Error(`Expected app build output at ${appBuildDir}`);
 }
 
 run("codesign", ["--force", "--deep", "--sign", "-", appBundlePath]);

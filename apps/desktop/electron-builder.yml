@@ -2,7 +2,7 @@ appId: com.init.electron
 productName: Init
 directories:
   buildResources: resources
-  output: dist
+  output: .output/bin
 files:
   - "!**/.vscode/*"
   - "!src/*"
@@ -11,14 +11,6 @@ files:
   - "!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}"
 asarUnpack:
   - resources/**
-win:
-  icon: resources/icon.ico
-  executableName: Init
-nsis:
-  artifactName: ${name}-${version}-setup.${ext}
-  shortcutName: ${productName}
-  uninstallDisplayName: ${productName}
-  createDesktopShortcut: always
 mac:
   artifactName: Init-${version}-${arch}-mac.${ext}
   category: public.app-category.productivity
@@ -32,15 +24,6 @@ mac:
   notarize: false
 dmg:
   artifactName: Init-${version}-${arch}.${ext}
-linux:
-  icon: resources/icon.png
-  target:
-    - AppImage
-    - deb
-  maintainer: electronjs.org
-  category: Utility
-appImage:
-  artifactName: ${name}-${version}.${ext}
 npmRebuild: false
 # Required for electron-updater — configure before shipping.
 # See: https://www.electron.build/publish

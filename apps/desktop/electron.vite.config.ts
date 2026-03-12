@@ -12,6 +12,7 @@ export default defineConfig({
       __PACKAGED_WEBAPP_URL__: JSON.stringify(packagedWebAppUrl),
     },
     build: {
+      outDir: ".output/app/main",
       rollupOptions: {
         input: {
           index: resolve(__dirname, "src/main/index.ts"),
@@ -22,6 +23,7 @@ export default defineConfig({
   preload: {
     plugins: [externalizeDepsPlugin()],
     build: {
+      outDir: ".output/app/preload",
       rollupOptions: {
         input: {
           index: resolve(__dirname, "src/preload/index.ts"),
@@ -31,6 +33,7 @@ export default defineConfig({
   },
   renderer: {
     build: {
+      outDir: ".output/app/renderer",
       rollupOptions: {
         input: {
           index: resolve(__dirname, "src/renderer/index.html"),

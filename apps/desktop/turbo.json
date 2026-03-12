@@ -3,7 +3,7 @@
   "extends": ["//"],
   "tasks": {
     "build": {
-      "outputs": ["out/**"]
+      "outputs": [".output/**"]
     },
     "dev": {
       "cache": false,

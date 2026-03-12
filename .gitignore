@@ -32,7 +32,7 @@ apps/mobile/.gitignore
 **/src-tauri/gen/
 
 # electron
-out/
+apps/desktop/.output/
 dev-app-update.yml
 
 # production

@@ -169,7 +169,7 @@ function configureApplicationMenu(): void {
 
 function resolveIconPath(ext: "ico" | "icns" | "png"): string | null {
   const candidates = [
-    path.join(__dirname, "../../resources", `icon.${ext}`),
+    path.join(__dirname, "../../../resources", `icon.${ext}`),
     path.join(process.resourcesPath, "resources", `icon.${ext}`),
     path.join(process.resourcesPath, `icon.${ext}`),
   ];
@@ -357,7 +357,7 @@ function createWindow(): BrowserWindow {
     titleBarStyle: "hiddenInset",
     trafficLightPosition: { x: 16, y: 16 },
     webPreferences: {
-      preload: path.join(__dirname, "../preload/index.js"),
+      preload: path.join(__dirname, "../preload/index.mjs"),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
