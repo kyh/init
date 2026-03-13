@@ -33,6 +33,3 @@ onlyBuiltDependencies:
   - "@tailwindcss/oxide"
   - electron
   - esbuild
-
-publicHoistPattern:
-  - "@radix-ui/*"
