@@ -22,6 +22,7 @@
     "format-fix": "oxfmt --write",
     "typecheck": "turbo run typecheck",
     "gen-ui": "pnpm -F ui gen-ui",
+    "test": "turbo run test",
     "bootstrap": "tsx scripts/bootstrap.ts"
   },
   "devDependencies": {

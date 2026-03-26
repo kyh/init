@@ -10,6 +10,7 @@
     "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "gen-ui": "pnpm dlx shadcn@latest add"
   },
@@ -36,7 +37,8 @@
   "devDependencies": {
     "@kyh/tsconfig": "catalog:",
     "@types/react": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "peerDependencies": {
     "react": "catalog:",
