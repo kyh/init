@@ -10,8 +10,8 @@ catalogs:
       specifier: ^1.5.6
       version: 1.5.6
     '@kyh/tsconfig':
-      specifier: ^1.1.13
-      version: 1.1.13
+      specifier: ^1.1.14
+      version: 1.1.14
     '@tailwindcss/postcss':
       specifier: ^4.2.2
       version: 4.2.2
@@ -147,7 +147,7 @@ importers:
     devDependencies:
       '@kyh/tsconfig':
         specifier: 'catalog:'
-        version: 1.1.13
+        version: 1.1.14
       '@tailwindcss/vite':
         specifier: 'catalog:'
         version: 4.2.2(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -265,7 +265,7 @@ importers:
     devDependencies:
       '@kyh/tsconfig':
         specifier: 'catalog:'
-        version: 1.1.13
+        version: 1.1.14
       '@repo/api':
         specifier: workspace:*
         version: link:../../packages/api
@@ -353,7 +353,7 @@ importers:
     devDependencies:
       '@kyh/tsconfig':
         specifier: 'catalog:'
-        version: 1.1.13
+        version: 1.1.14
       '@tailwindcss/postcss':
         specifier: 'catalog:'
         version: 4.2.2
@@ -411,7 +411,7 @@ importers:
     devDependencies:
       '@kyh/tsconfig':
         specifier: 'catalog:'
-        version: 1.1.13
+        version: 1.1.14
       '@types/node':
         specifier: 'catalog:'
         version: 25.5.0
@@ -451,7 +451,7 @@ importers:
     devDependencies:
       '@kyh/tsconfig':
         specifier: 'catalog:'
-        version: 1.1.13
+        version: 1.1.14
       '@types/react':
         specifier: 'catalog:'
         version: 19.2.14
@@ -530,7 +530,7 @@ importers:
     devDependencies:
       '@kyh/tsconfig':
         specifier: 'catalog:'
-        version: 1.1.13
+        version: 1.1.14
       '@types/react':
         specifier: 'catalog:'
         version: 19.2.14
@@ -2214,8 +2214,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@kyh/tsconfig@1.1.13':
-    resolution: {integrity: sha512-COK25yb9tlo5ea/qKYNPENxH95YZqlm6Vb1SyHxMKbyx25ANlF4/rGb+V+hZlNORmni9FcQwJ8IxeswpYTLjqA==}
+  '@kyh/tsconfig@1.1.14':
+    resolution: {integrity: sha512-Bn14z3WTnvIld5j9GYbHuoWyxGPKxF4U+OC+jfQvFruZZyJZOK435xIz7MmvsprrqBUn+6I2DYOS6vyN5k5iXA==}
 
   '@legendapp/list@2.0.19':
     resolution: {integrity: sha512-zDWg8yg0smKxxk+M7gwAbZAnf5uczohPA+IjqLSkImz7+e9ytxeT0Mq35RBO9RTKODOXfV/aIgm1uqUHLBEdmg==}
@@ -11156,7 +11156,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@kyh/tsconfig@1.1.13': {}
+  '@kyh/tsconfig@1.1.14': {}
 
   '@legendapp/list@2.0.19(react-native@0.84.1(@babel/core@7.29.0)(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)':
     dependencies:
