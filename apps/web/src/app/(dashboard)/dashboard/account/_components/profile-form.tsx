@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { getSupabaseBrowserClient } from "@repo/db/supabase-browser-client";
+import { getSupabaseClient } from "@/lib/supabase-client";
 import { Button } from "@repo/ui/button";
 import {
   Field,
@@ -27,7 +27,7 @@ type ProfileFormProps = {
 };
 
 export const ProfileForm = ({ user }: ProfileFormProps) => {
-  const client = getSupabaseBrowserClient();
+  const client = getSupabaseClient();
   const [isUploadingProfileImage, setIsUploadingProfileImage] = useState(false);
 
   const form = useForm({

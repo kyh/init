@@ -28,9 +28,9 @@
   "devDependencies": {
     "dotenv-cli": "^11.0.0",
     "oxfmt": "^0.42.0",
-    "oxlint": "^1.57.0",
+    "oxlint": "^1.59.0",
     "tsx": "^4.21.0",
-    "turbo": "^2.8.21",
+    "turbo": "^2.9.5",
     "typescript": "catalog:"
   },
   "packageManager": "pnpm@10.33.0",

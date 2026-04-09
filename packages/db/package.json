@@ -20,7 +20,6 @@
     "reset": "pnpm with-env supabase db reset && pnpm push",
     "status": "pnpm with-env supabase status",
     "supabase-test": "pnpm with-env supabase db test",
-    "typegen": "pnpm with-env supabase gen types typescript --local > src/database.types.ts",
     "push": "pnpm with-env drizzle-kit push",
     "push-remote": "dotenv -e ../../.env.production.local -- drizzle-kit push",
     "studio": "pnpm with-env drizzle-kit studio",
@@ -28,19 +27,15 @@
     "generate-auth-schema": "pnpm with-env pnpx @better-auth/cli generate --config ../api/src/auth/auth.ts --output ./src/drizzle-schema-auth.ts"
   },
   "dependencies": {
-    "@supabase/ssr": "^0.9.0",
-    "@supabase/supabase-js": "^2.100.1",
     "drizzle-orm": "^0.45.2",
-    "next": "catalog:",
-    "postgres": "^3.4.8",
-    "react": "catalog:",
+    "postgres": "^3.4.9",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@kyh/tsconfig": "catalog:",
-    "@types/react": "catalog:",
+    "@types/node": "catalog:",
     "drizzle-kit": "^0.31.10",
-    "supabase": "^2.84.4",
+    "supabase": "^2.89.0",
     "typescript": "catalog:"
   }
 }
