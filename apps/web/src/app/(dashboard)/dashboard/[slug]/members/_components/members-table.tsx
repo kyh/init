@@ -1,10 +1,10 @@
 "use client";
 
 import { useMemo } from "react";
-import { alertDialog } from "@repo/ui/alert-dialog";
-import { ProfileAvatar } from "@repo/ui/avatar";
-import { Badge } from "@repo/ui/badge";
-import { Button } from "@repo/ui/button";
+import { alertDialog } from "@repo/ui/components/alert-dialog";
+import { ProfileAvatar } from "@repo/ui/components/avatar";
+import { Badge } from "@repo/ui/components/badge";
+import { Button } from "@repo/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,9 +15,9 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@repo/ui/dropdown-menu";
-import { AutoTable } from "@repo/ui/table";
-import { toast } from "@repo/ui/toast";
+} from "@repo/ui/components/dropdown-menu";
+import { AutoTable } from "@repo/ui/components/table";
+import { toast } from "@repo/ui/components/toast";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { MoreHorizontalIcon } from "lucide-react";
@@ -172,10 +172,8 @@ const ActionsDropdown = ({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button aria-label="Open menu" variant="ghost" size="icon">
-          <MoreHorizontalIcon />
-        </Button>
+      <DropdownMenuTrigger render={<Button aria-label="Open menu" variant="ghost" size="icon" />}>
+        <MoreHorizontalIcon />
       </DropdownMenuTrigger>
       <DropdownMenuContent>{actions.map((action) => action)}</DropdownMenuContent>
     </DropdownMenu>

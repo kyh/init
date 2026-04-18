@@ -5,7 +5,7 @@ import { Command as CommandPrimitive } from "cmdk";
 import { SearchIcon } from "lucide-react";
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./dialog";
-import { cn } from "./utils";
+import { cn } from "@repo/ui/lib/utils";
 
 const Command = ({ className, ...props }: React.ComponentProps<typeof CommandPrimitive>) => {
   return (
@@ -27,11 +27,12 @@ const CommandDialog = ({
   className,
   showCloseButton = true,
   ...props
-}: React.ComponentProps<typeof Dialog> & {
+}: Omit<React.ComponentProps<typeof Dialog>, "children"> & {
   title?: string;
   description?: string;
   className?: string;
   showCloseButton?: boolean;
+  children?: React.ReactNode;
 }) => {
   return (
     <Dialog {...props}>

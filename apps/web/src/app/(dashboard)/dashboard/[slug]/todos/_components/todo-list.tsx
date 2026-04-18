@@ -2,12 +2,12 @@
 
 import type { FormEvent } from "react";
 import { useState } from "react";
-import { alertDialog } from "@repo/ui/alert-dialog";
-import { Button } from "@repo/ui/button";
-import { Checkbox } from "@repo/ui/checkbox";
-import { Input } from "@repo/ui/input";
-import { toast } from "@repo/ui/toast";
-import { cn } from "@repo/ui/utils";
+import { alertDialog } from "@repo/ui/components/alert-dialog";
+import { Button } from "@repo/ui/components/button";
+import { Checkbox } from "@repo/ui/components/checkbox";
+import { Input } from "@repo/ui/components/input";
+import { toast } from "@repo/ui/components/toast";
+import { cn } from "@repo/ui/lib/utils";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { PencilIcon, Trash2Icon } from "lucide-react";
 

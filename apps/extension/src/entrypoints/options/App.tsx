@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { Button } from "@repo/ui/button";
-import { Input } from "@repo/ui/input";
-import { Label } from "@repo/ui/label";
-import { Spinner } from "@repo/ui/spinner";
+import { Button } from "@repo/ui/components/button";
+import { Input } from "@repo/ui/components/input";
+import { Label } from "@repo/ui/components/label";
+import { Spinner } from "@repo/ui/components/spinner";
 import { Save, ExternalLink } from "lucide-react";
 
 import { getStorageData, setStorageData } from "@/lib/storage";

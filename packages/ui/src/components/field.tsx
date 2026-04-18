@@ -6,7 +6,7 @@ import { cva } from "class-variance-authority";
 
 import { Label } from "./label";
 import { Separator } from "./separator";
-import { cn } from "./utils";
+import { cn } from "@repo/ui/lib/utils";
 
 const fieldVariants = cva("group/field data-[invalid=true]:text-destructive flex w-full gap-3", {
   variants: {

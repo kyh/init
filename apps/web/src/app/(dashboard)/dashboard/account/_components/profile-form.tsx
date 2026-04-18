@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { getSupabaseClient } from "@/lib/supabase-client";
-import { Button } from "@repo/ui/button";
+import { Button } from "@repo/ui/components/button";
 import {
   Field,
   FieldContent,
@@ -11,9 +11,9 @@ import {
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@repo/ui/field";
-import { Input } from "@repo/ui/input";
-import { toast } from "@repo/ui/toast";
+} from "@repo/ui/components/field";
+import { Input } from "@repo/ui/components/input";
+import { toast } from "@repo/ui/components/toast";
 import { ImageIcon } from "lucide-react";
 import { useForm } from "@tanstack/react-form";
 import { z } from "zod";

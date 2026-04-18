@@ -10,8 +10,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@repo/ui/alert-dialog";
-import { Button } from "@repo/ui/button";
+} from "@repo/ui/components/alert-dialog";
+import { Button } from "@repo/ui/components/button";
 import {
   Field,
   FieldContent,
@@ -19,9 +19,9 @@ import {
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@repo/ui/field";
-import { Input } from "@repo/ui/input";
-import { toast } from "@repo/ui/toast";
+} from "@repo/ui/components/field";
+import { Input } from "@repo/ui/components/input";
+import { toast } from "@repo/ui/components/toast";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
@@ -90,10 +90,8 @@ const Delete = ({ organization }: DeleteProps) => {
       </div>
       <div>
         <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button type="button" variant="destructive">
-              Delete Organization
-            </Button>
+          <AlertDialogTrigger render={<Button type="button" variant="destructive" />}>
+            Delete Organization
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -205,10 +203,8 @@ const Leave = ({ organization }: LeaveProps) => {
         to it and will need to be re-invited to join
       </p>
       <AlertDialog>
-        <AlertDialogTrigger asChild>
-          <Button type="button" variant="destructive">
-            Leave Organization
-          </Button>
+        <AlertDialogTrigger render={<Button type="button" variant="destructive" />}>
+          Leave Organization
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>

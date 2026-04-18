@@ -1,10 +1,10 @@
 "use client";
 
 import { joinWaitlistInput } from "@repo/api/waitlist/waitlist-schema";
-import { Button } from "@repo/ui/button";
-import { Field, FieldContent, FieldError, FieldLabel } from "@repo/ui/field";
-import { toast } from "@repo/ui/toast";
-import { cn } from "@repo/ui/utils";
+import { Button } from "@repo/ui/components/button";
+import { Field, FieldContent, FieldError, FieldLabel } from "@repo/ui/components/field";
+import { toast } from "@repo/ui/components/toast";
+import { cn } from "@repo/ui/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
 

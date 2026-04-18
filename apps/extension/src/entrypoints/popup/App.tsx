@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Button } from "@repo/ui/button";
-import { Spinner } from "@repo/ui/spinner";
+import { Button } from "@repo/ui/components/button";
+import { Spinner } from "@repo/ui/components/spinner";
 import { Settings } from "lucide-react";
 
 import { getStorageData, onStorageChange } from "@/lib/storage";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@repo/ui/button";
+import { Button } from "@repo/ui/components/button";
 import {
   Dialog,
   DialogContent,
@@ -9,12 +9,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@repo/ui/dialog";
-import { Field, FieldContent, FieldError, FieldLabel } from "@repo/ui/field";
-import { Input } from "@repo/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/select";
-import { toast } from "@repo/ui/toast";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/tooltip";
+} from "@repo/ui/components/dialog";
+import { Field, FieldContent, FieldError, FieldLabel } from "@repo/ui/components/field";
+import { Input } from "@repo/ui/components/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/select";
+import { toast } from "@repo/ui/components/toast";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/components/tooltip";
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { PlusIcon, XIcon } from "lucide-react";
@@ -38,11 +38,9 @@ export const InviteMembersDialog = ({ slug }: InviteMembersDialogProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <PlusIcon className="mr-1 size-4" />
-          <span>Invite Members</span>
-        </Button>
+      <DialogTrigger render={<Button size="sm" />}>
+        <PlusIcon className="mr-1 size-4" />
+        <span>Invite Members</span>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -62,13 +60,17 @@ export const InviteMembersDialog = ({ slug }: InviteMembersDialogProps) => {
   );
 };
 
+const roleSchema = z.enum(["owner", "admin", "member"], {
+  error: "Select a role",
+});
+type Role = z.infer<typeof roleSchema>;
+const ROLES: readonly Role[] = ["owner", "admin", "member"];
+
 const inviteMembersSchema = z.object({
   organizationInvitations: z.array(
     z.object({
       email: z.email("Invalid email address"),
-      role: z.enum(["owner", "admin", "member"], {
-        errorMap: () => ({ message: "Select a role" }),
-      }),
+      role: roleSchema,
     }),
   ),
 });
@@ -152,11 +154,7 @@ export const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormPr
                   </form.Field>
                   <form.Field
                     name={`organizationInvitations[${index}].role`}
-                    validators={{
-                      onBlur: z.enum(["owner", "admin", "member"], {
-                        errorMap: () => ({ message: "Select a role" }),
-                      }),
-                    }}
+                    validators={{ onBlur: roleSchema }}
                   >
                     {(field) => {
                       const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
@@ -168,15 +166,18 @@ export const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormPr
                             <Select
                               value={field.state.value ?? ""}
                               onValueChange={(newRole) => {
-                                field.handleChange(newRole as "owner" | "admin" | "member");
-                                field.handleBlur();
+                                const parsed = roleSchema.safeParse(newRole);
+                                if (parsed.success) {
+                                  field.handleChange(parsed.data);
+                                  field.handleBlur();
+                                }
                               }}
                             >
                               <SelectTrigger>
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                {["owner", "admin", "member"].map((role) => (
+                                {ROLES.map((role) => (
                                   <SelectItem
                                     className="text-sm capitalize"
                                     key={role}
@@ -195,19 +196,21 @@ export const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormPr
                   </form.Field>
                   <div className="flex w-[40px] justify-end">
                     <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          type="button"
-                          disabled={(arrayField.state.value?.length ?? 0) <= 1}
-                          aria-label="Remove invite"
-                          onClick={() => {
-                            arrayField.removeValue(index);
-                          }}
-                        >
-                          <XIcon className="h-4 lg:h-5" />
-                        </Button>
+                      <TooltipTrigger
+                        render={
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            type="button"
+                            disabled={(arrayField.state.value?.length ?? 0) <= 1}
+                            aria-label="Remove invite"
+                            onClick={() => {
+                              arrayField.removeValue(index);
+                            }}
+                          />
+                        }
+                      >
+                        <XIcon className="h-4 lg:h-5" />
                       </TooltipTrigger>
                       <TooltipContent>Remove invite</TooltipContent>
                     </Tooltip>
@@ -236,9 +239,9 @@ export const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormPr
   );
 };
 
-const createEmptyInviteModel = () => ({
+const createEmptyInviteModel = (): { email: string; role: Role } => ({
   email: "",
-  role: "member" as const,
+  role: "member",
 });
 
 const useInviteMembers = (organizationId: string) => {

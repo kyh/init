@@ -74,8 +74,8 @@ The main chat interface:
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { Button } from "@repo/ui/button";
-import { toast } from "@repo/ui/toast";
+import { Button } from "@repo/ui/components/button";
+import { toast } from "@repo/ui/components/toast";
 
 export type AIFormProps = {
   slug: string;
@@ -149,8 +149,8 @@ Reusable message display components:
 ```typescript
 // apps/web/src/app/(dashboard)/dashboard/[slug]/(home)/_components/ai-chat-message.tsx
 import type { Message as AIMessage } from "ai";
-import { Avatar } from "@repo/ui/avatar";
-import { cn } from "@repo/ui/utils";
+import { Avatar } from "@repo/ui/components/avatar";
+import { cn } from "@repo/ui/lib/utils";
 
 interface MessageProps {
   message: AIMessage;
@@ -236,8 +236,8 @@ Custom input components for the chat interface:
 ```typescript
 // apps/web/src/app/(dashboard)/dashboard/[slug]/(home)/_components/ai-chat-input.tsx
 import { forwardRef } from "react";
-import { Textarea } from "@repo/ui/textarea";
-import { cn } from "@repo/ui/utils";
+import { Textarea } from "@repo/ui/components/textarea";
+import { cn } from "@repo/ui/lib/utils";
 
 export const PromptInput = forwardRef<
   HTMLDivElement,

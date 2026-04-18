@@ -9,7 +9,7 @@
 - **Package Manager**: pnpm 10.x with workspace catalogs
 - **Build**: Turborepo, Vite, Next.js Turbopack
 - **Language**: TypeScript 5.x, React 19
-- **Styling**: Tailwind CSS 4.x, Radix UI, shadcn/ui patterns
+- **Styling**: Tailwind CSS 4.x, Base UI, shadcn/ui (base-mira registry)
 - **Backend**: tRPC, better-auth, Drizzle ORM
 - **Database**: Supabase (Postgres)
 - **AI**: Vercel AI SDK
@@ -45,6 +45,27 @@ pnpm db-stop          # Stop Supabase
 pnpm db-push          # Push Drizzle schema
 pnpm db-reset         # Reset and push schema
 
-# UI
-pnpm gen-ui           # Add shadcn components
+# UI — add shadcn components (base-mira / Base UI)
+cd packages/ui && pnpm dlx shadcn@latest add <component>
 ```
+
+## UI Package
+
+`packages/ui` follows the shadcn monorepo layout:
+
+```
+packages/ui/
+  src/
+    components/   # primitives + custom shared components (flat)
+    hooks/
+    lib/utils.ts  # cn()
+    styles/globals.css
+  components.json # style: base-mira
+  postcss.config.mjs
+```
+
+Apps import via explicit paths:
+- `@repo/ui/components/<name>` — shared components
+- `@repo/ui/lib/utils` — cn
+- `@repo/ui/globals.css` — base stylesheet
+- `@repo/ui/postcss.config` — shared postcss
