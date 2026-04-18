@@ -88,7 +88,7 @@ export const WaitlistForm = () => {
         type="submit"
         variant="ghost"
         className={cn(
-          "text-xs hover:bg-transparent hover:text-current dark:hover:bg-transparent",
+          "rounded-[0.375rem] px-4 py-2 text-xs hover:bg-transparent hover:text-current dark:hover:bg-transparent",
           joinWaitlist.isPending && "[&>:first-child]:bg-input",
         )}
         loading={joinWaitlist.isPending}
