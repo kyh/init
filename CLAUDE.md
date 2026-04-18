@@ -9,7 +9,7 @@
 - **Package Manager**: pnpm 10.x with workspace catalogs
 - **Build**: Turborepo, Vite, Next.js Turbopack
 - **Language**: TypeScript 5.x, React 19
-- **Styling**: Tailwind CSS 4.x, Base UI, shadcn/ui (base-mira registry)
+- **Styling**: Tailwind CSS 4.x, Base UI, shadcn/ui (base-vega registry)
 - **Backend**: tRPC, better-auth, Drizzle ORM
 - **Database**: Supabase (Postgres)
 - **AI**: Vercel AI SDK
@@ -45,7 +45,7 @@ pnpm db:stop          # Stop Supabase
 pnpm db:push          # Push Drizzle schema
 pnpm db:reset         # Reset and push schema
 
-# UI — add shadcn components (base-mira / Base UI)
+# UI — add shadcn components (base-vega / Base UI)
 cd packages/ui && pnpm dlx shadcn@latest add <component>
 ```
 
@@ -60,7 +60,7 @@ packages/ui/
     hooks/
     lib/utils.ts  # cn()
     styles/globals.css
-  components.json # style: base-mira
+  components.json # style: base-vega
   postcss.config.mjs
 ```
 
