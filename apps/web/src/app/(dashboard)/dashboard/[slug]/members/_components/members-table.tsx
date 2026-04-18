@@ -20,6 +20,7 @@ import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import type { RouterOutputs } from "@repo/api";
 import type { ColumnDef } from "@tanstack/react-table";
 import { authClient } from "@/lib/auth-client";
+import { ROLES, roleSchema } from "@/app/(dashboard)/dashboard/[slug]/_components/role";
 import { TableRowActions } from "@/app/(dashboard)/dashboard/[slug]/_components/table-row-actions";
 import { useOrganization } from "@/app/(dashboard)/dashboard/[slug]/_components/use-organization";
 
@@ -141,7 +142,7 @@ const ActionsDropdown = ({
         <DropdownMenuSubTrigger>Change Role</DropdownMenuSubTrigger>
         <DropdownMenuSubContent>
           <DropdownMenuRadioGroup value={member.role} onValueChange={handleChangeRole}>
-            {["owner", "admin", "member"].map((role) => (
+            {ROLES.map((role) => (
               <DropdownMenuRadioItem key={role} value={role} className="capitalize">
                 {role}
               </DropdownMenuRadioItem>
@@ -173,7 +174,7 @@ const useUpdateMemberRole = (memberId: string) =>
     mutationFn: async (newRole: string) => {
       await authClient.organization.updateMemberRole({
         memberId,
-        role: newRole as "owner" | "admin" | "member",
+        role: roleSchema.parse(newRole),
       });
     },
     onSuccess: () => toast.success("Member role updated successfully"),

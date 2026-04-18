@@ -21,6 +21,7 @@ import { PlusIcon, XIcon } from "lucide-react";
 import { z } from "zod";
 
 import { authClient } from "@/lib/auth-client";
+import { ROLES, type Role, roleSchema } from "@/app/(dashboard)/dashboard/[slug]/_components/role";
 import { useOrganization } from "@/app/(dashboard)/dashboard/[slug]/_components/use-organization";
 
 /**
@@ -59,12 +60,6 @@ export const InviteMembersDialog = ({ slug }: InviteMembersDialogProps) => {
     </Dialog>
   );
 };
-
-const roleSchema = z.enum(["owner", "admin", "member"], {
-  error: "Select a role",
-});
-type Role = z.infer<typeof roleSchema>;
-const ROLES: readonly Role[] = ["owner", "admin", "member"];
 
 const inviteMembersSchema = z.object({
   organizationInvitations: z.array(
