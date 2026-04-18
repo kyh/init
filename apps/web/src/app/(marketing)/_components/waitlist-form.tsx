@@ -41,7 +41,7 @@ export const WaitlistForm = () => {
         event.preventDefault();
         void form.handleSubmit();
       }}
-      className="bg-input mt-10 flex max-w-sm items-center gap-2 rounded-2xl border border-white/10 shadow-lg"
+      className="bg-input mt-10 flex max-w-sm items-center gap-2 rounded-[0.75rem] border border-white/10 shadow-lg"
     >
       <form.Field
         name="email"
