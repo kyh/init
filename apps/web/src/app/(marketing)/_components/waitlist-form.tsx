@@ -86,8 +86,11 @@ export const WaitlistForm = () => {
       </form.Field>
       <Button
         type="submit"
-        className={cn("text-xs", joinWaitlist.isPending && "[&>:first-child]:bg-input")}
         variant="ghost"
+        className={cn(
+          "text-xs hover:bg-transparent hover:text-current",
+          joinWaitlist.isPending && "[&>:first-child]:bg-input",
+        )}
         loading={joinWaitlist.isPending}
       >
         Join Waitlist

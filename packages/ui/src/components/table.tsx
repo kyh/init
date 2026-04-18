@@ -120,11 +120,11 @@ type AutoTableProps<TData> = {
   table: UseReactTable<TData>
 } & React.HTMLAttributes<HTMLTableElement>
 
-export const AutoTable = <TData,>({ table }: AutoTableProps<TData>) => {
+export const AutoTable = <TData,>({ table, ...props }: AutoTableProps<TData>) => {
   const columns = table.getAllColumns()
 
   return (
-    <Table>
+    <Table {...props}>
       <TableHeader>
         {table.getHeaderGroups().map((headerGroup) => (
           <TableRow key={headerGroup.id}>

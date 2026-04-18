@@ -36,14 +36,14 @@ export const Header = () => {
             <span
               className={cn(
                 buttonVariants({ variant: "secondary", size: "sm" }),
-                "pointer-events-none ml-4 w-24 animate-pulse rounded-full px-5",
+                "pointer-events-none ml-4 h-8 w-24 animate-pulse rounded-full px-5",
               )}
             />
           ) : data ? (
             <Link
               className={cn(
                 buttonVariants({ variant: "secondary", size: "sm" }),
-                "ml-4 w-24 rounded-full px-5",
+                "ml-4 h-8 w-24 rounded-full px-5",
               )}
               href={`/dashboard/${data.slug}`}
             >
@@ -53,7 +53,7 @@ export const Header = () => {
             <Link
               className={cn(
                 buttonVariants({ variant: "secondary", size: "sm" }),
-                "ml-4 w-24 rounded-full px-5",
+                "ml-4 h-8 w-24 rounded-full px-5",
               )}
               href="/auth/login"
             >

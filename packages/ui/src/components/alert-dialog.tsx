@@ -259,7 +259,7 @@ export const GlobalAlertDialog = () => {
       setPendingCancel(true)
       const res = alertState.cancel?.onClick?.()
       if (res instanceof Promise) {
-        void res.then(() => {
+        void res.finally(() => {
           setPendingCancel(false)
           alertDialog.close()
         })
@@ -274,7 +274,7 @@ export const GlobalAlertDialog = () => {
     setPendingAction(true)
     const res = alertState.action?.onClick?.()
     if (res instanceof Promise) {
-      void res.then(() => {
+      void res.finally(() => {
         setPendingAction(false)
         alertDialog.close()
       })
