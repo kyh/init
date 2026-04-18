@@ -156,6 +156,7 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
             <Button
               variant="secondary"
               loading={isUploadingProfileImage}
+              nativeButton={false}
               render={<label />}
             >
               <input
