@@ -313,7 +313,7 @@ function createEnv(supabaseValues: Record<string, string>) {
 
 function pushSchema() {
   console.log("\nPushing database schema...");
-  exec("pnpm db-push", { stdio: "inherit" });
+  exec("pnpm db:push", { stdio: "inherit" });
   console.log("  ✓ Schema pushed");
 }
 

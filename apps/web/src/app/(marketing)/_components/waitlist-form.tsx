@@ -41,7 +41,7 @@ export const WaitlistForm = () => {
         event.preventDefault();
         void form.handleSubmit();
       }}
-      className="bg-input mt-10 flex max-w-sm items-center gap-2 rounded-xl border border-white/10 shadow-lg"
+      className="bg-input mt-10 flex max-w-sm items-center gap-2 rounded-2xl border border-white/10 shadow-lg"
     >
       <form.Field
         name="email"
@@ -88,7 +88,7 @@ export const WaitlistForm = () => {
         type="submit"
         variant="ghost"
         className={cn(
-          "text-xs hover:bg-transparent hover:text-current",
+          "text-xs hover:bg-transparent hover:text-current dark:hover:bg-transparent",
           joinWaitlist.isPending && "[&>:first-child]:bg-input",
         )}
         loading={joinWaitlist.isPending}
