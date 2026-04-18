@@ -15,7 +15,13 @@ import {
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/components/avatar";
 import { Button } from "@repo/ui/components/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/select";
 import { Textarea } from "@repo/ui/components/textarea";
 import { cn } from "@repo/ui/lib/utils";
 import {
@@ -46,7 +52,11 @@ import {
   CodeBlockSelectTrigger,
   CodeBlockSelectValue,
 } from "@repo/ui/components/code-block";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@repo/ui/components/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@repo/ui/components/collapsible";
 
 export type AIConversationProps = ComponentProps<typeof StickToBottom>;
 

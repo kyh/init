@@ -278,7 +278,9 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
               }}
             </form.Field>
             <div className="flex justify-end gap-2">
-              <Button type="submit" loading={form.state.isSubmitting}>Create Organization</Button>
+              <Button type="submit" loading={form.state.isSubmitting}>
+                Create Organization
+              </Button>
             </div>
           </FieldGroup>
         </form>

@@ -65,6 +65,7 @@ packages/ui/
 ```
 
 Apps import via explicit paths:
+
 - `@repo/ui/components/<name>` — shared components
 - `@repo/ui/lib/utils` — cn
 - `@repo/ui/globals.css` — base stylesheet

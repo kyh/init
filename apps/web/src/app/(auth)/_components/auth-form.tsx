@@ -3,13 +3,7 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@repo/ui/components/button";
-import {
-  Field,
-  FieldContent,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@repo/ui/components/field";
+import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from "@repo/ui/components/field";
 import { Input } from "@repo/ui/components/input";
 import { toast } from "@repo/ui/components/sonner";
 import { cn } from "@repo/ui/lib/utils";
@@ -124,8 +118,7 @@ export const AuthForm = ({ className, type, ...props }: AuthFormProps) => {
             }}
           >
             {(field) => {
-              const isInvalid =
-                field.state.meta.isTouched && !field.state.meta.isValid;
+              const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
 
               return (
                 <Field data-invalid={isInvalid} className="gap-1">
@@ -139,9 +132,7 @@ export const AuthForm = ({ className, type, ...props }: AuthFormProps) => {
                       name={field.name}
                       value={field.state.value}
                       onBlur={field.handleBlur}
-                      onChange={(event) =>
-                        field.handleChange(event.target.value)
-                      }
+                      onChange={(event) => field.handleChange(event.target.value)}
                       aria-invalid={isInvalid}
                       required
                       type="email"
@@ -163,8 +154,7 @@ export const AuthForm = ({ className, type, ...props }: AuthFormProps) => {
             }}
           >
             {(field) => {
-              const isInvalid =
-                field.state.meta.isTouched && !field.state.meta.isValid;
+              const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
 
               return (
                 <Field data-invalid={isInvalid} className="gap-1">
@@ -178,9 +168,7 @@ export const AuthForm = ({ className, type, ...props }: AuthFormProps) => {
                       name={field.name}
                       value={field.state.value}
                       onBlur={field.handleBlur}
-                      onChange={(event) =>
-                        field.handleChange(event.target.value)
-                      }
+                      onChange={(event) => field.handleChange(event.target.value)}
                       aria-invalid={isInvalid}
                       required
                       type="password"
@@ -234,8 +222,8 @@ export const RequestPasswordResetForm = () => {
       <div className="space-y-4 text-center">
         <div className="rounded-md bg-green-50 p-4 dark:bg-green-900/20">
           <p className="text-sm text-green-800 dark:text-green-200">
-            Password reset email sent! Check your inbox and follow the
-            instructions to reset your password.
+            Password reset email sent! Check your inbox and follow the instructions to reset your
+            password.
           </p>
         </div>
       </div>
@@ -258,8 +246,7 @@ export const RequestPasswordResetForm = () => {
           }}
         >
           {(field) => {
-            const isInvalid =
-              field.state.meta.isTouched && !field.state.meta.isValid;
+            const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
 
             return (
               <Field data-invalid={isInvalid} className="gap-1">
@@ -346,8 +333,7 @@ export const UpdatePasswordForm = () => {
           }}
         >
           {(field) => {
-            const isInvalid =
-              field.state.meta.isTouched && !field.state.meta.isValid;
+            const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
 
             return (
               <Field data-invalid={isInvalid} className="gap-1">
@@ -391,8 +377,7 @@ export const UpdatePasswordForm = () => {
           }}
         >
           {(field) => {
-            const isInvalid =
-              field.state.meta.isTouched && !field.state.meta.isValid;
+            const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
 
             return (
               <Field data-invalid={isInvalid} className="gap-1">

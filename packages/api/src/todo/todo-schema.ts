@@ -4,11 +4,7 @@ export const todoSlugInput = z.object({
   slug: z.string().min(1, "Organization slug is required"),
 });
 
-const titleField = z
-  .string()
-  .trim()
-  .min(1, "Title is required")
-  .max(255, "Title is too long");
+const titleField = z.string().trim().min(1, "Title is required").max(255, "Title is too long");
 const idField = z.uuid();
 const completedField = z.boolean();
 
