@@ -42,6 +42,8 @@ const buttonVariants = cva(
       { variant: "destructive", loading: true, className: "[&>:first-child]:bg-destructive/10" },
       { variant: "outline", loading: true, className: "[&>:first-child]:bg-background" },
       { variant: "secondary", loading: true, className: "[&>:first-child]:bg-secondary" },
+      { variant: "ghost", loading: true, className: "[&>:first-child]:bg-background" },
+      { variant: "link", loading: true, className: "[&>:first-child]:bg-background" },
     ],
     defaultVariants: {
       variant: "default",

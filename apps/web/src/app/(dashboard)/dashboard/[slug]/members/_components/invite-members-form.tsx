@@ -16,12 +16,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@repo/ui/components/sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/components/tooltip";
 import { useForm } from "@tanstack/react-form";
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { PlusIcon, XIcon } from "lucide-react";
 import { z } from "zod";
 
 import { authClient } from "@/lib/auth-client";
-import { useTRPC } from "@/trpc/react";
+import { useOrganization } from "@/app/(dashboard)/dashboard/[slug]/_components/use-organization";
 
 /**
  * The maximum number of invites that can be sent at once.
@@ -81,12 +81,7 @@ type InviteMembersFormProps = {
 };
 
 export const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormProps) => {
-  const trpc = useTRPC();
-  const { data: organizationData } = useSuspenseQuery(
-    trpc.organization.get.queryOptions({
-      slug,
-    }),
-  );
+  const { data: organizationData } = useOrganization(slug);
   const { mutateAsync: inviteMembers, isPending: isInvitingMembers } = useInviteMembers(
     organizationData.organization.id,
   );
@@ -201,7 +196,6 @@ export const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormPr
                           <Button
                             variant="ghost"
                             size="icon"
-                            type="button"
                             disabled={(arrayField.state.value?.length ?? 0) <= 1}
                             aria-label="Remove invite"
                             onClick={() => {
@@ -219,7 +213,6 @@ export const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormPr
               ))}
               {(arrayField.state.value?.length ?? 0) < MAX_INVITES && (
                 <Button
-                  type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => arrayField.pushValue(createEmptyInviteModel())}
@@ -244,27 +237,19 @@ const createEmptyInviteModel = (): { email: string; role: Role } => ({
   role: "member",
 });
 
-const useInviteMembers = (organizationId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+const useInviteMembers = (organizationId: string) =>
+  useMutation({
     mutationFn: async (data: z.infer<typeof inviteMembersSchema>) => {
-      const invitationPromises = data.organizationInvitations.map((invite) =>
-        authClient.organization.inviteMember({
-          email: invite.email,
-          role: invite.role,
-          organizationId,
-        }),
+      await Promise.all(
+        data.organizationInvitations.map((invite) =>
+          authClient.organization.inviteMember({
+            email: invite.email,
+            role: invite.role,
+            organizationId,
+          }),
+        ),
       );
-
-      await Promise.all(invitationPromises);
     },
-    onSuccess: async () => {
-      toast.success("Invitations sent successfully");
-      await queryClient.invalidateQueries();
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
+    onSuccess: () => toast.success("Invitations sent successfully"),
+    onError: (error) => toast.error(error.message),
   });
-};

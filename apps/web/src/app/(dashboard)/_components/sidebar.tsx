@@ -1,7 +1,7 @@
 "use client";
 
 import type { Organization } from "better-auth/plugins/organization";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { slugify } from "@repo/api/auth/utils";
@@ -60,34 +60,16 @@ export const Sidebar = ({ user }: SidebarProps) => {
   const { data: activeOrganization } = authClient.useActiveOrganization();
 
   const rootUrl = `/dashboard/${params.slug ?? activeOrganization?.slug}`;
-  const pageLinks = [
-    {
-      href: rootUrl,
-      label: "Home",
-      exact: true,
-      icon: HomeIcon,
-    },
-    {
-      href: `${rootUrl}/todos`,
-      label: "Todos",
-      icon: CheckSquareIcon,
-    },
-    {
-      href: `${rootUrl}/members`,
-      label: "Members",
-      icon: Users2Icon,
-    },
-    {
-      href: `${rootUrl}/billing`,
-      label: "Billing",
-      icon: CreditCardIcon,
-    },
-    {
-      href: `${rootUrl}/settings`,
-      label: "Settings",
-      icon: SettingsIcon,
-    },
-  ];
+  const pageLinks = useMemo(
+    () => [
+      { href: rootUrl, label: "Home", exact: true, icon: HomeIcon },
+      { href: `${rootUrl}/todos`, label: "Todos", icon: CheckSquareIcon },
+      { href: `${rootUrl}/members`, label: "Members", icon: Users2Icon },
+      { href: `${rootUrl}/billing`, label: "Billing", icon: CreditCardIcon },
+      { href: `${rootUrl}/settings`, label: "Settings", icon: SettingsIcon },
+    ],
+    [rootUrl],
+  );
 
   return (
     <nav className="sticky top-0 flex h-dvh w-[80px] flex-col items-center overflow-x-hidden overflow-y-auto px-4 py-[26px]">

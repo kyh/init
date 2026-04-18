@@ -22,13 +22,13 @@ import {
 } from "@repo/ui/components/field";
 import { Input } from "@repo/ui/components/input";
 import { toast } from "@repo/ui/components/sonner";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
 
 import type { RouterOutputs } from "@repo/api";
 import { authClient } from "@/lib/auth-client";
-import { useTRPC } from "@/trpc/react";
+import { useOrganization } from "@/app/(dashboard)/dashboard/[slug]/_components/use-organization";
 
 type Organization = RouterOutputs["organization"]["get"]["organization"];
 
@@ -37,12 +37,7 @@ type DeleteOrganizationFormProps = {
 };
 
 export const DeleteOrganizationForm = ({ slug }: DeleteOrganizationFormProps) => {
-  const trpc = useTRPC();
-  const { data: organizationData } = useSuspenseQuery(
-    trpc.organization.get.queryOptions({
-      slug,
-    }),
-  );
+  const { data: organizationData } = useOrganization(slug);
   const userIsOwner = organizationData.currentUserMember.role === "owner";
 
   if (organizationData.organizationMetadata.personal) {
@@ -90,7 +85,7 @@ const Delete = ({ organization }: DeleteProps) => {
       </div>
       <div>
         <AlertDialog>
-          <AlertDialogTrigger render={<Button type="button" variant="destructive" />}>
+          <AlertDialogTrigger render={<Button variant="destructive" />}>
             Delete Organization
           </AlertDialogTrigger>
           <AlertDialogContent>
