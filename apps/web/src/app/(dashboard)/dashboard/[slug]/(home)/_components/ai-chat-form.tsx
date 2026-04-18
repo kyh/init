@@ -16,7 +16,7 @@ import {
   AIMessageContent,
   AIResponse,
 } from "@/components/ai";
-import { toast } from "@repo/ui/components/toast";
+import { toast } from "@repo/ui/components/sonner";
 import { DefaultChatTransport } from "ai";
 import { GlobeIcon, MicIcon, PlusIcon } from "lucide-react";
 

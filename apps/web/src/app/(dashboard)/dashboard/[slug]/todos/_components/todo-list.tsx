@@ -6,7 +6,7 @@ import { alertDialog } from "@repo/ui/components/alert-dialog";
 import { Button } from "@repo/ui/components/button";
 import { Checkbox } from "@repo/ui/components/checkbox";
 import { Input } from "@repo/ui/components/input";
-import { toast } from "@repo/ui/components/toast";
+import { toast } from "@repo/ui/components/sonner";
 import { cn } from "@repo/ui/lib/utils";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { PencilIcon, Trash2Icon } from "lucide-react";

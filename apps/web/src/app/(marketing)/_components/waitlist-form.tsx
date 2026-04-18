@@ -3,7 +3,7 @@
 import { joinWaitlistInput } from "@repo/api/waitlist/waitlist-schema";
 import { Button } from "@repo/ui/components/button";
 import { Field, FieldContent, FieldError, FieldLabel } from "@repo/ui/components/field";
-import { toast } from "@repo/ui/components/toast";
+import { toast } from "@repo/ui/components/sonner";
 import { cn } from "@repo/ui/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
@@ -85,6 +85,7 @@ export const WaitlistForm = () => {
         }}
       </form.Field>
       <Button
+        type="submit"
         className={cn("text-xs", joinWaitlist.isPending && "[&>:first-child]:bg-input")}
         variant="ghost"
         loading={joinWaitlist.isPending}

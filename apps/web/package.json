@@ -33,6 +33,7 @@
     "fumadocs-ui": "^16.7.16",
     "lucide-react": "^1.8.0",
     "next": "catalog:",
+    "next-themes": "^0.4.6",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-markdown": "^10.1.0",

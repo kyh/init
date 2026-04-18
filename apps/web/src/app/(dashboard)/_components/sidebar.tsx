@@ -5,7 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { slugify } from "@repo/api/auth/utils";
-import { ProfileAvatar } from "@repo/ui/components/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/components/avatar";
 import { Button } from "@repo/ui/components/button";
 import {
   Dialog,
@@ -30,7 +30,7 @@ import {
 import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from "@repo/ui/components/field";
 import { Input } from "@repo/ui/components/input";
 import { Logo } from "@repo/ui/components/logo";
-import { toast } from "@repo/ui/components/toast";
+import { toast } from "@repo/ui/components/sonner";
 import { cn } from "@repo/ui/lib/utils";
 import {
   CheckIcon,
@@ -177,7 +177,11 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
     <Dialog open={isOrganizationsDialogOpen} onOpenChange={setIsOrganizationsDialogOpen}>
       <DropdownMenu>
         <DropdownMenuTrigger className="mt-auto cursor-pointer">
-          <ProfileAvatar displayName={user.email} avatarUrl={undefined} />
+          <Avatar className="size-9">
+            <AvatarFallback className="animate-in fade-in uppercase">
+              {user.email?.slice(0, 1)}
+            </AvatarFallback>
+          </Avatar>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56" alignOffset={8} sideOffset={8}>
           <DropdownMenuLabel className="font-normal">
@@ -211,11 +215,12 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
                       />
                     }
                   >
-                    <ProfileAvatar
-                      className="size-4"
-                      displayName={org.name}
-                      avatarUrl={org.logo}
-                    />
+                    <Avatar className="size-4">
+                      <AvatarImage src={org.logo ?? undefined} />
+                      <AvatarFallback className="animate-in fade-in uppercase">
+                        {org.name.slice(0, 1)}
+                      </AvatarFallback>
+                    </Avatar>
                     <span className="ml-2">{org.name}</span>
                     <CheckIcon
                       className={cn(
@@ -295,7 +300,7 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
               }}
             </form.Field>
             <div className="flex justify-end gap-2">
-              <Button loading={form.state.isSubmitting}>Create Organization</Button>
+              <Button type="submit" loading={form.state.isSubmitting}>Create Organization</Button>
             </div>
           </FieldGroup>
         </form>

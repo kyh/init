@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { RadioGroup, RadioGroupItem } from "@repo/ui/components/radio-group";
-import { useTheme } from "@repo/ui/components/theme";
+import { useTheme } from "next-themes";
 import { Check, Minus } from "lucide-react";
 
 const items = [

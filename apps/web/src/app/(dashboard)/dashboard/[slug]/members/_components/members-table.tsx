@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { alertDialog } from "@repo/ui/components/alert-dialog";
-import { ProfileAvatar } from "@repo/ui/components/avatar";
+import { Avatar, AvatarFallback } from "@repo/ui/components/avatar";
 import { Badge } from "@repo/ui/components/badge";
 import { Button } from "@repo/ui/components/button";
 import {
@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/components/dropdown-menu";
 import { AutoTable } from "@repo/ui/components/table";
-import { toast } from "@repo/ui/components/toast";
+import { toast } from "@repo/ui/components/sonner";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { MoreHorizontalIcon } from "lucide-react";
@@ -54,10 +54,11 @@ export const MembersTable = ({ slug }: MembersTableProps) => {
 
           return (
             <span className="flex items-center gap-4 text-left">
-              <ProfileAvatar
-                displayName={displayName}
-                avatarUrl={undefined} // TODO: Add avatar support when available
-              />
+              <Avatar className="size-9">
+                <AvatarFallback className="animate-in fade-in uppercase">
+                  {displayName?.slice(0, 1)}
+                </AvatarFallback>
+              </Avatar>
               <span>{displayName}</span>
               {isSelf && <Badge variant="outline">You</Badge>}
             </span>

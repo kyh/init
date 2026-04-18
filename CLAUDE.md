@@ -32,18 +32,18 @@ packages/
 
 ```bash
 pnpm dev              # Run all apps
-pnpm dev-web          # Run Next.js only
-pnpm dev-mobile       # Run Expo only
+pnpm dev:web          # Run Next.js only
+pnpm dev:mobile       # Run Expo only
 pnpm typecheck        # Type check all packages
 pnpm lint             # Lint all packages (oxlint)
 pnpm fmt              # Format all packages (oxfmt)
 pnpm build            # Build all packages
 
 # Database
-pnpm db-start         # Start local Supabase
-pnpm db-stop          # Stop Supabase
-pnpm db-push          # Push Drizzle schema
-pnpm db-reset         # Reset and push schema
+pnpm db:start         # Start local Supabase
+pnpm db:stop          # Stop Supabase
+pnpm db:push          # Push Drizzle schema
+pnpm db:reset         # Reset and push schema
 
 # UI — add shadcn components (base-mira / Base UI)
 cd packages/ui && pnpm dlx shadcn@latest add <component>
