@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { buttonVariants } from "@repo/ui/button";
-import { Logo } from "@repo/ui/logo";
-import { cn } from "@repo/ui/utils";
+import { buttonVariants } from "@repo/ui/components/button";
+import { Logo } from "@repo/ui/components/logo";
+import { cn } from "@repo/ui/lib/utils";
 
 import { authClient } from "@/lib/auth-client";
 

@@ -1,20 +1,12 @@
-import { todo } from "@repo/db/drizzle-schema";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export const todoSlugInput = z.object({
   slug: z.string().min(1, "Organization slug is required"),
 });
 
-const todoInsertSchema = createInsertSchema(todo);
-const todoSelectSchema = createSelectSchema(todo);
-
-const titleField = todoInsertSchema.shape.title
-  .trim()
-  .min(1, "Title is required")
-  .max(255, "Title is too long");
-const idField = todoSelectSchema.shape.id;
-const completedField = todoSelectSchema.shape.completed;
+const titleField = z.string().trim().min(1, "Title is required").max(255, "Title is too long");
+const idField = z.uuid();
+const completedField = z.boolean();
 
 export const createTodoInput = todoSlugInput.extend({
   title: titleField,

@@ -13,11 +13,17 @@ import {
   useState,
 } from "react";
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
-import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/avatar";
-import { Button } from "@repo/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/select";
-import { Textarea } from "@repo/ui/textarea";
-import { cn } from "@repo/ui/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/components/avatar";
+import { Button } from "@repo/ui/components/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/select";
+import { Textarea } from "@repo/ui/components/textarea";
+import { cn } from "@repo/ui/lib/utils";
 import {
   ArrowDownIcon,
   ChevronDownIcon,
@@ -30,7 +36,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 
-import type { BundledLanguage, CodeBlockProps } from "./code-block";
+import type { BundledLanguage, CodeBlockProps } from "@repo/ui/components/code-block";
 import {
   CodeBlock,
   CodeBlockBody,
@@ -45,8 +51,12 @@ import {
   CodeBlockSelectItem,
   CodeBlockSelectTrigger,
   CodeBlockSelectValue,
-} from "./code-block";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./collapsible";
+} from "@repo/ui/components/code-block";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@repo/ui/components/collapsible";
 
 export type AIConversationProps = ComponentProps<typeof StickToBottom>;
 

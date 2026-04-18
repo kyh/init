@@ -15,8 +15,20 @@ const ORG = {
   createdAt: new Date("2024-01-01"),
 };
 
-const MEMBER_OWNER = { id: "mem-1", organizationId: "org-1", userId: "user-1", role: "owner", createdAt: new Date("2024-01-01") };
-const MEMBER_OTHER = { id: "mem-2", organizationId: "org-1", userId: "user-2", role: "member", createdAt: new Date("2024-01-01") };
+const MEMBER_OWNER = {
+  id: "mem-1",
+  organizationId: "org-1",
+  userId: "user-1",
+  role: "owner",
+  createdAt: new Date("2024-01-01"),
+};
+const MEMBER_OTHER = {
+  id: "mem-2",
+  organizationId: "org-1",
+  userId: "user-2",
+  role: "member",
+  createdAt: new Date("2024-01-01"),
+};
 
 const OTHER_USER = {
   ...mockUser,

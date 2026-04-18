@@ -3,7 +3,9 @@ import { createMDX } from "fumadocs-mdx/next";
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
+/** @returns {import("next").NextConfig["images"] extends infer T ? (T extends { remotePatterns?: infer R } ? NonNullable<R> : never) : never} */
 const getRemotePatterns = () => {
+  /** @type {import("next").NextConfig["images"] extends infer T ? (T extends { remotePatterns?: infer R } ? NonNullable<R> : never) : never} */
   const remotePatterns = [];
 
   if (SUPABASE_URL) {

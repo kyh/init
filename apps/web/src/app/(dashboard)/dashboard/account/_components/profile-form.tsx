@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { getSupabaseClient } from "@/lib/supabase-client";
-import { Button } from "@repo/ui/button";
+import { Button } from "@repo/ui/components/button";
 import {
   Field,
   FieldContent,
@@ -11,9 +11,9 @@ import {
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@repo/ui/field";
-import { Input } from "@repo/ui/input";
-import { toast } from "@repo/ui/toast";
+} from "@repo/ui/components/field";
+import { Input } from "@repo/ui/components/input";
+import { toast } from "@repo/ui/components/sonner";
 import { ImageIcon } from "lucide-react";
 import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
@@ -153,15 +153,18 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
               Remove Profile Image
             </Button>
           ) : (
-            <Button variant="secondary" asChild loading={isUploadingProfileImage}>
-              <label>
-                <input
-                  className="invisible absolute inset-0"
-                  type="file"
-                  onChange={handleProfileImageChange}
-                />
-                Change Profile Image
-              </label>
+            <Button
+              variant="secondary"
+              loading={isUploadingProfileImage}
+              nativeButton={false}
+              render={<label />}
+            >
+              <input
+                className="invisible absolute inset-0"
+                type="file"
+                onChange={handleProfileImageChange}
+              />
+              Change Profile Image
             </Button>
           )}
           <p className="text-muted-foreground mt-2 text-xs leading-5">JPG, GIF or PNG. 1MB max.</p>

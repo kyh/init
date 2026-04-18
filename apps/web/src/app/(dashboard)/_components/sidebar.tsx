@@ -1,12 +1,12 @@
 "use client";
 
 import type { Organization } from "better-auth/plugins/organization";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { slugify } from "@repo/api/auth/utils";
-import { ProfileAvatar } from "@repo/ui/avatar";
-import { Button } from "@repo/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/components/avatar";
+import { Button } from "@repo/ui/components/button";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@repo/ui/dialog";
+} from "@repo/ui/components/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,12 +26,12 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@repo/ui/dropdown-menu";
-import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from "@repo/ui/field";
-import { Input } from "@repo/ui/input";
-import { Logo } from "@repo/ui/logo";
-import { toast } from "@repo/ui/toast";
-import { cn } from "@repo/ui/utils";
+} from "@repo/ui/components/dropdown-menu";
+import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from "@repo/ui/components/field";
+import { Input } from "@repo/ui/components/input";
+import { Logo } from "@repo/ui/components/logo";
+import { toast } from "@repo/ui/components/sonner";
+import { cn } from "@repo/ui/lib/utils";
 import {
   CheckIcon,
   CheckSquareIcon,
@@ -60,34 +60,16 @@ export const Sidebar = ({ user }: SidebarProps) => {
   const { data: activeOrganization } = authClient.useActiveOrganization();
 
   const rootUrl = `/dashboard/${params.slug ?? activeOrganization?.slug}`;
-  const pageLinks = [
-    {
-      href: rootUrl,
-      label: "Home",
-      exact: true,
-      icon: HomeIcon,
-    },
-    {
-      href: `${rootUrl}/todos`,
-      label: "Todos",
-      icon: CheckSquareIcon,
-    },
-    {
-      href: `${rootUrl}/members`,
-      label: "Members",
-      icon: Users2Icon,
-    },
-    {
-      href: `${rootUrl}/billing`,
-      label: "Billing",
-      icon: CreditCardIcon,
-    },
-    {
-      href: `${rootUrl}/settings`,
-      label: "Settings",
-      icon: SettingsIcon,
-    },
-  ];
+  const pageLinks = useMemo(
+    () => [
+      { href: rootUrl, label: "Home", exact: true, icon: HomeIcon },
+      { href: `${rootUrl}/todos`, label: "Todos", icon: CheckSquareIcon },
+      { href: `${rootUrl}/members`, label: "Members", icon: Users2Icon },
+      { href: `${rootUrl}/billing`, label: "Billing", icon: CreditCardIcon },
+      { href: `${rootUrl}/settings`, label: "Settings", icon: SettingsIcon },
+    ],
+    [rootUrl],
+  );
 
   return (
     <nav className="sticky top-0 flex h-dvh w-[80px] flex-col items-center overflow-x-hidden overflow-y-auto px-4 py-[26px]">
@@ -177,24 +159,24 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
     <Dialog open={isOrganizationsDialogOpen} onOpenChange={setIsOrganizationsDialogOpen}>
       <DropdownMenu>
         <DropdownMenuTrigger className="mt-auto cursor-pointer">
-          <ProfileAvatar displayName={user.email} avatarUrl={undefined} />
+          <Avatar className="size-9">
+            <AvatarFallback className="animate-in fade-in uppercase">
+              {user.email?.slice(0, 1)}
+            </AvatarFallback>
+          </Avatar>
         </DropdownMenuTrigger>
-        <DropdownMenuContent
-          className="w-56"
-          forceMount
-          alignOffset={8}
-          sideOffset={8}
-          collisionPadding={8}
-        >
-          <DropdownMenuLabel className="font-normal">
-            <div className="flex flex-col gap-1">
-              <p className="text-sm leading-none font-medium">{user.email}</p>
-            </div>
-          </DropdownMenuLabel>
+        <DropdownMenuContent className="w-56" alignOffset={8} sideOffset={8}>
+          <DropdownMenuGroup>
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col gap-1">
+                <p className="text-sm leading-none font-medium">{user.email}</p>
+              </div>
+            </DropdownMenuLabel>
+          </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuItem asChild>
-              <Link href="/dashboard/account">Account Settings</Link>
+            <DropdownMenuItem render={<Link href="/dashboard/account" />}>
+              Account Settings
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
@@ -203,49 +185,50 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
               <DropdownMenuSubTrigger>Switch Organizations</DropdownMenuSubTrigger>
               <DropdownMenuSubContent className="max-h-[300px] max-w-56 overflow-y-auto">
                 {organizations.map((org) => (
-                  <DropdownMenuItem key={org.id} asChild>
-                    <Link
-                      href={`/dashboard/${org.slug}`}
-                      className="inline-flex w-full items-center font-normal"
-                      onClick={() => {
-                        void authClient.organization.setActive({
-                          organizationId: org.id,
-                        });
-                      }}
-                    >
-                      <ProfileAvatar
-                        className="size-4"
-                        displayName={org.name}
-                        avatarUrl={org.logo}
+                  <DropdownMenuItem
+                    key={org.id}
+                    render={
+                      <Link
+                        href={`/dashboard/${org.slug}`}
+                        className="inline-flex w-full items-center font-normal"
+                        onClick={() => {
+                          void authClient.organization.setActive({
+                            organizationId: org.id,
+                          });
+                        }}
                       />
-                      <span className="ml-2">{org.name}</span>
-                      <CheckIcon
-                        className={cn(
-                          "ml-auto size-4",
-                          slug === org.slug ? "opacity-100" : "opacity-0",
-                        )}
-                      />
-                    </Link>
+                    }
+                  >
+                    <Avatar className="size-4">
+                      <AvatarImage src={org.logo ?? undefined} />
+                      <AvatarFallback className="animate-in fade-in uppercase">
+                        {org.name.slice(0, 1)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="ml-2">{org.name}</span>
+                    <CheckIcon
+                      className={cn(
+                        "ml-auto size-4",
+                        slug === org.slug ? "opacity-100" : "opacity-0",
+                      )}
+                    />
                   </DropdownMenuItem>
                 ))}
                 <DropdownMenuSeparator />
-                <DialogTrigger asChild>
-                  <DropdownMenuItem className="flex w-full gap-2" asChild>
-                    <button type="button">
-                      <PlusIcon className="size-4" />
-                      Create a Organization
-                    </button>
-                  </DropdownMenuItem>
+                <DialogTrigger
+                  nativeButton={false}
+                  render={<DropdownMenuItem className="flex w-full gap-2" />}
+                >
+                  <PlusIcon className="size-4" />
+                  Create a Organization
                 </DialogTrigger>
               </DropdownMenuSubContent>
             </DropdownMenuSub>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <button className="flex w-full gap-2" onClick={handleSignOut}>
-              <LogOutIcon className="size-4" />
-              Log out
-            </button>
+          <DropdownMenuItem className="flex w-full gap-2" onClick={handleSignOut}>
+            <LogOutIcon className="size-4" />
+            Log out
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -295,7 +278,9 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
               }}
             </form.Field>
             <div className="flex justify-end gap-2">
-              <Button loading={form.state.isSubmitting}>Create Organization</Button>
+              <Button type="submit" loading={form.state.isSubmitting}>
+                Create Organization
+              </Button>
             </div>
           </FieldGroup>
         </form>

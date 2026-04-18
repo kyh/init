@@ -114,9 +114,7 @@ function configureApplicationMenu(): void {
     },
     {
       label: "File",
-      submenu: [
-        { role: "close" },
-      ],
+      submenu: [{ role: "close" }],
     },
     { role: "editMenu" },
     { role: "viewMenu" },

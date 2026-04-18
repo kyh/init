@@ -8,7 +8,7 @@
   "main": "./.output/app/main/index.js",
   "scripts": {
     "build": "electron-vite build",
-    "build-mac": "node --import tsx ./scripts/build-mac.ts",
+    "build:mac": "node --import tsx ./scripts/build-mac.ts",
     "clean": "rm -rf .cache .output",
     "dev": "electron-vite dev",
     "start": "electron-vite preview",
@@ -20,7 +20,7 @@
   "devDependencies": {
     "@electron-toolkit/tsconfig": "^2.0.0",
     "@types/node": "catalog:",
-    "electron": "^41.2.0",
+    "electron": "^41.2.1",
     "electron-builder": "^26.8.1",
     "electron-vite": "^5.0.0",
     "typescript": "catalog:",

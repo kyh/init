@@ -75,7 +75,10 @@ describe("todoRouter.create", () => {
   it("inserts a todo and returns it", async () => {
     const ctx = authedContext();
     const created = { id: TODO_ID, title: "New todo", completed: false, organizationId: "org-1" };
-    const chain = { values: vi.fn().mockReturnThis(), returning: vi.fn().mockResolvedValue([created]) };
+    const chain = {
+      values: vi.fn().mockReturnThis(),
+      returning: vi.fn().mockResolvedValue([created]),
+    };
     ctx.db.insert.mockReturnValue(chain);
 
     const caller = createCaller(ctx);
@@ -111,9 +114,7 @@ describe("todoRouter.update", () => {
     const result = await caller.update({ slug: "acme", id: TODO_ID, title: "Updated" });
 
     expect(result.todo).toEqual(updated);
-    expect(chain.set).toHaveBeenCalledWith(
-      expect.objectContaining({ title: "Updated" }),
-    );
+    expect(chain.set).toHaveBeenCalledWith(expect.objectContaining({ title: "Updated" }));
   });
 
   it("updates completed status", async () => {
@@ -130,9 +131,7 @@ describe("todoRouter.update", () => {
     const result = await caller.update({ slug: "acme", id: TODO_ID, completed: true });
 
     expect(result.todo?.completed).toBe(true);
-    expect(chain.set).toHaveBeenCalledWith(
-      expect.objectContaining({ completed: true }),
-    );
+    expect(chain.set).toHaveBeenCalledWith(expect.objectContaining({ completed: true }));
   });
 
   it("throws NOT_FOUND when todo does not exist", async () => {
@@ -145,9 +144,9 @@ describe("todoRouter.update", () => {
     ctx.db.update.mockReturnValue(chain);
 
     const caller = createCaller(ctx);
-    await expect(
-      caller.update({ slug: "acme", id: TODO_ID, title: "Nope" }),
-    ).rejects.toThrow("Todo not found");
+    await expect(caller.update({ slug: "acme", id: TODO_ID, title: "Nope" })).rejects.toThrow(
+      "Todo not found",
+    );
   });
 });
 
@@ -177,8 +176,6 @@ describe("todoRouter.delete", () => {
     ctx.db.delete.mockReturnValue(chain);
 
     const caller = createCaller(ctx);
-    await expect(
-      caller.delete({ slug: "acme", id: TODO_ID }),
-    ).rejects.toThrow("Todo not found");
+    await expect(caller.delete({ slug: "acme", id: TODO_ID })).rejects.toThrow("Todo not found");
   });
 });

@@ -7,7 +7,6 @@ export const dynamic = "force-dynamic";
 
 type LayoutProps = {
   children: React.ReactNode;
-  params: Promise<{ slug: string }>;
 };
 
 const Layout = async (props: LayoutProps) => {

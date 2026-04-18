@@ -1,31 +1,28 @@
 "use client";
 
 import { useMemo } from "react";
-import { alertDialog } from "@repo/ui/alert-dialog";
-import { ProfileAvatar } from "@repo/ui/avatar";
-import { Badge } from "@repo/ui/badge";
-import { Button } from "@repo/ui/button";
+import { alertDialog } from "@repo/ui/components/alert-dialog";
+import { Avatar, AvatarFallback } from "@repo/ui/components/avatar";
+import { Badge } from "@repo/ui/components/badge";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from "@repo/ui/dropdown-menu";
-import { AutoTable } from "@repo/ui/table";
-import { toast } from "@repo/ui/toast";
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+} from "@repo/ui/components/dropdown-menu";
+import { AutoTable } from "@repo/ui/components/table";
+import { toast } from "@repo/ui/components/sonner";
+import { useMutation } from "@tanstack/react-query";
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
-import { MoreHorizontalIcon } from "lucide-react";
 
 import type { RouterOutputs } from "@repo/api";
 import type { ColumnDef } from "@tanstack/react-table";
 import { authClient } from "@/lib/auth-client";
-import { useTRPC } from "@/trpc/react";
+import { ROLES, roleSchema } from "@/app/(dashboard)/dashboard/[slug]/_components/role";
+import { TableRowActions } from "@/app/(dashboard)/dashboard/[slug]/_components/table-row-actions";
+import { useOrganization } from "@/app/(dashboard)/dashboard/[slug]/_components/use-organization";
 
 type MemberWithUser = RouterOutputs["organization"]["get"]["members"][number];
 
@@ -34,12 +31,7 @@ type MembersTableProps = {
 };
 
 export const MembersTable = ({ slug }: MembersTableProps) => {
-  const trpc = useTRPC();
-  const { data: organizationData } = useSuspenseQuery(
-    trpc.organization.get.queryOptions({
-      slug,
-    }),
-  );
+  const { data: organizationData } = useOrganization(slug);
   const userId = organizationData.currentUserMember.userId;
   const userRole = organizationData.currentUserMember.role;
 
@@ -54,10 +46,11 @@ export const MembersTable = ({ slug }: MembersTableProps) => {
 
           return (
             <span className="flex items-center gap-4 text-left">
-              <ProfileAvatar
-                displayName={displayName}
-                avatarUrl={undefined} // TODO: Add avatar support when available
-              />
+              <Avatar className="size-9">
+                <AvatarFallback className="animate-in fade-in uppercase">
+                  {displayName?.slice(0, 1)}
+                </AvatarFallback>
+              </Avatar>
               <span>{displayName}</span>
               {isSelf && <Badge variant="outline">You</Badge>}
             </span>
@@ -139,18 +132,17 @@ const ActionsDropdown = ({
     });
   };
 
-  // Members have no permissions to do any actions
   if (userRole === "member") {
     return null;
   }
 
   const actions = [
-    !isMemberSelf && ( // Can't change own role
+    !isMemberSelf && (
       <DropdownMenuSub key="change-role">
         <DropdownMenuSubTrigger>Change Role</DropdownMenuSubTrigger>
         <DropdownMenuSubContent>
           <DropdownMenuRadioGroup value={member.role} onValueChange={handleChangeRole}>
-            {["owner", "admin", "member"].map((role) => (
+            {ROLES.map((role) => (
               <DropdownMenuRadioItem key={role} value={role} className="capitalize">
                 {role}
               </DropdownMenuRadioItem>
@@ -159,7 +151,7 @@ const ActionsDropdown = ({
         </DropdownMenuSubContent>
       </DropdownMenuSub>
     ),
-    !isMemberOwner && ( // Cannot remove owner
+    !isMemberOwner && (
       <DropdownMenuItem key="remove-member" onSelect={handleRemoveFromOrganization}>
         Remove from Organization
       </DropdownMenuItem>
@@ -170,57 +162,32 @@ const ActionsDropdown = ({
     return null;
   }
 
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button aria-label="Open menu" variant="ghost" size="icon">
-          <MoreHorizontalIcon />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent>{actions.map((action) => action)}</DropdownMenuContent>
-    </DropdownMenu>
-  );
+  return <TableRowActions>{actions}</TableRowActions>;
 };
 
 const getDisplayName = (member: MemberWithUser) => {
   return member.user?.name ?? member.user?.email ?? "Unknown";
 };
 
-const useUpdateMemberRole = (memberId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+const useUpdateMemberRole = (memberId: string) =>
+  useMutation({
     mutationFn: async (newRole: string) => {
       await authClient.organization.updateMemberRole({
         memberId,
-        role: newRole as "owner" | "admin" | "member",
+        role: roleSchema.parse(newRole),
       });
     },
-    onSuccess: async () => {
-      toast.success("Member role updated successfully");
-      await queryClient.invalidateQueries();
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
+    onSuccess: () => toast.success("Member role updated successfully"),
+    onError: (error) => toast.error(error.message),
   });
-};
 
-const useRemoveMember = (memberId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+const useRemoveMember = (memberId: string) =>
+  useMutation({
     mutationFn: async () => {
       await authClient.organization.removeMember({
         memberIdOrEmail: memberId,
       });
     },
-    onSuccess: async () => {
-      toast.success("Member removed successfully");
-      await queryClient.invalidateQueries();
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
+    onSuccess: () => toast.success("Member removed successfully"),
+    onError: (error) => toast.error(error.message),
   });
-};

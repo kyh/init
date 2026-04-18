@@ -44,19 +44,18 @@ packages/
 | Command              | Description                   |
 | -------------------- | ----------------------------- |
 | `pnpm dev`           | Run all apps                  |
-| `pnpm dev-web`       | Run Next.js only              |
-| `pnpm dev-mobile`    | Run Expo only                 |
-| `pnpm dev-extension` | Run Chrome extension only     |
-| `pnpm dev-desktop`   | Run Electron only             |
+| `pnpm dev:web`       | Run Next.js only              |
+| `pnpm dev:mobile`    | Run Expo only                 |
+| `pnpm dev:extension` | Run Chrome extension only     |
+| `pnpm dev:desktop`   | Run Electron only             |
 | `pnpm build`         | Build all packages            |
 | `pnpm typecheck`     | Type check all packages       |
 | `pnpm lint`          | Lint all packages (oxlint)    |
 | `pnpm format`        | Format all packages (oxfmt)   |
-| `pnpm db-start`      | Start local Supabase (Docker) |
-| `pnpm db-stop`       | Stop local Supabase           |
-| `pnpm db-push`       | Push Drizzle schema           |
-| `pnpm db-reset`      | Reset and push schema         |
-| `pnpm gen-ui`        | Add shadcn components         |
+| `pnpm db:start`      | Start local Supabase (Docker) |
+| `pnpm db:stop`       | Stop local Supabase           |
+| `pnpm db:push`       | Push Drizzle schema           |
+| `pnpm db:reset`      | Reset and push schema         |
 
 ## License
 

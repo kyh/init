@@ -31,6 +31,6 @@
     "tailwindcss": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
-    "wxt": "^0.20.20"
+    "wxt": "^0.20.24"
   }
 }

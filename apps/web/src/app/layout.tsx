@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { GlobalAlertDialog } from "@repo/ui/alert-dialog";
-import { ThemeProvider } from "@repo/ui/theme";
-import { GlobalToaster } from "@repo/ui/toast";
-import { TooltipProvider } from "@repo/ui/tooltip";
+import { GlobalAlertDialog } from "@repo/ui/components/alert-dialog";
+import { Toaster } from "@repo/ui/components/sonner";
+import { TooltipProvider } from "@repo/ui/components/tooltip";
 
+import { ThemeProvider } from "@/components/theme-provider";
 import { siteConfig } from "@/lib/site-config";
 import { TRPCReactProvider } from "@/trpc/react";
 
@@ -90,10 +90,10 @@ const RootLayout = (props: LayoutProps) => {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="bg-background text-foreground font-sans antialiased">
-        <ThemeProvider attribute="class" forcedTheme="dark">
+        <ThemeProvider>
           <TooltipProvider>
             <TRPCReactProvider>{props.children}</TRPCReactProvider>
-            <GlobalToaster />
+            <Toaster />
             <GlobalAlertDialog />
           </TooltipProvider>
         </ThemeProvider>

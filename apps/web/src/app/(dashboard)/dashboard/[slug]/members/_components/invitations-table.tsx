@@ -1,25 +1,19 @@
 "use client";
 
 import { useMemo } from "react";
-import { alertDialog } from "@repo/ui/alert-dialog";
-import { Badge } from "@repo/ui/badge";
-import { Button } from "@repo/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@repo/ui/dropdown-menu";
-import { AutoTable } from "@repo/ui/table";
-import { toast } from "@repo/ui/toast";
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { alertDialog } from "@repo/ui/components/alert-dialog";
+import { Badge } from "@repo/ui/components/badge";
+import { DropdownMenuItem } from "@repo/ui/components/dropdown-menu";
+import { AutoTable } from "@repo/ui/components/table";
+import { toast } from "@repo/ui/components/sonner";
+import { useMutation } from "@tanstack/react-query";
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
-import { MoreHorizontalIcon } from "lucide-react";
 
 import type { RouterOutputs } from "@repo/api";
 import type { ColumnDef } from "@tanstack/react-table";
 import { authClient } from "@/lib/auth-client";
-import { useTRPC } from "@/trpc/react";
+import { TableRowActions } from "@/app/(dashboard)/dashboard/[slug]/_components/table-row-actions";
+import { useOrganization } from "@/app/(dashboard)/dashboard/[slug]/_components/use-organization";
 
 type Invitation = RouterOutputs["organization"]["get"]["invitations"][number];
 
@@ -28,12 +22,7 @@ type InvitationsTableProps = {
 };
 
 export const InvitationsTable = ({ slug }: InvitationsTableProps) => {
-  const trpc = useTRPC();
-  const { data: organizationData } = useSuspenseQuery(
-    trpc.organization.get.queryOptions({
-      slug,
-    }),
-  );
+  const { data: organizationData } = useOrganization(slug);
   const userRole = organizationData.currentUserMember.role;
 
   const columns = useMemo(() => {
@@ -94,40 +83,24 @@ const ActionsDropdown = ({
     });
   };
 
-  // Members have no permissions to do any actions
   if (userRole === "member") {
     return null;
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button aria-label="Open menu" variant="ghost" size="icon">
-          <MoreHorizontalIcon />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent>
-        <DropdownMenuItem onSelect={handleRemoveInvitation}>Remove Invitation</DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <TableRowActions>
+      <DropdownMenuItem onSelect={handleRemoveInvitation}>Remove Invitation</DropdownMenuItem>
+    </TableRowActions>
   );
 };
 
-const useCancelInvitation = (invitationId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+const useCancelInvitation = (invitationId: string) =>
+  useMutation({
     mutationFn: async () => {
       await authClient.organization.cancelInvitation({
         invitationId,
       });
     },
-    onSuccess: async () => {
-      toast.success("Invitation cancelled successfully");
-      await queryClient.invalidateQueries();
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
+    onSuccess: () => toast.success("Invitation cancelled successfully"),
+    onError: (error) => toast.error(error.message),
   });
-};

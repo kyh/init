@@ -2,10 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { slugify } from "@repo/api/auth/utils";
-import { Button } from "@repo/ui/button";
-import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from "@repo/ui/field";
-import { Input } from "@repo/ui/input";
-import { toast } from "@repo/ui/toast";
+import { Button } from "@repo/ui/components/button";
+import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from "@repo/ui/components/field";
+import { Input } from "@repo/ui/components/input";
+import { toast } from "@repo/ui/components/sonner";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
 import { z } from "zod";

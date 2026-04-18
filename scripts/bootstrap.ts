@@ -138,25 +138,25 @@ const apps: App[] = [
   {
     name: "Web (Next.js)",
     dir: "apps/web",
-    devScript: "dev-web",
+    devScript: "dev:web",
     remove: removeWeb,
   },
   {
     name: "Mobile (Expo/React Native)",
     dir: "apps/mobile",
-    devScript: "dev-mobile",
+    devScript: "dev:mobile",
     remove: removeMobile,
   },
   {
     name: "Extension (Chrome/WXT)",
     dir: "apps/extension",
-    devScript: "dev-extension",
+    devScript: "dev:extension",
     remove: removeExtension,
   },
   {
     name: "Desktop (Electron)",
     dir: "apps/desktop",
-    devScript: "dev-desktop",
+    devScript: "dev:desktop",
     remove: removeDesktop,
   },
 ];
@@ -167,7 +167,7 @@ function removeWeb() {
   rmDir("apps/web");
 
   const pkg = readJson("package.json");
-  delete pkg.scripts["dev-web"];
+  delete pkg.scripts["dev:web"];
   writeJson("package.json", pkg);
 }
 
@@ -175,7 +175,7 @@ function removeMobile() {
   rmDir("apps/mobile");
 
   const pkg = readJson("package.json");
-  delete pkg.scripts["dev-mobile"];
+  delete pkg.scripts["dev:mobile"];
   writeJson("package.json", pkg);
 
   if (fileExists("pnpm-workspace.yaml")) {
@@ -219,7 +219,7 @@ function removeExtension() {
   rmDir("apps/extension");
 
   const pkg = readJson("package.json");
-  delete pkg.scripts["dev-extension"];
+  delete pkg.scripts["dev:extension"];
   writeJson("package.json", pkg);
 
   if (fileExists(".gitignore")) {
@@ -233,7 +233,7 @@ function removeDesktop() {
   rmDir("apps/desktop");
 
   const pkg = readJson("package.json");
-  delete pkg.scripts["dev-desktop"];
+  delete pkg.scripts["dev:desktop"];
   if (pkg.pnpm?.onlyBuiltDependencies) {
     pkg.pnpm.onlyBuiltDependencies = pkg.pnpm.onlyBuiltDependencies.filter(
       (d: string) => d !== "electron-winstaller",
@@ -313,7 +313,7 @@ function createEnv(supabaseValues: Record<string, string>) {
 
 function pushSchema() {
   console.log("\nPushing database schema...");
-  exec("pnpm db-push", { stdio: "inherit" });
+  exec("pnpm db:push", { stdio: "inherit" });
   console.log("  ✓ Schema pushed");
 }
 

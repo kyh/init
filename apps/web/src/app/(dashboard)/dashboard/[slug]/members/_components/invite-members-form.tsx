@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@repo/ui/button";
+import { Button } from "@repo/ui/components/button";
 import {
   Dialog,
   DialogContent,
@@ -9,19 +9,26 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@repo/ui/dialog";
-import { Field, FieldContent, FieldError, FieldLabel } from "@repo/ui/field";
-import { Input } from "@repo/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/select";
-import { toast } from "@repo/ui/toast";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/tooltip";
+} from "@repo/ui/components/dialog";
+import { Field, FieldContent, FieldError, FieldLabel } from "@repo/ui/components/field";
+import { Input } from "@repo/ui/components/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/select";
+import { toast } from "@repo/ui/components/sonner";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/components/tooltip";
 import { useForm } from "@tanstack/react-form";
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { PlusIcon, XIcon } from "lucide-react";
 import { z } from "zod";
 
 import { authClient } from "@/lib/auth-client";
-import { useTRPC } from "@/trpc/react";
+import { ROLES, type Role, roleSchema } from "@/app/(dashboard)/dashboard/[slug]/_components/role";
+import { useOrganization } from "@/app/(dashboard)/dashboard/[slug]/_components/use-organization";
 
 /**
  * The maximum number of invites that can be sent at once.
@@ -38,11 +45,9 @@ export const InviteMembersDialog = ({ slug }: InviteMembersDialogProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <PlusIcon className="mr-1 size-4" />
-          <span>Invite Members</span>
-        </Button>
+      <DialogTrigger render={<Button size="sm" />}>
+        <PlusIcon className="mr-1 size-4" />
+        <span>Invite Members</span>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -66,9 +71,7 @@ const inviteMembersSchema = z.object({
   organizationInvitations: z.array(
     z.object({
       email: z.email("Invalid email address"),
-      role: z.enum(["owner", "admin", "member"], {
-        errorMap: () => ({ message: "Select a role" }),
-      }),
+      role: roleSchema,
     }),
   ),
 });
@@ -79,12 +82,7 @@ type InviteMembersFormProps = {
 };
 
 export const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormProps) => {
-  const trpc = useTRPC();
-  const { data: organizationData } = useSuspenseQuery(
-    trpc.organization.get.queryOptions({
-      slug,
-    }),
-  );
+  const { data: organizationData } = useOrganization(slug);
   const { mutateAsync: inviteMembers, isPending: isInvitingMembers } = useInviteMembers(
     organizationData.organization.id,
   );
@@ -152,11 +150,7 @@ export const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormPr
                   </form.Field>
                   <form.Field
                     name={`organizationInvitations[${index}].role`}
-                    validators={{
-                      onBlur: z.enum(["owner", "admin", "member"], {
-                        errorMap: () => ({ message: "Select a role" }),
-                      }),
-                    }}
+                    validators={{ onBlur: roleSchema }}
                   >
                     {(field) => {
                       const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
@@ -168,15 +162,18 @@ export const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormPr
                             <Select
                               value={field.state.value ?? ""}
                               onValueChange={(newRole) => {
-                                field.handleChange(newRole as "owner" | "admin" | "member");
-                                field.handleBlur();
+                                const parsed = roleSchema.safeParse(newRole);
+                                if (parsed.success) {
+                                  field.handleChange(parsed.data);
+                                  field.handleBlur();
+                                }
                               }}
                             >
                               <SelectTrigger>
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                {["owner", "admin", "member"].map((role) => (
+                                {ROLES.map((role) => (
                                   <SelectItem
                                     className="text-sm capitalize"
                                     key={role}
@@ -195,19 +192,20 @@ export const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormPr
                   </form.Field>
                   <div className="flex w-[40px] justify-end">
                     <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          type="button"
-                          disabled={(arrayField.state.value?.length ?? 0) <= 1}
-                          aria-label="Remove invite"
-                          onClick={() => {
-                            arrayField.removeValue(index);
-                          }}
-                        >
-                          <XIcon className="h-4 lg:h-5" />
-                        </Button>
+                      <TooltipTrigger
+                        render={
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={(arrayField.state.value?.length ?? 0) <= 1}
+                            aria-label="Remove invite"
+                            onClick={() => {
+                              arrayField.removeValue(index);
+                            }}
+                          />
+                        }
+                      >
+                        <XIcon className="h-4 lg:h-5" />
                       </TooltipTrigger>
                       <TooltipContent>Remove invite</TooltipContent>
                     </Tooltip>
@@ -216,7 +214,6 @@ export const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormPr
               ))}
               {(arrayField.state.value?.length ?? 0) < MAX_INVITES && (
                 <Button
-                  type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => arrayField.pushValue(createEmptyInviteModel())}
@@ -236,32 +233,24 @@ export const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormPr
   );
 };
 
-const createEmptyInviteModel = () => ({
+const createEmptyInviteModel = (): { email: string; role: Role } => ({
   email: "",
-  role: "member" as const,
+  role: "member",
 });
 
-const useInviteMembers = (organizationId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+const useInviteMembers = (organizationId: string) =>
+  useMutation({
     mutationFn: async (data: z.infer<typeof inviteMembersSchema>) => {
-      const invitationPromises = data.organizationInvitations.map((invite) =>
-        authClient.organization.inviteMember({
-          email: invite.email,
-          role: invite.role,
-          organizationId,
-        }),
+      await Promise.all(
+        data.organizationInvitations.map((invite) =>
+          authClient.organization.inviteMember({
+            email: invite.email,
+            role: invite.role,
+            organizationId,
+          }),
+        ),
       );
-
-      await Promise.all(invitationPromises);
     },
-    onSuccess: async () => {
-      toast.success("Invitations sent successfully");
-      await queryClient.invalidateQueries();
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
+    onSuccess: () => toast.success("Invitations sent successfully"),
+    onError: (error) => toast.error(error.message),
   });
-};

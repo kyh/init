@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 import { TRPCError } from "@trpc/server";
 
 import { createMockContext } from "../test-utils";
-import { createCallerFactory, createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import {
+  createCallerFactory,
+  createTRPCRouter,
+  protectedProcedure,
+  publicProcedure,
+} from "../trpc";
 
 const testRouter = createTRPCRouter({
   protectedQuery: protectedProcedure.query(({ ctx }) => ({

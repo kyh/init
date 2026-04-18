@@ -66,3 +66,6 @@ yarn-error.log*
 .branches
 .temp
 .superset
+
+# claude
+.claude/scheduled_tasks.lock
