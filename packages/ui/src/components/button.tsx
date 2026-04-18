@@ -1,4 +1,3 @@
-import * as React from "react";
 import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { cva, type VariantProps } from "class-variance-authority";
 
@@ -54,7 +53,6 @@ const buttonVariants = cva(
 type ButtonProps = ButtonPrimitive.Props &
   VariantProps<typeof buttonVariants> & {
     loading?: boolean;
-    asChild?: boolean;
   };
 
 function Button({
@@ -63,26 +61,14 @@ function Button({
   size = "default",
   loading,
   disabled,
-  asChild,
-  render,
   children,
   ...props
 }: ButtonProps) {
-  let finalRender = render;
-  let finalChildren: React.ReactNode = children;
-
-  if (asChild && React.isValidElement(children)) {
-    const child = children as React.ReactElement<{ children?: React.ReactNode }>;
-    finalRender = React.cloneElement(child, { children: undefined });
-    finalChildren = child.props.children;
-  }
-
   return (
     <ButtonPrimitive
       data-slot="button"
       className={cn(buttonVariants({ variant, size, loading, className }))}
       disabled={loading || disabled}
-      render={finalRender}
       {...props}
     >
       {loading && (
@@ -90,7 +76,7 @@ function Button({
           <Spinner className="size-4" />
         </span>
       )}
-      {finalChildren}
+      {children}
     </ButtonPrimitive>
   );
 }

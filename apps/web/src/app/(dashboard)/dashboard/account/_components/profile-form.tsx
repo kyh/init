@@ -153,15 +153,17 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
               Remove Profile Image
             </Button>
           ) : (
-            <Button variant="secondary" asChild loading={isUploadingProfileImage}>
-              <label>
-                <input
-                  className="invisible absolute inset-0"
-                  type="file"
-                  onChange={handleProfileImageChange}
-                />
-                Change Profile Image
-              </label>
+            <Button
+              variant="secondary"
+              loading={isUploadingProfileImage}
+              render={<label />}
+            >
+              <input
+                className="invisible absolute inset-0"
+                type="file"
+                onChange={handleProfileImageChange}
+              />
+              Change Profile Image
             </Button>
           )}
           <p className="text-muted-foreground mt-2 text-xs leading-5">JPG, GIF or PNG. 1MB max.</p>

@@ -184,11 +184,13 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
           </Avatar>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56" alignOffset={8} sideOffset={8}>
-          <DropdownMenuLabel className="font-normal">
-            <div className="flex flex-col gap-1">
-              <p className="text-sm leading-none font-medium">{user.email}</p>
-            </div>
-          </DropdownMenuLabel>
+          <DropdownMenuGroup>
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col gap-1">
+                <p className="text-sm leading-none font-medium">{user.email}</p>
+              </div>
+            </DropdownMenuLabel>
+          </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuItem render={<Link href="/dashboard/account" />}>
