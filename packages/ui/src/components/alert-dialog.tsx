@@ -230,12 +230,7 @@ export const alertDialog = {
     title: React.ReactNode,
     options: Omit<AlertState, "open" | "title">,
   ) => {
-    alertDialogStore.state = {
-      ...alertDialogStore.state,
-      ...options,
-      open: true,
-      title,
-    }
+    alertDialogStore.state = { open: true, title, ...options }
     alertDialogStore.emitChange()
   },
   close: () => {
@@ -253,35 +248,28 @@ export const GlobalAlertDialog = () => {
     alertDialogStore.getSnapshot,
   )
 
+  const runAndClose = async (
+    onClick: (() => void | Promise<unknown>) | undefined,
+    setPending: (v: boolean) => void,
+  ) => {
+    setPending(true)
+    try {
+      await onClick?.()
+    } finally {
+      setPending(false)
+      alertDialog.close()
+    }
+  }
+
   const onOpenChange = (open: boolean) => {
     if (pendingAction || pendingCancel) return
     if (!open) {
-      setPendingCancel(true)
-      const res = alertState.cancel?.onClick?.()
-      if (res instanceof Promise) {
-        void res.finally(() => {
-          setPendingCancel(false)
-          alertDialog.close()
-        })
-      } else {
-        setPendingCancel(false)
-        alertDialog.close()
-      }
+      void runAndClose(alertState.cancel?.onClick, setPendingCancel)
     }
   }
 
   const onConfirm = () => {
-    setPendingAction(true)
-    const res = alertState.action?.onClick?.()
-    if (res instanceof Promise) {
-      void res.finally(() => {
-        setPendingAction(false)
-        alertDialog.close()
-      })
-    } else {
-      setPendingAction(false)
-      alertDialog.close()
-    }
+    void runAndClose(alertState.action?.onClick, setPendingAction)
   }
 
   return (
