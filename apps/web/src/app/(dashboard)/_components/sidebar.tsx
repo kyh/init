@@ -233,14 +233,7 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
                   </DropdownMenuItem>
                 ))}
                 <DropdownMenuSeparator />
-                <DialogTrigger
-                  render={
-                    <DropdownMenuItem
-                      className="flex w-full gap-2"
-                      render={<button type="button" />}
-                    />
-                  }
-                >
+                <DialogTrigger render={<DropdownMenuItem className="flex w-full gap-2" />}>
                   <PlusIcon className="size-4" />
                   Create a Organization
                 </DialogTrigger>
@@ -248,9 +241,7 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
             </DropdownMenuSub>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            render={<button className="flex w-full gap-2" onClick={handleSignOut} />}
-          >
+          <DropdownMenuItem className="flex w-full gap-2" onClick={handleSignOut}>
             <LogOutIcon className="size-4" />
             Log out
           </DropdownMenuItem>
