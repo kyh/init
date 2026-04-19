@@ -12,7 +12,7 @@ export const Header = () => {
 
   return (
     <div className="mx-auto w-full justify-center">
-      <div className="border-t-none border-border mx-auto flex w-full max-w-7xl items-center justify-between border px-8 py-4 md:p-8">
+      <div className="border-t-0 border-border mx-auto flex w-full max-w-7xl items-center justify-between border px-8 py-4 md:p-8">
         <div className="text-secondary-foreground flex items-center justify-between">
           <Link className="-ml-2" href="/">
             <Logo className="size-10" />
