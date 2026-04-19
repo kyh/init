@@ -12,7 +12,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { useControllableState } from "@radix-ui/react-use-controllable-state";
+import { useControllableState } from "@repo/ui/hooks/use-controllable-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/components/avatar";
 import { Button } from "@repo/ui/components/button";
 import {
