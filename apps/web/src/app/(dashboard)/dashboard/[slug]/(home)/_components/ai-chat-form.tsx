@@ -76,6 +76,9 @@ export const AIChatForm = ({ slug }: AIFormProps) => {
             void stop();
             return;
           }
+          if (!message.text.trim()) {
+            return;
+          }
           void sendMessage({ text: message.text });
         }}
         className="max-w-(--breakpoint-md) m-auto w-full"
