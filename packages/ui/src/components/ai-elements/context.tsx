@@ -46,7 +46,7 @@ export const Context = ({ usedTokens, maxTokens, usage, modelId, ...props }: Con
 
   return (
     <ContextContext.Provider value={contextValue}>
-      <HoverCard closeDelay={0} openDelay={0} {...props} />
+      <HoverCard {...props} />
     </ContextContext.Provider>
   );
 };

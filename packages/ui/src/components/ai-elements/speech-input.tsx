@@ -133,7 +133,7 @@ export const SpeechInput = ({
 
       for (let i = speechEvent.resultIndex; i < speechEvent.results.length; i += 1) {
         const result = speechEvent.results[i];
-        if (result.isFinal) {
+        if (result?.isFinal) {
           finalTranscript += result[0]?.transcript ?? "";
         }
       }

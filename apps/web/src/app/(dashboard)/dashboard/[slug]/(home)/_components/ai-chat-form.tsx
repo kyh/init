@@ -14,7 +14,6 @@ import {
 } from "@repo/ui/components/ai-elements/message";
 import {
   PromptInput,
-  PromptInputBody,
   PromptInputButton,
   PromptInputFooter,
   PromptInputSubmit,
@@ -81,24 +80,22 @@ export const AIChatForm = ({ slug }: AIFormProps) => {
         }}
         className="max-w-(--breakpoint-md) m-auto w-full"
       >
-        <PromptInputBody>
-          <PromptInputTextarea />
-          <PromptInputFooter>
-            <PromptInputTools>
-              <PromptInputButton>
-                <PlusIcon size={16} />
-              </PromptInputButton>
-              <PromptInputButton>
-                <MicIcon size={16} />
-              </PromptInputButton>
-              <PromptInputButton>
-                <GlobeIcon size={16} />
-                <span>Search</span>
-              </PromptInputButton>
-            </PromptInputTools>
-            <PromptInputSubmit status={status} onStop={() => void stop()} />
-          </PromptInputFooter>
-        </PromptInputBody>
+        <PromptInputTextarea />
+        <PromptInputFooter>
+          <PromptInputTools>
+            <PromptInputButton>
+              <PlusIcon size={16} />
+            </PromptInputButton>
+            <PromptInputButton>
+              <MicIcon size={16} />
+            </PromptInputButton>
+            <PromptInputButton>
+              <GlobeIcon size={16} />
+              <span>Search</span>
+            </PromptInputButton>
+          </PromptInputTools>
+          <PromptInputSubmit status={status} onStop={() => void stop()} />
+        </PromptInputFooter>
       </PromptInput>
     </>
   );
