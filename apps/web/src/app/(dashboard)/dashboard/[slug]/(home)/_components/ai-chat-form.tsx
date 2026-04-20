@@ -1,21 +1,25 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment } from "react";
 import { useChat } from "@ai-sdk/react";
 import {
-  AIConversation,
-  AIConversationContent,
-  AIConversationScrollButton,
-  AIInput,
-  AIInputButton,
-  AIInputSubmit,
-  AIInputTextarea,
-  AIInputToolbar,
-  AIInputTools,
-  AIMessage,
-  AIMessageContent,
-  AIResponse,
-} from "@/components/ai";
+  Conversation,
+  ConversationContent,
+  ConversationScrollButton,
+} from "@repo/ui/components/ai-elements/conversation";
+import {
+  Message,
+  MessageContent,
+  MessageResponse,
+} from "@repo/ui/components/ai-elements/message";
+import {
+  PromptInput,
+  PromptInputButton,
+  PromptInputFooter,
+  PromptInputSubmit,
+  PromptInputTextarea,
+  PromptInputTools,
+} from "@repo/ui/components/ai-elements/prompt-input";
 import { toast } from "@repo/ui/components/sonner";
 import { DefaultChatTransport } from "ai";
 import { GlobeIcon, MicIcon, PlusIcon } from "lucide-react";
@@ -25,7 +29,6 @@ export type AIFormProps = {
 };
 
 export const AIChatForm = ({ slug }: AIFormProps) => {
-  const [input, setInput] = useState("");
   const { messages, sendMessage, status, stop } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/chat",
@@ -45,59 +48,58 @@ export const AIChatForm = ({ slug }: AIFormProps) => {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (status === "streaming" || status === "submitted") {
-      void stop();
-    } else {
-      void sendMessage({
-        text: input,
-      });
-    }
-
-    setInput("");
-  };
-
   return (
     <>
-      <AIConversation className="max-w-(--breakpoint-md) relative m-auto w-full flex-1 p-4">
-        <AIConversationContent>
+      <Conversation className="max-w-(--breakpoint-md) relative m-auto w-full flex-1 p-4">
+        <ConversationContent>
           {messages.map((message) => (
-            <AIMessage from={message.role} key={message.id}>
-              <AIMessageContent>
+            <Message from={message.role} key={message.id}>
+              <MessageContent>
                 {message.parts.map((part, index) => {
                   switch (part.type) {
                     case "text":
                       if (message.role === "assistant") {
-                        return <AIResponse key={index}>{part.text}</AIResponse>;
+                        return <MessageResponse key={index}>{part.text}</MessageResponse>;
                       }
                       return <Fragment key={index}>{part.text}</Fragment>;
                   }
                 })}
-              </AIMessageContent>
-            </AIMessage>
+              </MessageContent>
+            </Message>
           ))}
-        </AIConversationContent>
-        <AIConversationScrollButton />
-      </AIConversation>
-      <AIInput onSubmit={handleSubmit} className="max-w-(--breakpoint-md) m-auto w-full">
-        <AIInputTextarea onChange={(e) => setInput(e.target.value)} value={input} />
-        <AIInputToolbar>
-          <AIInputTools>
-            <AIInputButton>
+        </ConversationContent>
+        <ConversationScrollButton />
+      </Conversation>
+      <PromptInput
+        onSubmit={(message) => {
+          if (status === "streaming" || status === "submitted") {
+            void stop();
+            return;
+          }
+          if (!message.text.trim()) {
+            return;
+          }
+          void sendMessage({ text: message.text });
+        }}
+        className="max-w-(--breakpoint-md) m-auto w-full"
+      >
+        <PromptInputTextarea />
+        <PromptInputFooter>
+          <PromptInputTools>
+            <PromptInputButton>
               <PlusIcon size={16} />
-            </AIInputButton>
-            <AIInputButton>
+            </PromptInputButton>
+            <PromptInputButton>
               <MicIcon size={16} />
-            </AIInputButton>
-            <AIInputButton>
+            </PromptInputButton>
+            <PromptInputButton>
               <GlobeIcon size={16} />
               <span>Search</span>
-            </AIInputButton>
-          </AIInputTools>
-          <AIInputSubmit disabled={!input} status={status} />
-        </AIInputToolbar>
-      </AIInput>
+            </PromptInputButton>
+          </PromptInputTools>
+          <PromptInputSubmit status={status} onStop={() => void stop()} />
+        </PromptInputFooter>
+      </PromptInput>
     </>
   );
 };
