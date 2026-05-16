@@ -20,7 +20,7 @@ import {
   PromptInputTextarea,
   PromptInputTools,
 } from "@repo/ui/components/ai-elements/prompt-input";
-import { toast } from "@repo/ui/components/sonner";
+import { toast } from "@repo/ui/components/toast";
 import { DefaultChatTransport } from "ai";
 import { GlobeIcon, MicIcon, PlusIcon } from "lucide-react";
 

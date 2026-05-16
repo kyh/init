@@ -13,7 +13,7 @@ import {
   DropdownMenuSubTrigger,
 } from "@repo/ui/components/dropdown-menu";
 import { AutoTable } from "@repo/ui/components/table";
-import { toast } from "@repo/ui/components/sonner";
+import { toast } from "@repo/ui/components/toast";
 import { useMutation } from "@tanstack/react-query";
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 
