@@ -13,7 +13,7 @@ import {
   FieldLabel,
 } from "@repo/ui/components/field";
 import { Input } from "@repo/ui/components/input";
-import { toast } from "@repo/ui/components/toast";
+import { toast } from "@repo/ui/components/sonner";
 import { ImageIcon } from "lucide-react";
 import { useForm } from "@tanstack/react-form";
 import { z } from "zod";

@@ -5,7 +5,7 @@ import { alertDialog } from "@repo/ui/components/alert-dialog";
 import { Badge } from "@repo/ui/components/badge";
 import { DropdownMenuItem } from "@repo/ui/components/dropdown-menu";
 import { AutoTable } from "@repo/ui/components/table";
-import { toast } from "@repo/ui/components/toast";
+import { toast } from "@repo/ui/components/sonner";
 import { useMutation } from "@tanstack/react-query";
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 
