@@ -42,6 +42,9 @@
       "sharp",
       "spawn-sync",
       "supabase"
-    ]
+    ],
+    "overrides": {
+      "@expo/dom-webview": "56.0.5"
+    }
   }
 }
