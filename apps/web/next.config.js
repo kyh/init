@@ -56,6 +56,24 @@ const config = {
   },
   /** We already do linting and typechecking as separate tasks in CI */
   typescript: { ignoreBuildErrors: true },
+  /**
+   * RFC 8288 Link headers pointing agents at discovery resources.
+   * api-catalog (RFC 9727) and service-doc (RFC 8631) are IANA-registered rels.
+   */
+  async headers() {
+    const link = [
+      '</.well-known/api-catalog>; rel="api-catalog"',
+      '</docs/architecture/api>; rel="service-doc"; type="text/html"',
+      '</llms.txt>; rel="alternate"; type="text/plain"',
+    ].join(", ");
+
+    return [
+      {
+        source: "/",
+        headers: [{ key: "Link", value: link }],
+      },
+    ];
+  },
 };
 
 export default withMDX(config);

@@ -20,13 +20,12 @@ export function getPageImage(page: InferPageType<typeof source>) {
   };
 }
 
-export function getLLMText(page: InferPageType<typeof source>) {
-  // In fumadocs v16, processed markdown is available through the page's file data
-  // Access it via the underlying file structure if includeProcessedMarkdown is enabled
-  // Type assertion needed as the processed property may not be in the type definitions
-  const processed = (page.data as typeof page.data & { processed?: string }).processed;
+export async function getLLMText(page: InferPageType<typeof source>) {
+  // Processed markdown is exposed via getText('processed'), enabled by
+  // `includeProcessedMarkdown` in source.config.ts.
+  const processed = await page.data.getText("processed");
 
   return `# ${page.data.title}
 
-${processed ?? ""}`;
+${processed}`;
 }
