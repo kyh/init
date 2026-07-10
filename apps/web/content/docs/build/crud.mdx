@@ -1,3 +1,271 @@
 ---
 title: "CRUD"
 ---
+
+Add a complete feature to Init: database table → API router → UI. The todo feature is the reference implementation - this guide builds a `post` feature the same way. Copy the pattern, rename the nouns.
+
+The full path touches three packages:
+
+```
+packages/db/src/drizzle-schema.ts        # 1. Table
+packages/api/src/post/post-schema.ts     # 2. Zod inputs
+packages/api/src/post/post-router.ts     # 3. Procedures
+packages/api/src/root-router.ts          # 4. Mount
+apps/web/src/app/.../posts/page.tsx      # 5. Server page
+apps/web/src/app/.../posts/_components/  # 6. Client UI
+```
+
+## 1. Define the Table
+
+```typescript
+// packages/db/src/drizzle-schema.ts
+export const post = pgTable(
+  "post",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    organizationId: t
+      .text()
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    title: t.text().notNull(),
+    content: t.text(),
+    createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+    updatedAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+  }),
+  (table) => [index("post_organization_id_idx").on(table.organizationId)],
+).enableRLS();
+
+export const postRelations = relations(post, ({ one }) => ({
+  organization: one(organization, {
+    fields: [post.organizationId],
+    references: [organization.id],
+  }),
+}));
+```
+
+Every rule here matters: `organizationId` scopes the data to a tenant, the index makes the list query fast, `cascade` cleans up when an org is deleted, `.enableRLS()` keeps PostgREST locked out. See [Data Modelling](/docs/build/database) for why.
+
+## 2. Push the Schema
+
+```bash
+pnpm db:push
+```
+
+No migration files, no codegen. Types flow from the schema definition immediately.
+
+## 3. Validate Inputs
+
+```typescript
+// packages/api/src/post/post-schema.ts
+import { z } from "zod";
+
+export const postSlugInput = z.object({
+  slug: z.string().min(1, "Organization slug is required"),
+});
+
+export const createPostInput = postSlugInput.extend({
+  title: z.string().trim().min(1, "Title is required").max(255),
+  content: z.string().optional(),
+});
+
+export const deletePostInput = postSlugInput.extend({
+  id: z.uuid(),
+});
+
+export type CreatePostInput = z.infer<typeof createPostInput>;
+```
+
+Every input carries the organization `slug` - the router uses it to verify membership.
+
+## 4. Write the Router
+
+```typescript
+// packages/api/src/post/post-router.ts
+import { and, eq } from "@repo/db";
+import { post } from "@repo/db/drizzle-schema";
+import { TRPCError } from "@trpc/server";
+
+import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { createPostInput, deletePostInput, postSlugInput } from "./post-schema";
+
+export const postRouter = createTRPCRouter({
+  list: protectedProcedure.input(postSlugInput).query(async ({ ctx, input }) => {
+    const organization = await ensureOrganizationAccess(ctx, input.slug);
+
+    const posts = await ctx.db.query.post.findMany({
+      where: (postTable, { eq }) => eq(postTable.organizationId, organization.id),
+      orderBy: (postTable, { desc }) => desc(postTable.createdAt),
+    });
+
+    return { posts };
+  }),
+  create: protectedProcedure.input(createPostInput).mutation(async ({ ctx, input }) => {
+    const organization = await ensureOrganizationAccess(ctx, input.slug);
+
+    const [createdPost] = await ctx.db
+      .insert(post)
+      .values({
+        organizationId: organization.id,
+        title: input.title,
+        content: input.content,
+      })
+      .returning();
+
+    return { post: createdPost };
+  }),
+  delete: protectedProcedure.input(deletePostInput).mutation(async ({ ctx, input }) => {
+    const organization = await ensureOrganizationAccess(ctx, input.slug);
+
+    const [deletedPost] = await ctx.db
+      .delete(post)
+      .where(and(eq(post.id, input.id), eq(post.organizationId, organization.id)))
+      .returning();
+
+    if (!deletedPost) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Post not found" });
+    }
+
+    return { post: deletedPost };
+  }),
+});
+```
+
+`ensureOrganizationAccess` lives in `packages/api/src/todo/todo-router.ts` - copy it, or extract it to a shared module once two routers need it. Every mutation also filters by `organizationId` in the `where` clause, so a valid member of org A can never touch org B's rows.
+
+## 5. Mount the Router
+
+```typescript
+// packages/api/src/root-router.ts
+export const appRouter = createTRPCRouter({
+  waitlist: waitlistRouter,
+  organization: organizationRouter,
+  todo: todoRouter,
+  post: postRouter, // Add here
+});
+```
+
+`trpc.post.*` now autocompletes in every app.
+
+## 6. Build the Page
+
+Server component: check the session, prefetch the query, hydrate.
+
+```tsx
+// apps/web/src/app/(dashboard)/dashboard/[slug]/posts/page.tsx
+import { redirect } from "next/navigation";
+import { getSession } from "@repo/api/auth/auth";
+
+import { PageHeader } from "@/components/header";
+import { HydrateClient, prefetch, trpc } from "@/trpc/server";
+import { PostList } from "./_components/post-list";
+
+const Page = async (props: { params: Promise<{ slug: string }> }) => {
+  const { slug } = await props.params;
+
+  const session = await getSession();
+  if (!session) {
+    return redirect(`/auth/login?nextPath=/dashboard/${slug}/posts`);
+  }
+
+  prefetch(trpc.post.list.queryOptions({ slug }));
+
+  return (
+    <HydrateClient>
+      <main className="flex flex-1 flex-col px-5 pb-5">
+        <PageHeader>Posts</PageHeader>
+        <PostList slug={slug} />
+      </main>
+    </HydrateClient>
+  );
+};
+
+export default Page;
+```
+
+## 7. Build the Client Component
+
+```tsx
+// apps/web/src/app/(dashboard)/dashboard/[slug]/posts/_components/post-list.tsx
+"use client";
+
+import { toast } from "@repo/ui/components/sonner";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+
+import type { RouterInputs } from "@repo/api";
+import { useTRPC, useTRPCClient } from "@/trpc/react";
+
+type CreatePostInput = RouterInputs["post"]["create"];
+
+export const PostList = ({ slug }: { slug: string }) => {
+  const trpc = useTRPC();
+  const trpcClient = useTRPCClient();
+
+  // Resolves instantly from the server prefetch - no loading spinner
+  const { data } = useSuspenseQuery(trpc.post.list.queryOptions({ slug }));
+
+  const createPost = useMutation({
+    mutationFn: (input: CreatePostInput) => trpcClient.post.create.mutate(input),
+    onError: (error) => toast.error(error.message),
+  });
+
+  return (
+    <ul>
+      {data.posts.map((post) => (
+        <li key={post.id}>{post.title}</li>
+      ))}
+    </ul>
+  );
+};
+```
+
+The full reference - inline editing, delete confirmation, per-row pending states - is `apps/web/src/app/(dashboard)/dashboard/[slug]/todos/_components/todo-list.tsx`.
+
+## 8. Test It
+
+Routers test without a database. `createCallerFactory` plus the mock context from `packages/api/src/test-utils.ts`:
+
+```typescript
+// packages/api/src/post/post-router.test.ts
+import { describe, expect, it } from "vitest";
+
+import { createMockContext } from "../test-utils";
+import { createCallerFactory } from "../trpc";
+import { postRouter } from "./post-router";
+
+const createCaller = createCallerFactory(postRouter);
+
+it("throws UNAUTHORIZED when user is not a member", async () => {
+  const ctx = createMockContext();
+  ctx.db.query.organization.findFirst.mockResolvedValue({ id: "org-1", slug: "acme" });
+  ctx.db.query.member.findFirst.mockResolvedValue(undefined);
+
+  const caller = createCaller(ctx);
+  await expect(caller.list({ slug: "acme" })).rejects.toThrow();
+});
+```
+
+```bash
+pnpm -F @repo/api test
+```
+
+`packages/api/src/todo/todo-router.test.ts` covers the full matrix: happy paths, missing org, non-member, not-found rows.
+
+## Ship It Everywhere
+
+Nothing else to do. The mobile app (`apps/mobile/src/trpc/`) consumes the same `AppRouter` type, so `trpc.post.list` works there too. The extension iframes the web app and gets the feature for free.
+
+## Checklist
+
+- Table has `organizationId` + index + `.enableRLS()`
+- `pnpm db:push` ran
+- Zod schema validates every input, including `slug`
+- Router checks org membership and filters mutations by `organizationId`
+- Router mounted in `root-router.ts`
+- Page prefetches; client uses `useSuspenseQuery`
+- Tests cover the unauthorized paths
+
+## Next Steps
+
+1. **Data fetching** - [Queries in depth](/docs/build/queries)
+2. **Data mutations** - [Mutations in depth](/docs/build/mutations)
+3. **API reference** - [tRPC architecture](/docs/architecture/api)

@@ -1,0 +1,4 @@
+{
+  "title": "Architecture",
+  "pages": ["folder-structure", "api", "authentication", "database", "ai"]
+}

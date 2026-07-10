@@ -2,15 +2,110 @@
 title: "Data Fetching"
 ---
 
-Learn how to efficiently fetch data in your application.
+Init fetches data through tRPC + TanStack Query. The core pattern: prefetch on the server, render with suspense on the client. No loading spinners for first paint, no waterfall.
 
-## Overview
+## The Pattern
 
-Proper data fetching strategies ensure optimal performance and user experience.
+Two halves. The server component kicks off the query:
 
-## Key Concepts
+```tsx
+// apps/web/src/app/(dashboard)/dashboard/[slug]/todos/page.tsx
+import { HydrateClient, prefetch, trpc } from "@/trpc/server";
 
-- Query optimization
-- Caching strategies
-- Error handling
-- Real-time updates
+const Page = async (props: PageProps) => {
+  const { slug } = await props.params;
+
+  prefetch(trpc.todo.list.queryOptions({ slug }));
+
+  return (
+    <HydrateClient>
+      <TodoList slug={slug} />
+    </HydrateClient>
+  );
+};
+```
+
+The client component consumes it:
+
+```tsx
+// _components/todo-list.tsx
+"use client";
+
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { useTRPC } from "@/trpc/react";
+
+export const TodoList = ({ slug }: { slug: string }) => {
+  const trpc = useTRPC();
+  const { data } = useSuspenseQuery(trpc.todo.list.queryOptions({ slug }));
+  // data is typed and already there - no isLoading branch
+};
+```
+
+How it works: `prefetch` starts the query in a server-side query client without awaiting it. `HydrateClient` dehydrates the (possibly still pending) promise into the RSC payload. `useSuspenseQuery` picks it up on the client and streams the result in. See `apps/web/src/trpc/server.tsx`.
+
+The key: **query options are shared**. `trpc.todo.list.queryOptions({ slug })` produces the same query key on server and client, so hydration matches up.
+
+## Direct Server Calls
+
+When data is only needed during server rendering - no client interactivity - skip hydration and call the procedure directly:
+
+```typescript
+import { caller } from "@/trpc/server";
+
+const { todos } = await caller.todo.list({ slug });
+```
+
+`caller` invokes the router in-process (no HTTP), with context built from the request headers.
+
+### Which One?
+
+| Situation                                        | Use                             |
+| ------------------------------------------------ | ------------------------------- |
+| Client component needs the data                  | `prefetch` + `useSuspenseQuery` |
+| Server-only rendering, route handlers            | `caller`                        |
+| Data fetched on interaction (search-as-you-type) | `useQuery`, no prefetch         |
+
+## Caching
+
+Defaults live in `apps/web/src/trpc/query-client.ts`:
+
+- **`staleTime: 30_000`** - queries are fresh for 30s, so hydrated data isn't refetched on mount
+- **Every mutation invalidates everything** - the global `onSuccess` calls `queryClient.invalidateQueries()`. Blunt but correct; see [Data Mutations](/docs/build/mutations) to narrow it
+- **SuperJSON transformer** - `Date`, `Map`, `undefined` survive the wire intact
+
+Transport is `httpBatchStreamLink` (`apps/web/src/trpc/react.tsx`): parallel queries in one render batch into a single `/api/trpc` request, and results stream back as each procedure finishes.
+
+## Query State Without Suspense
+
+`useSuspenseQuery` throws to the nearest suspense/error boundary. For queries where you'd rather handle states inline:
+
+```tsx
+const { data, isLoading, error } = useQuery(trpc.todo.list.queryOptions({ slug }));
+```
+
+Prefer suspense for page-level data (it pairs with the server prefetch); use `useQuery` for secondary panels and interaction-driven fetches.
+
+## Typing Results
+
+Don't redeclare API shapes - derive them:
+
+```typescript
+import type { RouterOutputs } from "@repo/api";
+
+type Todo = RouterOutputs["todo"]["list"]["todos"][number];
+```
+
+## Debugging
+
+- **loggerLink** logs every call with input/output in development (`apps/web/src/trpc/react.tsx`)
+- **TanStack Query Devtools** render in the provider tree - inspect cache contents, query states, and invalidations live
+
+## Mobile
+
+Same router, same hooks. `apps/mobile/src/trpc/` wires the client to `EXPO_PUBLIC_API_URL` (dev builds derive it from Metro). No RSC on mobile, so there's no prefetch step - queries just fetch.
+
+## Next Steps
+
+1. **Mutations** - [Writing data](/docs/build/mutations)
+2. **Full walkthrough** - [Build a CRUD feature](/docs/build/crud)
+3. **API internals** - [tRPC architecture](/docs/architecture/api)

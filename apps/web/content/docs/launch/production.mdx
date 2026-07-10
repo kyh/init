@@ -2,11 +2,74 @@
 title: "Production"
 ---
 
-Essential steps to prepare your application for production.
+What to verify before real users arrive. [Deployment](/docs/launch/deployment) gets you live; this page keeps you safe once you are.
 
-## Pre-launch Checklist
+## Make It Yours
 
-- Security audit
-- Performance testing
-- Infrastructure scaling
-- Backup procedures
+Init ships with the author's defaults baked in. Change these before launch:
+
+- **`apps/web/src/lib/site-config.ts`** - name, description, production URL, Twitter handle. `siteConfig.url` feeds metadata, sitemap, robots, and `llms.txt`
+- **`packages/api/src/auth/auth.ts`** - the `oAuthProxy` fallback `productionURL` is `init.kyh.io`; on Vercel it's derived from `VERCEL_PROJECT_PRODUCTION_URL`, but update the fallback anyway
+- **`apps/web/src/app/(docs)/docs/layout.tsx`** - `githubUrl` points at the upstream repo
+- **`public/og.jpg`** - the OpenGraph image referenced in `src/app/layout.tsx`
+
+## Secrets
+
+- `BETTER_AUTH_SECRET` - unique per environment, `openssl rand -base64 32`. Rotating it invalidates existing sessions
+- Separate GitHub OAuth apps for dev and prod; prod callback is `https://your-domain.com/api/auth/callback/github`
+- `SUPABASE_SERVICE_ROLE_KEY` bypasses RLS - it must only appear in server code (`apps/web/src/lib/supabase-server.ts` and the avatar route are the only consumers)
+- Nothing secret in `NEXT_PUBLIC_*` - those ship to the browser
+
+## The Authorization Model
+
+Two layers, know both:
+
+1. **RLS deny-by-default** - every table calls `.enableRLS()` with no policies, so the anon key gets nothing through PostgREST
+2. **tRPC procedures** - the real authorization. `protectedProcedure` requires a session; org-scoped routers verify membership per call (`ensureOrganizationAccess` in `todo-router.ts`)
+
+On a hosted Supabase project, also disable the Data API (Settings → API) - local dev already has it off in `packages/db/supabase/config.toml`. And if you regenerate the auth schema, re-add `.enableRLS()` to every table.
+
+## What Init Doesn't Ship
+
+Honest gaps. Each is a deliberate "add when you need it":
+
+- **Email delivery** - no provider is wired. Password reset silently can't send, and organization invites only surface in-app. Wire `emailAndPassword.sendResetPassword` and the org plugin's `sendInvitationEmail` in `packages/api/src/auth/auth.ts` to a provider (Resend, Postmark)
+- **Rate limiting** - better-auth's built-in limiter covers auth routes (in-memory, so per-instance on serverless), but tRPC procedures and `/api/chat` have none. Add [Vercel WAF rules](https://vercel.com/docs/security/vercel-waf) or a middleware backed by a shared store
+- **Billing** - `dashboard/[slug]/billing` is an empty shell. Bring Stripe or Polar
+- **Background jobs** - no queue. Long work either fits in a request (the chat route caps at `maxDuration = 30`) or needs Inngest/Trigger.dev/QStash
+
+## Database Safety
+
+- `drizzle-kit push` has no down migrations. Back up before schema changes: `pg_dump $POSTGRES_URL > backup.sql`
+- Prefer add-column → backfill → drop-column over destructive changes on live data
+- `POSTGRES_URL` must be the transaction pooler (:6543); the client already sets `prepare: false` for it
+
+## Cost Guards
+
+The AI chat proxies every message to a model through the AI Gateway. Before opening it to the public, set a spending cap on the gateway key - it's the only per-request variable cost in the stack.
+
+## CI Gate
+
+`.github/workflows/ci.yml` runs on every PR and push to main:
+
+```bash
+pnpm typecheck && pnpm lint && pnpm format && pnpm test && pnpm build
+```
+
+Green CI is the merge bar. Note `apps/web/next.config.js` sets `typescript.ignoreBuildErrors: true` - type safety is enforced by the `typecheck` step, not the build, so don't skip it.
+
+## Launch Checklist
+
+- [ ] `site-config.ts`, OAuth proxy fallback, `githubUrl`, `og.jpg` updated
+- [ ] Unique `BETTER_AUTH_SECRET`; separate GitHub OAuth apps
+- [ ] Production schema pushed; `avatars` bucket created; Data API disabled
+- [ ] Email delivery wired (or password reset + invites consciously deferred)
+- [ ] Spending cap on `AI_GATEWAY_API_KEY`
+- [ ] Uptime monitor on `/api/health`
+- [ ] Error tracking installed ([Monitoring](/docs/launch/monitoring))
+- [ ] Database backup taken; restore path tested once
+
+## Next Steps
+
+1. **Monitoring** - [Know when it breaks](/docs/launch/monitoring)
+2. **Analytics** - [Know how it's used](/docs/scale/user-analytics)

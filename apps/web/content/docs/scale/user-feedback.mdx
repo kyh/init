@@ -2,15 +2,58 @@
 title: "User Feedback"
 ---
 
-Learn how to collect and utilize user feedback effectively.
+Analytics tell you what users do; feedback tells you why. Init gives you one capture loop out of the box and the primitives to build more.
 
-## Overview
+## What Ships: The Waitlist
 
-User feedback is crucial for continuous improvement and user satisfaction.
+The marketing page collects emails before you have a product (`apps/web/src/app/(marketing)/_components/waitlist-form.tsx` → `waitlist.join`). It's also your first feedback channel: everyone on it opted in to hear from you - and to be asked questions.
 
-## Key Areas
+```bash
+# Who's waiting? (local)
+psql $POSTGRES_URL -c 'select email, source from waitlist;'
+```
 
-- Feedback collection
-- Analysis methods
-- Implementation strategies
-- User communication
+## Build: An In-App Feedback Box
+
+A feedback feature is a [CRUD feature](/docs/build/crud) with three twists. The schema:
+
+```typescript
+// packages/db/src/drizzle-schema.ts
+export const feedback = pgTable("feedback", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  userId: t.text().references(() => user.id, { onDelete: "set null" }),
+  organizationId: t.text().references(() => organization.id, { onDelete: "set null" }),
+  message: t.text().notNull(),
+  path: t.text(), // Which page they were on
+  createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+})).enableRLS();
+```
+
+The twists versus the todo template:
+
+1. **`set null`, not `cascade`** - feedback should outlive the account that filed it
+2. **Capture context automatically** - `path` from `usePathname()`, user and org from the session; don't make users describe where they were
+3. **Create-only** - users submit; you read. One `protectedProcedure` mutation, no public list
+
+Then follow the [CRUD guide](/docs/build/crud): Zod schema → router → mount in `root-router.ts` → a dialog in the dashboard layout so it's reachable from every page.
+
+## Or: Don't Build It
+
+Legitimate lighter options:
+
+- **GitHub Issues** - if your users are developers, a "Report an issue" link to `github.com/you/repo/issues/new` beats a form
+- **A shared inbox** - `mailto:` link with a prefilled subject; fine below ~100 users
+- **Intercom/Plain/Crisp** - chat widgets, when support volume justifies a tool
+
+## Close the Loop
+
+Collection is the easy half:
+
+- Review on a schedule - a pile of unread feedback is worse than none
+- Reply when you ship something a user asked for; it's the cheapest retention you'll ever buy
+- Cross-reference with [analytics](/docs/scale/user-analytics): feedback tells you what to fix, usage data tells you for how many people
+
+## Next Steps
+
+1. **Build the feature** - [CRUD walkthrough](/docs/build/crud)
+2. **Growth** - [Turning retention into acquisition](/docs/scale/user-growth)

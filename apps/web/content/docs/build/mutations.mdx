@@ -2,15 +2,167 @@
 title: "Data Mutations"
 ---
 
-Learn how to handle data modifications safely and efficiently.
+Writes go through tRPC mutations: Zod validates, the procedure checks org access, TanStack Query refreshes the cache. The todo list and waitlist form are the two reference implementations.
 
-## Overview
+## Server Side
 
-Data mutations involve creating, updating, and deleting records while maintaining data integrity.
+Every mutation is a procedure with a Zod input and an ownership check:
 
-## Key Concepts
+```typescript
+// packages/api/src/todo/todo-router.ts
+create: protectedProcedure.input(createTodoInput).mutation(async ({ ctx, input }) => {
+  const organization = await ensureOrganizationAccess(ctx, input.slug);
 
-- Validation
-- Error handling
-- Optimistic updates
-- Rollback strategies
+  const [createdTodo] = await ctx.db
+    .insert(todo)
+    .values({ organizationId: organization.id, title: input.title })
+    .returning();
+
+  return { todo: createdTodo };
+}),
+```
+
+Rules the todo router demonstrates:
+
+- **Validate at the boundary** - inputs are parsed by Zod before your code runs; invalid input never reaches the database
+- **Scope every write** - updates and deletes filter by `organizationId`, not just row id, so members of one org can't touch another's rows
+- **`.returning()` + explicit NOT_FOUND** - if the scoped write matched nothing, throw instead of silently succeeding
+
+## Client Side: Two Styles
+
+### `mutationOptions` (simple case)
+
+When you just need to fire the mutation, the options proxy is the shortest path - the waitlist form uses it:
+
+```tsx
+// apps/web/src/app/(marketing)/_components/waitlist-form.tsx
+const trpc = useTRPC();
+const joinWaitlist = useMutation(trpc.waitlist.join.mutationOptions());
+
+joinWaitlist.mutateAsync({ email });
+```
+
+### `mutationFn` with the raw client (full control)
+
+When you want custom `onError`/`onSuccess` per call site, the todo list uses the bare client:
+
+```tsx
+// _components/todo-list.tsx
+const trpcClient = useTRPCClient();
+
+const createTodo = useMutation({
+  mutationFn: (input: CreateTodoInput) => trpcClient.todo.create.mutate(input),
+  onError: (error) => toast.error(error.message),
+});
+
+await createTodo.mutateAsync({ slug, title: trimmed });
+```
+
+Input types come from the router, not hand-written:
+
+```typescript
+import type { RouterInputs } from "@repo/api";
+
+type CreateTodoInput = RouterInputs["todo"]["create"];
+```
+
+## Cache Invalidation
+
+You don't write invalidation code for the common case. The query client invalidates **everything** after any successful mutation:
+
+```typescript
+// apps/web/src/trpc/query-client.ts
+mutations: {
+  onSuccess: async () => {
+    await queryClient.invalidateQueries();
+  },
+},
+```
+
+Blunt, but always correct - every list refetches with fresh data. If a hot path refetches too much, narrow it per-mutation:
+
+```tsx
+const queryClient = useQueryClient();
+
+const createTodo = useMutation({
+  mutationFn: (input: CreateTodoInput) => trpcClient.todo.create.mutate(input),
+  onSuccess: () =>
+    queryClient.invalidateQueries({
+      queryKey: trpc.todo.list.queryOptions({ slug }).queryKey,
+    }),
+});
+```
+
+A per-mutation `onSuccess` replaces the global default - once you narrow, you own the invalidation.
+
+## Pending States
+
+TanStack Query tracks in-flight state; the UI just reads it:
+
+```tsx
+// Disable the form while creating
+<Button type="submit" loading={createTodo.isPending}>
+  Add
+</Button>;
+
+// Per-row spinner: match the in-flight variables to this row
+const isDeleting = deleteTodo.isPending && deleteTodo.variables.id === todo.id;
+```
+
+`mutation.variables` holds the input of the in-flight call - that's how one `useMutation` instance drives per-row states in a list.
+
+## Feedback and Confirmation
+
+Patterns from the reference components:
+
+```tsx
+// Toast on lifecycle (waitlist-form.tsx)
+toast.promise(joinWaitlist.mutateAsync({ email }), {
+  loading: "Submitting...",
+  success: "Waitlist joined!",
+  error: "Failed to join waitlist",
+});
+
+// Confirm destructive actions (todo-list.tsx)
+alertDialog.open(`Delete "${todo.title}"?`, {
+  description: "This action cannot be undone.",
+  action: { label: "Delete", onClick: async () => deleteTodo.mutateAsync({ slug, id: todo.id }) },
+  cancel: { label: "Cancel" },
+});
+```
+
+`toast` and `alertDialog` come from `@repo/ui/components/sonner` and `@repo/ui/components/alert-dialog`. For error toasts, prefer the mutation's `onError` (shown above) so every call site gets it.
+
+## Form Validation
+
+Reuse the server's Zod schema on the client - one source of truth, errors before the round-trip:
+
+```tsx
+// waitlist-form.tsx
+import { joinWaitlistInput } from "@repo/api/waitlist/waitlist-schema";
+
+const form = useForm({
+  validators: { onSubmit: joinWaitlistInput },
+  // ...
+});
+```
+
+The server still validates - client-side is UX, server-side is the guarantee.
+
+## Idempotent Writes
+
+For writes that may repeat (signups, upserts), absorb the conflict instead of erroring:
+
+```typescript
+// packages/api/src/waitlist/waitlist-router.ts
+await ctx.db
+  .insert(waitlist)
+  .values({ ...input })
+  .onConflictDoNothing({ target: waitlist.email });
+```
+
+## Next Steps
+
+1. **Fetching** - [Queries and caching](/docs/build/queries)
+2. **Full walkthrough** - [Build a CRUD feature](/docs/build/crud)
+3. **Error handling** - [tRPC error codes](/docs/architecture/api)

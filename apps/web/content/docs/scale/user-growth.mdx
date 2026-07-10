@@ -2,15 +2,63 @@
 title: "Growth Strategies"
 ---
 
-Learn effective strategies for growing your user base.
+No growth hacks here - just the acquisition surfaces Init already ships and what to do with each.
 
-## Overview
+## Pre-Launch: The Waitlist
 
-Sustainable growth requires a balanced approach to user acquisition and retention.
+The marketing page captures emails from day zero (`waitlist.join`, [see how it works](/docs/build/mutations)). Two details worth knowing:
 
-## Key Strategies
+- The `source` column records which deployment captured the signup - useful once you run multiple landing pages
+- `userId` links a signup to the account it becomes, so you can measure waitlist → user conversion
 
-- User acquisition
-- Retention optimization
-- Engagement tactics
-- Viral loops
+Launch day, the waitlist is your distribution list - which is one more reason to [wire an email provider](/docs/launch/production).
+
+## Built-In Loop: Organization Invites
+
+Init's only viral mechanic ships in the members page (`dashboard/[slug]/members`): a user invites teammates, teammates become users, their personal orgs invite more teammates.
+
+To make it work, two things:
+
+1. **Wire invitation emails** - invites currently only appear in-app, which means the invitee must already have an account to see them. `sendInvitationEmail` in the better-auth org plugin closes that gap (see [Production](/docs/launch/production))
+2. **Instrument it** - invites sent vs. accepted is your viral coefficient; the `invitation` table holds the state
+
+## SEO
+
+The plumbing is done; you supply content:
+
+- `src/app/sitemap.ts` - homepage + every docs page, auto-maintained
+- `src/app/robots.txt/route.ts` - allows all crawlers, points at the sitemap
+- `src/app/layout.tsx` - metadata template with OpenGraph and Twitter cards from `site-config.ts`
+- Docs pages emit per-page titles/descriptions from frontmatter
+
+The [docs site](/docs/build/markdown) is your content-marketing engine - guides and comparison pages are `.mdx` files away, with search, SEO, and sitemap handled.
+
+## AI Discoverability
+
+A growing share of traffic arrives via AI assistants. Init treats them as a first-class channel:
+
+- `/llms.txt` indexes your docs for agents
+- Any docs page serves raw markdown to `Accept: text/markdown` requests
+- `robots.txt` emits `Content-Signal` directives (search / ai-input / ai-train permissions)
+- `/.well-known/api-catalog` advertises machine-readable entry points
+
+When someone asks their assistant "how do I do X with [your product]", these are what get retrieved.
+
+## Distribution: Four Platforms
+
+The monorepo itself is a growth lever - each app is a storefront:
+
+- **Chrome Web Store** (`apps/extension`) - browser extension marketplaces are an underrated discovery channel
+- **App stores** (`apps/mobile`) - Expo/EAS builds for iOS and Android
+- **Desktop** (`apps/desktop`) - direct downloads, or later Homebrew/winget
+
+Same API, same auth, same data - shipping a second platform is packaging work, not product work.
+
+## Retention Before Acquisition
+
+Pouring users into a leaky product wastes the channels above. Watch activation and retention first ([analytics](/docs/scale/user-analytics)), talk to the users you have ([feedback](/docs/scale/user-feedback)), then scale acquisition.
+
+## Next Steps
+
+1. **Measure it** - [User analytics](/docs/scale/user-analytics)
+2. **Production readiness** - [Before the traffic arrives](/docs/launch/production)

@@ -2,15 +2,128 @@
 title: "Data Modelling"
 ---
 
-Learn how to structure your application's data model effectively.
+How to design tables that fit Init's architecture. The plumbing - client, config, push workflow - is covered in [Database](/docs/architecture/database); this page is about the schema decisions you'll make for every new feature.
 
-## Overview
+## Where Schema Lives
 
-Data modeling is a crucial step in building robust applications. It helps define how data is organized, stored, and accessed.
+One file for your tables, one for better-auth's:
 
-## Key Concepts
+- `packages/db/src/drizzle-schema.ts` - application tables. Edit freely.
+- `packages/db/src/drizzle-schema-auth.ts` - generated from the auth config. Don't hand-edit; regenerate with `cd packages/db && pnpm generate:auth-schema`.
 
-- Database schema design
-- Entity relationships
-- Data normalization
-- Model validation
+## House Rules
+
+Every table in this codebase follows the same conventions:
+
+```typescript
+export const example = pgTable("example", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(), // UUID pk, db-generated
+  createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+  updatedAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+})).enableRLS(); // Always
+```
+
+- **UUID primary keys** - `defaultRandom()`, generated in Postgres
+- **Timestamps with timezone** - `defaultNow()`; routers set `updatedAt` on update (see `todo-router.ts`)
+- **snake_case is automatic** - the client is configured with `casing: "snake_case"`, so write `organizationId` and get `organization_id`
+- **`.enableRLS()` on every table** - no policies, deny by default. Authorization lives in tRPC; the server connection bypasses RLS as table owner. Forget this and the table is readable through PostgREST with the anon key on hosted Supabase.
+
+## Pattern: Organization-Scoped Data
+
+Most product data belongs to an organization, not a user - Init is multi-tenant by default. `todo` is the template:
+
+```typescript
+// packages/db/src/drizzle-schema.ts
+export const todo = pgTable(
+  "todo",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    organizationId: t
+      .text()
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    title: t.text().notNull(),
+    completed: t.boolean().notNull().default(false),
+    createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+    updatedAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+  }),
+  (table) => [index("todo_organization_id_idx").on(table.organizationId)],
+).enableRLS();
+```
+
+Three deliberate choices:
+
+1. **`organizationId`, not `userId`** - users move between orgs; data stays with the workspace
+2. **`onDelete: "cascade"`** - deleting an org deletes its data, no orphans
+3. **Index on `organizationId`** - every query filters by it, so every query hits the index
+
+Note the foreign key is `text`, not `uuid` - better-auth generates text ids for its tables.
+
+## Pattern: User-Linked Data
+
+Data that survives account deletion references the user loosely. `waitlist` is the template:
+
+```typescript
+export const waitlist = pgTable("waitlist", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  userId: t.text().references(() => user.id, { onDelete: "set null" }),
+  source: t.text(),
+  email: t.text().notNull().unique(),
+})).enableRLS();
+```
+
+`set null` instead of `cascade`: the signup record outlives the account. The `unique` constraint on `email` lets the router treat repeat signups as a no-op (`onConflictDoNothing`).
+
+## Relations
+
+Declare relations next to the table so `db.query.*.findMany({ with })` works:
+
+```typescript
+export const todoRelations = relations(todo, ({ one }) => ({
+  organization: one(organization, {
+    fields: [todo.organizationId],
+    references: [organization.id],
+  }),
+}));
+```
+
+Relations are a Drizzle query-layer concept - they don't create constraints. The `.references()` in the column definition is what creates the foreign key.
+
+## Evolving the Schema
+
+```bash
+pnpm db:push    # Diff schema against local db, apply
+pnpm db:reset   # Nuke local db, re-push (fastest fix for drift)
+```
+
+`drizzle-kit push` diffs and applies - it will prompt before destructive changes (drops, type changes it can't infer). Renames often read as drop-plus-create, so against production data, prefer add-new-column → backfill → drop-old over in-place renames. And back up first: there are no down migrations.
+
+## Deriving Types
+
+Never hand-write a type the schema already knows:
+
+```typescript
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import { todo } from "@repo/db/drizzle-schema";
+
+type Todo = InferSelectModel<typeof todo>;
+type NewTodo = InferInsertModel<typeof todo>;
+
+// Or inline, as todo-router.ts does:
+const updateData: Partial<typeof todo.$inferInsert> = { updatedAt: new Date() };
+```
+
+On the client, prefer `RouterOutputs` from `@repo/api` - it reflects what the API actually returns, not the raw row.
+
+## Checklist for a New Table
+
+- UUID pk, `createdAt`/`updatedAt` with timezone
+- `.enableRLS()`
+- Scoped: `organizationId` + cascade + index (or `userId` + `set null` if it must survive deletion)
+- Relations declared
+- `pnpm db:push` run
+
+## Next Steps
+
+1. **Use the table** - [Build a CRUD feature](/docs/build/crud) on top of it
+2. **Database internals** - [Client, config, and workflow](/docs/architecture/database)

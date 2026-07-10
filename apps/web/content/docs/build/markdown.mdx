@@ -2,15 +2,98 @@
 title: "Markdown"
 ---
 
-Learn how to use Markdown effectively in your documentation.
+The docs site you're reading ships with Init - [fumadocs](https://fumadocs.dev) over MDX, rendered inside the Next.js app. Use it for product docs, changelogs, or internal guides.
 
-## Overview
+## Where Content Lives
 
-Markdown is a lightweight markup language for creating formatted text.
+```
+apps/web/
+├── content/docs/            # MDX pages (this site)
+│   ├── overview/
+│   ├── architecture/
+│   └── ...
+├── source.config.ts         # Collection definition (fumadocs-mdx)
+└── src/
+    ├── lib/source.ts        # Content loader
+    ├── mdx-components.tsx   # Components available in MDX
+    └── app/(docs)/docs/     # Layout + catch-all page
+```
 
-## Key Features
+`source.config.ts` defines the collection; `pnpm dev:web` compiles content into `.source/` and hot-reloads on edit.
 
-- Basic syntax
-- Extended features
-- MDX components
-- Code blocks
+## Adding a Page
+
+Create an `.mdx` file with frontmatter - the route follows the file path:
+
+```mdx
+---
+title: "Webhooks"
+description: "Optional - shown under the title and in meta tags"
+---
+
+Punchy intro sentence.
+
+## First Section
+```
+
+`content/docs/build/webhooks.mdx` → `/docs/build/webhooks`. It appears in the sidebar, search index, sitemap, and `llms.txt` automatically.
+
+Frontmatter is validated by `frontmatterSchema` in `source.config.ts` - a bad key fails the build, not production.
+
+## Ordering the Sidebar
+
+Folders become sidebar sections. A `meta.json` in a folder controls its title and page order:
+
+```json
+// content/docs/build/meta.json
+{
+  "title": "Build",
+  "pages": ["database", "crud", "queries", "mutations", "markdown"]
+}
+```
+
+Without one, pages sort alphabetically.
+
+## MDX Components
+
+Pages render with fumadocs defaults (`src/mdx-components.tsx`): headings get anchor links, code blocks get syntax highlighting and a copy button, and the `Callout` component is available:
+
+```mdx
+<Callout type="warn">Deletes are permanent.</Callout>
+```
+
+Need more (Tabs, Steps, Accordions)? Import from `fumadocs-ui/components/*` and add them to `getMDXComponents`.
+
+Links to other docs pages can be relative file paths - `createRelativeLink` in `app/(docs)/docs/[[...slug]]/page.tsx` resolves `./queries.mdx` to the right URL.
+
+## Search
+
+Full-text search runs on Orama, built from the same source at request time:
+
+```typescript
+// apps/web/src/app/api/search/route.ts
+export const { GET } = createFromSource(source, { language: "english" });
+```
+
+No external service, no index to deploy. The search dialog in the docs layout queries it.
+
+## Markdown for Agents
+
+Every docs page is also machine-readable - useful when your users' AI tools read your docs:
+
+- **`/llms.txt`** - flat index of every page with canonical URLs (`src/app/llms.txt/route.ts`)
+- **`Accept: text/markdown`** - requesting any docs page with this header returns raw markdown instead of HTML. `src/proxy.ts` rewrites the request to the `/md` handler, which serves the processed markdown with an `x-markdown-tokens` size hint
+- **Content-Signal** - `robots.txt` declares how AI systems may use the content (`src/app/robots.txt/route.ts`)
+
+```bash
+curl -H "Accept: text/markdown" https://your-domain.com/docs/build/crud
+```
+
+## SEO
+
+Handled per-page from frontmatter: `generateMetadata` in the docs page emits title/description, `src/app/sitemap.ts` includes every page, and the root layout provides the OpenGraph template.
+
+## Next Steps
+
+1. **Site structure** - [Folder structure](/docs/architecture/folder-structure)
+2. **Ship it** - [Deployment](/docs/launch/deployment)

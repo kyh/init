@@ -2,15 +2,84 @@
 title: "User Analytics"
 ---
 
-Learn how to implement and utilize user analytics.
+Init ships no analytics - by design. Pick a tool when you have users; here's how the pieces slot in.
 
-## Overview
+## Start: Vercel Analytics
 
-Analytics help understand user behavior and make data-driven decisions.
+Zero-config traffic and Web Vitals if you deploy to Vercel:
 
-## Key Metrics
+```bash
+pnpm -F @repo/web add @vercel/analytics
+```
 
-- User engagement
-- Conversion rates
-- Retention metrics
-- Feature usage
+```tsx
+// apps/web/src/app/layout.tsx
+import { Analytics } from "@vercel/analytics/react";
+
+// Render inside <body>
+<Analytics />;
+```
+
+Covers "is anyone visiting" and "is it fast". It won't tell you what users do.
+
+## Product Analytics: PostHog
+
+When you need funnels, retention, and feature usage:
+
+```bash
+pnpm -F @repo/web add posthog-js
+```
+
+Initialize in a client provider (next to `TRPCReactProvider` in `apps/web/src/app/layout.tsx`), then identify against the entities Init already has - user and organization:
+
+```typescript
+import posthog from "posthog-js";
+import { authClient } from "@/lib/auth-client";
+
+const { data: session } = authClient.useSession();
+
+if (session) {
+  posthog.identify(session.user.id);
+  // Group by tenant, matching the org-scoped data model
+  posthog.group("organization", organization.id);
+}
+```
+
+Grouping by organization matters more than individual users in a multi-tenant app - "which workspaces are active" is the retention question.
+
+## What to Track
+
+Instrument the loops Init ships, not everything:
+
+- **Activation** - signup → first org action (first todo, first invite)
+- **Waitlist conversion** - `waitlist.join` fires → how many become users? The `waitlist` table already stores email + `userId` for the join
+- **Invites** - sent vs. accepted (the `invitation` table holds state)
+- **AI chat usage** - messages per org; this is also your [cost driver](/docs/launch/production)
+
+## Server-Side Events
+
+For events you can't trust the client to report, a tRPC middleware sees every procedure call:
+
+```typescript
+// packages/api/src/trpc.ts
+const analyticsMiddleware = t.middleware(async ({ next, path, type, ctx }) => {
+  const result = await next();
+  if (type === "mutation" && result.ok) {
+    // capture(ctx.session?.user.id, path)
+  }
+  return result;
+});
+```
+
+Keep it fire-and-forget - analytics must never fail a request.
+
+## Privacy
+
+- Track ids, not emails - `user.id` is enough to join against your database later
+- `robots.txt` already declares AI-usage signals (`Content-Signal`); add a privacy policy before adding trackers
+- EU users? Prefer server-side capture or a cookieless config
+
+## Next Steps
+
+1. **Feedback** - [Qualitative signal](/docs/scale/user-feedback)
+2. **Growth** - [Acting on the numbers](/docs/scale/user-growth)
