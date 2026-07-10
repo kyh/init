@@ -22,8 +22,8 @@ const Page = () => {
             <div className="flex h-full flex-col gap-6 p-8">
               <div>Build</div>
               <p className="text-muted-foreground">
-                Auth, organizations, Stripe billing, and streaming AI chat, wired end-to-end across
-                web, mobile, extension, and desktop. Your first commit is a feature, not plumbing.
+                One TypeScript stack, typed end-to-end from database to UI, shipping to web, mobile,
+                extension, and desktop. Your first commit is a feature, not plumbing.
               </p>
             </div>
             <div className="flex h-full flex-col gap-6 p-8">
