@@ -7,11 +7,7 @@ import {
   ConversationContent,
   ConversationScrollButton,
 } from "@repo/ui/components/ai-elements/conversation";
-import {
-  Message,
-  MessageContent,
-  MessageResponse,
-} from "@repo/ui/components/ai-elements/message";
+import { Message, MessageContent, MessageResponse } from "@repo/ui/components/ai-elements/message";
 import {
   PromptInput,
   PromptInputButton,
@@ -55,15 +51,22 @@ export const AIChatForm = ({ slug }: AIFormProps) => {
           {messages.map((message) => (
             <Message from={message.role} key={message.id}>
               <MessageContent>
+                {/* Parts are append-only during streaming, so index keys are stable */}
+                {/* oxlint-disable no-array-index-key */}
                 {message.parts.map((part, index) => {
                   switch (part.type) {
                     case "text":
                       if (message.role === "assistant") {
-                        return <MessageResponse key={index}>{part.text}</MessageResponse>;
+                        return (
+                          <MessageResponse key={`${message.id}-${index}`}>
+                            {part.text}
+                          </MessageResponse>
+                        );
                       }
-                      return <Fragment key={index}>{part.text}</Fragment>;
+                      return <Fragment key={`${message.id}-${index}`}>{part.text}</Fragment>;
                   }
                 })}
+                {/* oxlint-enable no-array-index-key */}
               </MessageContent>
             </Message>
           ))}

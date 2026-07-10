@@ -23,9 +23,9 @@ export const Meteors = ({ top = -5, number = 20 }: MeteorsProps) => {
 
   return (
     <div className="rotate-y-180 pointer-events-none absolute inset-0 h-full w-full overflow-hidden">
-      {[...meteorStyles].map((style, idx) => (
+      {meteorStyles.map((style) => (
         <span
-          key={idx}
+          key={`${style.left}-${style.animationDelay}-${style.animationDuration}`}
           className={cn(
             "animate-meteor pointer-events-none absolute left-1/2 top-1/2 h-0.5 w-0.5 rotate-[2deg] rounded-[9999px] bg-slate-500 shadow-[0_0_0_1px_#ffffff10]",
           )}

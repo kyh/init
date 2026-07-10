@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@repo/ui/components/button";
 import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from "@repo/ui/components/field";
 import { Input } from "@repo/ui/components/input";
@@ -16,9 +16,21 @@ type AuthFormProps = {
   type: "login" | "register";
 } & React.HTMLAttributes<HTMLDivElement>;
 
-export const AuthForm = ({ className, type, ...props }: AuthFormProps) => {
+// Only follow same-origin relative paths — nextPath is attacker-controllable
+const useNextPath = () => {
+  const nextPath = useSearchParams().get("nextPath");
+  return nextPath?.startsWith("/") && !nextPath.startsWith("//") ? nextPath : "/dashboard";
+};
+
+export const AuthForm = (props: AuthFormProps) => (
+  <Suspense>
+    <AuthFormInner {...props} />
+  </Suspense>
+);
+
+const AuthFormInner = ({ className, type, ...props }: AuthFormProps) => {
   const router = useRouter();
-  const params = useParams<{ nextPath?: string }>();
+  const nextPath = useNextPath();
   const [submittingGithub, setSubmittingGithub] = useState(false);
 
   const form = useForm({
@@ -41,7 +53,7 @@ export const AuthForm = ({ className, type, ...props }: AuthFormProps) => {
           name: emailPrefix ?? "User",
           fetchOptions: {
             onSuccess: () => {
-              router.replace(params.nextPath ?? "/dashboard");
+              router.replace(nextPath);
             },
             onError: (ctx) => {
               toast.error(ctx.error.message);
@@ -56,7 +68,7 @@ export const AuthForm = ({ className, type, ...props }: AuthFormProps) => {
           password: value.password,
           fetchOptions: {
             onSuccess: () => {
-              router.replace(params.nextPath ?? "/dashboard");
+              router.replace(nextPath);
             },
             onError: (ctx) => {
               toast.error(ctx.error.message);
@@ -71,10 +83,10 @@ export const AuthForm = ({ className, type, ...props }: AuthFormProps) => {
     setSubmittingGithub(true);
     await authClient.signIn.social({
       provider: "github",
+      // The OAuth flow is a full-page redirect; the server sends the user
+      // here after the callback (client onSuccess never fires)
+      callbackURL: nextPath,
       fetchOptions: {
-        onSuccess: () => {
-          router.replace(params.nextPath ?? "/dashboard");
-        },
         onError: (ctx) => {
           toast.error(ctx.error.message);
         },

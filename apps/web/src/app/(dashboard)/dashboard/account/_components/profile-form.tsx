@@ -157,6 +157,7 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
               variant="secondary"
               loading={isUploadingProfileImage}
               nativeButton={false}
+              // oxlint-disable-next-line label-has-associated-control -- label wraps the file input and button text below
               render={<label />}
             >
               <input

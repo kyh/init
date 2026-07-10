@@ -23,9 +23,7 @@ export const WaitlistForm = () => {
     },
     onSubmit: ({ value, formApi }) => {
       toast.promise(
-        joinWaitlist.mutateAsync({ email: value.email }).then(() => {
-          formApi.reset({ email: "" });
-        }),
+        joinWaitlist.mutateAsync({ email: value.email }).then(() => formApi.reset({ email: "" })),
         {
           loading: "Submitting...",
           success: "Waitlist joined!",

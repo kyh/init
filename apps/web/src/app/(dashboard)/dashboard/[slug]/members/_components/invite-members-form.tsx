@@ -70,6 +70,7 @@ export const InviteMembersDialog = ({ slug }: InviteMembersDialogProps) => {
 const inviteMembersSchema = z.object({
   organizationInvitations: z.array(
     z.object({
+      key: z.string(),
       email: z.email("Invalid email address"),
       role: roleSchema,
     }),
@@ -114,8 +115,8 @@ export const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormPr
         <form.Field name="organizationInvitations" mode="array">
           {(arrayField) => (
             <>
-              {arrayField.state.value?.map((_, index) => (
-                <div key={index} className="flex items-end gap-2">
+              {arrayField.state.value?.map((invite, index) => (
+                <div key={invite.key} className="flex items-end gap-2">
                   <form.Field
                     name={`organizationInvitations[${index}].email`}
                     validators={{
@@ -233,7 +234,9 @@ export const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormPr
   );
 };
 
-const createEmptyInviteModel = (): { email: string; role: Role } => ({
+// `key` is client-only (React list identity); the mutation maps email/role explicitly
+const createEmptyInviteModel = (): { key: string; email: string; role: Role } => ({
+  key: crypto.randomUUID(),
   email: "",
   role: "member",
 });
