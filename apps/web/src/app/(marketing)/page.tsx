@@ -7,9 +7,7 @@ const Page = () => {
       <section>
         <div className="border-border relative mx-auto max-w-7xl border-x border-b p-8 lg:py-32">
           <div className="max-w-2xl">
-            <span className="text-muted-foreground font-light">
-              Accelerate building modern applications
-            </span>
+            <span className="text-muted-foreground font-light">For you and your coding agents</span>
             <h1 className="text-secondary-foreground mt-6 text-2xl font-light text-pretty">
               An AI native starter kit to build, launch, and scale your next project.
             </h1>
@@ -24,25 +22,22 @@ const Page = () => {
             <div className="flex h-full flex-col gap-6 p-8">
               <div>Build</div>
               <p className="text-muted-foreground">
-                Start with a comprehensive foundation that includes authentication, database setup,
-                UI components, and AI integrations. Skip the boilerplate and focus on what makes
-                your application unique.
+                Auth, organizations, Stripe billing, and streaming AI chat, wired end-to-end across
+                web, mobile, extension, and desktop. Your first commit is a feature, not plumbing.
               </p>
             </div>
             <div className="flex h-full flex-col gap-6 p-8">
               <div>Launch</div>
               <p className="text-muted-foreground">
-                Deploy with confidence using built-in CI/CD pipelines, monitoring, and performance
-                optimization. Get your MVP to market faster with production-ready infrastructure and
-                best practices.
+                Push to deploy: CI, transactional email, and a production checklist come wired. The
+                distance between working locally and live for users is a git push.
               </p>
             </div>
             <div className="flex h-full flex-col gap-6 p-8">
               <div>Scale</div>
               <p className="text-muted-foreground">
-                Built for growth with scalable architecture, caching strategies, and modular
-                components. Easily extend functionality and handle increasing user demands without
-                architectural rewrites.
+                Multi-tenant from day one, typed end-to-end, documented by a self-updating agent
+                wiki. Grow by copying the patterns already there, not rewriting the architecture.
               </p>
             </div>
           </div>
