@@ -350,6 +350,8 @@ app
         mainWindow?.focus();
       }
     });
+
+    return undefined;
   })
   .catch((error) => {
     console.error("[desktop] fatal startup error", error);

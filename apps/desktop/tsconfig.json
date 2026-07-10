@@ -3,6 +3,8 @@
   "include": ["src/**/*", "electron.vite.config.ts"],
   "compilerOptions": {
     "composite": true,
+    "incremental": true,
+    "tsBuildInfoFile": "${configDir}/.cache/tsbuildinfo.json",
     "types": ["electron-vite/node"]
   }
 }

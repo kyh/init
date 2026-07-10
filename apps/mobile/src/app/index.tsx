@@ -17,13 +17,13 @@ function MobileAuth() {
           session
             ? authClient.signOut()
             : authClient.signIn.social({
-                provider: "discord",
+                provider: "github",
                 callbackURL: "/",
               })
         }
         className="bg-primary flex items-center rounded-sm p-2"
       >
-        <Text>{session ? "Sign Out" : "Sign In With Discord"}</Text>
+        <Text>{session ? "Sign Out" : "Sign In With Github"}</Text>
       </Pressable>
     </>
   );
@@ -35,7 +35,7 @@ export default function Index() {
       <Stack.Screen options={{ title: "Home Page" }} />
       <View className="bg-background h-full w-full p-4">
         <Text className="text-foreground pb-2 text-center text-5xl font-bold">
-          Create <Text className="text-primary">T3</Text> Turbo
+          <Text className="text-primary">Init</Text>
         </Text>
         <MobileAuth />
       </View>

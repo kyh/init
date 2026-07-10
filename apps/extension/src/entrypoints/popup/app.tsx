@@ -5,6 +5,10 @@ import { Settings } from "lucide-react";
 
 import { getStorageData, onStorageChange } from "@/lib/storage";
 
+const openOptions = () => {
+  void browser.runtime.openOptionsPage();
+};
+
 const App = () => {
   const [appUrl, setAppUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -28,10 +32,6 @@ const App = () => {
     return unsubscribe;
   }, []);
 
-  const openOptions = () => {
-    void browser.runtime.openOptionsPage();
-  };
-
   if (isLoading) {
     return (
       <div className="bg-background flex h-[600px] w-[400px] items-center justify-center">
@@ -52,12 +52,17 @@ const App = () => {
         <Settings className="size-4" />
       </Button>
 
+      {/* Embeds our own app: it needs scripts + same-origin cookies for auth, so the
+          sandbox can't isolate it — but it still blocks top-navigation hijacks */}
+      {/* oxlint-disable iframe-missing-sandbox */}
       <iframe
         src={appUrl ?? "http://localhost:3000"}
         className="h-full w-full border-0"
         title="Init App"
         allow="clipboard-read; clipboard-write"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
       />
+      {/* oxlint-enable iframe-missing-sandbox */}
     </div>
   );
 };
