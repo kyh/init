@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from "vitest";
-import { TRPCError } from "@trpc/server";
 
 import { createMockContext, createMockDb } from "../test-utils";
 import { createCallerFactory } from "../trpc";

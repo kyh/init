@@ -37,6 +37,12 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+  socialProviders: {
+    github: {
+      clientId: process.env.GITHUB_CLIENT_ID ?? "",
+      clientSecret: process.env.GITHUB_CLIENT_SECRET ?? "",
+    },
+  },
   trustedOrigins: ["expo://"],
   databaseHooks: {
     user: {
@@ -85,24 +91,24 @@ export const getOrganization = cache(
  * @param user - The user object for whom to create the organization
  * @throws Error if organization creation fails
  */
-const createDefaultOrganization = async (user: User) => {
-  /**
-   * Generates an available organization slug by checking for conflicts
-   * Recursively adds numbers to the slug until a unique one is found
-   * @param slug - The base slug to check
-   * @param attempt - The current attempt number for uniqueness
-   * @returns Promise<string> - A unique, available slug
-   */
-  const generateAvailableSlug = async (slug: string, attempt = 0) => {
-    const org = await db.query.organization.findFirst({
-      where: (organization, { eq }) => eq(organization.slug, slug),
-    });
-    if (org) {
-      return generateAvailableSlug(slug + `-${attempt + 1}`, attempt + 1);
-    }
-    return slug;
-  };
+/**
+ * Generates an available organization slug by checking for conflicts
+ * Recursively adds numbers to the slug until a unique one is found
+ * @param slug - The base slug to check
+ * @param attempt - The current attempt number for uniqueness
+ * @returns Promise<string> - A unique, available slug
+ */
+const generateAvailableSlug = async (slug: string, attempt = 0): Promise<string> => {
+  const org = await db.query.organization.findFirst({
+    where: (organization, { eq }) => eq(organization.slug, slug),
+  });
+  if (org) {
+    return generateAvailableSlug(slug + `-${attempt + 1}`, attempt + 1);
+  }
+  return slug;
+};
 
+const createDefaultOrganization = async (user: User) => {
   const slug = await generateAvailableSlug(slugify(user.name));
 
   try {

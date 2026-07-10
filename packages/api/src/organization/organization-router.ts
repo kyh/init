@@ -41,13 +41,14 @@ export const organizationRouter = createTRPCRouter({
     const memberUserIds = members.map((member) => member.userId);
     const memberUsers = await ctx.db.query.user.findMany({
       where: (user, { inArray }) => inArray(user.id, memberUserIds),
+      // Allow-list only — full rows include admin-only fields (role, banned, banReason)
+      columns: { id: true, name: true, email: true, image: true },
     });
     const memberUsersMap = new Map(memberUsers.map((user) => [user.id, user]));
 
-    const membersWithUsers = members.map((member) => ({
-      ...member,
-      user: memberUsersMap.get(member.userId),
-    }));
+    const membersWithUsers = members.map((member) =>
+      Object.assign({}, member, { user: memberUsersMap.get(member.userId) }),
+    );
 
     return {
       currentUserMember,

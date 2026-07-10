@@ -69,7 +69,7 @@ export const todoRouter = createTRPCRouter({
   update: protectedProcedure.input(updateTodoInput).mutation(async ({ ctx, input }) => {
     const organization = await ensureOrganizationAccess(ctx, input.slug);
 
-    const updateData: Record<string, unknown> = {
+    const updateData: Partial<typeof todo.$inferInsert> = {
       updatedAt: new Date(),
     };
 
