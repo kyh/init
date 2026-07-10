@@ -26,7 +26,7 @@ const Page = () => {
                   One TypeScript stack, typed end-to-end from database to UI, shipping to web,
                   mobile, extension, and desktop.
                 </p>
-                <p>Your first commit is a feature, not plumbing.</p>
+                <p className="text-sm italic">Your first commit is a feature, not plumbing.</p>
               </div>
             </div>
             <div className="flex h-full flex-col gap-6 p-8">
@@ -35,7 +35,9 @@ const Page = () => {
                 <p>
                   Push to deploy: CI, transactional email, and a production checklist come wired.
                 </p>
-                <p>The distance between working locally and live for users is a git push.</p>
+                <p className="text-sm italic">
+                  The distance between working locally and live for users is a git push.
+                </p>
               </div>
             </div>
             <div className="flex h-full flex-col gap-6 p-8">
@@ -45,7 +47,9 @@ const Page = () => {
                   Multi-tenant from day one, typed end-to-end, documented by a self-updating agent
                   wiki.
                 </p>
-                <p>Grow by copying the patterns already there, not rewriting the architecture.</p>
+                <p className="text-sm italic">
+                  Grow by copying the patterns already there, not rewriting the architecture.
+                </p>
               </div>
             </div>
           </div>
