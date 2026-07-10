@@ -2,11 +2,11 @@
 title: "API"
 ---
 
-Init uses tRPC to create end-to-end typesafe APIs that work seamlessly between your Next.js web app, Expo mobile app, and backend. This guide covers how the API is structured and how to extend it.
+Init uses tRPC v11 for end-to-end typesafe APIs shared by the Next.js web app and Expo mobile app. This guide covers how the API is structured and how to extend it.
 
 ## What is tRPC?
 
-tRPC allows you to build typesafe APIs without code generation or runtime bloat. You get autocompletion, inline errors, and type safety from your database to your UI.
+tRPC gives you typesafe APIs without code generation. Types flow from database to UI - autocompletion, inline errors, zero runtime schema drift.
 
 ### Key Benefits
 
@@ -14,470 +14,274 @@ tRPC allows you to build typesafe APIs without code generation or runtime bloat.
 - **No code generation** - TypeScript inference handles everything
 - **Excellent DX** - Autocompletion and inline errors
 - **Framework agnostic** - Works with React, React Native, and more
-- **Lightweight** - Minimal runtime overhead
 
 ## API Structure
 
-The API is organized in the `packages/api/` package:
+The API lives in `packages/api/`:
 
 ```
 packages/api/src/
-├── auth/               # Authentication procedures
-├── billing/            # Subscription and billing
-├── team/               # Team management
-├── user/               # User management
-├── waitlist/           # Waitlist functionality
-├── root-router.ts      # Main router composition
-├── trpc.ts            # tRPC setup and context
-└── index.ts           # Package exports
+├── auth/                  # better-auth config + helpers
+├── organization/          # Organization procedures
+├── todo/                  # Example CRUD procedures
+├── waitlist/              # Waitlist signup
+├── root-router.ts         # Router composition
+├── trpc.ts                # tRPC setup, context, procedures
+└── index.ts               # Package exports
 ```
+
+Each feature folder holds a `*-router.ts` (procedures), `*-schema.ts` (Zod inputs), and `*.test.ts` (Vitest).
 
 ## Core Components
 
 ### 1. Context (`trpc.ts`)
 
-The tRPC context provides access to shared resources:
+The context resolves the better-auth session and exposes the database:
 
 ```typescript
 export const createTRPCContext = async (opts: { headers: Headers }) => {
-  const supabase = getSupabaseServerClient();
-
-  // Handle authentication from headers or cookies
-  const token = opts.headers.get("authorization");
-  const { data } = token
-    ? await supabase.auth.getUser(token)
-    : await supabase.auth.getUser();
+  const session = await auth.api.getSession({
+    headers: opts.headers,
+  });
 
   return {
-    headers: opts.headers,
-    user: data.user,        # Current authenticated user
-    supabase,              # Supabase client
-    db,                    # Drizzle database client
+    session,
+    db,
   };
 };
 ```
 
 ### 2. Procedures
 
-Init provides several types of procedures:
-
 #### Public Procedures
 
-Available to all users (authenticated or not):
+Available to everyone:
 
 ```typescript
 export const publicProcedure = t.procedure;
 
-// Usage
+// packages/api/src/waitlist/waitlist-router.ts
 export const waitlistRouter = createTRPCRouter({
-  join: publicProcedure.input(z.object({ email: z.email() })).mutation(async ({ input, ctx }) => {
-    return ctx.db.insert(waitlist).values(input);
+  join: publicProcedure.input(joinWaitlistInput).mutation(async ({ ctx, input }) => {
+    const [created] = await ctx.db
+      .insert(waitlist)
+      .values({ ...input, userId: ctx.session?.user.id })
+      .onConflictDoNothing({ target: waitlist.email })
+      .returning();
+
+    return { waitlist: created ?? null };
   }),
 });
 ```
 
 #### Protected Procedures
 
-Require user authentication:
+Require a session:
 
 ```typescript
-export const protectedProcedure = t.procedure.use(
-  t.middleware(({ ctx, next }) => {
-    if (!ctx.user) {
-      throw new TRPCError({ code: "UNAUTHORIZED" });
-    }
-    return next({ ctx: { user: ctx.user, ...ctx } });
-  }),
-);
-
-// Usage
-export const userRouter = createTRPCRouter({
-  profile: protectedProcedure.query(async ({ ctx }) => {
-    return ctx.db.query.users.findFirst({
-      where: eq(users.id, ctx.user.id),
+export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
+  if (!ctx.session?.user) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "You must be logged in to access this resource",
     });
-  }),
+  }
+  return next({
+    ctx: {
+      session: { ...ctx.session, user: ctx.session.user },
+    },
+  });
 });
+```
+
+#### Organization Access
+
+Membership checks happen per-router. The todo router shows the pattern:
+
+```typescript
+// packages/api/src/todo/todo-router.ts
+const ensureOrganizationAccess = async (ctx: TRPCContext, slug: string) => {
+  const organization = await ctx.db.query.organization.findFirst({
+    where: (org, { eq }) => eq(org.slug, slug),
+  });
+  if (!organization) throw new TRPCError({ code: "NOT_FOUND" });
+
+  const membership = await ctx.db.query.member.findFirst({
+    where: (member, { and, eq }) =>
+      and(eq(member.organizationId, organization.id), eq(member.userId, userId)),
+  });
+  if (!membership) throw new TRPCError({ code: "UNAUTHORIZED" });
+
+  return organization;
+};
 ```
 
 ### 3. Router Composition
 
-All routers are composed in `root-router.ts`:
-
 ```typescript
+// packages/api/src/root-router.ts
 export const appRouter = createTRPCRouter({
-  auth: authRouter,
-  billing: billingRouter,
-  team: teamRouter,
-  user: userRouter,
   waitlist: waitlistRouter,
+  organization: organizationRouter,
+  todo: todoRouter,
 });
 
 export type AppRouter = typeof appRouter;
 ```
 
-## Router Examples
-
-### Authentication Router
-
-Handles user authentication and workspace data:
-
-```typescript
-export const authRouter = createTRPCRouter({
-  // Get current user workspace
-  workspace: publicProcedure.query(async ({ ctx }) => {
-    const teamMembers = ctx.user
-      ? await ctx.db.query.teamMembers.findMany({
-          where: eq(teamMembers.userId, ctx.user.id),
-          with: { team: true },
-        })
-      : [];
-
-    return {
-      user: ctx.user,
-      teams: teamMembers.map((tm) => tm.team),
-    };
-  }),
-
-  // Sign in with password
-  signInWithPassword: publicProcedure
-    .input(signInWithPasswordInput)
-    .mutation(async ({ input, ctx }) => {
-      const { data, error } = await ctx.supabase.auth.signInWithPassword({
-        email: input.email,
-        password: input.password,
-      });
-
-      if (error)
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: error.message,
-        });
-
-      return data;
-    }),
-});
-```
-
-### Team Router
-
-Manages team operations:
-
-```typescript
-export const teamRouter = createTRPCRouter({
-  // List user's teams
-  list: protectedProcedure.query(async ({ ctx }) => {
-    return ctx.db.query.teamMembers.findMany({
-      where: eq(teamMembers.userId, ctx.user.id),
-      with: { team: true },
-    });
-  }),
-
-  // Create new team
-  create: protectedProcedure.input(createTeamInput).mutation(async ({ input, ctx }) => {
-    return ctx.db.transaction(async (tx) => {
-      // Create team
-      const [team] = await tx
-        .insert(teams)
-        .values({
-          name: input.name,
-          slug: input.slug,
-        })
-        .returning();
-
-      // Add creator as owner
-      await tx.insert(teamMembers).values({
-        teamId: team.id,
-        userId: ctx.user.id,
-        role: "OWNER",
-      });
-
-      return team;
-    });
-  }),
-});
-```
-
 ## Client Usage
 
-### React Query Integration
+Init uses the TanStack React Query integration (`@trpc/tanstack-react-query`).
 
-tRPC provides hooks for React and React Native:
+### Queries and Mutations
 
 ```typescript
-// Query (GET)
-const { data: teams, isLoading } = api.team.list.useQuery();
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import { useTRPC, useTRPCClient } from "@/trpc/react";
 
-// Mutation (POST/PUT/DELETE)
-const createTeam = api.team.create.useMutation({
-  onSuccess: () => {
-    // Invalidate and refetch teams
-    utils.team.list.invalidate();
-  },
+const trpc = useTRPC();
+const trpcClient = useTRPCClient();
+
+// Query
+const { data } = useSuspenseQuery(trpc.todo.list.queryOptions({ slug }));
+
+// Mutation
+const createTodo = useMutation({
+  mutationFn: (input: CreateTodoInput) => trpcClient.todo.create.mutate(input),
 });
-
-// Usage
-const handleCreate = (data: CreateTeamInput) => {
-  createTeam.mutate(data);
-};
 ```
 
-### Cross-Platform Support
+### Server Components
 
-The same API works on web and mobile:
+`apps/web/src/trpc/server.tsx` exposes a server-side caller and prefetch helpers:
 
 ```typescript
-// Next.js (apps/web/src/trpc/react.tsx)
-// Expo (apps/mobile/src/trpc/react.tsx)
-import { createTRPCReact, createTRPCReact } from "@trpc/react-query";
+import { caller, HydrateClient, prefetch, trpc } from "@/trpc/server";
 
-import type { AppRouter, AppRouter } from "@repo/api";
+// Direct call in a server component or route handler
+const { todos } = await caller.todo.list({ slug });
 
-export const api = createTRPCReact<AppRouter>();
-
-export const api = createTRPCReact<AppRouter>();
+// Prefetch for client components
+prefetch(trpc.todo.list.queryOptions({ slug }));
 ```
+
+### Type Helpers
+
+```typescript
+import type { RouterInputs, RouterOutputs } from "@repo/api";
+
+type Todo = RouterOutputs["todo"]["list"]["todos"][number];
+type CreateTodoInput = RouterInputs["todo"]["create"];
+```
+
+### Cross-Platform
+
+The same router serves web and mobile. Web hits `/api/trpc` (see `apps/web/src/app/api/trpc/[trpc]/route.ts`); mobile points its client at the deployed URL (`apps/mobile/src/trpc/`).
 
 ## Input Validation
 
-All procedures use Zod for input validation:
+All procedures validate inputs with Zod, colocated in `*-schema.ts`:
 
 ```typescript
-// Schema definition (auth-schema.ts)
-export const signUpInput = z.object({
-  email: z.email(),
-  password: z.string().min(8),
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
-});
-
-export type SignUpInput = z.infer<typeof signUpInput>;
-
-// Router usage
-export const authRouter = createTRPCRouter({
-  signUp: publicProcedure.input(signUpInput).mutation(async ({ input, ctx }) => {
-    // input is fully typed and validated
-    const { email, password, firstName, lastName } = input;
-    // ...
-  }),
+// packages/api/src/todo/todo-schema.ts
+export const createTodoInput = z.object({
+  slug: z.string(),
+  title: z.string().min(1),
 });
 ```
 
+Validation errors flatten into `zodError` via the error formatter in `trpc.ts`.
+
 ## Error Handling
 
-tRPC provides structured error handling:
-
 ```typescript
-// Throw errors in procedures
-if (!team) {
-  throw new TRPCError({
-    code: "NOT_FOUND",
-    message: "Team not found",
-  });
-}
+// Throw in procedures
+throw new TRPCError({
+  code: "NOT_FOUND",
+  message: "Todo not found",
+});
 
-// Handle errors in client
-const createTeam = api.team.create.useMutation({
-  onError: (error) => {
-    if (error.data?.code === "UNAUTHORIZED") {
-      // Handle unauthorized
-    }
-    toast.error(error.message);
-  },
+// Handle in clients
+const createTodo = useMutation({
+  mutationFn: (input: CreateTodoInput) => trpcClient.todo.create.mutate(input),
+  onError: (error) => toast.error(error.message),
 });
 ```
 
 ### Common Error Codes
 
-- `UNAUTHORIZED` - User not authenticated
-- `FORBIDDEN` - User lacks permissions
+- `UNAUTHORIZED` - Not logged in or not a member
+- `FORBIDDEN` - Lacks permission
 - `NOT_FOUND` - Resource doesn't exist
 - `BAD_REQUEST` - Invalid input
-- `INTERNAL_SERVER_ERROR` - Unexpected error
 
 ## Adding New Routes
 
-### 1. Create Router File
+### 1. Create Schema
 
 ```typescript
-// packages/api/src/posts/posts-router.ts
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
-import { createPostInput, updatePostInput } from "./posts-schema";
-
-export const postsRouter = createTRPCRouter({
-  list: publicProcedure.query(async ({ ctx }) => {
-    return ctx.db.query.posts.findMany({
-      orderBy: (posts, { desc }) => [desc(posts.createdAt)],
-    });
-  }),
-
-  create: protectedProcedure.input(createPostInput).mutation(async ({ input, ctx }) => {
-    return ctx.db.insert(posts).values({
-      ...input,
-      authorId: ctx.user.id,
-    });
-  }),
-});
-```
-
-### 2. Create Validation Schema
-
-```typescript
-// packages/api/src/posts/posts-schema.ts
+// packages/api/src/post/post-schema.ts
 import { z } from "zod";
 
 export const createPostInput = z.object({
+  slug: z.string(),
   title: z.string().min(1).max(255),
-  content: z.string().optional(),
-  published: z.boolean().default(false),
 });
+```
 
-export type CreatePostInput = z.infer<typeof createPostInput>;
+### 2. Create Router
+
+```typescript
+// packages/api/src/post/post-router.ts
+import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { createPostInput } from "./post-schema";
+
+export const postRouter = createTRPCRouter({
+  create: protectedProcedure.input(createPostInput).mutation(async ({ ctx, input }) => {
+    const organization = await ensureOrganizationAccess(ctx, input.slug);
+    return ctx.db.insert(post).values({
+      organizationId: organization.id,
+      title: input.title,
+    });
+  }),
+});
 ```
 
 ### 3. Add to Root Router
 
 ```typescript
 // packages/api/src/root-router.ts
-import { postsRouter } from "./posts/posts-router";
-
 export const appRouter = createTRPCRouter({
-  auth: authRouter,
-  posts: postsRouter, // Add here
-  // ... other routers
+  waitlist: waitlistRouter,
+  organization: organizationRouter,
+  todo: todoRouter,
+  post: postRouter, // Add here
 });
 ```
 
 ### 4. Use in Client
 
 ```typescript
-// In your component
-const { data: posts } = api.posts.list.useQuery();
-const createPost = api.posts.create.useMutation();
+const { data } = useSuspenseQuery(trpc.post.list.queryOptions({ slug }));
 ```
 
-## Advanced Patterns
+## Testing
 
-### Middleware
+Routers ship with Vitest tests next to the code (`todo-router.test.ts`). Shared helpers live in `packages/api/src/test-utils.ts`.
 
-Create custom middleware for common logic:
-
-```typescript
-// Team ownership check
-const teamOwnerMiddleware = t.middleware(async ({ ctx, next, input }) => {
-  if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED" });
-
-  const teamId = input.teamId;
-  const member = await ctx.db.query.teamMembers.findFirst({
-    where: and(
-      eq(teamMembers.teamId, teamId),
-      eq(teamMembers.userId, ctx.user.id),
-      eq(teamMembers.role, "OWNER"),
-    ),
-  });
-
-  if (!member) throw new TRPCError({ code: "FORBIDDEN" });
-
-  return next({ ctx: { ...ctx, teamId } });
-});
-
-// Usage
-const teamOwnerProcedure = publicProcedure.use(teamOwnerMiddleware);
-```
-
-### Subscriptions
-
-For real-time features:
-
-```typescript
-// Server
-export const postsRouter = createTRPCRouter({
-  onUpdate: publicProcedure.subscription(() => {
-    return observable<Post>((emit) => {
-      // WebSocket or Supabase real-time logic
-      const channel = supabase
-        .channel("posts")
-        .on("postgres_changes", { event: "*", schema: "public", table: "posts" }, (payload) =>
-          emit.next(payload.new as Post),
-        );
-
-      return () => channel.unsubscribe();
-    });
-  }),
-});
-
-// Client
-const { data } = api.posts.onUpdate.useSubscription();
+```bash
+pnpm -F @repo/api test
 ```
 
 ## Best Practices
 
-### 1. Organize by Feature
-
-Group related procedures in feature-based routers:
-
-```
-auth/       # Authentication
-team/       # Team management
-billing/    # Subscriptions
-posts/      # Blog posts
-```
-
-### 2. Use Transactions
-
-For multi-step operations:
-
-```typescript
-.mutation(async ({ input, ctx }) => {
-  return ctx.db.transaction(async (tx) => {
-    const team = await tx.insert(teams).values(input);
-    await tx.insert(teamMembers).values({
-      teamId: team.id,
-      userId: ctx.user.id,
-      role: "OWNER",
-    });
-    return team;
-  });
-});
-```
-
-### 3. Consistent Error Messages
-
-Use consistent error handling:
-
-```typescript
-const ERRORS = {
-  TEAM_NOT_FOUND: "Team not found",
-  INSUFFICIENT_PERMISSIONS: "You don't have permission to perform this action",
-} as const;
-```
-
-### 4. Input Validation
-
-Always validate inputs with Zod:
-
-```typescript
-const input = z.object({
-  email: z.email("Invalid email address"),
-  age: z.number().min(18, "Must be 18 or older"),
-});
-```
-
-### 5. Type Exports
-
-Export types for client usage:
-
-```typescript
-// Export input/output types
-export type CreateTeamInput = z.infer<typeof createTeamInput>;
-export type Team = InferSelectModel<typeof teams>;
-```
+- **Organize by feature** - One folder per domain, router + schema + test
+- **Validate everything** - Zod at every boundary
+- **Check org access** - Every multi-tenant procedure verifies membership
+- **Allow-list columns** - Don't return full user rows; see `organization-router.ts`
 
 ## Next Steps
 
-Now that you understand tRPC architecture:
-
-1. **Explore authentication** - Learn about [Supabase auth integration](/docs/architecture/authentication)
-2. **Database operations** - Understand [Drizzle ORM usage](/docs/architecture/database)
-3. **Real-time features** - Implement subscriptions and live updates
-4. **Testing APIs** - Write tests for your procedures
+1. **Authentication** - [better-auth integration](/docs/architecture/authentication)
+2. **Database operations** - [Drizzle ORM usage](/docs/architecture/database)
+3. **AI features** - [The AI chat endpoint](/docs/architecture/ai)

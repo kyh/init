@@ -2,77 +2,74 @@
 title: "Introduction"
 ---
 
-Init is a modern, production-ready SaaS boilerplate designed to help you build and launch your next product quickly. Whether you're building a web application, mobile app, or both, Init provides everything you need to get started.
+Init is a modern, production-ready starter kit for shipping the same product to web, mobile, browser extension, and desktop - from one TypeScript codebase.
 
 ## What is Init?
 
-Init is a full-stack TypeScript boilerplate that combines the best tools and patterns from the modern web development ecosystem. It's built for developers who want to focus on building their product rather than setting up infrastructure.
+Init is a full-stack TypeScript monorepo that combines the best tools from the modern web ecosystem. Build your product, not your infrastructure.
 
 ### Key Features
 
 - **🚀 Full-Stack TypeScript** - End-to-end type safety from database to UI
-- **📱 Cross-Platform** - Next.js web app and Expo mobile app sharing the same backend
-- **🔐 Authentication Ready** - Complete auth system with Supabase
-- **💳 Billing Integration** - Ready-to-use billing system for SaaS products
-- **🤖 AI-Powered** - Built-in AI chat functionality
-- **👥 Team Management** - Multi-tenant architecture with team support
-- **🎨 Modern UI** - Beautiful, accessible components with Tailwind CSS
-- **📊 Analytics Ready** - User analytics and feedback collection
-- **🔧 Developer Experience** - Turborepo monorepo with hot reload
+- **📱 Multi-Platform** - Next.js web, Expo mobile, Chrome extension, Electron desktop
+- **🔐 Authentication Ready** - better-auth with email/password and GitHub OAuth
+- **👥 Organizations** - Multi-tenant by default; every user gets a personal org
+- **🤖 AI-Powered** - Streaming AI chat via the Vercel AI SDK and AI Gateway
+- **🎨 Modern UI** - Tailwind CSS 4, Base UI, shadcn-style shared components
+- **📚 Docs Included** - fumadocs-powered docs site (you're reading it)
+- **🔧 Developer Experience** - Turborepo, oxlint, oxfmt, hot reload everywhere
 
 ## Technology Stack
 
-Init is built on proven technologies that scale:
-
 ### Frontend
 
-- **Next.js 15** - React framework with App Router
-- **Expo** - Cross-platform mobile development
-- **Tailwind CSS** - Utility-first CSS framework
-- **Shadcn/ui** - High-quality React components
+- **Next.js 16** - React framework with App Router
+- **Expo** - Cross-platform mobile with NativeWind
+- **WXT** - Chrome extension framework
+- **Electron** - Desktop app
+- **Tailwind CSS 4** - Utility-first styling
+- **Base UI + shadcn/ui** - Accessible component primitives
 
 ### Backend
 
-- **tRPC** - End-to-end typesafe APIs
-- **Supabase** - PostgreSQL database with real-time features
+- **tRPC v11** - End-to-end typesafe APIs
+- **better-auth** - Authentication with organization and admin plugins
 - **Drizzle ORM** - Type-safe database queries
+- **Supabase** - Managed Postgres and file storage
+- **Vercel AI SDK** - Streaming AI features
 
 ### Infrastructure
 
-- **Turborepo** - High-performance monorepo build system
-- **TypeScript** - Static type checking
-- **ESLint & Prettier** - Code formatting and linting
+- **Turborepo** - High-performance monorepo builds
+- **pnpm** - Workspaces with version catalogs
+- **oxlint & oxfmt** - Fast linting and formatting
+- **Vitest** - API tests
 
 ## Who is Init For?
 
-Init is perfect for:
-
-- **Indie Hackers** building their next SaaS product
-- **Startups** needing to move fast with proven patterns
+- **Indie hackers** shipping their next product
+- **Startups** that need to move fast with proven patterns
 - **Developers** who want a modern, type-safe foundation
-- **Teams** looking for a consistent development experience
+- **Teams** targeting multiple platforms without multiple codebases
 
 ## What You'll Build
 
-With Init, you can build modern applications that include:
+Out of the box you get:
 
-- User authentication and registration
-- Team-based workspaces
-- Subscription billing
-- Real-time features
-- Mobile and web experiences
-- AI-powered functionality
+- Email/password and GitHub login
+- Organization workspaces with members and invitations
+- An example CRUD feature (todos) scoped per organization
+- A streaming AI chat
+- A marketing page, waitlist, and docs site
 
 ## Getting Started
 
-Ready to build your next project? Start with our [installation guide](/docs/overview/installation) to get Init running locally in minutes.
+Start with the [installation guide](/docs/overview/installation) to get Init running locally in minutes.
 
 ## Philosophy
 
-Init follows these core principles:
-
 - **Developer Experience First** - Tools should help, not hinder
 - **Type Safety** - Catch errors at compile time, not runtime
-- **Modern Patterns** - Use the latest best practices and patterns
-- **Production Ready** - Built for real-world applications that scale
-- **Community Driven** - Open source and welcoming to contributions
+- **Modern Patterns** - Use current best practices
+- **Production Ready** - Built for real-world applications
+- **Only What You Need** - `pnpm bootstrap` trims platforms you don't want

@@ -2,267 +2,203 @@
 title: "Folder Structure"
 ---
 
-Init is organized as a Turborepo monorepo with clear separation between applications and shared packages. This structure promotes code reuse, maintainability, and developer productivity.
+Init is a Turborepo monorepo with clear separation between applications and shared packages. Apps consume packages; packages never depend on apps.
 
 ## Overview
 
 ```
 init/
-├── apps/                    # Applications
-│   ├── nextjs/             # Next.js web application
-│   └── expo/               # Expo mobile application
-├── packages/               # Shared packages
-│   ├── api/                # tRPC API routes
-│   ├── db/                 # Database schema and utilities
-│   ├── ui/                 # Shared UI components
-│   └── mdx/                # Documentation system
-├── package.json            # Root workspace configuration
-├── turbo.json              # Turborepo configuration
-└── pnpm-workspace.yaml     # pnpm workspace configuration
+├── apps/
+│   ├── web/               # Next.js 16 web app
+│   ├── mobile/            # Expo mobile app
+│   ├── extension/         # Chrome extension (WXT)
+│   └── desktop/           # Electron desktop app
+├── packages/
+│   ├── api/               # tRPC router + better-auth
+│   ├── db/                # Drizzle schema + Supabase config
+│   └── ui/                # Shared React components
+├── scripts/               # bootstrap.ts (starter trimming)
+├── package.json           # Root workspace scripts
+├── turbo.json             # Turborepo pipeline + env
+└── pnpm-workspace.yaml    # Workspaces + version catalog
 ```
 
 ## Applications (`apps/`)
 
-### Next.js Web App (`apps/web/`)
+### Web App (`apps/web/`)
 
-The web application built with Next.js 15 and the App Router:
+Next.js 16 with the App Router:
 
 ```
 apps/web/
+├── content/
+│   └── docs/              # These docs (fumadocs MDX)
 ├── src/
-│   ├── app/                # App Router structure
-│   │   ├── (auth)/         # Authentication routes
-│   │   │   ├── auth/       # Auth pages (login, register, etc.)
-│   │   │   └── layout.tsx  # Auth layout
-│   │   ├── (dashboard)/    # Protected dashboard routes
-│   │   │   ├── dashboard/  # Team-specific dashboards
-│   │   │   ├── account/    # User account settings
-│   │   │   └── layout.tsx  # Dashboard layout with sidebar
-│   │   ├── (docs)/         # Documentation routes
-│   │   │   └── docs/       # MDX documentation pages
-│   │   ├── (marketing)/    # Public marketing pages
-│   │   │   ├── page.tsx    # Landing page
-│   │   │   └── layout.tsx  # Marketing layout
-│   │   ├── api/            # API routes
-│   │   │   ├── trpc/       # tRPC endpoint
-│   │   │   └── chat/       # AI chat endpoint
-│   │   ├── layout.tsx      # Root layout
-│   │   └── globals.css     # Global styles
-│   ├── components/         # App-specific components
-│   ├── lib/                # Utility functions and config
-│   ├── trpc/               # tRPC client setup
-│   └── middleware.ts       # Next.js middleware (auth, etc.)
-├── public/                 # Static assets
-├── next.config.js          # Next.js configuration
-├── tailwind.config.ts      # Tailwind CSS configuration
-└── package.json            # Dependencies and scripts
+│   ├── app/
+│   │   ├── (auth)/        # Login, register, password reset
+│   │   ├── (dashboard)/   # Protected dashboard
+│   │   │   └── dashboard/
+│   │   │       ├── [slug]/    # Org pages: todos, members, settings, billing
+│   │   │       └── account/   # User account settings
+│   │   ├── (docs)/        # Docs routes (fumadocs)
+│   │   ├── (marketing)/   # Public landing page
+│   │   └── api/
+│   │       ├── auth/[...all]/  # better-auth handler
+│   │       ├── trpc/[trpc]/    # tRPC endpoint
+│   │       ├── chat/           # AI chat endpoint
+│   │       ├── health/         # Liveness check
+│   │       └── search/         # Docs search
+│   ├── components/        # App-level components (header, nav, theme)
+│   ├── lib/               # auth-client, site-config, fumadocs source
+│   ├── trpc/              # tRPC client setup (react, server, query-client)
+│   └── proxy.ts           # Markdown content negotiation for agents
+├── next.config.ts
+└── package.json
 ```
 
-#### Route Organization
+#### Route Conventions
 
-Next.js App Router uses folder-based routing with special conventions:
+- `(auth)/`, `(dashboard)/`, `(marketing)/`, `(docs)/` - route groups
+- `[slug]/` - dynamic org routes
+- `_components/` - colocated components, not routes
 
-- `(auth)/` - Route group for authentication pages
-- `(dashboard)/` - Route group for protected dashboard pages
-- `(marketing)/` - Route group for public marketing pages
-- `[param]/` - Dynamic routes (e.g., `[slug]`)
-- `_components/` - Collocated components (not routes)
+### Mobile App (`apps/mobile/`)
 
-### Expo Mobile App (`apps/mobile/`)
-
-The mobile application built with Expo and React Native:
+Expo + React Native with NativeWind:
 
 ```
 apps/mobile/
 ├── src/
-│   ├── app/                # Expo Router structure
-│   │   ├── (tabs)/         # Tab navigation
-│   │   ├── auth/           # Authentication screens
-│   │   ├── _layout.tsx     # Root layout with providers
-│   │   └── index.tsx       # Home screen
-│   ├── trpc/               # tRPC client setup
-│   └── utils/              # Mobile-specific utilities
-├── assets/                 # Images, icons, fonts
-├── app.config.ts           # Expo configuration
-├── babel.config.js         # Babel configuration
-└── package.json            # Dependencies and scripts
+│   ├── app/               # Expo Router (_layout.tsx, index.tsx)
+│   ├── utils/             # auth (SecureStore), api (tRPC), base-url
+│   └── styles.css
+├── app.config.ts
+└── package.json
+```
+
+### Chrome Extension (`apps/extension/`)
+
+Built with WXT:
+
+```
+apps/extension/
+├── src/
+│   ├── entrypoints/       # background, popup, options
+│   ├── assets/
+│   └── lib/
+└── wxt.config.ts
+```
+
+### Desktop App (`apps/desktop/`)
+
+Electron via electron-vite:
+
+```
+apps/desktop/
+├── src/
+│   ├── main/              # Main process
+│   ├── preload/           # Preload scripts
+│   └── renderer/          # UI
+├── electron.vite.config.ts
+└── electron-builder.yml
 ```
 
 ## Shared Packages (`packages/`)
 
 ### API Package (`packages/api/`)
 
-Contains all tRPC API routes and business logic:
+tRPC router and better-auth config:
 
 ```
-packages/api/
-├── src/
-│   ├── auth/               # Authentication routes
-│   │   ├── auth-router.ts  # Auth procedures
-│   │   └── auth-schema.ts  # Zod validation schemas
-│   ├── user/               # User management routes
-│   ├── team/               # Team management routes
-│   ├── billing/            # Billing and subscription routes
-│   ├── note/               # Example CRUD routes
-│   ├── waitlist/           # Waitlist management
-│   ├── root-router.ts      # Main router composition
-│   ├── trpc.ts             # tRPC setup and middleware
-│   └── index.ts            # Package exports
-└── package.json
+packages/api/src/
+├── auth/                  # auth.ts (better-auth), auth-schema.ts, utils
+├── organization/          # organization-router.ts, -schema.ts, -test
+├── todo/                  # Example CRUD router
+├── waitlist/              # Waitlist router
+├── root-router.ts         # Router composition
+├── trpc.ts                # Context + procedures
+├── test-utils.ts          # Vitest helpers
+└── index.ts               # Exports: appRouter, RouterInputs/Outputs
 ```
 
-#### Router Organization
-
-Each feature has its own router module:
-
-- `*-router.ts` - tRPC procedures (queries/mutations)
-- `*-schema.ts` - Zod validation schemas
-- Route grouping by domain (auth, user, team, etc.)
+Convention per feature: `*-router.ts` (procedures), `*-schema.ts` (Zod), `*.test.ts` (tests).
 
 ### Database Package (`packages/db/`)
-
-Database schema, migrations, and client utilities:
 
 ```
 packages/db/
 ├── src/
-│   ├── schema.ts           # Drizzle database schema
-│   ├── drizzle-client.ts   # Drizzle ORM client
-│   ├── supabase-*-client.ts # Supabase clients (server, browser, etc.)
-│   ├── database.types.ts   # Generated TypeScript types
-│   └── index.ts            # Package exports
-├── supabase/               # Supabase configuration
-│   ├── config.toml         # Supabase local config
-│   ├── migrations/         # SQL migrations
-│   └── functions/          # Edge functions
-├── drizzle.config.ts       # Drizzle configuration
-└── package.json
+│   ├── drizzle-schema.ts       # App tables (waitlist, todo)
+│   ├── drizzle-schema-auth.ts  # better-auth generated tables
+│   ├── drizzle-client.ts       # postgres.js + Drizzle client
+│   └── index.ts                # Re-exports drizzle-orm operators
+├── supabase/
+│   ├── config.toml             # Local Supabase (auth disabled, storage on)
+│   └── seed.sql                # Avatars bucket policies
+├── drizzle.config.ts
+└── package.json                # db scripts (start, push, reset, studio)
 ```
-
-#### Database Architecture
-
-- **Drizzle ORM** - Type-safe database queries
-- **Supabase** - PostgreSQL with real-time features
-- **Multiple clients** - Server, browser, middleware contexts
-- **Type generation** - Automatic TypeScript types
 
 ### UI Package (`packages/ui/`)
 
-Shared React components used across web and mobile:
+shadcn-style components on Base UI (base-vega registry):
 
 ```
 packages/ui/
 ├── src/
-│   ├── button.tsx          # Button component
-│   ├── card.tsx            # Card component
-│   ├── input.tsx           # Input component
-│   ├── form.tsx            # Form components
-│   ├── dialog.tsx          # Modal/dialog component
-│   ├── theme.tsx           # Theme provider
-│   ├── utils.tsx           # Utility functions
-│   └── index.tsx           # Package exports
-├── components.json         # Shadcn/ui configuration
-└── package.json
+│   ├── components/        # Flat primitives + ai-elements/
+│   ├── hooks/
+│   ├── lib/utils.ts       # cn()
+│   └── styles/globals.css
+├── components.json        # shadcn config (style: base-vega)
+└── postcss.config.mjs
 ```
 
-#### Component Strategy
+Apps import explicit paths:
 
-- **Shadcn/ui base** - High-quality accessible components
-- **Platform adaptation** - Works on web and mobile
-- **Consistent design** - Shared design system
-- **Customizable** - Easy to modify and extend
+- `@repo/ui/components/<name>`
+- `@repo/ui/lib/utils`
+- `@repo/ui/globals.css`
 
-### Documentation Package (`packages/mdx/`)
+Add components from the registry:
 
-MDX-based documentation system:
-
+```bash
+cd packages/ui && pnpm dlx shadcn@latest add <component>
 ```
-packages/mdx/
-├── content/                # MDX content files
-│   ├── overview/           # Getting started guides
-│   ├── architecture/       # Architecture documentation
-│   ├── build/              # Build and deployment
-│   ├── launch/             # Launch preparation
-│   └── scale/              # Scaling strategies
-├── src/
-│   └── index.tsx           # MDX processing utilities
-├── content-collections.ts  # Content configuration
-└── package.json
-```
+
+## Documentation
+
+No separate docs package - these pages are MDX files in `apps/web/content/docs/`, rendered by fumadocs (`apps/web/src/lib/source.ts`).
 
 ## Configuration Files
 
-### Root Configuration
-
-- `package.json` - Workspace configuration and scripts
-- `turbo.json` - Turborepo build pipeline configuration
-- `pnpm-workspace.yaml` - pnpm workspace definition
-
-### Build and Development
-
-- `.oxlintrc.json` - Code linting rules
-- `.oxfmtrc.json` - Code formatting rules
-- `tsconfig.json` - TypeScript configuration
+- `package.json` - Workspace scripts (`dev:web`, `db:push`, ...)
+- `turbo.json` - Pipeline + `globalEnv` allow-list for env vars
+- `pnpm-workspace.yaml` - Workspaces and the shared version catalog
+- `.oxlintrc.json` - Linting (oxlint); formatting is oxfmt
 
 ## Key Design Principles
 
-### 1. Separation of Concerns
-
-- **Apps** contain application-specific code
-- **Packages** contain shared, reusable code
-- Clear boundaries between UI, API, and data layers
-
-### 2. Code Sharing
-
-- API logic shared between web and mobile
-- UI components adapted for each platform
-- Database schema and utilities shared
-
-### 3. Type Safety
-
-- End-to-end TypeScript coverage
-- Shared types between packages
-- Automatic type generation from database
-
-### 4. Developer Experience
-
-- Fast development with Turborepo
-- Hot reload across all packages
-- Consistent tooling and scripts
-
-### 5. Scalability
-
-- Easy to add new apps or packages
-- Clear patterns for feature organization
-- Independent deployment of packages
+1. **Separation of concerns** - Apps own UX; packages own logic, data, and primitives
+2. **Code sharing** - One tRPC router, one auth config, one schema for every platform
+3. **Type safety** - Types flow from schema through API to UI, no codegen
+4. **Explicit imports** - `@repo/ui/components/button`, not barrel files
 
 ## Adding New Features
 
 ### New API Routes
 
-1. Add router in `packages/api/src/[feature]/`
-2. Export from `packages/api/src/root-router.ts`
-3. Use in apps with full type safety
+1. Add `packages/api/src/<feature>/` with router + schema
+2. Register in `packages/api/src/root-router.ts`
+3. Consume with full types via `useTRPC()`
 
 ### New UI Components
 
-1. Add component in `packages/ui/src/`
-2. Export from `packages/ui/src/index.tsx`
-3. Import in apps as needed
+1. Add to `packages/ui/src/components/` (or `pnpm dlx shadcn@latest add`)
+2. Import as `@repo/ui/components/<name>`
 
 ### New Database Tables
 
-1. Add schema in `packages/db/src/schema.ts`
-2. Run `pnpm db:push` to update database
-3. Types automatically available across packages
-
-## Navigation Between Packages
-
-Understanding the relationships:
-
-- Apps depend on packages
-- Packages can depend on other packages
-- No circular dependencies
-- Clean import/export boundaries
-
-This structure enables rapid development while maintaining code quality and type safety across the entire application.
+1. Define in `packages/db/src/drizzle-schema.ts` with `.enableRLS()`
+2. Run `pnpm db:push`
+3. Types flow everywhere automatically
