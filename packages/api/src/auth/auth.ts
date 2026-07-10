@@ -2,14 +2,15 @@ import type { User } from "better-auth";
 import { cache } from "react";
 import { headers } from "next/headers";
 import { expo } from "@better-auth/expo";
-import { eq } from "@repo/db";
+import { and, eq, isNull } from "@repo/db";
 import { db } from "@repo/db/drizzle-client";
-import { user as userSchema } from "@repo/db/drizzle-schema-auth";
+import { session as sessionSchema, user as userSchema } from "@repo/db/drizzle-schema-auth";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { admin, oAuthProxy, organization } from "better-auth/plugins";
 
+import { sendEmail } from "../email/send-email";
 import { slugify } from "./utils";
 
 const baseUrl =
@@ -27,15 +28,32 @@ export const auth = betterAuth({
   plugins: [
     oAuthProxy({
       currentURL: baseUrl,
-      productionURL: `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "init.kyh.io"}`,
+      productionURL: process.env.VERCEL_PROJECT_PRODUCTION_URL
+        ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+        : baseUrl,
     }),
     expo(),
-    organization(),
+    organization({
+      sendInvitationEmail: async (data) => {
+        await sendEmail({
+          to: data.email,
+          subject: `You've been invited to ${data.organization.name}`,
+          text: `Accept the invitation: ${baseUrl}/auth/invitation/${data.id}`,
+        });
+      },
+    }),
     admin(),
     nextCookies(),
   ],
   emailAndPassword: {
     enabled: true,
+    sendResetPassword: async ({ user, url }) => {
+      await sendEmail({
+        to: user.email,
+        subject: "Reset your password",
+        text: `Click the link to reset your password: ${url}`,
+      });
+    },
   },
   socialProviders: {
     github: {
@@ -121,7 +139,7 @@ const createDefaultOrganization = async (user: User) => {
   const slug = await generateAvailableSlug(slugify(user.name));
 
   try {
-    await auth.api.createOrganization({
+    const createdOrganization = await auth.api.createOrganization({
       body: {
         userId: user.id,
         name: "Personal Organization",
@@ -131,6 +149,15 @@ const createDefaultOrganization = async (user: User) => {
         },
       },
     });
+
+    // The signup session is created before this hook finishes, so the
+    // session.create.before hook found no membership — backfill it
+    if (createdOrganization) {
+      await db
+        .update(sessionSchema)
+        .set({ activeOrganizationId: createdOrganization.id })
+        .where(and(eq(sessionSchema.userId, user.id), isNull(sessionSchema.activeOrganizationId)));
+    }
   } catch (err) {
     // If organization creation fails, delete the user to maintain data consistency
     await db.delete(userSchema).where(eq(userSchema.id, user.id));

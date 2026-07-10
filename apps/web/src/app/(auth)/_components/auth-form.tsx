@@ -217,6 +217,7 @@ export const RequestPasswordResetForm = () => {
     onSubmit: async ({ value }) => {
       await authClient.requestPasswordReset({
         email: value.email,
+        redirectTo: "/auth/password-update",
         fetchOptions: {
           onSuccess: () => {
             toast.success("Password reset email sent successfully!");
@@ -294,8 +295,16 @@ export const RequestPasswordResetForm = () => {
   );
 };
 
-export const UpdatePasswordForm = () => {
+export const UpdatePasswordForm = () => (
+  <Suspense>
+    <UpdatePasswordFormInner />
+  </Suspense>
+);
+
+const UpdatePasswordFormInner = () => {
   const router = useRouter();
+  // better-auth appends the reset token to the redirectTo URL
+  const token = useSearchParams().get("token");
 
   const form = useForm({
     defaultValues: {
@@ -314,8 +323,13 @@ export const UpdatePasswordForm = () => {
         }),
     },
     onSubmit: async ({ value }) => {
+      if (!token) {
+        toast.error("Invalid or expired reset link. Request a new one.");
+        return;
+      }
       await authClient.resetPassword({
         newPassword: value.password,
+        token,
         fetchOptions: {
           onSuccess: () => {
             toast.success("Password updated successfully!");

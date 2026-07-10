@@ -9,7 +9,7 @@ What to verify before real users arrive. [Deployment](/docs/launch/deployment) g
 Init ships with the author's defaults baked in. Change these before launch:
 
 - **`apps/web/src/lib/site-config.ts`** - name, description, production URL, Twitter handle. `siteConfig.url` feeds metadata, sitemap, robots, and `llms.txt`
-- **`packages/api/src/auth/auth.ts`** - the `oAuthProxy` fallback `productionURL` is `init.kyh.io`; on Vercel it's derived from `VERCEL_PROJECT_PRODUCTION_URL`, but update the fallback anyway
+- **`packages/api/src/auth/auth.ts`** - `oAuthProxy` derives `productionURL` from `VERCEL_PROJECT_PRODUCTION_URL`; deploying off Vercel means setting that env var (or replacing the derivation)
 - **`apps/web/src/app/(docs)/docs/layout.tsx`** - `githubUrl` points at the upstream repo
 - **`public/og.jpg`** - the OpenGraph image referenced in `src/app/layout.tsx`
 
@@ -33,7 +33,7 @@ On a hosted Supabase project, also disable the Data API (Settings → API) - loc
 
 Honest gaps. Each is a deliberate "add when you need it":
 
-- **Email delivery** - no provider is wired. Password reset silently can't send, and organization invites only surface in-app. Wire `emailAndPassword.sendResetPassword` and the org plugin's `sendInvitationEmail` in `packages/api/src/auth/auth.ts` to a provider (Resend, Postmark)
+- **Email delivery** - set `RESEND_API_KEY` (and `EMAIL_FROM`) in production. Password reset and organization invite emails send through Resend's REST API (`packages/api/src/email/send-email.ts`); without the key they log to the server console instead of sending
 - **Rate limiting** - better-auth's built-in limiter covers auth routes (in-memory, so per-instance on serverless), but tRPC procedures and `/api/chat` have none. Add [Vercel WAF rules](https://vercel.com/docs/security/vercel-waf) or a middleware backed by a shared store
 - **Billing** - `dashboard/[slug]/billing` is an empty shell. Bring Stripe or Polar
 - **Background jobs** - no queue. Long work either fits in a request (the chat route caps at `maxDuration = 30`) or needs Inngest/Trigger.dev/QStash
@@ -60,10 +60,10 @@ Green CI is the merge bar. Note `apps/web/next.config.js` sets `typescript.ignor
 
 ## Launch Checklist
 
-- [ ] `site-config.ts`, OAuth proxy fallback, `githubUrl`, `og.jpg` updated
+- [ ] `site-config.ts` (name, description, Twitter), `githubUrl`, `og.jpg` updated
 - [ ] Unique `BETTER_AUTH_SECRET`; separate GitHub OAuth apps
 - [ ] Production schema pushed; `avatars` bucket created; Data API disabled
-- [ ] Email delivery wired (or password reset + invites consciously deferred)
+- [ ] `RESEND_API_KEY` + `EMAIL_FROM` set (password reset + invite emails)
 - [ ] Spending cap on `AI_GATEWAY_API_KEY`
 - [ ] Uptime monitor on `/api/health`
 - [ ] Error tracking installed ([Monitoring](/docs/launch/monitoring))
