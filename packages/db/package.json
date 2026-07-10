@@ -14,7 +14,6 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "supabase": "pnpm with-env supabase",
     "drizzle:kit": "pnpm with-env drizzle-kit",
-    "seed": "pnpm with-env tsx src/seed/initial.ts",
     "start": "pnpm with-env supabase status || supabase start",
     "stop": "pnpm with-env supabase stop",
     "reset": "pnpm with-env supabase db reset && pnpm push",

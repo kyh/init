@@ -40,17 +40,18 @@ type MockDb = {
   delete: ReturnType<typeof vi.fn>;
 };
 
-export function createMockDb(): MockDb {
-  const chainable = () => {
-    const chain = {
-      values: vi.fn().mockReturnThis(),
-      set: vi.fn().mockReturnThis(),
-      where: vi.fn().mockReturnThis(),
-      returning: vi.fn().mockResolvedValue([]),
-    };
-    return chain;
+const chainable = () => {
+  const chain = {
+    values: vi.fn().mockReturnThis(),
+    set: vi.fn().mockReturnThis(),
+    where: vi.fn().mockReturnThis(),
+    onConflictDoNothing: vi.fn().mockReturnThis(),
+    returning: vi.fn().mockResolvedValue([]),
   };
+  return chain;
+};
 
+export function createMockDb(): MockDb {
   return {
     query: {
       organization: { findFirst: vi.fn() },

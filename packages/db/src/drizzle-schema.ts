@@ -2,16 +2,19 @@
  * Application schema
  */
 import { relations } from "drizzle-orm";
-import { pgTable } from "drizzle-orm/pg-core";
+import { index, pgTable } from "drizzle-orm/pg-core";
 
 import { organization, user } from "./drizzle-schema-auth";
 
+// All tables enable RLS with no policies (deny-by-default): the public schema
+// is reachable through PostgREST with the anon key, and authz lives in tRPC.
+// The server's drizzle connection is unaffected (table owner bypasses RLS).
 export const waitlist = pgTable("waitlist", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
-  userId: t.text().references(() => user.id),
+  userId: t.text().references(() => user.id, { onDelete: "set null" }),
   source: t.text(),
-  email: t.text(),
-}));
+  email: t.text().notNull().unique(),
+})).enableRLS();
 
 export const waitlistRelations = relations(waitlist, ({ one }) => ({
   user: one(user, {
@@ -20,18 +23,22 @@ export const waitlistRelations = relations(waitlist, ({ one }) => ({
   }),
 }));
 
-export const todo = pgTable("todo", (t) => ({
-  id: t.uuid().notNull().primaryKey().defaultRandom(),
-  organizationId: t
-    .text()
-    .notNull()
-    .references(() => organization.id, { onDelete: "cascade" }),
-  title: t.text().notNull(),
-  description: t.text(),
-  completed: t.boolean().notNull().default(false),
-  createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
-  updatedAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
-}));
+export const todo = pgTable(
+  "todo",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    organizationId: t
+      .text()
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    title: t.text().notNull(),
+    description: t.text(),
+    completed: t.boolean().notNull().default(false),
+    createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+    updatedAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+  }),
+  (table) => [index("todo_organization_id_idx").on(table.organizationId)],
+).enableRLS();
 
 export const todoRelations = relations(todo, ({ one }) => ({
   organization: one(organization, {

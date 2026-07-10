@@ -12,10 +12,12 @@ export const waitlistRouter = createTRPCRouter({
         source: process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "",
         userId: ctx.session?.user.id,
       })
+      // Repeat signups are a no-op rather than an error (email is unique)
+      .onConflictDoNothing({ target: waitlist.email })
       .returning();
 
     return {
-      waitlist: created,
+      waitlist: created ?? null,
     };
   }),
 });

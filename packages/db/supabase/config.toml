@@ -54,6 +54,14 @@ enabled = true
 # The maximum file size allowed (e.g. "5MB", "500KB").
 file_size_limit = "50MiB"
 
+# Public bucket for user avatars (read via getPublicUrl). Write access is
+# granted by the policies in supabase/seed.sql. For hosted projects, create
+# the bucket + policies once via the dashboard or `supabase storage` CLI.
+[storage.buckets.avatars]
+public = true
+file_size_limit = "5MiB"
+allowed_mime_types = ["image/png", "image/jpeg", "image/webp", "image/gif"]
+
 [auth]
 enabled = false
 

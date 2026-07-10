@@ -12,6 +12,7 @@ describe("waitlistRouter.join", () => {
     const created = { id: "wl-1", email: "hello@example.com", source: "", userId: undefined };
     const chain = {
       values: vi.fn().mockReturnThis(),
+      onConflictDoNothing: vi.fn().mockReturnThis(),
       returning: vi.fn().mockResolvedValue([created]),
     };
     ctx.db.insert.mockReturnValue(chain);
@@ -30,6 +31,7 @@ describe("waitlistRouter.join", () => {
     const created = { id: "wl-2", email: "user@example.com", source: "", userId: "user-1" };
     const chain = {
       values: vi.fn().mockReturnThis(),
+      onConflictDoNothing: vi.fn().mockReturnThis(),
       returning: vi.fn().mockResolvedValue([created]),
     };
     ctx.db.insert.mockReturnValue(chain);
@@ -55,6 +57,7 @@ describe("waitlistRouter.join", () => {
       };
       const chain = {
         values: vi.fn().mockReturnThis(),
+        onConflictDoNothing: vi.fn().mockReturnThis(),
         returning: vi.fn().mockResolvedValue([created]),
       };
       ctx.db.insert.mockReturnValue(chain);
@@ -79,6 +82,7 @@ describe("waitlistRouter.join", () => {
     const created = { id: "wl-4", email: "anon@example.com", source: "", userId: undefined };
     const chain = {
       values: vi.fn().mockReturnThis(),
+      onConflictDoNothing: vi.fn().mockReturnThis(),
       returning: vi.fn().mockResolvedValue([created]),
     };
     ctx.db.insert.mockReturnValue(chain);
