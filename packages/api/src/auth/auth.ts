@@ -24,7 +24,6 @@ export const auth = betterAuth({
     provider: "pg",
   }),
   baseURL: baseUrl,
-  secret: process.env.BETTER_AUTH_SECRET,
   plugins: [
     oAuthProxy({
       currentURL: baseUrl,
