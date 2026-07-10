@@ -44,6 +44,15 @@ export const auth = betterAuth({
     },
   },
   trustedOrigins: ["expo://"],
+  advanced: {
+    defaultCookieAttributes: {
+      // The extension popup iframes the web app; SameSite=Lax cookies are
+      // stripped in that cross-site context. Chrome exempts extensions that
+      // hold host_permissions for the site from third-party cookie blocking.
+      sameSite: "none",
+      secure: true,
+    },
+  },
   databaseHooks: {
     user: {
       create: {

@@ -15,10 +15,14 @@ export default defineConfig({
     description:
       "Chrome extension for Init - your AI-native starter kit for building, launching, and scaling applications.",
     permissions: ["storage"],
+    // Host permissions also exempt these sites from third-party cookie
+    // blocking inside the popup iframe — keep in sync with where the app
+    // is deployed
     host_permissions: [
       "http://localhost:3000/*",
       "http://localhost:5173/*",
       "https://*.vercel.app/*",
+      "https://init.kyh.io/*",
     ],
   },
   vite: () => ({
