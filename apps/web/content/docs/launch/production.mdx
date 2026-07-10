@@ -35,7 +35,8 @@ Honest gaps. Each is a deliberate "add when you need it":
 
 - **Email delivery** - set `RESEND_API_KEY` (and `EMAIL_FROM`) in production. Password reset and organization invite emails send through Resend's REST API (`packages/api/src/email/send-email.ts`); without the key they log to the server console instead of sending
 - **Rate limiting** - better-auth's built-in limiter covers auth routes (in-memory, so per-instance on serverless), but tRPC procedures and `/api/chat` have none. Add [Vercel WAF rules](https://vercel.com/docs/security/vercel-waf) or a middleware backed by a shared store
-- **Billing** - `dashboard/[slug]/billing` is an empty shell. Bring Stripe or Polar
+- **Billing** - Stripe via `@better-auth/stripe`. Set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and `STRIPE_PRO_PRICE_ID`, then point a Stripe webhook at `/api/auth/stripe/webhook` (events: `checkout.session.completed`, `customer.subscription.created/updated/deleted`). The webhook keeps the `subscription` table in sync; `dashboard/[slug]/billing` handles checkout and the billing portal. Subscriptions are org-scoped — only owners/admins can manage them
+- **Email verification** - verification emails send on signup. Uncomment `requireEmailVerification` in `packages/api/src/auth/auth.ts` to block unverified logins
 - **Background jobs** - no queue. Long work either fits in a request (the chat route caps at `maxDuration = 30`) or needs Inngest/Trigger.dev/QStash
 
 ## Database Safety
@@ -63,7 +64,8 @@ Green CI is the merge bar. Note `apps/web/next.config.js` sets `typescript.ignor
 - [ ] `site-config.ts` (name, description, Twitter), `githubUrl`, `og.jpg` updated
 - [ ] Unique `BETTER_AUTH_SECRET`; separate GitHub OAuth apps
 - [ ] Production schema pushed; `avatars` bucket created; Data API disabled
-- [ ] `RESEND_API_KEY` + `EMAIL_FROM` set (password reset + invite emails)
+- [ ] `RESEND_API_KEY` + `EMAIL_FROM` set (verification, password reset, invite emails)
+- [ ] Stripe keys set + webhook pointed at `/api/auth/stripe/webhook`
 - [ ] Spending cap on `AI_GATEWAY_API_KEY`
 - [ ] Uptime monitor on `/api/health`
 - [ ] Error tracking installed ([Monitoring](/docs/launch/monitoring))

@@ -2,6 +2,7 @@ import type { User } from "better-auth";
 import { cache } from "react";
 import { headers } from "next/headers";
 import { expo } from "@better-auth/expo";
+import { stripe } from "@better-auth/stripe";
 import { and, eq, isNull } from "@repo/db";
 import { db } from "@repo/db/drizzle-client";
 import { session as sessionSchema, user as userSchema } from "@repo/db/drizzle-schema-auth";
@@ -9,9 +10,14 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { admin, oAuthProxy, organization } from "better-auth/plugins";
+import Stripe from "stripe";
 
 import { sendEmail } from "../email/send-email";
 import { slugify } from "./utils";
+
+// No network call until first use, so a placeholder key keeps local dev
+// working without Stripe configured (checkout/portal will fail, list won't)
+const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY ?? "sk_test_placeholder");
 
 const baseUrl =
   process.env.VERCEL_ENV === "production"
@@ -43,15 +49,52 @@ export const auth = betterAuth({
       },
     }),
     admin(),
+    stripe({
+      stripeClient,
+      stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
+      // Lazy customer creation keeps signup independent of Stripe config
+      createCustomerOnSignUp: false,
+      subscription: {
+        enabled: true,
+        plans: [
+          {
+            name: "pro",
+            priceId: process.env.STRIPE_PRO_PRICE_ID ?? "",
+          },
+        ],
+        // Subscriptions are org-scoped (referenceId = organization id);
+        // only owners/admins may manage the org's billing
+        authorizeReference: async ({ user, referenceId }) => {
+          const membership = await db.query.member.findFirst({
+            where: (member, { and, eq }) =>
+              and(eq(member.organizationId, referenceId), eq(member.userId, user.id)),
+          });
+          return membership?.role === "owner" || membership?.role === "admin";
+        },
+      },
+    }),
     nextCookies(),
   ],
   emailAndPassword: {
     enabled: true,
+    // Uncomment to block email/password login until the address is verified
+    // requireEmailVerification: true,
     sendResetPassword: async ({ user, url }) => {
       await sendEmail({
         to: user.email,
         subject: "Reset your password",
         text: `Click the link to reset your password: ${url}`,
+      });
+    },
+  },
+  emailVerification: {
+    sendOnSignUp: true,
+    autoSignInAfterVerification: true,
+    sendVerificationEmail: async ({ user, url }) => {
+      await sendEmail({
+        to: user.email,
+        subject: "Verify your email",
+        text: `Click the link to verify your email: ${url}`,
       });
     },
   },

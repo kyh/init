@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@ai-sdk/react": "^4.0.20",
+    "@better-auth/stripe": "^1.6.23",
     "@repo/api": "workspace:*",
     "@repo/db": "workspace:*",
     "@repo/ui": "workspace:*",

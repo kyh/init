@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
-import { getSession } from "@repo/api/auth/auth";
+import { getOrganization, getSession } from "@repo/api/auth/auth";
 
 import { PageHeader } from "@/components/header";
+import { BillingHistory, BillingPlan } from "./_components/billing-plan";
 
 type PageProps = {
   params: Promise<{
@@ -18,6 +19,14 @@ const Page = async (props: PageProps) => {
     return redirect(`/auth/login?nextPath=/dashboard/${slug}/billing`);
   }
 
+  const organization = await getOrganization({ organizationSlug: slug }).catch(() => null);
+  if (!organization) {
+    return redirect("/dashboard");
+  }
+
+  const role = organization.members.find((member) => member.userId === session.user.id)?.role;
+  const canManage = role === "owner" || role === "admin";
+
   return (
     <main className="flex flex-1 flex-col px-5">
       <PageHeader>Billing</PageHeader>
@@ -29,7 +38,9 @@ const Page = async (props: PageProps) => {
               Manage your subscription and billing details.
             </p>
           </div>
-          <div className="md:col-span-2"></div>
+          <div className="md:col-span-2">
+            <BillingPlan organizationId={organization.id} slug={slug} canManage={canManage} />
+          </div>
         </div>
         <div className="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 py-8 md:grid-cols-3">
           <div>
@@ -38,7 +49,9 @@ const Page = async (props: PageProps) => {
               Download invoices and view your order history.
             </p>
           </div>
-          <div className="space-y-3 md:col-span-2"></div>
+          <div className="space-y-3 md:col-span-2">
+            <BillingHistory organizationId={organization.id} slug={slug} canManage={canManage} />
+          </div>
         </div>
       </section>
     </main>
