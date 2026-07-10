@@ -6,6 +6,7 @@ import { cn } from "@repo/ui/lib/utils";
 
 function Label({ className, ...props }: React.ComponentProps<"label">) {
   return (
+    // oxlint-disable-next-line label-has-associated-control -- primitive; consumers associate via htmlFor/children
     <label
       data-slot="label"
       className={cn(

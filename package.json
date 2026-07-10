@@ -32,6 +32,9 @@
     "turbo": "^2.10.4",
     "typescript": "catalog:"
   },
+  "engines": {
+    "node": ">=24"
+  },
   "packageManager": "pnpm@10.33.0",
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -52,8 +55,5 @@
         "typescript"
       ]
     }
-  },
-  "engines": {
-    "node": ">=24"
   }
 }

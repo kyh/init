@@ -140,7 +140,6 @@
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: color-mix(in oklab, var(--foreground) 25%, transparent)
-      transparent;
+    scrollbar-color: color-mix(in oklab, var(--foreground) 25%, transparent) transparent;
   }
 }

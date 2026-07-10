@@ -12,7 +12,17 @@
     ".output",
     "out"
   ],
-  "plugins": ["eslint", "typescript", "unicorn", "react", "nextjs", "oxc", "node", "promise"],
+  "plugins": [
+    "eslint",
+    "typescript",
+    "unicorn",
+    "react",
+    "nextjs",
+    "jsx-a11y",
+    "oxc",
+    "node",
+    "promise"
+  ],
   "categories": {
     "correctness": "warn",
     "suspicious": "warn",
@@ -21,6 +31,12 @@
   "rules": {
     "react/react-in-jsx-scope": "off",
     "eslint/no-shadow": "off",
-    "eslint/no-await-in-loop": "off"
+    "eslint/no-await-in-loop": "off",
+    "eslint/no-underscore-dangle": [
+      "warn",
+      { "allow": ["__dirname", "__registerFileInput", "__PACKAGED_WEBAPP_URL__"] }
+    ],
+    "react/no-unstable-nested-components": ["warn", { "allowAsProps": true }],
+    "jsx-a11y/prefer-tag-over-role": "off"
   }
 }

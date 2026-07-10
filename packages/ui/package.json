@@ -47,7 +47,6 @@
     "vitest": "catalog:"
   },
   "peerDependencies": {
-    "react": "catalog:",
-    "zod": "catalog:"
+    "react": "catalog:"
   }
 }

@@ -18,9 +18,11 @@ next-env.d.ts
 .nitro/
 .output/
 
+# build output
+dist/
+
 # expo
 .expo/
-dist/
 expo-env.d.ts
 apps/mobile/.gitignore
 

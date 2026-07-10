@@ -201,10 +201,7 @@ function removeMobile() {
 
   if (fileExists(".gitignore")) {
     let gi = readText(".gitignore");
-    gi = gi.replace(
-      /\n# expo\n\.expo\/\ndist\/\nexpo-env\.d\.ts\napps\/mobile\/\.gitignore\n/,
-      "\n",
-    );
+    gi = gi.replace(/\n# expo\n\.expo\/\nexpo-env\.d\.ts\napps\/mobile\/\.gitignore\n/, "\n");
     writeText(".gitignore", gi);
   }
 
