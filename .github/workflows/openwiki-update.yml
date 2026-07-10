@@ -1,0 +1,50 @@
+name: OpenWiki Update
+
+# Regenerates the agent wiki (openwiki/) + AGENTS.md from the code and opens
+# a PR with the diff. Add an ANTHROPIC_API_KEY repo secret to enable; the job
+# skips silently without it. https://github.com/langchain-ai/openwiki
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 8 * * 1" # Mondays 08:00 UTC
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    if: ${{ github.event_name == 'workflow_dispatch' || vars.OPENWIKI_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: true
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Install OpenWiki
+        run: npm install --global openwiki
+
+      - name: Run OpenWiki
+        run: openwiki code --update --print
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENWIKI_MODEL_ID: claude-sonnet-5
+
+      - name: Create OpenWiki update pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          add-paths: |
+            openwiki
+            AGENTS.md
+            CLAUDE.md
+          branch: openwiki/update
+          commit-message: "docs: update OpenWiki"
+          title: "docs: update OpenWiki"
+          body: |
+            Automated OpenWiki documentation update — the agent wiki regenerated
+            from the current code.
