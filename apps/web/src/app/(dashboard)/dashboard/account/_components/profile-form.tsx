@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { getSupabaseClient } from "@/lib/supabase-client";
 import { Button } from "@repo/ui/components/button";
 import {
   Field,
@@ -19,15 +18,15 @@ import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
 
 import type { Session } from "@repo/api/auth/auth";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { authClient } from "@/lib/auth-client";
+
+const avatarResponseSchema = z.object({ url: z.string() });
 
 type ProfileFormProps = {
   user: Session["user"];
 };
 
 export const ProfileForm = ({ user }: ProfileFormProps) => {
-  const client = getSupabaseClient();
   const [isUploadingProfileImage, setIsUploadingProfileImage] = useState(false);
 
   const form = useForm({
@@ -61,26 +60,19 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
     setIsUploadingProfileImage(true);
     const id = toast.loading("Uploading profile image...");
 
-    if (user.image) {
-      await removeFileFromPublicUrl(client, user.image);
-    }
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await fetch("/api/account/avatar", { method: "POST", body: formData });
 
-    const { data: uploadData, error } = await client.storage
-      .from("avatars")
-      .upload(`${user.id}/${file.name}`, file, {
-        upsert: true,
-        cacheControl: "3600",
-      });
-
-    if (error) {
-      toast.error(error.message, { id });
+    if (!response.ok) {
+      toast.error(await response.text(), { id });
       setIsUploadingProfileImage(false);
       return;
     }
 
-    const publicUrl = getPublicUrl(client, uploadData.path);
+    const { url } = avatarResponseSchema.parse(await response.json());
     await authClient.updateUser({
-      image: publicUrl,
+      image: url,
       fetchOptions: {
         onSuccess: () => {
           toast.success("Profile image uploaded successfully", { id });
@@ -97,6 +89,14 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
 
   const removeProfileImage = async () => {
     setIsUploadingProfileImage(true);
+
+    const response = await fetch("/api/account/avatar", { method: "DELETE" });
+    if (!response.ok) {
+      toast.error("Failed to remove profile image");
+      setIsUploadingProfileImage(false);
+      return;
+    }
+
     await authClient.updateUser({
       image: "",
       fetchOptions: {
@@ -220,22 +220,4 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
       </footer>
     </form>
   );
-};
-
-const removeFileFromPublicUrl = async (client: SupabaseClient, publicUrl: string) => {
-  const pathSegments = publicUrl.split("/avatars/");
-  const filePath = pathSegments[1];
-
-  if (!filePath) return;
-
-  const { error } = await client.storage.from("avatars").remove([filePath]);
-  if (error) console.error("Error deleting file:", error);
-};
-
-const getPublicUrl = (client: SupabaseClient, uploadPath: string) => {
-  const {
-    data: { publicUrl },
-  } = client.storage.from("avatars").getPublicUrl(uploadPath);
-
-  return publicUrl;
 };

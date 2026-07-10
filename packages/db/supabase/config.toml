@@ -2,22 +2,22 @@
 # working directory name when running `supabase init`.
 project_id = "zmdrwswxugswzmcokvff"
 
+# Data API (PostgREST) is off: the app talks to Postgres through tRPC/Drizzle
+# only, and storage/auth are separate services unaffected by this flag.
+# For hosted projects, disable it under Settings → API → Data API (new
+# Supabase projects also stop auto-granting table access as of May 2026).
 [api]
-enabled = true
+enabled = false
 # Port to use for the API URL.
 port = 54321
-# Schemas to expose in your API. Tables, views and stored procedures in this schema will get API
-# endpoints. public and storage are always included.
-schemas = ["storage"]
-# Extra schemas to add to the search_path of every request. public is always included.
-extra_search_path = ["public", "extensions"]
-# The maximum number of rows returns from a view, table, or stored procedure. Limits payload size
-# for accidental or malicious requests.
-max_rows = 1000
 
 [db]
 # Port to use for the local database URL.
 port = 54322
+
+[db.seed]
+# Schema is pushed with drizzle-kit; no SQL seed files
+enabled = false
 # Port used by db diff command to initialize the shadow database.
 shadow_port = 54320
 # The database major version to use. This has to be the same as your remote database's. Run `SHOW
@@ -46,7 +46,7 @@ port = 54323
 # External URL of the API server that frontend connects to.
 api_url = "http://127.0.0.1"
 
-[inbucket]
+[local_smtp]
 enabled = false
 
 [storage]
@@ -54,9 +54,10 @@ enabled = true
 # The maximum file size allowed (e.g. "5MB", "500KB").
 file_size_limit = "50MiB"
 
-# Public bucket for user avatars (read via getPublicUrl). Write access is
-# granted by the policies in supabase/seed.sql. For hosted projects, create
-# the bucket + policies once via the dashboard or `supabase storage` CLI.
+# Public bucket for user avatars (read via getPublicUrl). Writes go through
+# the app's /api/account/avatar route using the service-role key, so no
+# storage policies are needed. For hosted projects, create the bucket once
+# via the dashboard or `supabase storage` CLI.
 [storage.buckets.avatars]
 public = true
 file_size_limit = "5MiB"

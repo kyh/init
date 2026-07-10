@@ -68,7 +68,7 @@ The `oAuthProxy` plugin in `packages/api/src/auth/auth.ts` routes OAuth callback
 
    `drizzle-kit push` connects directly (the config swaps :6543 for :5432 automatically).
 
-3. **Create the avatars bucket** - a public `avatars` bucket with the policies from `packages/db/supabase/seed.sql`. Local dev gets this from `config.toml`; hosted projects need it created in the dashboard.
+3. **Create the avatars bucket** - a public `avatars` bucket, no policies needed (writes go through `/api/account/avatar` with the service-role key). Local dev gets this from `config.toml`; hosted projects need it created in the dashboard.
 
 RLS is already on for every table with no policies - deny by default. Authorization lives in tRPC; the server connection bypasses RLS as table owner.
 

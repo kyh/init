@@ -198,13 +198,13 @@ type NewTodo = InferInsertModel<typeof todo>;
 
 ## Local Supabase
 
-Config lives in `packages/db/supabase/config.toml`. Supabase Auth is disabled (better-auth owns auth). Storage is enabled with a public `avatars` bucket; its access policies live in `packages/db/supabase/seed.sql`.
+Config lives in `packages/db/supabase/config.toml`. Supabase Auth and the Data API (PostgREST) are disabled — better-auth owns auth, and all queries go through tRPC/Drizzle. Storage is enabled with a public `avatars` bucket; writes go through `/api/account/avatar` with the service-role key, so no storage policies are needed.
 
 ```bash
 pnpm db:start   # supabase start (Postgres on :54322, Studio on :54323)
 ```
 
-For hosted projects, create the `avatars` bucket and policies in the Supabase dashboard.
+For hosted projects, create the `avatars` bucket in the Supabase dashboard and disable the Data API under Settings → API.
 
 ## Best Practices
 
