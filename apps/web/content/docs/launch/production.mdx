@@ -63,7 +63,7 @@ Green CI is the merge bar. Note `apps/web/next.config.js` sets `typescript.ignor
 
 - [ ] `site-config.ts` (name, description, Twitter), `githubUrl`, `og.jpg` updated
 - [ ] Unique `BETTER_AUTH_SECRET`; separate GitHub OAuth apps
-- [ ] Production schema pushed; `avatars` bucket created; Data API disabled
+- [ ] Production schema pushed (`pnpm db:push-remote` — also revokes Data API grants); `avatars` bucket created
 - [ ] `RESEND_API_KEY` + `EMAIL_FROM` set (verification, password reset, invite emails)
 - [ ] Stripe keys set + webhook pointed at `/api/auth/stripe/webhook`
 - [ ] Spending cap on `AI_GATEWAY_API_KEY`

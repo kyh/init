@@ -200,6 +200,8 @@ type NewTodo = InferInsertModel<typeof todo>;
 
 Config lives in `packages/db/supabase/config.toml`. Supabase Auth and the Data API (PostgREST) are disabled — better-auth owns auth, and all queries go through tRPC/Drizzle. Storage is enabled with a public `avatars` bucket; writes go through `/api/account/avatar` with the service-role key, so no storage policies are needed.
 
+The Data API is also neutralized as code: every `pnpm db:push` / `db:push-remote` runs `packages/db/src/lockdown.ts`, which revokes all `public`-schema grants from `anon`/`authenticated` (matching Supabase's no-auto-grant default for new projects). Even where PostgREST is enabled, it can serve nothing.
+
 ```bash
 pnpm db:start   # supabase start (Postgres on :54322, Studio on :54323)
 ```
