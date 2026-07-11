@@ -20,7 +20,6 @@ export default defineConfig({
     // is deployed
     host_permissions: [
       "http://localhost:3000/*",
-      "http://localhost:5173/*",
       "https://*.vercel.app/*",
       "https://init.kyh.io/*",
     ],

@@ -11,7 +11,9 @@
 - **Language**: TypeScript 5.x, React 19
 - **Styling**: Tailwind CSS 4.x, Base UI, shadcn/ui (base-vega registry)
 - **Backend**: tRPC, better-auth, Drizzle ORM
-- **Database**: Supabase (Postgres)
+- **Billing**: Stripe via @better-auth/stripe
+- **Email**: Resend REST API (console fallback in dev)
+- **Database**: Supabase (Postgres + avatars storage bucket only — auth is better-auth, Data API disabled)
 - **AI**: Vercel AI SDK
 
 ## Monorepo Structure
@@ -36,7 +38,9 @@ pnpm dev:web          # Run Next.js only
 pnpm dev:mobile       # Run Expo only
 pnpm typecheck        # Type check all packages
 pnpm lint             # Lint all packages (oxlint)
-pnpm fmt              # Format all packages (oxfmt)
+pnpm format           # Check formatting (oxfmt)
+pnpm format:fix       # Format all packages (oxfmt)
+pnpm test             # Run tests (vitest)
 pnpm build            # Build all packages
 
 # Database

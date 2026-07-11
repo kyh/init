@@ -2,6 +2,7 @@
   "recommendations": [
     "expo.vscode-expo-tools",
     "yoavbls.pretty-ts-errors",
-    "bradlc.vscode-tailwindcss"
+    "bradlc.vscode-tailwindcss",
+    "oxc.oxc-vscode"
   ]
 }

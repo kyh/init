@@ -176,7 +176,7 @@ type CreateTodoInput = RouterInputs["todo"]["create"];
 
 ### Cross-Platform
 
-The same router serves web and mobile. Web hits `/api/trpc` (see `apps/web/src/app/api/trpc/[trpc]/route.ts`); mobile points its client at the deployed URL (`apps/mobile/src/trpc/`).
+The same router serves web and mobile. Web hits `/api/trpc` (see `apps/web/src/app/api/trpc/[trpc]/route.ts`); mobile points its client at the deployed URL (`apps/mobile/src/utils/api.tsx`).
 
 ## Input Validation
 

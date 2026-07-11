@@ -39,7 +39,6 @@ AI_GATEWAY_API_KEY=...
 
 # Avatar uploads (Supabase Storage)
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=...
 ```
 
@@ -138,7 +137,7 @@ Supabase paid plans also keep automated backups.
 - `BETTER_AUTH_SECRET` set and unique per environment
 - Separate GitHub OAuth apps for dev and prod (callback: `https://your-domain.com/api/auth/callback/github`)
 - `POSTGRES_URL` uses the transaction pooler (:6543) - the client is configured for it
-- Avatars bucket + policies exist in the production Supabase project
+- Avatars bucket exists in the production Supabase project (no policies needed)
 - Uptime monitor on `/api/health`
 
 ## Next Steps

@@ -1,4 +1,5 @@
 import { execSync } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -52,7 +53,6 @@ function checkbox(message: string, items: CheckboxItem[]): Promise<boolean[]> {
     let cursor = 0;
 
     const render = () => {
-      // Move cursor up to re-render (except first render)
       stdout.write(HIDE_CURSOR);
       for (let i = 0; i < items.length; i++) {
         stdout.write(CLEAR_LINE);
@@ -68,7 +68,6 @@ function checkbox(message: string, items: CheckboxItem[]): Promise<boolean[]> {
       stdout.write(`\x1b[${items.length}A\r`);
     };
 
-    // Print question
     stdout.write(`\n${CYAN}?${RESET} ${BOLD}${message}${RESET}\n`);
 
     render();
@@ -176,6 +175,7 @@ function removeMobile() {
 
   const pkg = readJson("package.json");
   delete pkg.scripts["dev:mobile"];
+  delete pkg.pnpm?.overrides?.["@expo/dom-webview"];
   writeJson("package.json", pkg);
 
   if (fileExists("pnpm-workspace.yaml")) {
@@ -233,7 +233,7 @@ function removeDesktop() {
   delete pkg.scripts["dev:desktop"];
   if (pkg.pnpm?.onlyBuiltDependencies) {
     pkg.pnpm.onlyBuiltDependencies = pkg.pnpm.onlyBuiltDependencies.filter(
-      (d: string) => d !== "electron-winstaller",
+      (d: string) => d !== "electron" && d !== "electron-winstaller",
     );
   }
   writeJson("package.json", pkg);
@@ -291,15 +291,18 @@ function createEnv(supabaseValues: Record<string, string>) {
     return;
   }
 
-  const apiUrl = supabaseValues["API URL"] ?? "";
-  const anonKey = supabaseValues["anon key"] ?? "";
-  const serviceRoleKey = supabaseValues["service_role key"] ?? "";
+  // With the Data API disabled, `supabase start` doesn't print these — fall
+  // back to the fixed local-dev values (identical for every local instance)
+  const apiUrl = supabaseValues["API URL"] ?? "http://127.0.0.1:54321";
+  const serviceRoleKey =
+    supabaseValues["service_role key"] ??
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU";
 
   const env = [
     `NEXT_PUBLIC_SUPABASE_URL="${apiUrl}"`,
-    `NEXT_PUBLIC_SUPABASE_ANON_KEY="${anonKey}"`,
     `SUPABASE_SERVICE_ROLE_KEY="${serviceRoleKey}"`,
     `POSTGRES_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"`,
+    `BETTER_AUTH_SECRET="${randomBytes(32).toString("base64")}"`,
     `AI_GATEWAY_API_KEY=""`,
     "",
   ].join("\n");

@@ -1,8 +1,9 @@
 {
-  "$schema": "https://turbo.build/schema.v2.json",
+  "$schema": "https://turborepo.com/schema.json",
   "extends": ["//"],
   "tasks": {
     "build": {
+      "env": ["WEBAPP_URL"],
       "outputs": [".output/**"]
     },
     "dev": {

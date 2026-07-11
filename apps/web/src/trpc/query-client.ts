@@ -11,7 +11,6 @@ export const createQueryClient = () => {
       },
       mutations: {
         onSuccess: async () => {
-          // Invalidate all queries in the react-query cache:
           await queryClient.invalidateQueries();
         },
       },

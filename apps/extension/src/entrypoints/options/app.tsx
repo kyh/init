@@ -40,7 +40,7 @@ const App = () => {
     setMessage(null);
 
     try {
-      // Validate URL
+      // new URL() throwing on bad input is the validation
       const url = new URL(apiBaseUrl);
       const normalizedUrl = url.origin;
 

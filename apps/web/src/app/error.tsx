@@ -8,7 +8,7 @@ type ErrorProps = {
 
 const Error = ({ error }: ErrorProps) => {
   useEffect(() => {
-    // Log the error to an error reporting service
+    // Replace with your error reporting service
     console.error(error);
   }, [error]);
 

@@ -65,7 +65,7 @@ export const createCallerFactory = t.createCallerFactory;
  * 3. ROUTER & PROCEDURE (THE IMPORTANT BIT)
  *
  * These are the pieces you use to build your tRPC API. You should import these
- * a lot in the /src/server/api/routers folder
+ * a lot in the feature routers (e.g. src/todo/todo-router.ts)
  */
 
 /**

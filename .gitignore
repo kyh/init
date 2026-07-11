@@ -14,8 +14,7 @@ out/
 next-env.d.ts
 .source
 
-# nitro
-.nitro/
+# wxt / electron-vite build output
 .output/
 
 # build output
@@ -29,16 +28,8 @@ apps/mobile/.gitignore
 # wxt
 .wxt/
 
-# tauri
-**/src-tauri/target/
-**/src-tauri/gen/
-
 # electron
-apps/desktop/.output/
 dev-app-update.yml
-
-# production
-packages/mdx/.content-collections/cache
 
 # misc
 .DS_Store

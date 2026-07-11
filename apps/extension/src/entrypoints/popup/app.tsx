@@ -22,7 +22,7 @@ const App = () => {
 
     void loadUrl();
 
-    // Listen for URL changes from options page
+    // The options page can change the URL while the popup is open
     const unsubscribe = onStorageChange((changes) => {
       if (changes.apiBaseUrl?.newValue) {
         setAppUrl(changes.apiBaseUrl.newValue);

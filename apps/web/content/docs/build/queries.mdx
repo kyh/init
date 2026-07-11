@@ -102,7 +102,7 @@ type Todo = RouterOutputs["todo"]["list"]["todos"][number];
 
 ## Mobile
 
-Same router, same hooks. `apps/mobile/src/trpc/` wires the client to `EXPO_PUBLIC_API_URL` (dev builds derive it from Metro). No RSC on mobile, so there's no prefetch step - queries just fetch.
+Same router, same hooks. `apps/mobile/src/utils/api.tsx` wires the client to `EXPO_PUBLIC_API_URL` (dev builds derive it from Metro). No RSC on mobile, so there's no prefetch step - queries just fetch.
 
 ## Next Steps
 

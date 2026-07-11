@@ -1,5 +1,3 @@
-// Browser extension storage utilities
-
 export type StorageData = {
   apiBaseUrl: string;
   theme: "light" | "dark" | "system";
@@ -23,7 +21,6 @@ export async function setStorageData<K extends keyof StorageData>(
   await browser.storage.local.set({ [key]: value });
 }
 
-// Listen for storage changes
 export function onStorageChange(
   callback: (changes: {
     [key in keyof StorageData]?: {

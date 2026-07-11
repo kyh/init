@@ -11,7 +11,6 @@ export async function GET() {
     return redirect("/auth/login");
   }
 
-  // If the user has an active organization, redirect to it
   if (session.session.activeOrganizationId) {
     const organization = await getOrganization({
       organizationId: session.session.activeOrganizationId,
@@ -21,7 +20,7 @@ export async function GET() {
     }
   }
 
-  // If the user has no active organization, redirect to the first organization
+  // No active organization — fall back to the first membership
   const firstMember = await db
     .select({
       organizationId: member.organizationId,
@@ -35,6 +34,6 @@ export async function GET() {
     return redirect(`/dashboard/${firstMember[0].organizationSlug}`);
   }
 
-  // Theoretically should never happen
+  // Unreachable in practice — signup always creates an organization
   return redirect("/dashboard/account");
 }

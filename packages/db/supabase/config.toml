@@ -13,15 +13,15 @@ port = 54321
 [db]
 # Port to use for the local database URL.
 port = 54322
-
-[db.seed]
-# Schema is pushed with drizzle-kit; no SQL seed files
-enabled = false
 # Port used by db diff command to initialize the shadow database.
 shadow_port = 54320
 # The database major version to use. This has to be the same as your remote database's. Run `SHOW
 # server_version;` on the remote database to check.
 major_version = 15
+
+[db.seed]
+# Schema is pushed with drizzle-kit; no SQL seed files
+enabled = false
 
 [db.pooler]
 enabled = true

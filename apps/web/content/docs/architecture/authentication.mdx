@@ -46,7 +46,9 @@ export const auth = betterAuth({
   plugins: [
     oAuthProxy({
       currentURL: baseUrl,
-      productionURL: `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "init.kyh.io"}`,
+      productionURL: process.env.VERCEL_PROJECT_PRODUCTION_URL
+        ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+        : baseUrl,
     }),
     expo(), // mobile support
     organization(), // multi-tenant orgs

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://turborepo.org/schema.json",
+  "$schema": "https://turborepo.com/schema.json",
   "ui": "tui",
   "tasks": {
     "topo": {
@@ -33,7 +33,6 @@
     "BETTER_AUTH_SECRET",
     "POSTGRES_URL",
     "NEXT_PUBLIC_SUPABASE_URL",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
     "SUPABASE_SERVICE_ROLE_KEY",
     "AI_GATEWAY_API_KEY",
     "RESEND_API_KEY",
@@ -51,7 +50,6 @@
     "VERCEL",
     "VERCEL_ENV",
     "VERCEL_URL",
-    "VERCEL_PROJECT_PRODUCTION_URL",
-    "npm_lifecycle_event"
+    "VERCEL_PROJECT_PRODUCTION_URL"
   ]
 }

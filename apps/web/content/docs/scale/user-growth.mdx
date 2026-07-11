@@ -19,7 +19,7 @@ Init's only viral mechanic ships in the members page (`dashboard/[slug]/members`
 
 To make it work, two things:
 
-1. **Wire invitation emails** - invites currently only appear in-app, which means the invitee must already have an account to see them. `sendInvitationEmail` in the better-auth org plugin closes that gap (see [Production](/docs/launch/production))
+1. **Set `RESEND_API_KEY`** - `sendInvitationEmail` is already wired in the better-auth org plugin, but without the key invite emails only log to the server console, so invitees never hear about them (see [Production](/docs/launch/production))
 2. **Instrument it** - invites sent vs. accepted is your viral coefficient; the `invitation` table holds the state
 
 ## SEO

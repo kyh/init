@@ -16,7 +16,7 @@ export const queryClient = new QueryClient({
 });
 
 /**
- * A set of typesafe hooks for consuming your API.
+ * Typesafe tRPC query/mutation options for TanStack Query.
  */
 export const trpc = createTRPCOptionsProxy<AppRouter>({
   client: createTRPCClient({

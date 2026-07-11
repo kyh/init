@@ -135,11 +135,7 @@ export const auth = betterAuth({
 export type Auth = typeof auth;
 export type Session = Auth["$Infer"]["Session"];
 
-/**
- * Cached function to get the current user session
- * Uses React cache to avoid unnecessary re-fetching
- * @returns Promise<Session | null> - The current user session or null if not authenticated
- */
+/** Current session, or null if not authenticated. React cache dedupes lookups within a request. */
 export const getSession = cache(async () => auth.api.getSession({ headers: await headers() }));
 
 export const getOrganization = cache(
@@ -154,20 +150,7 @@ export const getOrganization = cache(
     }),
 );
 
-/**
- * Creates a default personal organization for a new user
- * Generates a unique slug and creates the organization
- * If organization creation fails, the user is deleted to maintain data consistency
- * @param user - The user object for whom to create the organization
- * @throws Error if organization creation fails
- */
-/**
- * Generates an available organization slug by checking for conflicts
- * Recursively adds numbers to the slug until a unique one is found
- * @param slug - The base slug to check
- * @param attempt - The current attempt number for uniqueness
- * @returns Promise<string> - A unique, available slug
- */
+/** Appends an incrementing suffix to the slug until no organization claims it. */
 const generateAvailableSlug = async (slug: string, attempt = 0): Promise<string> => {
   const org = await db.query.organization.findFirst({
     where: (organization, { eq }) => eq(organization.slug, slug),
@@ -178,6 +161,10 @@ const generateAvailableSlug = async (slug: string, attempt = 0): Promise<string>
   return slug;
 };
 
+/**
+ * Creates the personal organization every new user gets. If creation fails the
+ * user is deleted — the app assumes every user belongs to at least one org.
+ */
 const createDefaultOrganization = async (user: User) => {
   const slug = await generateAvailableSlug(slugify(user.name));
 
@@ -202,18 +189,13 @@ const createDefaultOrganization = async (user: User) => {
         .where(and(eq(sessionSchema.userId, user.id), isNull(sessionSchema.activeOrganizationId)));
     }
   } catch (err) {
-    // If organization creation fails, delete the user to maintain data consistency
+    // Roll back the signup — see the doc comment above
     await db.delete(userSchema).where(eq(userSchema.id, user.id));
     throw err;
   }
 };
 
-/**
- * Sets the active organization for a user session
- * Finds the first organization the user is a member of and sets it as active
- * @param session - The session object containing the user ID
- * @returns Promise<object> - Session data with activeOrganizationId set
- */
+/** Defaults the session's active organization to the user's first membership. */
 const setActiveOrganization = async (session: { userId: string }) => {
   const firstOrg = await db.query.member.findFirst({
     where: (member, { eq }) => eq(member.userId, session.userId),
