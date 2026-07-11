@@ -200,7 +200,7 @@ type NewTodo = InferInsertModel<typeof todo>;
 
 Config lives in `packages/db/supabase/config.toml`. Supabase Auth and the Data API (PostgREST) are disabled — better-auth owns auth, and all queries go through tRPC/Drizzle. Storage is enabled with a public `avatars` bucket; writes go through `/api/account/avatar` with the service-role key, so no storage policies are needed.
 
-Even if the Data API is on, every table enables RLS with no policies (deny-by-default) — Supabase's own security model — so `anon`/`authenticated` get zero rows. New Supabase projects also stop auto-granting table access entirely; for older projects, disable the Data API once under Settings → API.
+Every table enables RLS with no policies, so the Data API serves zero rows to `anon`/`authenticated` — authorization lives in tRPC. Hosted projects should disable the Data API under Settings → API; nothing in the app uses it.
 
 ```bash
 pnpm db:start   # supabase start (Postgres on :54322, Studio on :54323)
