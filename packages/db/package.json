@@ -18,8 +18,8 @@
     "stop": "pnpm with-env supabase stop",
     "reset": "pnpm with-env supabase db reset && pnpm push && pnpm with-env supabase seed buckets",
     "status": "pnpm with-env supabase status",
-    "push": "pnpm with-env drizzle-kit push && pnpm with-env tsx src/lockdown.ts",
-    "push:remote": "dotenv -e ../../.env.production.local -- drizzle-kit push && dotenv -e ../../.env.production.local -- tsx src/lockdown.ts",
+    "push": "pnpm with-env drizzle-kit push",
+    "push:remote": "dotenv -e ../../.env.production.local -- drizzle-kit push",
     "studio": "pnpm with-env drizzle-kit studio",
     "with-env": "dotenv -e ../../.env --",
     "generate:auth-schema": "pnpm with-env pnpx @better-auth/cli generate --config ../api/src/auth/auth.ts --output ./src/drizzle-schema-auth.ts"
@@ -34,7 +34,6 @@
     "@types/node": "catalog:",
     "drizzle-kit": "^0.31.10",
     "supabase": "^2.109.1",
-    "tsx": "^4.23.0",
     "typescript": "catalog:"
   }
 }
