@@ -1,9 +1,40 @@
+import type { Metadata } from "next";
+
 import { Meteors } from "@/app/(marketing)/_components/meteor";
 import { WaitlistForm } from "@/app/(marketing)/_components/waitlist-form";
+import { siteConfig } from "@/lib/site-config";
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: "/",
+  },
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      name: siteConfig.name,
+      url: siteConfig.url,
+      logo: `${siteConfig.url}/logo.svg`,
+    },
+    {
+      "@type": "WebSite",
+      name: siteConfig.name,
+      description: siteConfig.description,
+      url: siteConfig.url,
+    },
+  ],
+};
 
 const Page = () => {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <section>
         <div className="border-border relative mx-auto max-w-7xl border-x border-b p-8 lg:py-32">
           <div className="max-w-2xl">

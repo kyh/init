@@ -4,8 +4,12 @@ import { siteConfig } from "@/lib/site-config";
 import { source } from "@/lib/source";
 
 const sitemap = (): MetadataRoute.Sitemap => {
+  // Static route: evaluated once per build, so this is the deploy time.
+  const lastModified = new Date();
+
   const docs = source.getPages().map((page) => ({
     url: `${siteConfig.url}${page.url}`,
+    lastModified,
     changeFrequency: "weekly" as const,
     priority: 0.5,
   }));
@@ -13,6 +17,7 @@ const sitemap = (): MetadataRoute.Sitemap => {
   return [
     {
       url: siteConfig.url,
+      lastModified,
       changeFrequency: "weekly",
       priority: 1,
     },

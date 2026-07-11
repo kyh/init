@@ -13,6 +13,10 @@ export const GET = () => {
   const body = [
     "User-Agent: *",
     "Allow: /",
+    // /auth and /dashboard are handled with meta noindex instead of Disallow —
+    // a disallowed path can still be indexed from external links, since
+    // crawlers never fetch the page to see the noindex.
+    "Disallow: /api/",
     "Content-Signal: search=yes, ai-input=yes, ai-train=yes",
     "",
     `Sitemap: ${siteConfig.url}/sitemap.xml`,

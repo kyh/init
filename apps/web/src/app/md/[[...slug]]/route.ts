@@ -9,6 +9,9 @@ const markdownResponse = (text: string) =>
     headers: {
       "Content-Type": "text/markdown; charset=utf-8",
       "x-markdown-tokens": String(estimateTokens(text)),
+      // Markdown mirror of the HTML pages — keep it out of search indexes so
+      // it doesn't compete with the canonical HTML as duplicate content.
+      "X-Robots-Tag": "noindex",
     },
   });
 

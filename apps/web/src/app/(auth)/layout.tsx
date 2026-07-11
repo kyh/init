@@ -4,7 +4,10 @@ import { Logo } from "@repo/ui/components/logo";
 
 export const metadata: Metadata = {
   title: "Authentication",
-  description: "Authentication forms built using the components.",
+  description: "Sign in or create an account.",
+  robots: {
+    index: false,
+  },
 };
 
 type LayoutProps = {
