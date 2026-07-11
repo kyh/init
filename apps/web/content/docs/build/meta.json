@@ -1,4 +1,4 @@
 {
   "title": "Build",
-  "pages": ["database", "crud", "queries", "mutations", "markdown"]
+  "pages": ["database", "crud", "queries", "mutations", "markdown", "agent-wiki"]
 }

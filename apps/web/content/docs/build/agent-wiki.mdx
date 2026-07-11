@@ -1,0 +1,54 @@
+---
+title: "Agent Wiki"
+description: "Optional: self-updating codebase docs for AI agents, powered by OpenWiki"
+---
+
+These docs are written for humans. Agents get their own: [OpenWiki](https://github.com/langchain-ai/openwiki) reads the codebase and generates a wiki agents can search for context, regenerated on a schedule so it describes the code as it is - not as it was three months ago.
+
+<Callout>
+  This is optional. The template ships only the workflow file - nothing runs,
+  and no API key is spent, until you enable it.
+</Callout>
+
+## What It Generates
+
+- **`openwiki/`** - the agent wiki: architecture, modules, and conventions synthesized from the current code
+- **`AGENTS.md` + `CLAUDE.md`** - a managed `<!-- OPENWIKI:START -->…<!-- OPENWIKI:END -->` block pointing coding agents at the wiki. Your own content in these files is left untouched
+
+## Enable the Workflow
+
+`.github/workflows/openwiki-update.yml` runs weekly (Mondays 08:00 UTC), regenerates the wiki, and opens a PR with the diff. Code drift becomes a reviewable docs PR instead of silent rot.
+
+1. Add an `ANTHROPIC_API_KEY` repository secret (Settings → Secrets and variables → Actions)
+2. Set the `OPENWIKI_ENABLED` repository variable to `true` - or trigger the workflow once from the Actions tab to generate without enabling the schedule
+3. Review and merge the first PR (branch `openwiki/update`)
+
+The workflow uses Anthropic with `claude-sonnet-5` by default. OpenWiki also supports OpenAI, OpenRouter, Fireworks, and any OpenAI-compatible endpoint - swap the `OPENWIKI_MODEL_ID` and provider env vars in the workflow per the [OpenWiki docs](https://github.com/langchain-ai/openwiki#customizing).
+
+## Or Run It Locally
+
+Useful for the first generation, or if you'd rather not put an API key in CI:
+
+```bash
+npm install --global openwiki
+openwiki code --init
+```
+
+The wizard walks through provider, API key, and model - including an OpenAI ChatGPT-subscription login that draws on your plan's included usage instead of metered API billing. Credentials are saved to `~/.openwiki/.env`, never the repo.
+
+Regenerate after code changes:
+
+```bash
+openwiki code --update
+```
+
+Commit the resulting `openwiki/` directory and `AGENTS.md`/`CLAUDE.md` changes like any other code.
+
+## Removing It
+
+Don't want an agent wiki? Delete `.github/workflows/openwiki-update.yml`. If you enabled it and changed your mind, also delete `openwiki/` and the `OPENWIKI` blocks in `AGENTS.md` and `CLAUDE.md`.
+
+## Next Steps
+
+1. **Human docs** - [Markdown](/docs/build/markdown)
+2. **Agent-readable surfaces** - `llms.txt` and markdown content negotiation, covered in [Markdown](/docs/build/markdown#markdown-for-agents)

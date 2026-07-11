@@ -91,9 +91,7 @@ curl -H "Accept: text/markdown" https://your-domain.com/docs/build/crud
 
 ## Self-Updating Agent Wiki
 
-These docs are written for humans. Agents get their own: `.github/workflows/openwiki-update.yml` runs [OpenWiki](https://github.com/langchain-ai/openwiki) weekly, regenerating an agent wiki (`openwiki/`) plus `AGENTS.md` from the current code and opening a PR with the diff. Code drift becomes a reviewable docs PR instead of silent rot.
-
-To enable: add an `ANTHROPIC_API_KEY` repo secret, set the `OPENWIKI_ENABLED` repo variable to `true` (or trigger the workflow manually once from the Actions tab), and merge the first PR.
+These docs are written for humans. Agents can get their own - an optional [OpenWiki](https://github.com/langchain-ai/openwiki) workflow regenerates a wiki from the current code on a schedule. Setup lives in [Agent Wiki](/docs/build/agent-wiki).
 
 ## SEO
 
