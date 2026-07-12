@@ -1,0 +1,37 @@
+{
+  "$schema": "https://react.doctor/schema/config.json",
+  "ignore": {
+    "overrides": [
+      {
+        // MutationCache invalidates after every successful mutation and composes with local callbacks.
+        "files": [
+          "src/app/**/members/_components/invitations-table.tsx",
+          "src/app/**/members/_components/invite-members-form.tsx",
+          "src/app/**/members/_components/members-table.tsx",
+          "src/app/**/settings/_components/delete-organization-form.tsx",
+          "src/app/**/settings/_components/update-organization-form.tsx",
+          "src/app/**/todos/_components/todo-list.tsx"
+        ],
+        "rules": ["react-doctor/query-mutation-missing-invalidation"]
+      },
+      {
+        // Base UI renders the label supplied through render; the input also has an explicit label.
+        "files": ["src/app/**/profile-form.tsx"],
+        "rules": ["react-doctor/label-has-associated-control"]
+      },
+      {
+        // The memo dependencies use stable aliases declared immediately above each hook.
+        "files": [
+          "src/app/**/members/_components/invitations-table.tsx",
+          "src/app/**/members/_components/members-table.tsx"
+        ],
+        "rules": ["react-doctor/exhaustive-deps"]
+      },
+      {
+        // Public starter API documented in content/docs/build/queries.mdx.
+        "files": ["src/trpc/server.tsx"],
+        "rules": ["deslop/unused-export"]
+      }
+    ]
+  }
+}
