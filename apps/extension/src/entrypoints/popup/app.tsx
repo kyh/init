@@ -54,7 +54,7 @@ const App = () => {
 
       {/* Embeds our own app: it needs scripts + same-origin cookies for auth, so the
           sandbox can't isolate it — but it still blocks top-navigation hijacks */}
-      {/* oxlint-disable iframe-missing-sandbox */}
+      {/* oxlint-disable iframe-missing-sandbox, react-doctor/iframe-missing-sandbox -- extension parent and web child are cross-origin */}
       <iframe
         src={appUrl ?? "http://localhost:3000"}
         className="h-full w-full border-0"
@@ -62,7 +62,7 @@ const App = () => {
         allow="clipboard-read; clipboard-write"
         sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
       />
-      {/* oxlint-enable iframe-missing-sandbox */}
+      {/* oxlint-enable iframe-missing-sandbox, react-doctor/iframe-missing-sandbox */}
     </div>
   );
 };
