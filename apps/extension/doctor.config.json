@@ -1,0 +1,13 @@
+{
+  "$schema": "https://react.doctor/schema/config.json",
+  "ignore": {
+    "files": [".output/**"],
+    "overrides": [
+      {
+        // WXT discovers these entrypoints by filename, outside the import graph.
+        "files": ["src/entrypoints/**", "src/lib/storage.ts"],
+        "rules": ["deslop/unused-file"]
+      }
+    ]
+  }
+}
