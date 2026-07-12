@@ -33,10 +33,7 @@ const jsonLdScript = JSON.stringify(jsonLd).replaceAll("<", "\\u003c");
 const Page = () => {
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: jsonLdScript }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript }} />
       <section>
         <div className="border-border relative mx-auto max-w-7xl border-x border-b p-8 lg:py-32">
           <div className="max-w-2xl">

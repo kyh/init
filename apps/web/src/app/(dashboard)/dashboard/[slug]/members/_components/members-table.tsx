@@ -30,6 +30,8 @@ type MembersTableProps = {
   slug: string;
 };
 
+const dateFormatter = new Intl.DateTimeFormat("en-US", { timeZone: "UTC" });
+
 export const MembersTable = ({ slug }: MembersTableProps) => {
   const { data: organizationData } = useOrganization(slug);
   const userId = organizationData.currentUserMember.userId;
@@ -70,7 +72,7 @@ export const MembersTable = ({ slug }: MembersTableProps) => {
       },
       {
         header: "Joined at",
-        cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString(),
+        cell: ({ row }) => dateFormatter.format(new Date(row.original.createdAt)),
       },
       {
         header: "",

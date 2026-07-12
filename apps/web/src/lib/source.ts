@@ -11,15 +11,6 @@ export const source = loader({
   plugins: [lucideIconsPlugin()],
 });
 
-export function getPageImage(page: InferPageType<typeof source>) {
-  const segments = [...page.slugs, "image.png"];
-
-  return {
-    segments,
-    url: `/og/docs/${segments.join("/")}`,
-  };
-}
-
 export async function getLLMText(page: InferPageType<typeof source>) {
   // Processed markdown is exposed via getText('processed'), enabled by
   // `includeProcessedMarkdown` in source.config.ts.

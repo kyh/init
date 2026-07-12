@@ -21,6 +21,8 @@ type InvitationsTableProps = {
   slug: string;
 };
 
+const dateFormatter = new Intl.DateTimeFormat("en-US", { timeZone: "UTC" });
+
 export const InvitationsTable = ({ slug }: InvitationsTableProps) => {
   const { data: organizationData } = useOrganization(slug);
   const userRole = organizationData.currentUserMember.role;
@@ -37,9 +39,7 @@ export const InvitationsTable = ({ slug }: InvitationsTableProps) => {
       },
       {
         header: "Expires at",
-        cell: ({ row }) => {
-          return new Date(row.original.expiresAt).toLocaleDateString();
-        },
+        cell: ({ row }) => dateFormatter.format(new Date(row.original.expiresAt)),
       },
       {
         header: "",

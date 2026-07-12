@@ -188,9 +188,6 @@ importers:
       '@expo/metro-runtime':
         specifier: ~57.0.3
         version: 57.0.3(@expo/log-box@57.0.0)(expo@57.0.4)(react-dom@19.2.7(react@19.2.7))(react-native@0.86.0(@babel/core@7.29.7)(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.7))(react@19.2.7)
-      '@legendapp/list':
-        specifier: ^3.3.2
-        version: 3.3.2(react-dom@19.2.7(react@19.2.7))(react-native@0.86.0(@babel/core@7.29.7)(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.7))(react@19.2.7)
       '@tanstack/react-query':
         specifier: 'catalog:'
         version: 5.101.2(react@19.2.7)
@@ -2384,18 +2381,6 @@ packages:
 
   '@kyh/tsconfig@1.1.14':
     resolution: {integrity: sha512-Bn14z3WTnvIld5j9GYbHuoWyxGPKxF4U+OC+jfQvFruZZyJZOK435xIz7MmvsprrqBUn+6I2DYOS6vyN5k5iXA==}
-
-  '@legendapp/list@3.3.2':
-    resolution: {integrity: sha512-wAw961e9PjWECXne68IVIWCUgPGrJGJySojEUFuVNICSqXKqzYSN7tA4r7SI3KVquto30Xb7PE+ZgdRZjwsOOQ==}
-    peerDependencies:
-      react: '*'
-      react-dom: '*'
-      react-native: '*'
-    peerDependenciesMeta:
-      react-dom:
-        optional: true
-      react-native:
-        optional: true
 
   '@malept/cross-spawn-promise@2.0.0':
     resolution: {integrity: sha512-1DpKU0Z5ThltBwjNySMC14g0CkbyhCaz9FkhxqNsZI6uAPJXFS8cMXlBKo26FJ8ZuW6S9GCMcR9IO5k2X5/9Fg==}
@@ -11533,9 +11518,7 @@ snapshots:
       metro-transform-plugins: 0.84.4
       metro-transform-worker: 0.84.4
     transitivePeerDependencies:
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@expo/osascript@2.7.0':
     dependencies:
@@ -11871,14 +11854,6 @@ snapshots:
       '@jridgewell/sourcemap-codec': 1.5.5
 
   '@kyh/tsconfig@1.1.14': {}
-
-  '@legendapp/list@3.3.2(react-dom@19.2.7(react@19.2.7))(react-native@0.86.0(@babel/core@7.29.7)(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.7))(react@19.2.7)':
-    dependencies:
-      react: 19.2.7
-      use-sync-external-store: 1.6.0(react@19.2.7)
-    optionalDependencies:
-      react-dom: 19.2.7(react@19.2.7)
-      react-native: 0.86.0(@babel/core@7.29.7)(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.7)
 
   '@malept/cross-spawn-promise@2.0.0':
     dependencies:
@@ -12767,7 +12742,9 @@ snapshots:
       metro-runtime: 0.84.4
     transitivePeerDependencies:
       - '@babel/core'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-colors@0.86.0': {}
 
