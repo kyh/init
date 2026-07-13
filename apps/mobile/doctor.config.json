@@ -1,0 +1,12 @@
+{
+  "$schema": "https://react.doctor/schema/config.json",
+  "ignore": {
+    "overrides": [
+      {
+        // Public starter API documented in the web architecture and CRUD guides.
+        "files": ["src/utils/api.ts"],
+        "rules": ["deslop/unused-export"]
+      }
+    ]
+  }
+}

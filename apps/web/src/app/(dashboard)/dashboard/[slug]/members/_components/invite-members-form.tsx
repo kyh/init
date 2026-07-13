@@ -82,7 +82,7 @@ type InviteMembersFormProps = {
   onInviteSuccess?: () => void;
 };
 
-export const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormProps) => {
+const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormProps) => {
   const { data: organizationData } = useOrganization(slug);
   const { mutateAsync: inviteMembers, isPending: isInvitingMembers } = useInviteMembers(
     organizationData.organization.id,

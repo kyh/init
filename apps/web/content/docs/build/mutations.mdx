@@ -68,32 +68,27 @@ type CreateTodoInput = RouterInputs["todo"]["create"];
 
 ## Cache Invalidation
 
-You don't write invalidation code for the common case. The query client invalidates **everything** after any successful mutation:
+You don't write invalidation code for the common case. The mutation cache invalidates **everything** after any successful mutation:
 
 ```typescript
 // apps/web/src/trpc/query-client.ts
-mutations: {
-  onSuccess: async () => {
-    await queryClient.invalidateQueries();
+mutationCache: new MutationCache({
+  onSuccess: async (_data, _variables, _result, _mutation, context) => {
+    await context.client.invalidateQueries();
   },
-},
+}),
 ```
 
-Blunt, but always correct - every list refetches with fresh data. If a hot path refetches too much, narrow it per-mutation:
+Blunt, but always correct - every list refetches with fresh data. Local callbacks compose with the cache callback:
 
 ```tsx
-const queryClient = useQueryClient();
-
 const createTodo = useMutation({
   mutationFn: (input: CreateTodoInput) => trpcClient.todo.create.mutate(input),
-  onSuccess: () =>
-    queryClient.invalidateQueries({
-      queryKey: trpc.todo.list.queryOptions({ slug }).queryKey,
-    }),
+  onSuccess: () => toast.success("Todo created"),
 });
 ```
 
-A per-mutation `onSuccess` replaces the global default - once you narrow, you own the invalidation.
+To narrow a hot path, replace the global cache policy and add targeted invalidation to each mutation.
 
 ## Pending States
 

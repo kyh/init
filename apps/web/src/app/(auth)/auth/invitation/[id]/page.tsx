@@ -10,9 +10,7 @@ export const metadata: Metadata = {
 };
 
 const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
-  const { id } = await params;
-
-  const session = await getSession();
+  const [{ id }, session] = await Promise.all([params, getSession()]);
   if (!session) {
     redirect(`/auth/login?nextPath=/auth/invitation/${id}`);
   }

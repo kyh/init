@@ -157,10 +157,12 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
               variant="secondary"
               loading={isUploadingProfileImage}
               nativeButton={false}
-              // oxlint-disable-next-line label-has-associated-control -- label wraps the file input and button text below
-              render={<label />}
+              // oxlint-disable-next-line label-has-associated-control -- Base UI renders this label with the explicit htmlFor below
+              render={<label htmlFor="profile-image-upload" />}
             >
               <input
+                id="profile-image-upload"
+                aria-label="Change profile image"
                 className="invisible absolute inset-0"
                 type="file"
                 onChange={handleProfileImageChange}

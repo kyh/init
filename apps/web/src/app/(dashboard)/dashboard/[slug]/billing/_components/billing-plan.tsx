@@ -14,6 +14,8 @@ type BillingPlanProps = {
   canManage: boolean;
 };
 
+const dateFormatter = new Intl.DateTimeFormat("en-US", { timeZone: "UTC" });
+
 const useSubscriptions = (organizationId: string) =>
   useQuery({
     queryKey: ["subscriptions", organizationId],
@@ -86,7 +88,7 @@ export const BillingPlan = ({ organizationId, slug, canManage }: BillingPlanProp
       {subscription?.periodEnd && (
         <p className="text-muted-foreground text-sm">
           {subscription.cancelAtPeriodEnd ? "Access until" : "Renews"}{" "}
-          {new Date(subscription.periodEnd).toLocaleDateString()}
+          {dateFormatter.format(new Date(subscription.periodEnd))}
         </p>
       )}
       {canManage ? (
