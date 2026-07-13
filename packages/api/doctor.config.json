@@ -3,7 +3,6 @@
   "ignore": {
     "overrides": [
       {
-        // Deliberate non-secret Stripe test placeholder. Network calls still fail closed.
         "files": ["src/auth/auth.ts"],
         "rules": ["react-doctor/secret-in-fallback"]
       }
