@@ -40,3 +40,11 @@ export const prefetch = <TQueryFnData, TError, TData, TQueryKey extends QueryKey
 ) => {
   void getQueryClient().prefetchQuery(queryOptions);
 };
+
+/**
+ * Calls procedures in-process, with no HTTP round trip and no query cache — for
+ * server-only rendering and route handlers, where hydrating a client cache buys
+ * nothing. Complements `trpc` + `prefetch` rather than competing with them; see
+ * the table in content/docs/build/queries.mdx.
+ */
+export const caller = appRouter.createCaller(createContext);
