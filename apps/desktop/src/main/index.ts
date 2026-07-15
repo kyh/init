@@ -17,6 +17,24 @@ function getWebAppUrl(): string {
   if (isDevelopment) return WEBAPP_DEV_URL;
   return __PACKAGED_WEBAPP_URL__;
 }
+
+/**
+ * Origins allowed to render inside the main window, which carries the
+ * desktopBridge preload. The web app itself, plus the identity providers
+ * configured in packages/api/src/auth/auth.ts — better-auth's social sign-in
+ * navigates the window to them and back, so denying them breaks login. Keep
+ * in sync when adding a provider.
+ */
+const OAUTH_ORIGINS = new Set(["https://github.com"]);
+
+function isAllowedInWindow(url: string): boolean {
+  try {
+    const { origin } = new URL(url);
+    return origin === new URL(getWebAppUrl()).origin || OAUTH_ORIGINS.has(origin);
+  } catch {
+    return false;
+  }
+}
 /** Delay before first update check so the app finishes loading first. */
 const STARTUP_UPDATE_DELAY_MS = 15_000;
 const APP_DISPLAY_NAME = isDevelopment ? "Init (Dev)" : "Init";
@@ -295,6 +313,22 @@ function createWindow(): BrowserWindow {
     }
     return { action: "deny" };
   });
+
+  // setWindowOpenHandler only covers *new* windows. Without these, a link,
+  // redirect, or script navigation moves this window to an arbitrary origin
+  // that renders in trusted app chrome (the title is pinned below) and
+  // inherits window.desktopBridge. Anything not on the allow-list is handed
+  // to the system browser instead.
+  const guardNavigation = (event: Electron.Event, url: string) => {
+    if (isAllowedInWindow(url)) return;
+    event.preventDefault();
+    if (isHttpUrl(url)) {
+      void shell.openExternal(url);
+    }
+  };
+
+  window.webContents.on("will-navigate", guardNavigation);
+  window.webContents.on("will-redirect", guardNavigation);
 
   window.on("page-title-updated", (event) => {
     event.preventDefault();
