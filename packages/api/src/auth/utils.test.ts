@@ -27,8 +27,19 @@ describe("slugify", () => {
     expect(slugify("")).toBe("");
   });
 
-  it("handles unicode by stripping non-ascii", () => {
-    expect(slugify("café latte")).toBe("caf-latte");
+  it("keeps the base letter when stripping diacritics", () => {
+    expect(slugify("café latte")).toBe("cafe-latte");
+    expect(slugify("José Müller")).toBe("jose-muller");
+  });
+
+  it("returns empty string for scripts with no ascii base", () => {
+    expect(slugify("李明")).toBe("");
+    expect(slugify("Иван")).toBe("");
+  });
+
+  it("does not leave leading or trailing hyphens", () => {
+    expect(slugify("!hello!")).toBe("hello");
+    expect(slugify("-hello-")).toBe("hello");
   });
 
   it("preserves numbers", () => {

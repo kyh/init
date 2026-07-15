@@ -13,7 +13,7 @@ import { admin, oAuthProxy, organization } from "better-auth/plugins";
 import Stripe from "stripe";
 
 import { sendEmail } from "../email/send-email";
-import { slugify } from "./utils";
+import { FALLBACK_ORGANIZATION_SLUG, slugify } from "./utils";
 
 // No network call until first use, so a placeholder key keeps local dev
 // working without Stripe configured (checkout/portal will fail, list won't)
@@ -150,13 +150,14 @@ export const getOrganization = cache(
     }),
 );
 
-/** Appends an incrementing suffix to the slug until no organization claims it. */
-const generateAvailableSlug = async (slug: string, attempt = 0): Promise<string> => {
+/** Appends an incrementing suffix to the base slug until no organization claims it. */
+const generateAvailableSlug = async (baseSlug: string, attempt = 0): Promise<string> => {
+  const slug = attempt === 0 ? baseSlug : `${baseSlug}-${attempt}`;
   const org = await db.query.organization.findFirst({
     where: (organization, { eq }) => eq(organization.slug, slug),
   });
   if (org) {
-    return generateAvailableSlug(slug + `-${attempt + 1}`, attempt + 1);
+    return generateAvailableSlug(baseSlug, attempt + 1);
   }
   return slug;
 };
@@ -166,7 +167,10 @@ const generateAvailableSlug = async (slug: string, attempt = 0): Promise<string>
  * user is deleted — the app assumes every user belongs to at least one org.
  */
 const createDefaultOrganization = async (user: User) => {
-  const slug = await generateAvailableSlug(slugify(user.name));
+  // A name in a script with no ASCII base ("李明") slugifies to "", which would
+  // create an organization at the unroutable /dashboard/. Signup has no user to
+  // prompt, so fall back to a generic base and let them rename it later.
+  const slug = await generateAvailableSlug(slugify(user.name) || FALLBACK_ORGANIZATION_SLUG);
 
   try {
     const createdOrganization = await auth.api.createOrganization({
