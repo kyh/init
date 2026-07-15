@@ -9,7 +9,7 @@
 import { db } from "@repo/db/drizzle-client";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
-import { ZodError } from "zod";
+import { z, ZodError } from "zod";
 
 import { auth } from "./auth/auth";
 
@@ -105,3 +105,43 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
     },
   });
 });
+
+/**
+ * Organization-scoped procedure
+ *
+ * Takes an organization `slug`, resolves it, and proves the caller is a member
+ * before the handler runs — so a handler cannot read or write another tenant's
+ * rows by forgetting a check. Handlers get `ctx.organization` and
+ * `ctx.membership` and should still scope their queries by
+ * `ctx.organization.id`.
+ */
+export const organizationProcedure = protectedProcedure
+  .input(z.object({ slug: z.string().min(1, "Organization slug is required") }))
+  .use(async ({ ctx, input, next }) => {
+    const organization = await ctx.db.query.organization.findFirst({
+      where: (org, { eq }) => eq(org.slug, input.slug),
+    });
+
+    if (!organization) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Organization not found",
+      });
+    }
+
+    // Kept as a second lookup rather than a join: membership absence must be
+    // UNAUTHORIZED, distinct from the organization not existing at all.
+    const membership = await ctx.db.query.member.findFirst({
+      where: (member, { and, eq }) =>
+        and(eq(member.organizationId, organization.id), eq(member.userId, ctx.session.user.id)),
+    });
+
+    if (!membership) {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "You do not have access to this organization",
+      });
+    }
+
+    return next({ ctx: { organization, membership } });
+  });

@@ -37,10 +37,17 @@ const OTHER_USER = {
   email: "other@example.com",
 };
 
+/** organizationProcedure resolves the org, then the caller's membership. */
+const authedContext = () => {
+  const ctx = createMockContext();
+  ctx.db.query.organization.findFirst.mockResolvedValue(ORG);
+  ctx.db.query.member.findFirst.mockResolvedValue(MEMBER_OWNER);
+  return ctx;
+};
+
 describe("organizationRouter.get", () => {
   it("returns org with members, invitations, and metadata", async () => {
-    const ctx = createMockContext();
-    ctx.db.query.organization.findFirst.mockResolvedValue(ORG);
+    const ctx = authedContext();
     ctx.db.query.member.findMany.mockResolvedValue([MEMBER_OWNER, MEMBER_OTHER]);
     ctx.db.query.invitation.findMany.mockResolvedValue([]);
     ctx.db.query.user.findMany.mockResolvedValue([mockUser, OTHER_USER]);
@@ -57,7 +64,7 @@ describe("organizationRouter.get", () => {
   });
 
   it("parses metadata defaulting to empty object when null", async () => {
-    const ctx = createMockContext();
+    const ctx = authedContext();
     ctx.db.query.organization.findFirst.mockResolvedValue({ ...ORG, metadata: null });
     ctx.db.query.member.findMany.mockResolvedValue([MEMBER_OWNER]);
     ctx.db.query.invitation.findMany.mockResolvedValue([]);
@@ -70,8 +77,7 @@ describe("organizationRouter.get", () => {
   });
 
   it("filters out canceled invitations", async () => {
-    const ctx = createMockContext();
-    ctx.db.query.organization.findFirst.mockResolvedValue(ORG);
+    const ctx = authedContext();
     ctx.db.query.member.findMany.mockResolvedValue([MEMBER_OWNER]);
     ctx.db.query.invitation.findMany.mockResolvedValue([
       { id: "inv-1", email: "a@b.com", status: "pending", organizationId: "org-1" },
@@ -98,11 +104,11 @@ describe("organizationRouter.get", () => {
   it("throws UNAUTHORIZED when user is not a member", async () => {
     const ctx = createMockContext();
     ctx.db.query.organization.findFirst.mockResolvedValue(ORG);
-    ctx.db.query.member.findMany.mockResolvedValue([MEMBER_OTHER]); // only other user
+    ctx.db.query.member.findFirst.mockResolvedValue(undefined); // caller has no membership
 
     const caller = createCaller(ctx);
     await expect(caller.get({ slug: "acme" })).rejects.toThrow(
-      "You are not a member of this organization",
+      "You do not have access to this organization",
     );
   });
 

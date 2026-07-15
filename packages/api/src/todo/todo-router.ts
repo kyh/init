@@ -2,73 +2,30 @@ import { todo } from "@repo/db/drizzle-schema";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 
-import type { TRPCContext } from "../trpc";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { createTodoInput, deleteTodoInput, todoSlugInput, updateTodoInput } from "./todo-schema";
-
-const ensureOrganizationAccess = async (ctx: TRPCContext, slug: string) => {
-  if (!ctx.session?.user) {
-    throw new TRPCError({
-      code: "UNAUTHORIZED",
-      message: "You must be logged in to access this resource",
-    });
-  }
-
-  const userId = ctx.session.user.id;
-
-  const organization = await ctx.db.query.organization.findFirst({
-    where: (org, { eq }) => eq(org.slug, slug),
-  });
-
-  if (!organization) {
-    throw new TRPCError({
-      code: "NOT_FOUND",
-      message: "Organization not found",
-    });
-  }
-
-  const membership = await ctx.db.query.member.findFirst({
-    where: (member, { and, eq }) =>
-      and(eq(member.organizationId, organization.id), eq(member.userId, userId)),
-  });
-
-  if (!membership) {
-    throw new TRPCError({
-      code: "UNAUTHORIZED",
-      message: "You do not have access to this organization",
-    });
-  }
-
-  return organization;
-};
+import { createTRPCRouter, organizationProcedure } from "../trpc";
+import { createTodoInput, deleteTodoInput, updateTodoInput } from "./todo-schema";
 
 export const todoRouter = createTRPCRouter({
-  list: protectedProcedure.input(todoSlugInput).query(async ({ ctx, input }) => {
-    const organization = await ensureOrganizationAccess(ctx, input.slug);
-
+  list: organizationProcedure.query(async ({ ctx }) => {
     const todos = await ctx.db.query.todo.findMany({
-      where: (todoTable, { eq }) => eq(todoTable.organizationId, organization.id),
+      where: (todoTable, { eq }) => eq(todoTable.organizationId, ctx.organization.id),
       orderBy: (todoTable, { desc }) => desc(todoTable.createdAt),
     });
 
     return { todos };
   }),
-  create: protectedProcedure.input(createTodoInput).mutation(async ({ ctx, input }) => {
-    const organization = await ensureOrganizationAccess(ctx, input.slug);
-
+  create: organizationProcedure.input(createTodoInput).mutation(async ({ ctx, input }) => {
     const [createdTodo] = await ctx.db
       .insert(todo)
       .values({
-        organizationId: organization.id,
+        organizationId: ctx.organization.id,
         title: input.title,
       })
       .returning();
 
     return { todo: createdTodo };
   }),
-  update: protectedProcedure.input(updateTodoInput).mutation(async ({ ctx, input }) => {
-    const organization = await ensureOrganizationAccess(ctx, input.slug);
-
+  update: organizationProcedure.input(updateTodoInput).mutation(async ({ ctx, input }) => {
     const updateData: Partial<typeof todo.$inferInsert> = {
       updatedAt: new Date(),
     };
@@ -84,7 +41,7 @@ export const todoRouter = createTRPCRouter({
     const [updatedTodo] = await ctx.db
       .update(todo)
       .set(updateData)
-      .where(and(eq(todo.id, input.id), eq(todo.organizationId, organization.id)))
+      .where(and(eq(todo.id, input.id), eq(todo.organizationId, ctx.organization.id)))
       .returning();
 
     if (!updatedTodo) {
@@ -96,12 +53,10 @@ export const todoRouter = createTRPCRouter({
 
     return { todo: updatedTodo };
   }),
-  delete: protectedProcedure.input(deleteTodoInput).mutation(async ({ ctx, input }) => {
-    const organization = await ensureOrganizationAccess(ctx, input.slug);
-
+  delete: organizationProcedure.input(deleteTodoInput).mutation(async ({ ctx, input }) => {
     const [deletedTodo] = await ctx.db
       .delete(todo)
-      .where(and(eq(todo.id, input.id), eq(todo.organizationId, organization.id)))
+      .where(and(eq(todo.id, input.id), eq(todo.organizationId, ctx.organization.id)))
       .returning();
 
     if (!deletedTodo) {

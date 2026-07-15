@@ -7,7 +7,6 @@
     ".": "./src/index.ts",
     "./auth/auth": "./src/auth/auth.ts",
     "./auth/utils": "./src/auth/utils.ts",
-    "./organization/organization-schema": "./src/organization/organization-schema.ts",
     "./todo/todo-schema": "./src/todo/todo-schema.ts",
     "./waitlist/waitlist-schema": "./src/waitlist/waitlist-schema.ts"
   },
