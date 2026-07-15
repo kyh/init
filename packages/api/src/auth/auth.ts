@@ -7,9 +7,9 @@ import { db } from "@repo/db/drizzle-client";
 import { session as sessionSchema, user as userSchema } from "@repo/db/drizzle-schema-auth";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { and, eq, isNull } from "drizzle-orm";
 import { nextCookies } from "better-auth/next-js";
 import { admin, oAuthProxy, organization } from "better-auth/plugins";
+import { and, eq, isNull } from "drizzle-orm";
 import Stripe from "stripe";
 
 import { sendEmail } from "../email/send-email";
