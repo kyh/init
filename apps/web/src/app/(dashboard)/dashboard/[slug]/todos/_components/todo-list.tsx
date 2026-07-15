@@ -11,44 +11,27 @@ import { cn } from "@repo/ui/lib/utils";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { PencilIcon, Trash2Icon } from "lucide-react";
 
-import type { RouterInputs, RouterOutputs } from "@repo/api";
-import { useTRPC, useTRPCClient } from "@/trpc/react";
+import type { RouterOutputs } from "@repo/api";
+import { useTRPC } from "@/trpc/react";
 
 type TodoListProps = {
   slug: string;
 };
 
 type Todo = RouterOutputs["todo"]["list"]["todos"][number];
-type CreateTodoInput = RouterInputs["todo"]["create"];
-type UpdateTodoInput = RouterInputs["todo"]["update"];
-type DeleteTodoInput = RouterInputs["todo"]["delete"];
+
+const onError = (error: { message: string }) => {
+  toast.error(error.message);
+};
 
 export const TodoList = ({ slug }: TodoListProps) => {
   const trpc = useTRPC();
-  const trpcClient = useTRPCClient();
   const { data } = useSuspenseQuery(trpc.todo.list.queryOptions({ slug }));
   const todos = data.todos;
 
-  const createTodo = useMutation({
-    mutationFn: (input: CreateTodoInput) => trpcClient.todo.create.mutate(input),
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
-
-  const updateTodo = useMutation({
-    mutationFn: (input: UpdateTodoInput) => trpcClient.todo.update.mutate(input),
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
-
-  const deleteTodo = useMutation({
-    mutationFn: (input: DeleteTodoInput) => trpcClient.todo.delete.mutate(input),
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
+  const createTodo = useMutation(trpc.todo.create.mutationOptions({ onError }));
+  const updateTodo = useMutation(trpc.todo.update.mutationOptions({ onError }));
+  const deleteTodo = useMutation(trpc.todo.delete.mutationOptions({ onError }));
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState("");
