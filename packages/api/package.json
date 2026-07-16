@@ -17,8 +17,8 @@
   },
   "dependencies": {
     "@better-auth/expo": "catalog:",
-    "@better-auth/stripe": "^1.6.23",
-    "@repo/db": "workspace:^",
+    "@better-auth/stripe": "catalog:",
+    "@repo/db": "workspace:*",
     "@trpc/server": "catalog:",
     "better-auth": "catalog:",
     "drizzle-orm": "catalog:",
