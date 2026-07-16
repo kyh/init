@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./auth/auth": "./src/auth/auth.ts",
+    "./auth/permissions": "./src/auth/permissions.ts",
     "./auth/utils": "./src/auth/utils.ts",
     "./todo/todo-schema": "./src/todo/todo-schema.ts",
     "./waitlist/waitlist-schema": "./src/waitlist/waitlist-schema.ts"

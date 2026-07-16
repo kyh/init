@@ -12,6 +12,7 @@ import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import type { RouterOutputs } from "@repo/api";
 import type { ColumnDef } from "@tanstack/react-table";
 import { authClient } from "@/lib/auth-client";
+import { roleSchema } from "@/app/(dashboard)/dashboard/[slug]/_components/role";
 import { TableRowActions } from "@/app/(dashboard)/dashboard/[slug]/_components/table-row-actions";
 import { useOrganization } from "@/app/(dashboard)/dashboard/[slug]/_components/use-organization";
 
@@ -25,7 +26,13 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", { timeZone: "UTC" });
 
 export const InvitationsTable = ({ slug }: InvitationsTableProps) => {
   const { data: organizationData } = useOrganization(slug);
-  const userRole = organizationData.currentUserMember.role;
+  const parsedUserRole = roleSchema.safeParse(organizationData.currentUserMember.role);
+  const canManageInvitations =
+    parsedUserRole.success &&
+    authClient.organization.checkRolePermission({
+      role: parsedUserRole.data,
+      permissions: { invitation: ["cancel"] },
+    });
 
   const columns = useMemo(() => {
     const columnDefs: ColumnDef<Invitation>[] = [
@@ -44,12 +51,14 @@ export const InvitationsTable = ({ slug }: InvitationsTableProps) => {
       {
         header: "",
         id: "actions",
-        cell: ({ row }) => <ActionsDropdown invitation={row.original} userRole={userRole} />,
+        cell: ({ row }) => (
+          <ActionsDropdown invitation={row.original} canManageInvitations={canManageInvitations} />
+        ),
       },
     ];
 
     return columnDefs;
-  }, [userRole]);
+  }, [canManageInvitations]);
 
   const table = useReactTable({
     data: organizationData.invitations,
@@ -66,10 +75,10 @@ export const InvitationsTable = ({ slug }: InvitationsTableProps) => {
 
 const ActionsDropdown = ({
   invitation,
-  userRole,
+  canManageInvitations,
 }: {
   invitation: Invitation;
-  userRole: string | undefined;
+  canManageInvitations: boolean;
 }) => {
   const { mutateAsync: cancelInvitation } = useCancelInvitation(invitation.id);
 
@@ -83,7 +92,7 @@ const ActionsDropdown = ({
     });
   };
 
-  if (userRole === "member") {
+  if (!canManageInvitations) {
     return null;
   }
 
