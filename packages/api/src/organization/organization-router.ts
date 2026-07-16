@@ -5,35 +5,28 @@ export const organizationRouter = createTRPCRouter({
   get: organizationProcedure.query(async ({ ctx }) => {
     const { organization, membership: currentUserMember } = ctx;
 
-    const members = await ctx.db.query.member.findMany({
-      where: (member, { eq }) => eq(member.organizationId, organization.id),
-    });
-
-    const invitations = await ctx.db.query.invitation.findMany({
-      where: (invitation, { eq }) => eq(invitation.organizationId, organization.id),
-    });
-    const filteredInvitations = invitations.filter(
-      (invitation) => invitation.status !== "canceled",
-    );
-
-    const memberUserIds = members.map((member) => member.userId);
-    const memberUsers = await ctx.db.query.user.findMany({
-      where: (user, { inArray }) => inArray(user.id, memberUserIds),
-      // Allow-list only — full rows include admin-only fields (role, banned, banReason)
-      columns: { id: true, name: true, email: true, image: true },
-    });
-    const memberUsersMap = new Map(memberUsers.map((user) => [user.id, user]));
-
-    const membersWithUsers = members.map((member) =>
-      Object.assign({}, member, { user: memberUsersMap.get(member.userId) }),
-    );
+    // Independent of each other, and organizationProcedure has already proven
+    // membership — so overlap them rather than paying two round trips.
+    const [members, invitations] = await Promise.all([
+      ctx.db.query.member.findMany({
+        where: (member, { eq }) => eq(member.organizationId, organization.id),
+        with: {
+          // Allow-list only — full rows include admin-only fields (role, banned, banReason)
+          user: { columns: { id: true, name: true, email: true, image: true } },
+        },
+      }),
+      ctx.db.query.invitation.findMany({
+        where: (invitation, { and, eq, ne }) =>
+          and(eq(invitation.organizationId, organization.id), ne(invitation.status, "canceled")),
+      }),
+    ]);
 
     return {
       currentUserMember,
       organization,
       organizationMetadata: authMetadataSchema.parse(organization.metadata ?? "{}"),
-      members: membersWithUsers,
-      invitations: filteredInvitations,
+      members,
+      invitations,
     };
   }),
 });
