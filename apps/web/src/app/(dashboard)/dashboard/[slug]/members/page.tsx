@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getSession } from "@repo/api/auth/auth";
+import { Skeleton } from "@repo/ui/components/skeleton";
 
 import { PageHeader } from "@/components/header";
 import { HydrateClient, prefetch, trpc } from "@/trpc/server";
@@ -12,6 +14,23 @@ type PageProps = {
     slug: string;
   }>;
 };
+
+const SKELETON_ROW_KEYS = ["a", "b", "c", "d", "e"];
+
+const RowsSkeleton = ({ rows, withAvatar }: { rows: number; withAvatar?: boolean }) => (
+  <div className="rounded-md border">
+    {SKELETON_ROW_KEYS.slice(0, rows).map((key) => (
+      <div key={key} className="flex items-center gap-4 border-b p-4 last:border-b-0">
+        {withAvatar ? <Skeleton className="size-9 rounded-full" /> : null}
+        <div className="flex-1 space-y-2">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-3 w-48" />
+        </div>
+        <Skeleton className="h-5 w-16" />
+      </div>
+    ))}
+  </div>
+);
 
 const Page = async (props: PageProps) => {
   const params = await props.params;
@@ -37,7 +56,9 @@ const Page = async (props: PageProps) => {
               </p>
             </div>
             <div className="md:col-span-2">
-              <MembersTable slug={slug} />
+              <Suspense fallback={<RowsSkeleton rows={3} withAvatar />}>
+                <MembersTable slug={slug} />
+              </Suspense>
             </div>
           </div>
           <div className="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 py-8 md:grid-cols-3">
@@ -51,7 +72,9 @@ const Page = async (props: PageProps) => {
               <div className="flex justify-end">
                 <InviteMembersDialog slug={slug} />
               </div>
-              <InvitationsTable slug={slug} />
+              <Suspense fallback={<RowsSkeleton rows={2} />}>
+                <InvitationsTable slug={slug} />
+              </Suspense>
             </div>
           </div>
         </section>
