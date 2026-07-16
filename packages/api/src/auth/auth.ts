@@ -109,6 +109,16 @@ export const auth = betterAuth({
     },
   },
   trustedOrigins,
+  // Persist rate-limit counters in Postgres. The default in-memory store keeps
+  // per-instance counters, so on serverless (Vercel) the effective limit
+  // multiplies across cold-started instances and resets on every deploy. 10
+  // requests/60s per IP throttles credential-stuffing against the auth routes.
+  rateLimit: {
+    enabled: true,
+    storage: "database",
+    window: 60,
+    max: 10,
+  },
   advanced: {
     defaultCookieAttributes: {
       // The extension popup iframes the web app; SameSite=Lax cookies are

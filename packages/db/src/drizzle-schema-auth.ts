@@ -5,6 +5,7 @@ import {
   timestamp,
   boolean,
   integer,
+  bigint,
   index,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
@@ -186,6 +187,17 @@ export const subscription = pgTable(
     index("subscription_stripeCustomerId_idx").on(table.stripeCustomerId),
   ],
 ).enableRLS();
+
+// better-auth's database rate-limit store (rateLimit.storage = "database" in
+// auth.ts). Keyed by IP+path; `key` is unique so the counter upsert is a single
+// indexed lookup. Hand-added — the CLI regen emits this table but strips the
+// .enableRLS() below, so re-add it if you regenerate.
+export const rateLimit = pgTable("rate_limit", {
+  id: text("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  count: integer("count").notNull(),
+  lastRequest: bigint("last_request", { mode: "number" }).notNull(),
+}).enableRLS();
 
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
