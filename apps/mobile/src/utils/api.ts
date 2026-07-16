@@ -1,4 +1,4 @@
-import { QueryClient } from "@tanstack/react-query";
+import { MutationCache, QueryClient } from "@tanstack/react-query";
 import { createTRPCClient, httpBatchLink, loggerLink } from "@trpc/client";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import superjson from "superjson";
@@ -8,9 +8,21 @@ import { authClient } from "./auth";
 import { getBaseUrl } from "./base-url";
 
 export const queryClient = new QueryClient({
+  /**
+   * Blunt but always correct: every successful mutation refetches everything,
+   * so screens never render stale rows and features carry no invalidation code.
+   * Matches apps/web — the contract in build/mutations.mdx is template-wide.
+   */
+  mutationCache: new MutationCache({
+    onSuccess: async (_data, _variables, _onMutateResult, _mutation, context) => {
+      await context.client.invalidateQueries();
+    },
+  }),
   defaultOptions: {
     queries: {
-      // ...
+      // Navigating back to a screen remounts it; at staleTime 0 that refetches
+      // over cellular every time.
+      staleTime: 30 * 1000,
     },
   },
 });
