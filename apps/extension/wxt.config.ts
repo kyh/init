@@ -16,13 +16,12 @@ export default defineConfig({
       "Chrome extension for Init - your AI-native starter kit for building, launching, and scaling applications.",
     permissions: ["storage"],
     // Host permissions also exempt these sites from third-party cookie
-    // blocking inside the popup iframe — keep in sync with where the app
-    // is deployed
-    host_permissions: [
-      "http://localhost:3000/*",
-      "https://*.vercel.app/*",
-      "https://init.kyh.io/*",
-    ],
+    // blocking inside the popup iframe — keep in sync with where the app is
+    // deployed. Forks add their own deploy origin here (Chrome match patterns
+    // can't scope to one project's Vercel preview subdomains, and a wildcard
+    // costs broad install warnings + CWS review friction — use
+    // optional_host_permissions for previews if you need them).
+    host_permissions: ["http://localhost:3000/*", "https://init.kyh.io/*"],
   },
   vite: () => ({
     plugins: [react(), tailwindcss()],

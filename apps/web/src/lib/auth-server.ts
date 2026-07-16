@@ -18,3 +18,7 @@ export const getOrganizationBySlug = cache(async (slug: string) =>
 export const getOrganizationById = cache(async (id: string) =>
   auth.api.getFullOrganization({ query: { organizationId: id }, headers: await headers() }),
 );
+
+export const listOrganizations = cache(async () =>
+  auth.api.listOrganizations({ headers: await headers() }),
+);

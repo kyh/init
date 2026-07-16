@@ -16,7 +16,6 @@
     "@ai-sdk/react": "^4.0.20",
     "@better-auth/stripe": "catalog:",
     "@repo/api": "workspace:*",
-    "@repo/db": "workspace:*",
     "@repo/ui": "workspace:*",
     "@supabase/supabase-js": "^2.110.2",
     "@tanstack/react-form": "catalog:",
