@@ -12,22 +12,14 @@ import {
   AlertDialogTrigger,
 } from "@repo/ui/components/alert-dialog";
 import { Button } from "@repo/ui/components/button";
-import {
-  Field,
-  FieldContent,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@repo/ui/components/field";
-import { Input } from "@repo/ui/components/input";
+import { FieldGroup } from "@repo/ui/components/field";
 import { toast } from "@repo/ui/components/sonner";
 import { useMutation } from "@tanstack/react-query";
-import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
 
 import type { RouterOutputs } from "@repo/api";
 import { authClient } from "@/lib/auth-client";
+import { useAppForm } from "@/lib/form";
 import { useOrganization } from "@/app/(dashboard)/dashboard/[slug]/_components/use-organization";
 
 type Organization = RouterOutputs["organization"]["get"]["organization"];
@@ -58,7 +50,7 @@ type DeleteProps = {
 const Delete = ({ organization }: DeleteProps) => {
   const { mutateAsync: deleteOrganization, isPending } = useDeleteOrganization(organization.id);
 
-  const form = useForm({
+  const form = useAppForm({
     defaultValues: {
       name: "",
     },
@@ -111,7 +103,7 @@ const Delete = ({ organization }: DeleteProps) => {
                 <div className="text-sm">Are you sure you want to continue?</div>
               </div>
               <FieldGroup className="gap-2">
-                <form.Field
+                <form.AppField
                   name="name"
                   validators={{
                     onChange: z.string().refine((value) => value === organization.name, {
@@ -119,38 +111,17 @@ const Delete = ({ organization }: DeleteProps) => {
                     }),
                   }}
                 >
-                  {(field) => {
-                    const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
-
-                    return (
-                      <Field data-invalid={isInvalid} className="gap-1">
-                        <FieldLabel htmlFor="delete-organization-name">
-                          Organization Name
-                        </FieldLabel>
-                        <FieldContent>
-                          <Input
-                            id="delete-organization-name"
-                            name={field.name}
-                            value={field.state.value}
-                            onBlur={field.handleBlur}
-                            onChange={(event) => field.handleChange(event.target.value)}
-                            aria-invalid={isInvalid}
-                            required
-                            type="text"
-                            autoComplete="off"
-                            className="w-full"
-                            placeholder=""
-                            pattern={organization.name}
-                          />
-                        </FieldContent>
-                        <FieldDescription>
-                          Type the name of the organization to confirm
-                        </FieldDescription>
-                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
-                      </Field>
-                    );
-                  }}
-                </form.Field>
+                  {(field) => (
+                    <field.TextField
+                      label="Organization Name"
+                      description="Type the name of the organization to confirm"
+                      required
+                      type="text"
+                      autoComplete="off"
+                      pattern={organization.name}
+                    />
+                  )}
+                </form.AppField>
               </FieldGroup>
             </div>
             <AlertDialogFooter>
@@ -173,7 +144,7 @@ type LeaveProps = {
 const Leave = ({ organization }: LeaveProps) => {
   const { mutateAsync: leaveOrganization, isPending } = useLeaveOrganization(organization.id);
 
-  const form = useForm({
+  const form = useAppForm({
     defaultValues: {
       confirmation: "",
     },
@@ -214,7 +185,7 @@ const Leave = ({ organization }: LeaveProps) => {
             }}
           >
             <FieldGroup className="gap-4">
-              <form.Field
+              <form.AppField
                 name="confirmation"
                 validators={{
                   onChange: z.string().refine((value) => value === "LEAVE", {
@@ -222,38 +193,17 @@ const Leave = ({ organization }: LeaveProps) => {
                   }),
                 }}
               >
-                {(field) => {
-                  const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
-
-                  return (
-                    <Field data-invalid={isInvalid} className="gap-1">
-                      <FieldLabel htmlFor="leave-organization-confirmation">
-                        Please type LEAVE to confirm leaving the organization.
-                      </FieldLabel>
-                      <FieldContent>
-                        <Input
-                          id="leave-organization-confirmation"
-                          name={field.name}
-                          value={field.state.value}
-                          onBlur={field.handleBlur}
-                          onChange={(event) => field.handleChange(event.target.value)}
-                          aria-invalid={isInvalid}
-                          type="text"
-                          className="w-full"
-                          autoComplete="off"
-                          placeholder=""
-                          pattern="LEAVE"
-                          required
-                        />
-                      </FieldContent>
-                      <FieldDescription>
-                        By leaving the organization, you will no longer have access to it.
-                      </FieldDescription>
-                      {isInvalid && <FieldError errors={field.state.meta.errors} />}
-                    </Field>
-                  );
-                }}
-              </form.Field>
+                {(field) => (
+                  <field.TextField
+                    label="Please type LEAVE to confirm leaving the organization."
+                    description="By leaving the organization, you will no longer have access to it."
+                    type="text"
+                    autoComplete="off"
+                    pattern="LEAVE"
+                    required
+                  />
+                )}
+              </form.AppField>
             </FieldGroup>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>

@@ -3,14 +3,13 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@repo/ui/components/button";
-import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from "@repo/ui/components/field";
-import { Input } from "@repo/ui/components/input";
+import { FieldGroup } from "@repo/ui/components/field";
 import { toast } from "@repo/ui/components/sonner";
 import { cn } from "@repo/ui/lib/utils";
-import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
 
 import { authClient } from "@/lib/auth-client";
+import { useAppForm } from "@/lib/form";
 
 type AuthFormProps = {
   type: "login" | "register";
@@ -33,7 +32,7 @@ const AuthFormInner = ({ className, type, ...props }: AuthFormProps) => {
   const nextPath = useNextPath();
   const [submittingGithub, setSubmittingGithub] = useState(false);
 
-  const form = useForm({
+  const form = useAppForm({
     defaultValues: {
       email: "",
       password: "",
@@ -123,89 +122,57 @@ const AuthFormInner = ({ className, type, ...props }: AuthFormProps) => {
         }}
       >
         <FieldGroup className="gap-2">
-          <form.Field
+          <form.AppField
             name="email"
             validators={{
               onBlur: z.email("Invalid email address"),
             }}
           >
-            {(field) => {
-              const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
-
-              return (
-                <Field data-invalid={isInvalid} className="gap-1">
-                  <FieldLabel className="sr-only" htmlFor="email">
-                    Email
-                  </FieldLabel>
-                  <FieldContent>
-                    <Input
-                      id="email"
-                      data-test="email-input"
-                      name={field.name}
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(event) => field.handleChange(event.target.value)}
-                      aria-invalid={isInvalid}
-                      required
-                      type="email"
-                      placeholder="name@example.com"
-                      autoCapitalize="none"
-                      autoComplete="email"
-                      autoCorrect="off"
-                    />
-                  </FieldContent>
-                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
-                </Field>
-              );
-            }}
-          </form.Field>
-          <form.Field
+            {(field) => (
+              <field.TextField
+                label="Email"
+                labelClassName="sr-only"
+                data-test="email-input"
+                required
+                type="email"
+                placeholder="name@example.com"
+                autoCapitalize="none"
+                autoComplete="email"
+                autoCorrect="off"
+              />
+            )}
+          </form.AppField>
+          <form.AppField
             name="password"
             validators={{
               onBlur: z.string().min(1, "Password is required"),
             }}
           >
-            {(field) => {
-              const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
-
-              return (
-                <Field data-invalid={isInvalid} className="gap-1">
-                  <FieldLabel className="sr-only" htmlFor="password">
-                    Password
-                  </FieldLabel>
-                  <FieldContent>
-                    <Input
-                      id="password"
-                      data-test="password-input"
-                      name={field.name}
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(event) => field.handleChange(event.target.value)}
-                      aria-invalid={isInvalid}
-                      required
-                      type="password"
-                      placeholder="******"
-                      autoCapitalize="none"
-                      autoComplete="current-password"
-                      autoCorrect="off"
-                    />
-                  </FieldContent>
-                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
-                </Field>
-              );
-            }}
-          </form.Field>
+            {(field) => (
+              <field.TextField
+                label="Password"
+                labelClassName="sr-only"
+                data-test="password-input"
+                required
+                type="password"
+                placeholder="******"
+                autoCapitalize="none"
+                autoComplete="current-password"
+                autoCorrect="off"
+              />
+            )}
+          </form.AppField>
         </FieldGroup>
-        <Button type="submit" loading={form.state.isSubmitting}>
-          {type === "login" ? "Login" : "Register"}
-        </Button>
+        <form.AppForm>
+          <form.SubmitButton>{type === "login" ? "Login" : "Register"}</form.SubmitButton>
+        </form.AppForm>
       </form>
     </div>
   );
 };
 
 export const RequestPasswordResetForm = () => {
-  const form = useForm({
+  const form = useAppForm({
     defaultValues: {
       email: "",
     },
@@ -252,45 +219,29 @@ export const RequestPasswordResetForm = () => {
       }}
     >
       <FieldGroup className="gap-4">
-        <form.Field
+        <form.AppField
           name="email"
           validators={{
             onBlur: z.email("Invalid email address"),
           }}
         >
-          {(field) => {
-            const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
-
-            return (
-              <Field data-invalid={isInvalid} className="gap-1">
-                <FieldLabel className="sr-only" htmlFor="reset-email">
-                  Email
-                </FieldLabel>
-                <FieldContent>
-                  <Input
-                    id="reset-email"
-                    name={field.name}
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(event) => field.handleChange(event.target.value)}
-                    aria-invalid={isInvalid}
-                    required
-                    type="email"
-                    placeholder="name@example.com"
-                    autoCapitalize="none"
-                    autoComplete="email"
-                    autoCorrect="off"
-                  />
-                </FieldContent>
-                {isInvalid && <FieldError errors={field.state.meta.errors} />}
-              </Field>
-            );
-          }}
-        </form.Field>
+          {(field) => (
+            <field.TextField
+              label="Email"
+              labelClassName="sr-only"
+              required
+              type="email"
+              placeholder="name@example.com"
+              autoCapitalize="none"
+              autoComplete="email"
+              autoCorrect="off"
+            />
+          )}
+        </form.AppField>
       </FieldGroup>
-      <Button type="submit" loading={form.state.isSubmitting}>
-        Request Password Reset
-      </Button>
+      <form.AppForm>
+        <form.SubmitButton>Request Password Reset</form.SubmitButton>
+      </form.AppForm>
     </form>
   );
 };
@@ -306,7 +257,7 @@ const UpdatePasswordFormInner = () => {
   // better-auth appends the reset token to the redirectTo URL
   const token = useSearchParams().get("token");
 
-  const form = useForm({
+  const form = useAppForm({
     defaultValues: {
       password: "",
       confirmPassword: "",
@@ -352,42 +303,26 @@ const UpdatePasswordFormInner = () => {
       }}
     >
       <FieldGroup className="gap-4">
-        <form.Field
+        <form.AppField
           name="password"
           validators={{
             onBlur: z.string().min(8, "Password must be at least 8 characters"),
           }}
         >
-          {(field) => {
-            const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
-
-            return (
-              <Field data-invalid={isInvalid} className="gap-1">
-                <FieldLabel className="sr-only" htmlFor="new-password">
-                  New Password
-                </FieldLabel>
-                <FieldContent>
-                  <Input
-                    id="new-password"
-                    name={field.name}
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(event) => field.handleChange(event.target.value)}
-                    aria-invalid={isInvalid}
-                    required
-                    type="password"
-                    placeholder="Enter new password"
-                    autoCapitalize="none"
-                    autoComplete="new-password"
-                    autoCorrect="off"
-                  />
-                </FieldContent>
-                {isInvalid && <FieldError errors={field.state.meta.errors} />}
-              </Field>
-            );
-          }}
-        </form.Field>
-        <form.Field
+          {(field) => (
+            <field.TextField
+              label="New Password"
+              labelClassName="sr-only"
+              required
+              type="password"
+              placeholder="Enter new password"
+              autoCapitalize="none"
+              autoComplete="new-password"
+              autoCorrect="off"
+            />
+          )}
+        </form.AppField>
+        <form.AppField
           name="confirmPassword"
           validators={{
             onChange: ({ value, fieldApi }) => {
@@ -402,45 +337,23 @@ const UpdatePasswordFormInner = () => {
             },
           }}
         >
-          {(field) => {
-            const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
-
-            return (
-              <Field data-invalid={isInvalid} className="gap-1">
-                <FieldLabel className="sr-only" htmlFor="confirm-password">
-                  Confirm New Password
-                </FieldLabel>
-                <FieldContent>
-                  <Input
-                    id="confirm-password"
-                    name={field.name}
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(event) => field.handleChange(event.target.value)}
-                    aria-invalid={isInvalid}
-                    required
-                    type="password"
-                    placeholder="Confirm new password"
-                    autoCapitalize="none"
-                    autoComplete="new-password"
-                    autoCorrect="off"
-                  />
-                </FieldContent>
-                {isInvalid && (
-                  <FieldError
-                    errors={field.state.meta.errors.map((error) =>
-                      typeof error === "string" ? { message: error } : error,
-                    )}
-                  />
-                )}
-              </Field>
-            );
-          }}
-        </form.Field>
+          {(field) => (
+            <field.TextField
+              label="Confirm New Password"
+              labelClassName="sr-only"
+              required
+              type="password"
+              placeholder="Confirm new password"
+              autoCapitalize="none"
+              autoComplete="new-password"
+              autoCorrect="off"
+            />
+          )}
+        </form.AppField>
       </FieldGroup>
-      <Button type="submit" loading={form.state.isSubmitting}>
-        Update Password
-      </Button>
+      <form.AppForm>
+        <form.SubmitButton>Update Password</form.SubmitButton>
+      </form.AppForm>
     </form>
   );
 };

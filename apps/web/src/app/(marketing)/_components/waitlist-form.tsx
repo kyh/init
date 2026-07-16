@@ -2,19 +2,18 @@
 
 import { joinWaitlistInput } from "@repo/api/waitlist/waitlist-schema";
 import { Button } from "@repo/ui/components/button";
-import { Field, FieldContent, FieldError, FieldLabel } from "@repo/ui/components/field";
 import { toast } from "@repo/ui/components/sonner";
 import { cn } from "@repo/ui/lib/utils";
 import { useMutation } from "@tanstack/react-query";
-import { useForm } from "@tanstack/react-form";
 
+import { useAppForm } from "@/lib/form";
 import { useTRPC } from "@/trpc/react";
 
 export const WaitlistForm = () => {
   const trpc = useTRPC();
   const joinWaitlist = useMutation(trpc.waitlist.join.mutationOptions());
 
-  const form = useForm({
+  const form = useAppForm({
     defaultValues: {
       email: "",
     },
@@ -41,47 +40,28 @@ export const WaitlistForm = () => {
       }}
       className="border-border/50 mt-10 flex max-w-sm items-center gap-2 rounded-[0.75rem] border bg-transparent shadow-sm"
     >
-      <form.Field
+      <form.AppField
         name="email"
         validators={{
           onBlur: joinWaitlistInput.shape.email,
         }}
       >
-        {(field) => {
-          const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
-
-          return (
-            <Field data-invalid={isInvalid} className="relative min-w-0 flex-1">
-              <FieldLabel className="sr-only" htmlFor="waitlist-email">
-                Email
-              </FieldLabel>
-              <FieldContent>
-                <input
-                  id="waitlist-email"
-                  className="text-foreground placeholder:text-muted-foreground w-full border-none bg-transparent py-3 pl-4 text-sm focus:ring-0 focus:outline-hidden"
-                  name={field.name}
-                  value={field.state.value ?? ""}
-                  onBlur={field.handleBlur}
-                  onChange={(event) => field.handleChange(event.target.value)}
-                  aria-invalid={isInvalid}
-                  required
-                  type="email"
-                  placeholder="name@example.com"
-                  autoCapitalize="none"
-                  autoComplete="email"
-                  autoCorrect="off"
-                />
-              </FieldContent>
-              {isInvalid && (
-                <FieldError
-                  className="absolute left-0 top-full pt-1"
-                  errors={field.state.meta.errors}
-                />
-              )}
-            </Field>
-          );
-        }}
-      </form.Field>
+        {(field) => (
+          <field.TextField
+            label="Email"
+            labelClassName="sr-only"
+            type="email"
+            required
+            placeholder="name@example.com"
+            autoCapitalize="none"
+            autoComplete="email"
+            autoCorrect="off"
+            className="relative min-w-0 flex-1"
+            inputClassName="h-auto rounded-none border-0 bg-transparent py-3 pl-4 shadow-none focus-visible:border-0 focus-visible:ring-0 aria-invalid:border-0 aria-invalid:ring-0"
+            errorClassName="absolute left-0 top-full pt-1"
+          />
+        )}
+      </form.AppField>
       <Button
         type="submit"
         variant="ghost"
