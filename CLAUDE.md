@@ -26,9 +26,19 @@ apps/
   desktop/     # Desktop app (Electron)
 packages/
   api/         # tRPC router + better-auth
-  db/          # Drizzle schema + Supabase client
+  db/          # Drizzle schema + client, Supabase local dev/migrations
   ui/          # Shared React components (shadcn-style)
 ```
+
+The service-role Supabase client lives in `apps/web/src/lib/supabase-server.ts`, not in `packages/db` — `packages/db` only carries the Supabase CLI for local dev.
+
+### Mutation path
+
+Mutations go through tRPC or the better-auth client — never Next Server Actions. All four platforms (web, mobile, extension, desktop) then share one typed surface, and the `MutationCache` global-invalidation contract holds (it only observes React Query mutations). Do not introduce Server Actions alongside.
+
+### Mobile dependency pins
+
+`nativewind` is pinned to the `5.0.0-preview` channel because it's the only Tailwind 4-compatible line; `react-native-css` is exact-pinned to the tested version. Lift both when nativewind 5 stable ships (see the tracking issue).
 
 ## Common Commands
 
