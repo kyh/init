@@ -6,8 +6,8 @@
       "dependsOn": ["^topo"]
     },
     "build": {
-      "dependsOn": ["^build"],
-      "outputs": [".cache/tsbuildinfo.json", "dist/**"]
+      "dependsOn": ["^topo"],
+      "outputs": [".cache/tsbuildinfo.json"]
     },
     "dev": {
       "dependsOn": ["^dev"],
@@ -15,11 +15,11 @@
       "persistent": false
     },
     "typecheck": {
-      "dependsOn": ["^topo", "^build"],
+      "dependsOn": ["^topo"],
       "outputs": [".cache/tsbuildinfo.json"]
     },
     "test": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^topo"],
       "cache": false
     },
     "clean": {
