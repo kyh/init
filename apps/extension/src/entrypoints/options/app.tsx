@@ -5,7 +5,7 @@ import { Label } from "@repo/ui/components/label";
 import { Spinner } from "@repo/ui/components/spinner";
 import { Save, ExternalLink } from "lucide-react";
 
-import { getStorageData, setStorageData } from "@/lib/storage";
+import { apiBaseUrlItem } from "@/lib/storage";
 
 const App = () => {
   const [apiBaseUrl, setApiBaseUrl] = useState("");
@@ -20,7 +20,7 @@ const App = () => {
     const loadSettings = async () => {
       setIsLoading(true);
       try {
-        const savedApiBaseUrl = await getStorageData("apiBaseUrl");
+        const savedApiBaseUrl = await apiBaseUrlItem.getValue();
         setApiBaseUrl(savedApiBaseUrl);
       } catch {
         setMessage({
@@ -44,7 +44,7 @@ const App = () => {
       const url = new URL(apiBaseUrl);
       const normalizedUrl = url.origin;
 
-      await setStorageData("apiBaseUrl", normalizedUrl);
+      await apiBaseUrlItem.setValue(normalizedUrl);
 
       setApiBaseUrl(normalizedUrl);
       setMessage({

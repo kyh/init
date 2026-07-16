@@ -3,36 +3,25 @@ import { Button } from "@repo/ui/components/button";
 import { Spinner } from "@repo/ui/components/spinner";
 import { Settings } from "lucide-react";
 
-import { getStorageData, onStorageChange } from "@/lib/storage";
+import { apiBaseUrlItem } from "@/lib/storage";
 
 const openOptions = () => {
   void browser.runtime.openOptionsPage();
 };
 
 const App = () => {
+  // The item's fallback means getValue never resolves null, so null is exactly
+  // "first read still in flight" — no separate loading flag can disagree with it.
   const [appUrl, setAppUrl] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const loadUrl = async () => {
-      const url = await getStorageData("apiBaseUrl");
-      setAppUrl(url);
-      setIsLoading(false);
-    };
-
-    void loadUrl();
+    void apiBaseUrlItem.getValue().then(setAppUrl);
 
     // The options page can change the URL while the popup is open
-    const unsubscribe = onStorageChange((changes) => {
-      if (changes.apiBaseUrl?.newValue) {
-        setAppUrl(changes.apiBaseUrl.newValue);
-      }
-    });
-
-    return unsubscribe;
+    return apiBaseUrlItem.watch(setAppUrl);
   }, []);
 
-  if (isLoading) {
+  if (appUrl === null) {
     return (
       <div className="bg-background flex h-[600px] w-[400px] items-center justify-center">
         <Spinner className="text-muted-foreground size-6" />
@@ -56,7 +45,7 @@ const App = () => {
           sandbox can't isolate it — but it still blocks top-navigation hijacks */}
       {/* oxlint-disable iframe-missing-sandbox, react-doctor/iframe-missing-sandbox -- extension parent and web child are cross-origin */}
       <iframe
-        src={appUrl ?? "http://localhost:3000"}
+        src={appUrl}
         className="h-full w-full border-0"
         title="Init App"
         allow="clipboard-read; clipboard-write"
