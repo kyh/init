@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { headers } from "next/headers";
 import { appRouter, createTRPCContext } from "@repo/api";
+import { getSession } from "@/lib/auth-server";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 
@@ -19,6 +20,10 @@ const createContext = cache(async () => {
 
   return createTRPCContext({
     headers: heads,
+    // Dashboard pages call getSession() to gate the route before they prefetch.
+    // Reuse that cached result — resolving it again here would be a second
+    // session lookup per render.
+    session: await getSession(),
   });
 });
 

@@ -3,6 +3,7 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { z, ZodError } from "zod";
 
+import type { Session } from "./auth/auth";
 import { auth, trustedOrigins } from "./auth/auth";
 
 /**
@@ -12,10 +13,22 @@ import { auth, trustedOrigins } from "./auth/auth";
  *
  * @see https://trpc.io/docs/server/context
  */
-export const createTRPCContext = async (opts: { headers: Headers }) => {
-  const session = await auth.api.getSession({
-    headers: opts.headers,
-  });
+export const createTRPCContext = async (opts: {
+  headers: Headers;
+  /**
+   * Pass an already-resolved session to reuse it. RSC callers have usually
+   * resolved one via the cached `getSession()` before prefetching; without
+   * this they'd pay a second session lookup, because React's cache keys on the
+   * function, so a separate `auth.api.getSession` call never dedupes with it.
+   * `null` means "resolved, and nobody is logged in" — only `undefined` triggers
+   * a lookup here.
+   */
+  session?: Session | null;
+}) => {
+  const session =
+    opts.session === undefined
+      ? await auth.api.getSession({ headers: opts.headers })
+      : opts.session;
 
   return {
     session,
