@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { getOrganization, getSession } from "@repo/api/auth/auth";
-import { eq } from "@repo/db";
 import { db } from "@repo/db/drizzle-client";
 import { member, organization } from "@repo/db/drizzle-schema-auth";
+import { eq } from "drizzle-orm";
 
 export async function GET() {
   const session = await getSession();

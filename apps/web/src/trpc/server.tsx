@@ -5,7 +5,7 @@ import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 
 import type { AppRouter } from "@repo/api";
-import type { TRPCQueryOptions } from "@trpc/tanstack-react-query";
+import type { FetchQueryOptions, QueryKey } from "@tanstack/react-query";
 import { createQueryClient } from "./query-client";
 
 /**
@@ -35,13 +35,16 @@ export const HydrateClient = (props: { children: React.ReactNode }) => {
   return <HydrationBoundary state={dehydrate(queryClient)}>{props.children}</HydrationBoundary>;
 };
 
-export function prefetch<T extends ReturnType<TRPCQueryOptions<any>>>(queryOptions: T) {
-  const queryClient = getQueryClient();
-  if (queryOptions.queryKey[1]?.type === "infinite") {
-    void queryClient.prefetchInfiniteQuery(queryOptions as any);
-  } else {
-    void queryClient.prefetchQuery(queryOptions);
-  }
-}
+export const prefetch = <TQueryFnData, TError, TData, TQueryKey extends QueryKey>(
+  queryOptions: FetchQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
+) => {
+  void getQueryClient().prefetchQuery(queryOptions);
+};
 
+/**
+ * Calls procedures in-process, with no HTTP round trip and no query cache — for
+ * server-only rendering and route handlers, where hydrating a client cache buys
+ * nothing. Complements `trpc` + `prefetch` rather than competing with them; see
+ * the table in content/docs/build/queries.mdx.
+ */
 export const caller = appRouter.createCaller(createContext);

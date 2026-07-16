@@ -4,7 +4,7 @@ import type { Organization } from "better-auth/plugins/organization";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { slugify } from "@repo/api/auth/utils";
+import { FALLBACK_ORGANIZATION_SLUG, slugify } from "@repo/api/auth/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/components/avatar";
 import { Button } from "@repo/ui/components/button";
 import {
@@ -124,7 +124,9 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
     onSubmit: async ({ value, formApi }) => {
       await authClient.organization.create({
         name: value.name,
-        slug: slugify(value.name),
+        // Names with no ASCII base ("李明的公司") slugify to "" — the name is
+        // the user's to choose, so fall back rather than reject it.
+        slug: slugify(value.name) || FALLBACK_ORGANIZATION_SLUG,
         keepCurrentActiveOrganization: false,
         fetchOptions: {
           onSuccess: (ctx) => {

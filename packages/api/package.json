@@ -5,7 +5,10 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./*": "./src/*.ts"
+    "./auth/auth": "./src/auth/auth.ts",
+    "./auth/utils": "./src/auth/utils.ts",
+    "./todo/todo-schema": "./src/todo/todo-schema.ts",
+    "./waitlist/waitlist-schema": "./src/waitlist/waitlist-schema.ts"
   },
   "scripts": {
     "clean": "git clean -xdf .cache .turbo dist node_modules",
@@ -18,6 +21,7 @@
     "@repo/db": "workspace:^",
     "@trpc/server": "catalog:",
     "better-auth": "catalog:",
+    "drizzle-orm": "catalog:",
     "next": "catalog:",
     "react": "catalog:",
     "stripe": "^22.3.1",

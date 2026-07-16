@@ -28,6 +28,7 @@
     "@trpc/tanstack-react-query": "catalog:",
     "ai": "^7.0.19",
     "better-auth": "catalog:",
+    "drizzle-orm": "catalog:",
     "fumadocs-core": "^16.11.1",
     "fumadocs-mdx": "^15.1.0",
     "fumadocs-ui": "^16.11.1",

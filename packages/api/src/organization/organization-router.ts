@@ -1,35 +1,13 @@
-import { TRPCError } from "@trpc/server";
-
 import { authMetadataSchema } from "../auth/auth-schema";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { getOrganizationInput } from "./organization-schema";
+import { createTRPCRouter, organizationProcedure } from "../trpc";
 
 export const organizationRouter = createTRPCRouter({
-  get: protectedProcedure.input(getOrganizationInput).query(async ({ ctx, input }) => {
-    const { slug } = input;
-
-    const organization = await ctx.db.query.organization.findFirst({
-      where: (org, { eq }) => eq(org.slug, slug),
-    });
-
-    if (!organization) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Organization not found",
-      });
-    }
+  get: organizationProcedure.query(async ({ ctx }) => {
+    const { organization, membership: currentUserMember } = ctx;
 
     const members = await ctx.db.query.member.findMany({
       where: (member, { eq }) => eq(member.organizationId, organization.id),
     });
-    const currentUserMember = members.find((member) => member.userId === ctx.session.user.id);
-
-    if (!currentUserMember) {
-      throw new TRPCError({
-        code: "UNAUTHORIZED",
-        message: "You are not a member of this organization",
-      });
-    }
 
     const invitations = await ctx.db.query.invitation.findMany({
       where: (invitation, { eq }) => eq(invitation.organizationId, organization.id),

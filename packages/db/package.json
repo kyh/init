@@ -4,8 +4,9 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./*": "./src/*.ts"
+    "./drizzle-client": "./src/drizzle-client.ts",
+    "./drizzle-schema": "./src/drizzle-schema.ts",
+    "./drizzle-schema-auth": "./src/drizzle-schema-auth.ts"
   },
   "scripts": {
     "clean": "git clean -xdf .cache .turbo dist node_modules",
@@ -23,7 +24,7 @@
     "generate:auth-schema": "pnpm with-env pnpx @better-auth/cli generate --config ../api/src/auth/auth.ts --output ./src/drizzle-schema-auth.ts"
   },
   "dependencies": {
-    "drizzle-orm": "^0.45.2",
+    "drizzle-orm": "catalog:",
     "postgres": "^3.4.9",
     "zod": "catalog:"
   },

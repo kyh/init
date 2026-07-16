@@ -15,7 +15,12 @@ import { useTRPC } from "@/trpc/react";
 
 const updateOrganizationSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  slug: z.string().min(1, "Slug is required"),
+  // Validate what submit actually sends: the field is slugified on the way out,
+  // so a non-empty entry can still reduce to "" and yield an unroutable URL.
+  slug: z
+    .string()
+    .min(1, "Slug is required")
+    .refine((value) => slugify(value).length > 0, "Slug must contain a letter or number"),
 });
 
 type UpdateOrganizationFormProps = {

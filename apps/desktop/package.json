@@ -9,7 +9,7 @@
   "scripts": {
     "build": "electron-vite build",
     "build:mac": "node --import tsx ./scripts/build-mac.ts",
-    "clean": "rm -rf .cache .output",
+    "clean": "git clean -xdf .cache .turbo .output node_modules",
     "dev": "electron-vite dev",
     "start": "electron-vite preview",
     "typecheck": "tsc --noEmit"

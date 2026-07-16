@@ -5,6 +5,11 @@
     "composite": true,
     "incremental": true,
     "tsBuildInfoFile": "${configDir}/.cache/tsbuildinfo.json",
-    "types": ["electron-vite/node"]
+    "types": ["electron-vite/node"],
+    // @electron-toolkit's base sets noImplicitAny:false and omits
+    // noUncheckedIndexedAccess, which every @kyh/tsconfig workspace enables.
+    // Realign — desktop was the only place an implicit any typechecked.
+    "noImplicitAny": true,
+    "noUncheckedIndexedAccess": true
   }
 }
