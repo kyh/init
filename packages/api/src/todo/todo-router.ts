@@ -26,9 +26,8 @@ export const todoRouter = createTRPCRouter({
     return { todo: createdTodo };
   }),
   update: organizationProcedure.input(updateTodoInput).mutation(async ({ ctx, input }) => {
-    const updateData: Partial<typeof todo.$inferInsert> = {
-      updatedAt: new Date(),
-    };
+    // updatedAt is maintained by the column's $onUpdate — see drizzle-schema.ts
+    const updateData: Partial<typeof todo.$inferInsert> = {};
 
     if (input.title !== undefined) {
       updateData.title = input.title;

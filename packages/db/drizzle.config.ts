@@ -8,7 +8,7 @@ const nonPoolingUrl = process.env.POSTGRES_URL.replace(":6543", ":5432");
 
 export default {
   schema: ["./src/drizzle-schema-auth.ts", "./src/drizzle-schema.ts"],
-  out: "./supabase/migrations",
+  out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {
     url: nonPoolingUrl,
