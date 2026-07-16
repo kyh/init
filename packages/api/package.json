@@ -19,6 +19,7 @@
     "@better-auth/expo": "catalog:",
     "@better-auth/stripe": "^1.6.23",
     "@repo/db": "workspace:^",
+    "@t3-oss/env-core": "catalog:",
     "@trpc/server": "catalog:",
     "better-auth": "catalog:",
     "drizzle-orm": "catalog:",

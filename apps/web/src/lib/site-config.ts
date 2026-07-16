@@ -1,3 +1,5 @@
+import { env } from "@/env";
+
 export const siteConfig = {
   name: "Init",
   shortName: "Init",
@@ -6,9 +8,9 @@ export const siteConfig = {
   // consumer is a server context (metadata, sitemap, robots). SITE_URL is the
   // escape hatch for non-Vercel hosts, where the Vercel var doesn't exist.
   url:
-    process.env.SITE_URL ??
-    (process.env.VERCEL_PROJECT_PRODUCTION_URL
-      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    env.SITE_URL ??
+    (env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`
       : "http://localhost:3000"),
   ogImage: "/og.jpg",
   twitter: "@kaiyuhsu",
