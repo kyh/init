@@ -122,13 +122,13 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
       className="space-y-8"
     >
       <div className="col-span-full flex items-center gap-x-8">
-        <label className="bg-secondary text-secondary-foreground hover:bg-secondary/80 relative shadow-sm">
-          <input
-            className="invisible absolute inset-0"
-            type="file"
-            onChange={handleProfileImageChange}
-            disabled={isUploadingProfileImage}
-          />
+        {/* The avatar and the button below are both labels for the same file
+            input, so either opens the picker. The input itself is sr-only —
+            visually hidden but focusable and announced, unlike `invisible`. */}
+        <label
+          htmlFor="profile-image-upload"
+          className="bg-secondary text-secondary-foreground hover:bg-secondary/80 relative cursor-pointer shadow-sm"
+        >
           {user.image ? (
             <Image
               src={user.image}
@@ -144,32 +144,34 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
           )}
         </label>
         <div>
-          {user.image ? (
-            <Button
-              variant="secondary"
-              onClick={removeProfileImage}
-              disabled={isUploadingProfileImage}
-            >
-              Remove Profile Image
-            </Button>
-          ) : (
+          <input
+            id="profile-image-upload"
+            aria-label={user.image ? "Change profile image" : "Upload profile image"}
+            className="sr-only"
+            type="file"
+            onChange={handleProfileImageChange}
+            disabled={isUploadingProfileImage}
+          />
+          <div className="flex gap-2">
             <Button
               variant="secondary"
               loading={isUploadingProfileImage}
               nativeButton={false}
-              // oxlint-disable-next-line label-has-associated-control -- Base UI renders this label with the explicit htmlFor below
+              // oxlint-disable-next-line label-has-associated-control -- associated with the file input above via htmlFor
               render={<label htmlFor="profile-image-upload" />}
             >
-              <input
-                id="profile-image-upload"
-                aria-label="Change profile image"
-                className="invisible absolute inset-0"
-                type="file"
-                onChange={handleProfileImageChange}
-              />
-              Change Profile Image
+              {user.image ? "Change Profile Image" : "Upload Profile Image"}
             </Button>
-          )}
+            {user.image && (
+              <Button
+                variant="ghost"
+                onClick={removeProfileImage}
+                disabled={isUploadingProfileImage}
+              >
+                Remove
+              </Button>
+            )}
+          </div>
           <p className="text-muted-foreground mt-2 text-xs leading-5">JPG, GIF or PNG. 1MB max.</p>
         </div>
       </div>

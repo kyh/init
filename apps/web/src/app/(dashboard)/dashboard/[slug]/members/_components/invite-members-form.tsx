@@ -128,9 +128,14 @@ const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormProps) =>
 
                       return (
                         <Field data-invalid={isInvalid} className="w-7/12 gap-1">
-                          {index === 0 && (
-                            <FieldLabel htmlFor={`invite-${index}-email`}>Email</FieldLabel>
-                          )}
+                          {/* Visible on the first row; kept in the a11y tree as
+                              sr-only on the rest so every input has a label. */}
+                          <FieldLabel
+                            htmlFor={`invite-${index}-email`}
+                            className={index === 0 ? undefined : "sr-only"}
+                          >
+                            Email
+                          </FieldLabel>
                           <FieldContent>
                             <Input
                               id={`invite-${index}-email`}
@@ -158,7 +163,12 @@ const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormProps) =>
 
                       return (
                         <Field data-invalid={isInvalid} className="w-4/12 gap-1">
-                          {index === 0 && <FieldLabel>Role</FieldLabel>}
+                          <FieldLabel
+                            htmlFor={`invite-${index}-role`}
+                            className={index === 0 ? undefined : "sr-only"}
+                          >
+                            Role
+                          </FieldLabel>
                           <FieldContent>
                             <Select
                               value={field.state.value ?? ""}
@@ -170,7 +180,7 @@ const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormProps) =>
                                 }
                               }}
                             >
-                              <SelectTrigger>
+                              <SelectTrigger id={`invite-${index}-role`}>
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
