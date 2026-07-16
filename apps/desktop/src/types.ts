@@ -52,9 +52,13 @@ const UPDATE_STATUSES = new Set([
 /** Intentionally validates only `status` — called in a sandboxed preload
  *  where the value always originates from the main process via IPC. */
 export function isUpdateState(value: unknown): value is UpdateState {
-  if (typeof value !== "object" || value === null) return false;
-  const obj = value as Record<string, unknown>;
-  return typeof obj.status === "string" && UPDATE_STATUSES.has(obj.status);
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "status" in value &&
+    typeof value.status === "string" &&
+    UPDATE_STATUSES.has(value.status)
+  );
 }
 
 export function toErrorMessage(error: unknown): string {

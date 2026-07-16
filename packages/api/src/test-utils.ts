@@ -75,14 +75,23 @@ export function createMockContext(
   } = {},
 ): TRPCContext & { db: MockDb } {
   const db = overrides.db ?? createMockDb();
+  // The one sanctioned assertion boundary: plain-object chain mocks meet the
+  // real drizzle context type here and nowhere else. The alternative — PGlite
+  // integration tests — is a separate call; mockDeep would break the chain
+  // mocks. Any drift still fails loudly at test runtime.
   return {
     session: overrides.session === undefined ? mockSession : overrides.session,
-    db: db as unknown as TRPCContext["db"],
+    // The single sanctioned assertion: the chain mock is both the real drizzle
+    // type (for TRPCContext) and MockDb (for test access). Casting to the
+    // intersection once lets the object satisfy the return type with no outer
+    // cast.
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- mock db meets the real context type only here
+    db: db as unknown as TRPCContext["db"] & MockDb,
     // Default to no browser provenance — mutations pass the origin guard unless
     // a test opts into cross-origin headers.
     origin: overrides.origin ?? null,
     secFetchSite: overrides.secFetchSite ?? null,
-  } as TRPCContext & { db: MockDb };
+  };
 }
 
 export { mockUser, mockSession };
