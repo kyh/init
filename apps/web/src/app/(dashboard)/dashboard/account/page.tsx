@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getSession } from "@repo/api/auth/auth";
+import { getSession } from "@/lib/auth-server";
 
 import { PageHeader } from "@/components/header";
 import { AppearanceForm } from "./_components/appearance-form";

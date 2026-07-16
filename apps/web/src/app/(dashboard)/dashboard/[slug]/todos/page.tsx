@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { getSession } from "@repo/api/auth/auth";
+import { getSession } from "@/lib/auth-server";
 import { Skeleton } from "@repo/ui/components/skeleton";
 
 import { PageHeader } from "@/components/header";

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { auth, getSession } from "@repo/api/auth/auth";
+import { auth } from "@repo/api/auth/auth";
+import { getSession } from "@/lib/auth-server";
 
 import { InvitationActions } from "./_components/invitation-actions";
 
