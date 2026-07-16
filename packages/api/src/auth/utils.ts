@@ -1,4 +1,19 @@
+import { APIError } from "better-auth/api";
 import { z } from "zod";
+
+/**
+ * True when a create-organization failure was a slug collision — a concurrent
+ * signup claimed the same slug between our availability check and the insert.
+ * better-auth surfaces it as an APIError ("...slug already taken"); the Postgres
+ * unique constraint can instead raise SQLSTATE 23505. A fresh slug on retry
+ * resolves it, so callers retry on this and only this; any other error is fatal.
+ */
+export const isSlugCollision = (error: unknown): boolean => {
+  if (error instanceof APIError) {
+    return /slug|already (exists|taken)/i.test(error.message);
+  }
+  return typeof error === "object" && error !== null && "code" in error && error.code === "23505";
+};
 
 /**
  * Converts a string to a URL-friendly slug.

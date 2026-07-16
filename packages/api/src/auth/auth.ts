@@ -11,7 +11,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import Stripe from "stripe";
 
 import { sendEmail } from "../email/send-email";
-import { FALLBACK_ORGANIZATION_SLUG, slugify } from "./utils";
+import { FALLBACK_ORGANIZATION_SLUG, isSlugCollision, slugify } from "./utils";
 
 // No network call until first use, so a placeholder key keeps local dev
 // working without Stripe configured (checkout/portal will fail, list won't)
@@ -165,23 +165,45 @@ const generateAvailableSlug = async (baseSlug: string, attempt = 0): Promise<str
  * Creates the personal organization every new user gets. If creation fails the
  * user is deleted — the app assumes every user belongs to at least one org.
  */
-const createDefaultOrganization = async (user: User) => {
+const MAX_SLUG_ATTEMPTS = 3;
+
+/**
+ * Creates the personal org, retrying on a slug collision. generateAvailableSlug
+ * checks availability then inserts, so two concurrent signups can compute the
+ * same slug and one loses the unique constraint — a fresh slug on retry clears
+ * it. Bounded so a genuinely stuck slug can't loop forever.
+ */
+const createPersonalOrganization = async (user: User) => {
   // A name in a script with no ASCII base ("李明") slugifies to "", which would
   // create an organization at the unroutable /dashboard/. Signup has no user to
   // prompt, so fall back to a generic base and let them rename it later.
-  const slug = await generateAvailableSlug(slugify(user.name) || FALLBACK_ORGANIZATION_SLUG);
+  const baseSlug = slugify(user.name) || FALLBACK_ORGANIZATION_SLUG;
 
-  try {
-    const createdOrganization = await auth.api.createOrganization({
-      body: {
-        userId: user.id,
-        name: "Personal Organization",
-        slug,
-        metadata: {
-          personal: true,
+  for (let attempt = 1; ; attempt++) {
+    const slug = await generateAvailableSlug(baseSlug);
+    try {
+      return await auth.api.createOrganization({
+        body: {
+          userId: user.id,
+          name: "Personal Organization",
+          slug,
+          metadata: {
+            personal: true,
+          },
         },
-      },
-    });
+      });
+    } catch (err) {
+      if (attempt < MAX_SLUG_ATTEMPTS && isSlugCollision(err)) {
+        continue;
+      }
+      throw err;
+    }
+  }
+};
+
+const createDefaultOrganization = async (user: User) => {
+  try {
+    const createdOrganization = await createPersonalOrganization(user);
 
     // The signup session is created before this hook finishes, so the
     // session.create.before hook found no membership — backfill it

@@ -1,6 +1,7 @@
+import { APIError } from "better-auth/api";
 import { describe, expect, it } from "vitest";
 
-import { slugify, zJsonString } from "./utils";
+import { isSlugCollision, slugify, zJsonString } from "./utils";
 
 describe("slugify", () => {
   it("lowercases and replaces spaces with hyphens", () => {
@@ -73,5 +74,28 @@ describe("zJsonString", () => {
   it("rejects non-string input", () => {
     const result = zJsonString.safeParse(123);
     expect(result.success).toBe(false);
+  });
+});
+
+describe("isSlugCollision", () => {
+  it("matches a better-auth slug-taken APIError", () => {
+    const error = new APIError("BAD_REQUEST", { message: "Organization slug already taken" });
+    expect(isSlugCollision(error)).toBe(true);
+  });
+
+  it("matches a Postgres unique violation (23505)", () => {
+    expect(isSlugCollision({ code: "23505" })).toBe(true);
+  });
+
+  it("does not match an unrelated APIError", () => {
+    const error = new APIError("BAD_REQUEST", { message: "You are not a member" });
+    expect(isSlugCollision(error)).toBe(false);
+  });
+
+  it("does not match a generic error or non-object", () => {
+    expect(isSlugCollision(new Error("network down"))).toBe(false);
+    expect(isSlugCollision({ code: "08006" })).toBe(false);
+    expect(isSlugCollision(null)).toBe(false);
+    expect(isSlugCollision(undefined)).toBe(false);
   });
 });
