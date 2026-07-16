@@ -1,4 +1,4 @@
-import { getOrganization } from "@repo/api/auth/auth";
+import { getOrganization } from "@/lib/auth-server";
 import { convertToModelMessages, smoothStream, streamText, validateUIMessages } from "ai";
 import { APIError } from "better-auth/api";
 import { z } from "zod";

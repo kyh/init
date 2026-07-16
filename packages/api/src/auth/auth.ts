@@ -1,6 +1,4 @@
 import type { User } from "better-auth";
-import { cache } from "react";
-import { headers } from "next/headers";
 import { expo } from "@better-auth/expo";
 import { stripe } from "@better-auth/stripe";
 import { db } from "@repo/db/drizzle-client";
@@ -140,21 +138,6 @@ export const auth = betterAuth({
 
 export type Auth = typeof auth;
 export type Session = Auth["$Infer"]["Session"];
-
-/** Current session, or null if not authenticated. React cache dedupes lookups within a request. */
-export const getSession = cache(async () => auth.api.getSession({ headers: await headers() }));
-
-export const getOrganization = cache(
-  async (query: {
-    organizationId?: string | undefined;
-    organizationSlug?: string | undefined;
-    membersLimit?: string | number | undefined;
-  }) =>
-    auth.api.getFullOrganization({
-      query,
-      headers: await headers(),
-    }),
-);
 
 /** Appends an incrementing suffix to the base slug until no organization claims it. */
 const generateAvailableSlug = async (baseSlug: string, attempt = 0): Promise<string> => {

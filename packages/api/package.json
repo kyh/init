@@ -22,8 +22,6 @@
     "@trpc/server": "catalog:",
     "better-auth": "catalog:",
     "drizzle-orm": "catalog:",
-    "next": "catalog:",
-    "react": "catalog:",
     "stripe": "^22.3.1",
     "superjson": "catalog:",
     "zod": "catalog:"

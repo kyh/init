@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getOrganization, getSession } from "@repo/api/auth/auth";
+import { getOrganization, getSession } from "@/lib/auth-server";
 
 import { PageHeader } from "@/components/header";
 import { BillingHistory, BillingPlan } from "./_components/billing-plan";

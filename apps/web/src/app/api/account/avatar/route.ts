@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getSession } from "@repo/api/auth/auth";
+import { getSession } from "@/lib/auth-server";
 
 import { getSupabaseServerClient } from "@/lib/supabase-server";
 

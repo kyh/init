@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getOrganization, getSession } from "@repo/api/auth/auth";
+import { getOrganization, getSession } from "@/lib/auth-server";
 import { db } from "@repo/db/drizzle-client";
 import { member, organization } from "@repo/db/drizzle-schema-auth";
 import { eq } from "drizzle-orm";

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getSession } from "@repo/api/auth/auth";
+import { getSession } from "@/lib/auth-server";
 
 import { Sidebar } from "./_components/sidebar";
 
