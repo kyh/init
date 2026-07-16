@@ -16,11 +16,13 @@ mac:
   category: public.app-category.productivity
   icon: resources/icon.icns
   entitlementsInherit: resources/entitlements.mac.plist
-  extendInfo:
-    - NSCameraUsageDescription: Application requests access to the device's camera.
-    - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
-    - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
-    - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
+  # extendInfo is a mapping merged into Info.plist — dash-prefixed entries make
+  # it a sequence, and the array indices become the plist keys. Add a privacy
+  # string only when the app actually reaches for that resource; the shell
+  # doesn't, and pickFolder's open dialog is user-initiated, so macOS grants it
+  # without one.
+  # extendInfo:
+  #   NSCameraUsageDescription: Explain why this app needs the camera.
   notarize: false
 dmg:
   artifactName: Init-${version}-${arch}.${ext}
