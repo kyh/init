@@ -3,6 +3,8 @@ import { GlobalAlertDialog } from "@repo/ui/components/alert-dialog";
 import { Toaster } from "@repo/ui/components/sonner";
 import { TooltipProvider } from "@repo/ui/components/tooltip";
 
+import { DesktopMenuListener } from "@/components/desktop-menu-listener";
+import { DesktopUpdateBanner } from "@/components/desktop-update-banner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { siteConfig } from "@/lib/site-config";
 import { TRPCReactProvider } from "@/trpc/react";
@@ -95,6 +97,8 @@ const RootLayout = (props: LayoutProps) => {
             <TRPCReactProvider>{props.children}</TRPCReactProvider>
             <Toaster />
             <GlobalAlertDialog />
+            <DesktopMenuListener />
+            <DesktopUpdateBanner />
           </TooltipProvider>
         </ThemeProvider>
       </body>
