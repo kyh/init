@@ -3,14 +3,13 @@
 import { useRouter } from "next/navigation";
 import { slugify } from "@repo/api/auth/utils";
 import { Button } from "@repo/ui/components/button";
-import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from "@repo/ui/components/field";
-import { Input } from "@repo/ui/components/input";
+import { FieldGroup } from "@repo/ui/components/field";
 import { toast } from "@repo/ui/components/sonner";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
-import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
 
 import { authClient } from "@/lib/auth-client";
+import { useAppForm } from "@/lib/form";
 import { useTRPC } from "@/trpc/react";
 
 const updateOrganizationSchema = z.object({
@@ -39,7 +38,7 @@ export const UpdateOrganizationForm = ({ slug }: UpdateOrganizationFormProps) =>
     organizationData.organization.id,
   );
 
-  const form = useForm({
+  const form = useAppForm({
     defaultValues: {
       name: organizationData.organization.name,
       slug: organizationData.organization.slug ?? "",
@@ -60,66 +59,32 @@ export const UpdateOrganizationForm = ({ slug }: UpdateOrganizationFormProps) =>
       }}
     >
       <FieldGroup className="gap-8">
-        <form.Field
+        <form.AppField
           name="name"
           validators={{
             onBlur: z.string().min(1, "Name is required"),
           }}
         >
-          {(field) => {
-            const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
-
-            return (
-              <Field data-invalid={isInvalid} className="gap-1">
-                <FieldLabel htmlFor="organization-name">Organization Name</FieldLabel>
-                <FieldContent>
-                  <Input
-                    id="organization-name"
-                    name={field.name}
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(event) => field.handleChange(event.target.value)}
-                    aria-invalid={isInvalid}
-                  />
-                </FieldContent>
-                {isInvalid && <FieldError errors={field.state.meta.errors} />}
-              </Field>
-            );
-          }}
-        </form.Field>
-        <form.Field
+          {(field) => <field.TextField label="Organization Name" />}
+        </form.AppField>
+        <form.AppField
           name="slug"
           validators={{
             onBlur: z.string().min(1, "Slug is required"),
           }}
         >
-          {(field) => {
-            const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
-
-            return (
-              <Field data-invalid={isInvalid} className="gap-1">
-                <FieldLabel htmlFor="organization-slug">Organization URL</FieldLabel>
-                <FieldContent>
-                  <div className="flex rounded-lg shadow-sm shadow-black/[.04]">
-                    <span className="border-input bg-background text-muted-foreground -z-10 inline-flex items-center rounded-s-lg border px-3 text-sm">
-                      dashboard/
-                    </span>
-                    <Input
-                      id="organization-slug"
-                      className="-ms-px rounded-s-none shadow-none"
-                      name={field.name}
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(event) => field.handleChange(event.target.value)}
-                      aria-invalid={isInvalid}
-                    />
-                  </div>
-                </FieldContent>
-                {isInvalid && <FieldError errors={field.state.meta.errors} />}
-              </Field>
-            );
-          }}
-        </form.Field>
+          {(field) => (
+            <field.TextField
+              label="Organization URL"
+              inputClassName="-ms-px rounded-s-none shadow-none"
+              startAdornment={
+                <span className="border-input bg-background text-muted-foreground -z-10 inline-flex items-center rounded-s-lg border px-3 text-sm">
+                  dashboard/
+                </span>
+              }
+            />
+          )}
+        </form.AppField>
       </FieldGroup>
       <footer className="mt-8 flex justify-end">
         <Button type="submit" loading={isPending}>

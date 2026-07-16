@@ -10,23 +10,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@repo/ui/components/dialog";
-import { Field, FieldContent, FieldError, FieldLabel } from "@repo/ui/components/field";
-import { Input } from "@repo/ui/components/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@repo/ui/components/select";
 import { toast } from "@repo/ui/components/sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/components/tooltip";
-import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { PlusIcon, XIcon } from "lucide-react";
 import { z } from "zod";
 
 import { authClient } from "@/lib/auth-client";
+import { useAppForm } from "@/lib/form";
 import { ROLES, type Role, roleSchema } from "@/app/(dashboard)/dashboard/[slug]/_components/role";
 import { useOrganization } from "@/app/(dashboard)/dashboard/[slug]/_components/use-organization";
 
@@ -88,7 +79,7 @@ const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormProps) =>
     organizationData.organization.id,
   );
 
-  const form = useForm({
+  const form = useAppForm({
     defaultValues: {
       organizationInvitations: [createEmptyInviteModel()],
     },
@@ -117,90 +108,37 @@ const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormProps) =>
             <>
               {arrayField.state.value?.map((invite, index) => (
                 <div key={invite.key} className="flex items-end gap-2">
-                  <form.Field
+                  <form.AppField
                     name={`organizationInvitations[${index}].email`}
                     validators={{
                       onBlur: z.email("Invalid email address"),
                     }}
                   >
-                    {(field) => {
-                      const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
-
-                      return (
-                        <Field data-invalid={isInvalid} className="w-7/12 gap-1">
-                          {/* Visible on the first row; kept in the a11y tree as
-                              sr-only on the rest so every input has a label. */}
-                          <FieldLabel
-                            htmlFor={`invite-${index}-email`}
-                            className={index === 0 ? undefined : "sr-only"}
-                          >
-                            Email
-                          </FieldLabel>
-                          <FieldContent>
-                            <Input
-                              id={`invite-${index}-email`}
-                              name={field.name}
-                              value={field.state.value}
-                              onBlur={field.handleBlur}
-                              onChange={(event) => field.handleChange(event.target.value)}
-                              aria-invalid={isInvalid}
-                              placeholder="member@email.com"
-                              type="email"
-                              required
-                            />
-                          </FieldContent>
-                          {isInvalid && <FieldError errors={field.state.meta.errors} />}
-                        </Field>
-                      );
-                    }}
-                  </form.Field>
-                  <form.Field
+                    {(field) => (
+                      <field.TextField
+                        label="Email"
+                        labelClassName={index === 0 ? undefined : "sr-only"}
+                        className="w-7/12"
+                        type="email"
+                        required
+                        placeholder="member@email.com"
+                      />
+                    )}
+                  </form.AppField>
+                  <form.AppField
                     name={`organizationInvitations[${index}].role`}
                     validators={{ onBlur: roleSchema }}
                   >
-                    {(field) => {
-                      const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
-
-                      return (
-                        <Field data-invalid={isInvalid} className="w-4/12 gap-1">
-                          <FieldLabel
-                            htmlFor={`invite-${index}-role`}
-                            className={index === 0 ? undefined : "sr-only"}
-                          >
-                            Role
-                          </FieldLabel>
-                          <FieldContent>
-                            <Select
-                              value={field.state.value ?? ""}
-                              onValueChange={(newRole) => {
-                                const parsed = roleSchema.safeParse(newRole);
-                                if (parsed.success) {
-                                  field.handleChange(parsed.data);
-                                  field.handleBlur();
-                                }
-                              }}
-                            >
-                              <SelectTrigger id={`invite-${index}-role`}>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {ROLES.map((role) => (
-                                  <SelectItem
-                                    className="text-sm capitalize"
-                                    key={role}
-                                    value={role}
-                                  >
-                                    {role}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FieldContent>
-                          {isInvalid && <FieldError errors={field.state.meta.errors} />}
-                        </Field>
-                      );
-                    }}
-                  </form.Field>
+                    {(field) => (
+                      <field.SelectField
+                        label="Role"
+                        labelClassName={index === 0 ? undefined : "sr-only"}
+                        className="w-4/12"
+                        options={ROLES.map((role) => ({ value: role, label: role }))}
+                        itemClassName="text-sm capitalize"
+                      />
+                    )}
+                  </form.AppField>
                   <div className="flex w-[40px] justify-end">
                     <Tooltip>
                       <TooltipTrigger

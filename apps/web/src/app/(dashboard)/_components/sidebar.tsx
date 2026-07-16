@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { FALLBACK_ORGANIZATION_SLUG, slugify } from "@repo/api/auth/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/components/avatar";
-import { Button } from "@repo/ui/components/button";
 import {
   Dialog,
   DialogContent,
@@ -27,8 +26,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@repo/ui/components/dropdown-menu";
-import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from "@repo/ui/components/field";
-import { Input } from "@repo/ui/components/input";
+import { FieldGroup } from "@repo/ui/components/field";
 import { Logo } from "@repo/ui/components/logo";
 import { toast } from "@repo/ui/components/sonner";
 import { cn } from "@repo/ui/lib/utils";
@@ -42,7 +40,7 @@ import {
   SettingsIcon,
   Users2Icon,
 } from "lucide-react";
-import { useForm } from "@tanstack/react-form";
+import { useAppForm } from "@/lib/form";
 import { z } from "zod";
 
 import type { Session } from "@repo/api/auth/auth";
@@ -109,7 +107,7 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
   const [isOrganizationsDialogOpen, setIsOrganizationsDialogOpen] = useState(false);
   const router = useRouter();
 
-  const form = useForm({
+  const form = useAppForm({
     defaultValues: {
       name: "",
     },
@@ -247,44 +245,24 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
             void form.handleSubmit();
           }}
         >
-          <FieldGroup className="flex flex-col gap-4">
-            <form.Field
-              name="name"
-              validators={{
-                onBlur: z
-                  .string()
-                  .min(2, "Organization name must be at least 2 characters")
-                  .max(50, "Organization name must be at most 50 characters"),
-              }}
-            >
-              {(field) => {
-                const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
-
-                return (
-                  <Field data-invalid={isInvalid} className="gap-1">
-                    <FieldLabel htmlFor="organization-name">Organization Name</FieldLabel>
-                    <FieldContent>
-                      <Input
-                        id="organization-name"
-                        name={field.name}
-                        value={field.state.value}
-                        onBlur={field.handleBlur}
-                        onChange={(event) => field.handleChange(event.target.value)}
-                        aria-invalid={isInvalid}
-                        placeholder=""
-                      />
-                    </FieldContent>
-                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
-                  </Field>
-                );
-              }}
-            </form.Field>
-            <div className="flex justify-end gap-2">
-              <Button type="submit" loading={form.state.isSubmitting}>
-                Create Organization
-              </Button>
-            </div>
-          </FieldGroup>
+          <form.AppForm>
+            <FieldGroup className="flex flex-col gap-4">
+              <form.AppField
+                name="name"
+                validators={{
+                  onBlur: z
+                    .string()
+                    .min(2, "Organization name must be at least 2 characters")
+                    .max(50, "Organization name must be at most 50 characters"),
+                }}
+              >
+                {(field) => <field.TextField label="Organization Name" />}
+              </form.AppField>
+              <div className="flex justify-end gap-2">
+                <form.SubmitButton>Create Organization</form.SubmitButton>
+              </div>
+            </FieldGroup>
+          </form.AppForm>
         </form>
       </DialogContent>
     </Dialog>
