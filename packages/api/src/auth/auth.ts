@@ -19,12 +19,18 @@ import { FALLBACK_ORGANIZATION_SLUG, slugify } from "./utils";
 // working without Stripe configured (checkout/portal will fail, list won't)
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY ?? "sk_test_placeholder");
 
-const baseUrl =
+export const baseUrl =
   process.env.VERCEL_ENV === "production"
     ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
     : process.env.VERCEL_ENV === "preview"
       ? `https://${process.env.VERCEL_URL}`
       : "http://localhost:3000";
+
+// Origins allowed to drive authenticated requests. The web app, extension popup
+// iframe, and desktop shell all run same-origin as baseUrl; React Native uses
+// the expo:// scheme. Consumed by better-auth's own Origin checks and by the
+// tRPC mutation guard (see packages/api/src/trpc.ts).
+export const trustedOrigins = [baseUrl, "expo://"];
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -104,7 +110,7 @@ export const auth = betterAuth({
       clientSecret: process.env.GITHUB_CLIENT_SECRET ?? "",
     },
   },
-  trustedOrigins: ["expo://"],
+  trustedOrigins,
   advanced: {
     defaultCookieAttributes: {
       // The extension popup iframes the web app; SameSite=Lax cookies are

@@ -20,6 +20,7 @@ const testRouter = createTRPCRouter({
   publicQuery: publicProcedure.query(({ ctx }) => ({
     hasSession: ctx.session !== null,
   })),
+  publicMutation: publicProcedure.mutation(() => ({ ok: true })),
   organizationQuery: organizationProcedure.query(({ ctx }) => ({
     organizationId: ctx.organization.id,
     role: ctx.membership.role,
@@ -104,5 +105,51 @@ describe("publicProcedure", () => {
     const caller = createCaller(createMockContext());
     const result = await caller.publicQuery();
     expect(result.hasSession).toBe(true);
+  });
+});
+
+describe("cross-origin mutation guard", () => {
+  it("allows a mutation the browser labels same-origin", async () => {
+    const caller = createCaller(createMockContext({ secFetchSite: "same-origin" }));
+    expect(await caller.publicMutation()).toEqual({ ok: true });
+  });
+
+  it("allows a user-initiated mutation (Sec-Fetch-Site: none)", async () => {
+    const caller = createCaller(createMockContext({ secFetchSite: "none" }));
+    expect(await caller.publicMutation()).toEqual({ ok: true });
+  });
+
+  it("allows a mutation whose Origin matches the app", async () => {
+    const caller = createCaller(createMockContext({ origin: "http://localhost:3000" }));
+    expect(await caller.publicMutation()).toEqual({ ok: true });
+  });
+
+  it("allows a non-browser mutation with no Origin or Sec-Fetch-Site", async () => {
+    const caller = createCaller(createMockContext());
+    expect(await caller.publicMutation()).toEqual({ ok: true });
+  });
+
+  it("rejects a mutation the browser labels cross-site", async () => {
+    const caller = createCaller(
+      createMockContext({ secFetchSite: "cross-site", origin: "https://evil.example" }),
+    );
+    await expect(caller.publicMutation()).rejects.toThrow("Cross-origin request rejected");
+  });
+
+  it("rejects a mutation from an untrusted Origin when Sec-Fetch-Site is absent", async () => {
+    const caller = createCaller(createMockContext({ origin: "https://evil.example" }));
+    await expect(caller.publicMutation()).rejects.toThrow("Cross-origin request rejected");
+  });
+
+  it("rejects a cross-site mutation even if the Origin header is stripped", async () => {
+    const caller = createCaller(createMockContext({ secFetchSite: "cross-site", origin: null }));
+    await expect(caller.publicMutation()).rejects.toThrow("Cross-origin request rejected");
+  });
+
+  it("does not guard queries, only mutations", async () => {
+    const caller = createCaller(
+      createMockContext({ secFetchSite: "cross-site", origin: "https://evil.example" }),
+    );
+    expect(await caller.publicQuery()).toEqual({ hasSession: true });
   });
 });
