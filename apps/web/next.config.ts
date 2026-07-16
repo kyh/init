@@ -1,12 +1,15 @@
+import type { NextConfig } from "next";
 import { createMDX } from "fumadocs-mdx/next";
+
+type ImageConfig = NonNullable<NextConfig["images"]>;
+type RemotePatterns = NonNullable<ImageConfig["remotePatterns"]>;
+type LocalPatterns = NonNullable<ImageConfig["localPatterns"]>;
 
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-/** @returns {import("next").NextConfig["images"] extends infer T ? (T extends { remotePatterns?: infer R } ? NonNullable<R> : never) : never} */
-const getRemotePatterns = () => {
-  /** @type {import("next").NextConfig["images"] extends infer T ? (T extends { remotePatterns?: infer R } ? NonNullable<R> : never) : never} */
-  const remotePatterns = [];
+const getRemotePatterns = (): RemotePatterns => {
+  const remotePatterns: RemotePatterns = [];
 
   if (SUPABASE_URL) {
     const hostname = new URL(SUPABASE_URL).hostname;
@@ -32,22 +35,17 @@ const getRemotePatterns = () => {
   return remotePatterns;
 };
 
-const getLocalPatterns = () => {
-  const localPatterns = [
-    {
-      pathname: "/assets/**",
-    },
-  ];
-
-  return localPatterns;
-};
+const getLocalPatterns = (): LocalPatterns => [
+  {
+    pathname: "/assets/**",
+  },
+];
 
 const transpilePackages = ["@repo/api", "@repo/db", "@repo/ui"];
 
 const withMDX = createMDX();
 
-/** @type {import("next").NextConfig} */
-const config = {
+const config: NextConfig = {
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
   transpilePackages,
   images: {
