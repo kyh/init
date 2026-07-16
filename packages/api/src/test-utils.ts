@@ -67,12 +67,21 @@ export function createMockDb(): MockDb {
 }
 
 export function createMockContext(
-  overrides: { session?: TRPCContext["session"] | null; db?: MockDb } = {},
+  overrides: {
+    session?: TRPCContext["session"] | null;
+    db?: MockDb;
+    origin?: string | null;
+    secFetchSite?: string | null;
+  } = {},
 ): TRPCContext & { db: MockDb } {
   const db = overrides.db ?? createMockDb();
   return {
     session: overrides.session === undefined ? mockSession : overrides.session,
     db: db as unknown as TRPCContext["db"],
+    // Default to no browser provenance — mutations pass the origin guard unless
+    // a test opts into cross-origin headers.
+    origin: overrides.origin ?? null,
+    secFetchSite: overrides.secFetchSite ?? null,
   } as TRPCContext & { db: MockDb };
 }
 

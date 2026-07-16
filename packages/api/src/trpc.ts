@@ -11,7 +11,7 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { z, ZodError } from "zod";
 
-import { auth } from "./auth/auth";
+import { auth, trustedOrigins } from "./auth/auth";
 
 /**
  * 1. CONTEXT
@@ -33,6 +33,12 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
   return {
     session,
     db,
+    // Browser-supplied request provenance. Captured here because a tRPC
+    // middleware cannot read raw request headers; read by the mutation origin
+    // guard below. Both null for non-browser callers (React Native,
+    // server-to-server).
+    origin: opts.headers.get("origin"),
+    secFetchSite: opts.headers.get("sec-fetch-site"),
   };
 };
 
@@ -74,6 +80,40 @@ export const createCallerFactory = t.createCallerFactory;
  */
 export const createTRPCRouter = t.router;
 
+const TRUSTED_ORIGINS = new Set(trustedOrigins);
+
+/**
+ * True when a request carries browser provenance that isn't same-origin or an
+ * allow-listed origin. Auth cookies are SameSite=None (an extension-iframe
+ * constraint, see auth.ts), so the browser's own CSRF backstop is off for
+ * /api/trpc and better-auth's Origin checks only cover /api/auth/*. Non-browser
+ * callers send neither header and are left alone; session auth still applies.
+ */
+const isUntrustedOrigin = (origin: string | null, secFetchSite: string | null) => {
+  // Sec-Fetch-Site is set by the browser and cannot be forged from script.
+  if (secFetchSite === "same-origin" || secFetchSite === "none") return false;
+  // No browser provenance at all — not a browser CSRF vector.
+  if (!origin && !secFetchSite) return false;
+  // A cross-site/same-site label, or any Origin, must match the allow-list.
+  // Fail closed: a stripped Origin under a cross-site label is rejected.
+  return origin === null || !TRUSTED_ORIGINS.has(origin);
+};
+
+/**
+ * Rejects state-changing calls whose origin isn't trusted — defence-in-depth
+ * against CSRF, layered under session auth rather than replacing it. Queries are
+ * side-effect-free and pass through untouched.
+ */
+const enforceTrustedOriginOnMutation = t.middleware(({ ctx, type, next }) => {
+  if (type === "mutation" && isUntrustedOrigin(ctx.origin, ctx.secFetchSite)) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Cross-origin request rejected",
+    });
+  }
+  return next();
+});
+
 /**
  * Public (unauthed) procedure
  *
@@ -81,7 +121,7 @@ export const createTRPCRouter = t.router;
  * tRPC API. It does not guarantee that a user querying is authorized, but you
  * can still access user session data if they are logged in
  */
-export const publicProcedure = t.procedure;
+export const publicProcedure = t.procedure.use(enforceTrustedOriginOnMutation);
 
 /**
  * Protected (authenticated) procedure
@@ -91,7 +131,7 @@ export const publicProcedure = t.procedure;
  *
  * @see https://trpc.io/docs/procedures
  */
-export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
+export const protectedProcedure = publicProcedure.use(({ ctx, next }) => {
   if (!ctx.session?.user) {
     throw new TRPCError({
       code: "UNAUTHORIZED",
