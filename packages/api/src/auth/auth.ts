@@ -12,18 +12,20 @@ import { admin, oAuthProxy, organization } from "better-auth/plugins";
 import { and, eq, isNull } from "drizzle-orm";
 import Stripe from "stripe";
 
+import { env } from "../env";
 import { sendEmail } from "../email/send-email";
 import { FALLBACK_ORGANIZATION_SLUG, slugify } from "./utils";
 
-// No network call until first use, so a placeholder key keeps local dev
-// working without Stripe configured (checkout/portal will fail, list won't)
-const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY ?? "sk_test_placeholder");
+// The SDK makes no network call until first use, so the placeholder key from the
+// env boundary keeps local dev working with billing inert (checkout/portal fail,
+// list works).
+const stripeClient = new Stripe(env.STRIPE_SECRET_KEY);
 
 const baseUrl =
-  process.env.VERCEL_ENV === "production"
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : process.env.VERCEL_ENV === "preview"
-      ? `https://${process.env.VERCEL_URL}`
+  env.VERCEL_ENV === "production"
+    ? `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : env.VERCEL_ENV === "preview"
+      ? `https://${env.VERCEL_URL}`
       : "http://localhost:3000";
 
 export const auth = betterAuth({
@@ -34,8 +36,8 @@ export const auth = betterAuth({
   plugins: [
     oAuthProxy({
       currentURL: baseUrl,
-      productionURL: process.env.VERCEL_PROJECT_PRODUCTION_URL
-        ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      productionURL: env.VERCEL_PROJECT_PRODUCTION_URL
+        ? `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`
         : baseUrl,
     }),
     expo(),
@@ -51,7 +53,7 @@ export const auth = betterAuth({
     admin(),
     stripe({
       stripeClient,
-      stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
+      stripeWebhookSecret: env.STRIPE_WEBHOOK_SECRET,
       // Lazy customer creation keeps signup independent of Stripe config
       createCustomerOnSignUp: false,
       subscription: {
@@ -59,7 +61,7 @@ export const auth = betterAuth({
         plans: [
           {
             name: "pro",
-            priceId: process.env.STRIPE_PRO_PRICE_ID ?? "",
+            priceId: env.STRIPE_PRO_PRICE_ID,
           },
         ],
         // Subscriptions are org-scoped (referenceId = organization id);
@@ -100,8 +102,8 @@ export const auth = betterAuth({
   },
   socialProviders: {
     github: {
-      clientId: process.env.GITHUB_CLIENT_ID ?? "",
-      clientSecret: process.env.GITHUB_CLIENT_SECRET ?? "",
+      clientId: env.GITHUB_CLIENT_ID,
+      clientSecret: env.GITHUB_CLIENT_SECRET,
     },
   },
   trustedOrigins: ["expo://"],

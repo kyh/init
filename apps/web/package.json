@@ -19,6 +19,7 @@
     "@repo/db": "workspace:*",
     "@repo/ui": "workspace:*",
     "@supabase/supabase-js": "^2.110.2",
+    "@t3-oss/env-nextjs": "^0.13.11",
     "@tanstack/react-form": "catalog:",
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-query-devtools": "^5.101.2",

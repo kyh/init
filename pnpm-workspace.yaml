@@ -5,6 +5,7 @@ packages:
 catalog:
   "@base-ui/react": ^1.6.0
   "@better-auth/expo": ^1.6.23
+  "@t3-oss/env-core": ^0.13.11
   "@kyh/tsconfig": ^1.1.14
   "@tailwindcss/postcss": ^4.3.2
   "@tailwindcss/vite": ^4.3.2
