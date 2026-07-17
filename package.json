@@ -47,7 +47,7 @@
       "supabase"
     ],
     "overrides": {
-      "@expo/dom-webview": "56.0.5",
+      "@expo/dom-webview": "57.0.1",
       "lightningcss": "1.30.1"
     },
     "updateConfig": {
