@@ -19,8 +19,8 @@ const homepageMarkdown = () =>
   `# ${siteConfig.name}\n\n${siteConfig.description}\n\n- Docs: ${siteConfig.url}/docs\n- Doc index (markdown): ${siteConfig.url}/llms.txt\n- API catalog: ${siteConfig.url}/.well-known/api-catalog\n`;
 
 /**
- * Serves markdown representations of HTML pages. Reached via a middleware
- * rewrite when the request carries `Accept: text/markdown`.
+ * Serves markdown representations of HTML pages. Reached via a proxy rewrite
+ * (src/proxy.ts) when the request carries `Accept: text/markdown`.
  */
 export const GET = async (
   _request: Request,
