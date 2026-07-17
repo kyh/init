@@ -1,4 +1,4 @@
-import { getOrganization } from "@/lib/auth-server";
+import { getOrganizationBySlug } from "@/lib/auth-server";
 import { convertToModelMessages, smoothStream, streamText, validateUIMessages } from "ai";
 import { APIError } from "better-auth/api";
 import { z } from "zod";
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   let organization;
   try {
     // Throws UNAUTHORIZED without a session, FORBIDDEN for non-members
-    organization = await getOrganization({ organizationSlug: slug });
+    organization = await getOrganizationBySlug(slug);
   } catch (error) {
     if (error instanceof APIError) {
       return new Response(error.message, { status: error.statusCode });

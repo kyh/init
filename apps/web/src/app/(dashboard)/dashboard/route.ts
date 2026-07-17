@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getOrganization, getSession } from "@/lib/auth-server";
+import { getOrganizationById, getSession } from "@/lib/auth-server";
 import { db } from "@repo/db/drizzle-client";
 import { member, organization } from "@repo/db/drizzle-schema-auth";
 import { eq } from "drizzle-orm";
@@ -12,9 +12,7 @@ export async function GET() {
   }
 
   if (session.session.activeOrganizationId) {
-    const organization = await getOrganization({
-      organizationId: session.session.activeOrganizationId,
-    });
+    const organization = await getOrganizationById(session.session.activeOrganizationId);
     if (organization) {
       return redirect(`/dashboard/${organization.slug}`);
     }

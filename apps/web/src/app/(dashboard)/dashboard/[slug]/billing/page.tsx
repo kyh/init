@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getOrganization, getSession } from "@/lib/auth-server";
+import { getOrganizationBySlug, getSession } from "@/lib/auth-server";
 
 import { PageHeader } from "@/components/header";
 import { BillingHistory, BillingPlan } from "./_components/billing-plan";
@@ -19,7 +19,7 @@ const Page = async (props: PageProps) => {
     return redirect(`/auth/login?nextPath=/dashboard/${slug}/billing`);
   }
 
-  const organization = await getOrganization({ organizationSlug: slug }).catch(() => null);
+  const organization = await getOrganizationBySlug(slug).catch(() => null);
   if (!organization) {
     return redirect("/dashboard");
   }
