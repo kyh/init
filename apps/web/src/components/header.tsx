@@ -1,7 +1,5 @@
 type PageHeaderProps = {
   children: React.ReactNode;
-  showNotifications?: boolean;
-  showSearch?: boolean;
 };
 
 export const PageHeader = ({ children }: PageHeaderProps) => {
