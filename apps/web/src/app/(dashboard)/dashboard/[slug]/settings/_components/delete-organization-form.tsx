@@ -20,6 +20,7 @@ import { z } from "zod";
 import type { RouterOutputs } from "@repo/api";
 import { authClient } from "@/lib/auth-client";
 import { useAppForm } from "@/lib/form";
+import { roleSchema } from "@/app/(dashboard)/dashboard/[slug]/_components/role";
 import { useOrganization } from "@/app/(dashboard)/dashboard/[slug]/_components/use-organization";
 
 type Organization = RouterOutputs["organization"]["get"]["organization"];
@@ -30,13 +31,19 @@ type DeleteOrganizationFormProps = {
 
 export const DeleteOrganizationForm = ({ slug }: DeleteOrganizationFormProps) => {
   const { data: organizationData } = useOrganization(slug);
-  const userIsOwner = organizationData.currentUserMember.role === "owner";
+  const parsedRole = roleSchema.safeParse(organizationData.currentUserMember.role);
+  const canDeleteOrganization =
+    parsedRole.success &&
+    authClient.organization.checkRolePermission({
+      role: parsedRole.data,
+      permissions: { organization: ["delete"] },
+    });
 
   if (organizationData.organizationMetadata.personal) {
     return null;
   }
 
-  if (userIsOwner) {
+  if (canDeleteOrganization) {
     return <Delete organization={organizationData.organization} />;
   }
 

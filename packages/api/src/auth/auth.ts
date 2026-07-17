@@ -11,6 +11,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import Stripe from "stripe";
 
 import { sendEmail } from "../email/send-email";
+import { ac, roles, roleSchema } from "./permissions";
 import { FALLBACK_ORGANIZATION_SLUG, isSlugCollision, slugify } from "./utils";
 
 // No network call until first use, so a placeholder key keeps local dev
@@ -44,6 +45,8 @@ export const auth = betterAuth({
     }),
     expo(),
     organization({
+      ac,
+      roles,
       sendInvitationEmail: async (data) => {
         await sendEmail({
           to: data.email,
@@ -67,13 +70,15 @@ export const auth = betterAuth({
           },
         ],
         // Subscriptions are org-scoped (referenceId = organization id);
-        // only owners/admins may manage the org's billing
+        // only roles with the "billing" permission may manage the org's
+        // billing (owner/admin today — see packages/api/src/auth/permissions.ts)
         authorizeReference: async ({ user, referenceId }) => {
           const membership = await db.query.member.findFirst({
             where: (member, { and, eq }) =>
               and(eq(member.organizationId, referenceId), eq(member.userId, user.id)),
           });
-          return membership?.role === "owner" || membership?.role === "admin";
+          const role = roleSchema.safeParse(membership?.role);
+          return role.success && roles[role.data].authorize({ billing: ["manage"] }).success;
         },
       },
     }),

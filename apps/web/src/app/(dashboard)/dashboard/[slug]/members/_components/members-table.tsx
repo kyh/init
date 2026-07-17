@@ -35,7 +35,13 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", { timeZone: "UTC" });
 export const MembersTable = ({ slug }: MembersTableProps) => {
   const { data: organizationData } = useOrganization(slug);
   const userId = organizationData.currentUserMember.userId;
-  const userRole = organizationData.currentUserMember.role;
+  const parsedUserRole = roleSchema.safeParse(organizationData.currentUserMember.role);
+  const canManageMembers =
+    parsedUserRole.success &&
+    authClient.organization.checkRolePermission({
+      role: parsedUserRole.data,
+      permissions: { member: ["update", "delete"] },
+    });
 
   const columns = useMemo(() => {
     const columnDefs: ColumnDef<MemberWithUser>[] = [
@@ -78,13 +84,17 @@ export const MembersTable = ({ slug }: MembersTableProps) => {
         header: "",
         id: "actions",
         cell: ({ row }) => (
-          <ActionsDropdown member={row.original} userId={userId} userRole={userRole} />
+          <ActionsDropdown
+            member={row.original}
+            userId={userId}
+            canManageMembers={canManageMembers}
+          />
         ),
       },
     ];
 
     return columnDefs;
-  }, [userId, userRole]);
+  }, [userId, canManageMembers]);
 
   const table = useReactTable({
     data: organizationData.members,
@@ -102,14 +112,23 @@ export const MembersTable = ({ slug }: MembersTableProps) => {
 const ActionsDropdown = ({
   member,
   userId,
-  userRole,
+  canManageMembers,
 }: {
   member: MemberWithUser;
   userId: string;
-  userRole: string | undefined;
+  canManageMembers: boolean;
 }) => {
   const isMemberSelf = member.userId === userId;
-  const isMemberOwner = member.role === "owner";
+  // Only the owner role can delete the organization (see permissions.ts) —
+  // used here as an "is this member the owner" check, since better-auth's
+  // access control models permissions, not role identity.
+  const parsedMemberRole = roleSchema.safeParse(member.role);
+  const isMemberOwner =
+    parsedMemberRole.success &&
+    authClient.organization.checkRolePermission({
+      role: parsedMemberRole.data,
+      permissions: { organization: ["delete"] },
+    });
   const displayName = getDisplayName(member);
 
   const { mutateAsync: updateMemberRole } = useUpdateMemberRole(member.id);
@@ -134,7 +153,7 @@ const ActionsDropdown = ({
     });
   };
 
-  if (userRole === "member") {
+  if (!canManageMembers) {
     return null;
   }
 
