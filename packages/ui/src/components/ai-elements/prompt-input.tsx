@@ -70,7 +70,7 @@ const convertBlobUrlToDataUrl = async (url: string): Promise<string | null> => {
     // FileReader uses callback-based API, wrapping in Promise is necessary
     return new Promise((resolve) => {
       const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
+      reader.onloadend = () => resolve(typeof reader.result === "string" ? reader.result : null);
       // oxlint-disable-next-line prefer-add-event-listener
       reader.onerror = () => resolve(null);
       reader.readAsDataURL(blob);
@@ -795,8 +795,8 @@ export const PromptInput = ({
       const text = usingProvider
         ? controller.textInput.value
         : (() => {
-            const formData = new FormData(form);
-            return (formData.get("message") as string) || "";
+            const message = new FormData(form).get("message");
+            return typeof message === "string" ? message : "";
           })();
 
       // Reset form immediately after capturing text to avoid race condition
@@ -921,9 +921,7 @@ export const PromptInputTextarea = ({
 
         // Check if the submit button is disabled before submitting
         const { form } = e.currentTarget;
-        const submitButton = form?.querySelector(
-          'button[type="submit"]',
-        ) as HTMLButtonElement | null;
+        const submitButton = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
         if (submitButton?.disabled) {
           return;
         }
