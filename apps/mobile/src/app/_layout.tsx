@@ -7,17 +7,25 @@ import { queryClient } from "@/utils/api";
 
 import "../styles.css";
 
+// React Navigation needs a concrete color string — it can't resolve a CSS
+// var(). These mirror the --background token in styles.css (light:
+// hsl(0 0% 100%), dark: hsl(240 10% 3.9%)); keep in sync if that token moves.
+const BACKGROUND_LIGHT = "#ffffff";
+const BACKGROUND_DARK = "#09090b";
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const backgroundColor = colorScheme === "dark" ? BACKGROUND_DARK : BACKGROUND_LIGHT;
+
   return (
     <QueryClientProvider client={queryClient}>
       <Stack
         screenOptions={{
           headerStyle: {
-            backgroundColor: "#c03484",
+            backgroundColor,
           },
           contentStyle: {
-            backgroundColor: colorScheme == "dark" ? "#09090B" : "#FFFFFF",
+            backgroundColor,
           },
         }}
       />
