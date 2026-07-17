@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { RadioGroup, RadioGroupItem } from "@repo/ui/components/radio-group";
+import { Skeleton } from "@repo/ui/components/skeleton";
 import { useTheme } from "next-themes";
 import { Check, Minus } from "lucide-react";
 
@@ -28,13 +30,26 @@ const items = [
 
 export const AppearanceForm = () => {
   const { theme, setTheme } = useTheme();
+  // next-themes resolves the theme only on the client, so gate rendering on mount:
+  // a controlled value={undefined} during SSR would leave every radio unchecked,
+  // and that unchecked DOM would persist after hydration.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  const onChange = (value: string) => {
-    setTheme(value);
-  };
+  if (!mounted) {
+    return (
+      <div className="flex gap-5">
+        {items.map((item) => (
+          <Skeleton key={item.id} className="h-[146px] w-[120px] rounded-lg" />
+        ))}
+      </div>
+    );
+  }
 
   return (
-    <RadioGroup className="flex gap-5" onValueChange={onChange} defaultValue={theme}>
+    <RadioGroup className="flex gap-5" onValueChange={setTheme} value={theme}>
       {items.map((item) => (
         <label key={item.id} htmlFor={item.id}>
           <RadioGroupItem

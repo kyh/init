@@ -1,15 +1,9 @@
-"use client";
-
 import Link from "next/link";
-import { buttonVariants } from "@repo/ui/components/button";
 import { Logo } from "@repo/ui/components/logo";
-import { cn } from "@repo/ui/lib/utils";
 
-import { authClient } from "@/lib/auth-client";
+import { AuthButton } from "./auth-button";
 
 export const Header = () => {
-  const { data, isPending } = authClient.useActiveOrganization();
-
   return (
     <div className="mx-auto w-full justify-center">
       <div className="border-t-0 border-border mx-auto flex w-full max-w-7xl items-center justify-between border px-8 py-4 md:p-8">
@@ -32,34 +26,7 @@ export const Header = () => {
           >
             Github
           </Link>
-          {isPending ? (
-            <span
-              className={cn(
-                buttonVariants({ variant: "secondary", size: "sm" }),
-                "pointer-events-none ml-4 w-24 animate-pulse rounded-full px-5",
-              )}
-            />
-          ) : data ? (
-            <Link
-              className={cn(
-                buttonVariants({ variant: "secondary", size: "sm" }),
-                "ml-4 w-24 rounded-full px-5",
-              )}
-              href={`/dashboard/${data.slug}`}
-            >
-              Dashboard
-            </Link>
-          ) : (
-            <Link
-              className={cn(
-                buttonVariants({ variant: "secondary", size: "sm" }),
-                "ml-4 w-24 rounded-full px-5",
-              )}
-              href="/auth/login"
-            >
-              Login
-            </Link>
-          )}
+          <AuthButton />
         </nav>
       </div>
     </div>
