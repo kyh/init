@@ -20,7 +20,9 @@ Every feature is built the way its library's own docs say to build it: better-au
 
 ### 3. Agent rules and surfaces built in
 
-- **`CLAUDE.md`** - repo conventions coding agents load automatically
+- **`AGENTS.md` + `CLAUDE.md`** - conventions and the full agent workflow, loaded automatically
+- **One-command setup** - `pnpm bootstrap --yes` provisions a headless dev environment (database, `.env`, schema, seeded login) so an agent goes from clone to running app unattended
+- **End-to-end verifiable** - `agent-browser` drives the real web app and `emulate` fakes GitHub OAuth offline, so an agent proves a change works instead of just typechecking it
 - **`llms.txt`** - a machine-readable map of the docs
 - **Markdown negotiation** - every docs page serves markdown to any client that asks for `Accept: text/markdown`
 - **API catalog** - `/.well-known/api-catalog` so agents can discover endpoints
@@ -28,7 +30,7 @@ Every feature is built the way its library's own docs say to build it: better-au
 
 ### 4. Self-updating documentation
 
-An optional [OpenWiki](https://github.com/langchain-ai/openwiki) workflow regenerates an agent wiki (`openwiki/`) plus `AGENTS.md` from the code and opens a PR with the diff. Docs that describe the code as it is, not as it was three months ago. Setup is one secret - see [Agent Wiki](/docs/build/agent-wiki).
+An optional [OpenWiki](https://github.com/langchain-ai/openwiki) workflow regenerates an agent wiki (`openwiki/`) from the code and refreshes a managed block in `AGENTS.md`, opening a PR with the diff. Docs that describe the code as it is, not as it was three months ago. Setup is one secret - see [Agent Wiki](/docs/build/agent-wiki).
 
 ### Key Features
 

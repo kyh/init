@@ -8,9 +8,10 @@
     "db:supabase": "pnpm -F db supabase",
     "db:start": "pnpm -F db start",
     "db:stop": "pnpm -F db stop",
-    "db:reset": "pnpm -F db reset",
+    "db:reset": "pnpm -F db reset && pnpm db:seed",
     "db:push": "pnpm -F db push",
     "db:push-remote": "pnpm -F db push:remote",
+    "db:seed": "pnpm -F @repo/api seed",
     "dev": "turbo watch dev --continue",
     "dev:web": "turbo watch dev -F @repo/web...",
     "dev:mobile": "turbo watch dev -F @repo/mobile...",
@@ -22,7 +23,9 @@
     "format:fix": "oxfmt --write",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
-    "bootstrap": "tsx scripts/bootstrap.ts"
+    "verify": "pnpm typecheck && pnpm lint && pnpm format && pnpm test",
+    "bootstrap": "tsx scripts/bootstrap.ts",
+    "emulate": "npx emulate --service github"
   },
   "devDependencies": {
     "dotenv-cli": "^11.0.0",

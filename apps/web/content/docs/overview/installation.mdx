@@ -75,13 +75,12 @@ Using Supabase Cloud instead? Create a project at [supabase.com](https://supabas
 
 ### 5. Trim the Starter (Optional)
 
-Only building for one platform? Remove the rest:
+`pnpm bootstrap` is the one-command alternative to steps 3–4: it starts Supabase, writes `.env`, pushes the schema, and seeds a dev user (`dev@init.local` / `password`), then ends with an interactive checklist — deselect mobile, extension, or desktop and it deletes them cleanly. Pass `--yes` to keep all apps and run unattended (how a coding agent provisions).
 
 ```bash
-pnpm bootstrap
+pnpm bootstrap        # interactive
+pnpm bootstrap --yes  # headless: keep all apps, no prompts
 ```
-
-Interactive checklist - deselect mobile, extension, or desktop and it deletes them cleanly.
 
 ### 6. Start Development
 
@@ -120,8 +119,9 @@ init/
 
 - `pnpm db:start` / `pnpm db:stop` - Local Supabase
 - `pnpm db:push` - Push schema to local database
+- `pnpm db:seed` - Seed a dev user + sample data
 - `pnpm db:push-remote` - Push schema to production
-- `pnpm db:reset` - Reset local database and re-push
+- `pnpm db:reset` - Reset local database, re-push, and re-seed
 
 ### Code Quality
 
@@ -129,6 +129,7 @@ init/
 - `pnpm format` / `pnpm format:fix` - oxfmt
 - `pnpm typecheck` - TypeScript
 - `pnpm test` - Vitest
+- `pnpm verify` - typecheck · lint · format · test (the CI gate)
 
 ### Build
 
@@ -159,4 +160,5 @@ pnpm build
 
 ## Next Steps
 
-Continue with the [local development guide](/docs/overview/local-development) for the day-to-day workflow.
+- [Agent-Driven Development](/docs/overview/agent-driven-development) - provision, seed, and verify with a coding agent
+- [Local Development](/docs/overview/local-development) - the day-to-day human workflow
