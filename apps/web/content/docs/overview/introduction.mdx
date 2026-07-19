@@ -16,7 +16,7 @@ When researchers gave Claude Code open-ended build prompts and tracked [what it 
 
 ### 2. Idiomatic implementations
 
-Every feature is built the way its library's own docs say to build it: better-auth plugins for orgs and Stripe billing, Drizzle relational queries, tRPC procedures with parse-at-the-boundary Zod schemas, AI SDK streaming with `ai-elements`. When an agent extends a feature, the pattern it reaches for is the pattern already there. The [CRUD guide](/docs/build/crud) is literally "copy the todo feature, rename the nouns" - and that works for agents too.
+Every feature is built the way its library's own docs say to build it: better-auth plugins for orgs and Stripe billing, Drizzle relational queries, tRPC procedures with parse-at-the-boundary Zod schemas. When an agent extends a feature, the pattern it reaches for is the pattern already there. The [CRUD guide](/docs/build/crud) is literally "copy the todo feature, rename the nouns" - and that works for agents too.
 
 ### 3. Agent rules and surfaces built in
 
@@ -39,7 +39,6 @@ An optional [OpenWiki](https://github.com/langchain-ai/openwiki) workflow regene
 - **🔐 Authentication Ready** - better-auth with email/password, GitHub OAuth, email verification
 - **👥 Organizations** - Multi-tenant by default; every user gets a personal org
 - **💳 Billing** - Org-scoped Stripe subscriptions, webhook-synced to your database
-- **🤖 AI-Powered** - Streaming AI chat via the Vercel AI SDK and AI Gateway
 - **🎨 Modern UI** - Tailwind CSS 4, Base UI, shadcn-style shared components
 - **📚 Docs Included** - fumadocs-powered docs site (you're reading it)
 - **🔧 Developer Experience** - Turborepo, oxlint, oxfmt, hot reload everywhere
@@ -61,7 +60,6 @@ An optional [OpenWiki](https://github.com/langchain-ai/openwiki) workflow regene
 - **better-auth** - Authentication with organization, admin, and Stripe plugins
 - **Drizzle ORM** - Type-safe database queries
 - **Supabase** - Managed Postgres and file storage
-- **Vercel AI SDK** - Streaming AI features
 
 ### Infrastructure
 
@@ -84,7 +82,6 @@ Out of the box you get:
 - Email/password and GitHub login, with verification and password reset emails
 - Organization workspaces with members, invitations, and Stripe billing
 - An example CRUD feature (todos) scoped per organization
-- A streaming AI chat
 - A marketing page, waitlist, and docs site
 
 ## Getting Started

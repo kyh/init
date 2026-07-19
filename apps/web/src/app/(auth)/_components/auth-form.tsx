@@ -238,7 +238,7 @@ export const RequestPasswordResetForm = () => {
 
 // better-auth appends the reset token to the redirectTo URL; the page reads it
 // from searchParams server-side and passes it in.
-export const UpdatePasswordForm = ({ token }: { token: string | null }) => {
+export const UpdatePasswordForm = ({ token }: { token?: string }) => {
   const router = useRouter();
 
   const form = useAppForm({

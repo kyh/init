@@ -9,7 +9,7 @@ Init fetches data through tRPC + TanStack Query. The core pattern: prefetch on t
 Two halves. The server component kicks off the query:
 
 ```tsx
-// apps/web/src/app/(dashboard)/dashboard/[slug]/todos/page.tsx
+// apps/web/src/app/(dashboard)/dashboard/[slug]/(home)/page.tsx
 import { HydrateClient, prefetch, trpc } from "@/trpc/server";
 
 const Page = async (props: PageProps) => {

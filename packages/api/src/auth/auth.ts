@@ -31,6 +31,10 @@ export const baseUrl =
 // tRPC mutation guard (see packages/api/src/trpc.ts).
 export const trustedOrigins = [baseUrl, "expo://"];
 
+// Set (to the local `emulate` server URL) in dev to exercise GitHub OAuth offline;
+// drives the dev-only genericOAuth provider in `plugins` below. Unset in production.
+const emulatorUrl = process.env.NEXT_PUBLIC_GITHUB_EMULATOR_URL;
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
@@ -82,14 +86,13 @@ export const auth = betterAuth({
         },
       },
     }),
-    // Dev-only: route GitHub OAuth to a local `emulate` server so the shipped
-    // "Continue with GitHub" button works offline (agents and tests included).
-    // Active only when NEXT_PUBLIC_GITHUB_EMULATOR_URL is set; production leaves
-    // it unset and uses the real socialProviders.github below. The built-in
-    // github provider has hardcoded endpoints, so the emulated flow rides on
-    // genericOAuth — the signInWithGithub() client helper picks signIn.oauth2 in
-    // this mode. Creds are local fixtures matching emulate.config.yaml, not secrets.
-    ...(process.env.NEXT_PUBLIC_GITHUB_EMULATOR_URL
+    // Dev-only: route GitHub OAuth to the local `emulate` server so the shipped
+    // "Continue with GitHub" button works offline (agents and tests included);
+    // production uses the real socialProviders.github below. The built-in github
+    // provider has hardcoded endpoints, so the emulated flow rides on genericOAuth
+    // — the signInWithGithub() client helper picks signIn.oauth2 to match. Creds
+    // are local fixtures matching emulate.config.yaml, not secrets.
+    ...(emulatorUrl
       ? [
           genericOAuth({
             config: [
@@ -97,9 +100,9 @@ export const auth = betterAuth({
                 providerId: "github",
                 clientId: "init-local-github",
                 clientSecret: "init-local-github-secret",
-                authorizationUrl: `${process.env.NEXT_PUBLIC_GITHUB_EMULATOR_URL}/login/oauth/authorize`,
-                tokenUrl: `${process.env.NEXT_PUBLIC_GITHUB_EMULATOR_URL}/login/oauth/access_token`,
-                userInfoUrl: `${process.env.NEXT_PUBLIC_GITHUB_EMULATOR_URL}/user`,
+                authorizationUrl: `${emulatorUrl}/login/oauth/authorize`,
+                tokenUrl: `${emulatorUrl}/login/oauth/access_token`,
+                userInfoUrl: `${emulatorUrl}/user`,
               },
             ],
           }),

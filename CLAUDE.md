@@ -14,7 +14,6 @@
 - **Billing**: Stripe via @better-auth/stripe
 - **Email**: Resend REST API (console fallback in dev)
 - **Database**: Supabase (Postgres + avatars storage bucket only — auth is better-auth, Data API disabled)
-- **AI**: Vercel AI SDK
 
 ## Monorepo Structure
 

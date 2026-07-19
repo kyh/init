@@ -92,7 +92,7 @@ For the three non-web targets, verify with `pnpm typecheck` and `pnpm build`; a 
 
 - **Mutations go through tRPC or the better-auth client — never Next Server Actions.** All four platforms share one typed surface, and the `MutationCache` global-invalidation contract depends on it (see `CLAUDE.md` → Mutation path).
 - **No `any`, no non-null `!`, no `as` casts.** Kebab-case filenames. Make illegal states unrepresentable.
-- Env degrades gracefully: missing keys (Stripe, Resend, AI Gateway) disable a feature, they don't crash boot.
+- Env degrades gracefully: missing keys (Stripe, Resend) disable a feature, they don't crash boot.
 
 ## Map
 

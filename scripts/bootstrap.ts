@@ -307,7 +307,6 @@ function createEnv(supabaseValues: Record<string, string>) {
     `SUPABASE_SERVICE_ROLE_KEY="${serviceRoleKey}"`,
     `POSTGRES_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"`,
     `BETTER_AUTH_SECRET="${randomBytes(32).toString("base64")}"`,
-    `AI_GATEWAY_API_KEY=""`,
     "",
     "# Uncomment + run 'pnpm emulate' so the GitHub button works offline (see AGENTS.md)",
     `# NEXT_PUBLIC_GITHUB_EMULATOR_URL="http://localhost:4000"`,

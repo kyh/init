@@ -34,7 +34,6 @@ import {
   CheckIcon,
   CheckSquareIcon,
   CreditCardIcon,
-  HomeIcon,
   LogOutIcon,
   PlusIcon,
   SettingsIcon,
@@ -60,8 +59,7 @@ export const Sidebar = ({ user }: SidebarProps) => {
   const rootUrl = `/dashboard/${params.slug ?? activeOrganization?.slug}`;
   const pageLinks = useMemo(
     () => [
-      { href: rootUrl, label: "Home", exact: true, icon: HomeIcon },
-      { href: `${rootUrl}/todos`, label: "Todos", icon: CheckSquareIcon },
+      { href: rootUrl, label: "Todos", exact: true, icon: CheckSquareIcon },
       { href: `${rootUrl}/members`, label: "Members", icon: Users2Icon },
       { href: `${rootUrl}/billing`, label: "Billing", icon: CreditCardIcon },
       { href: `${rootUrl}/settings`, label: "Settings", icon: SettingsIcon },

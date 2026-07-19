@@ -19,7 +19,6 @@ catalog:
   "@types/react": ^19.2.17
   "@types/react-dom": ^19.2.3
   "@vitejs/plugin-react": ^6.0.3
-  ai: ^7.0.19
   better-auth: ^1.6.23
   drizzle-orm: ^0.45.2
   lucide-react: ^1.24.0

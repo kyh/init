@@ -13,7 +13,6 @@
     "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
-    "@ai-sdk/react": "^4.0.20",
     "@better-auth/stripe": "catalog:",
     "@repo/api": "workspace:*",
     "@repo/ui": "workspace:*",
@@ -25,7 +24,6 @@
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
     "@trpc/tanstack-react-query": "catalog:",
-    "ai": "catalog:",
     "better-auth": "catalog:",
     "drizzle-orm": "catalog:",
     "fumadocs-core": "^16.11.1",

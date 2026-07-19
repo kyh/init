@@ -34,20 +34,16 @@ On a hosted Supabase project, also disable the Data API (Settings → API) - loc
 Honest gaps. Each is a deliberate "add when you need it":
 
 - **Email delivery** - set `RESEND_API_KEY` (and `EMAIL_FROM`) in production. Password reset and organization invite emails send through Resend's REST API (`packages/api/src/email/send-email.ts`); without the key they log to the server console instead of sending
-- **Rate limiting** - better-auth's built-in limiter covers auth routes (in-memory, so per-instance on serverless), but tRPC procedures and `/api/chat` have none. Add [Vercel WAF rules](https://vercel.com/docs/security/vercel-waf) or a middleware backed by a shared store
+- **Rate limiting** - better-auth's built-in limiter covers auth routes (in-memory, so per-instance on serverless), but tRPC procedures have none. Add [Vercel WAF rules](https://vercel.com/docs/security/vercel-waf) or a middleware backed by a shared store
 - **Billing** - Stripe via `@better-auth/stripe`. Set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and `STRIPE_PRO_PRICE_ID`, then point a Stripe webhook at `/api/auth/stripe/webhook` (events: `checkout.session.completed`, `customer.subscription.created/updated/deleted`). The webhook keeps the `subscription` table in sync; `dashboard/[slug]/billing` handles checkout and the billing portal. Subscriptions are org-scoped — only owners/admins can manage them
 - **Email verification** - verification emails send on signup. Uncomment `requireEmailVerification` in `packages/api/src/auth/auth.ts` to block unverified logins
-- **Background jobs** - no queue. Long work either fits in a request (the chat route caps at `maxDuration = 30`) or needs Inngest/Trigger.dev/QStash
+- **Background jobs** - no queue. Long work either fits in a request or needs Inngest/Trigger.dev/QStash
 
 ## Database Safety
 
 - `drizzle-kit push` has no down migrations. Back up before schema changes: `pg_dump $POSTGRES_URL > backup.sql`
 - Prefer add-column → backfill → drop-column over destructive changes on live data
 - `POSTGRES_URL` must be the transaction pooler (:6543); the client already sets `prepare: false` for it
-
-## Cost Guards
-
-The AI chat proxies every message to a model through the AI Gateway. Before opening it to the public, set a spending cap on the gateway key - it's the only per-request variable cost in the stack.
 
 ## CI Gate
 
@@ -66,7 +62,6 @@ Green CI is the merge bar. Note `apps/web/next.config.ts` sets `typescript.ignor
 - [ ] Production schema pushed; `avatars` bucket created; Data API disabled (Settings → API)
 - [ ] `RESEND_API_KEY` + `EMAIL_FROM` set (verification, password reset, invite emails)
 - [ ] Stripe keys set + webhook pointed at `/api/auth/stripe/webhook`
-- [ ] Spending cap on `AI_GATEWAY_API_KEY`
 - [ ] Uptime monitor on `/api/health`
 - [ ] Error tracking installed ([Monitoring](/docs/launch/monitoring))
 - [ ] Database backup taken; restore path tested once
