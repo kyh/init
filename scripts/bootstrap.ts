@@ -309,8 +309,9 @@ function createEnv(supabaseValues: Record<string, string>) {
     `BETTER_AUTH_SECRET="${randomBytes(32).toString("base64")}"`,
     `AI_GATEWAY_API_KEY=""`,
     "",
-    "# Uncomment and run 'pnpm emulate' to exercise GitHub OAuth offline (see AGENTS.md)",
-    `# GITHUB_EMULATOR_URL="http://localhost:4000"`,
+    "# Uncomment + run 'pnpm emulate' so the GitHub button works offline (see AGENTS.md)",
+    `# NEXT_PUBLIC_GITHUB_EMULATOR_URL="http://localhost:4000"`,
+    `# EXPO_PUBLIC_GITHUB_EMULATOR_URL="http://localhost:4000"`,
     "",
   ].join("\n");
 

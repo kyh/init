@@ -66,22 +66,16 @@ Don't stop at typecheck/tests — exercise the actual flow and observe the resul
 
 ## OAuth without the internet
 
-Email/password (above) needs no external service. To verify the **GitHub** button offline, use [emulate](https://github.com/vercel-labs/emulate), a local OAuth provider. Config ships in `emulate.config.yaml`.
+Email/password (above) needs no external service. To exercise the **GitHub** button offline, use [emulate](https://github.com/vercel-labs/emulate), a local OAuth provider (fixtures in `emulate.config.yaml`). Uncomment `NEXT_PUBLIC_GITHUB_EMULATOR_URL` in `.env` (bootstrap wrote it commented), then:
 
 ```sh
-pnpm emulate                                        # GitHub emulator on :4000
-GITHUB_EMULATOR_URL=http://localhost:4000 pnpm dev:web
+pnpm emulate     # GitHub emulator on :4000
+pnpm dev:web
 ```
 
-When `GITHUB_EMULATOR_URL` is set, better-auth routes GitHub through a dev-only `genericOAuth` provider aimed at the emulator (the real provider is untouched otherwise — see `packages/api/src/auth/auth.ts`). Trigger the flow, then open the returned URL with agent-browser:
+With the var set, the shipped "Continue with GitHub" button routes through a dev-only `genericOAuth` provider aimed at the emulator — same button, no diverging prod path (unset ⇒ the real provider; see `packages/api/src/auth/auth.ts`). Open `/auth/login`, click the button, and the emulator's user-picker (octocat) completes sign-in.
 
-```sh
-curl -sX POST localhost:3000/api/auth/sign-in/oauth2 \
-  -H 'content-type: application/json' \
-  -d '{"providerId":"github","callbackURL":"/dashboard"}'
-# → { "url": "<emulator authorize URL>" }
-# open it → redirects to /api/auth/oauth2/callback/github and sets the session
-```
+(Pure HTTP: `POST /api/auth/sign-in/oauth2 {"providerId":"github"}` returns the authorize URL directly — the same flow the button triggers.)
 
 ## Platform matrix
 

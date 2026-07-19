@@ -3,7 +3,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { skipToken, useQuery } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 
-import { authClient } from "@/utils/auth";
+import { authClient, signInWithGithub } from "@/utils/auth";
 import { trpc } from "@/utils/api";
 
 /**
@@ -51,14 +51,7 @@ function MobileAuth() {
         {session?.user.name ? `Hello, ${session.user.name}` : "Not logged in"}
       </Text>
       <Pressable
-        onPress={() =>
-          session
-            ? authClient.signOut()
-            : authClient.signIn.social({
-                provider: "github",
-                callbackURL: "/",
-              })
-        }
+        onPress={() => (session ? authClient.signOut() : signInWithGithub({ callbackURL: "/" }))}
         className="bg-primary flex items-center rounded-sm p-2"
       >
         <Text>{session ? "Sign Out" : "Sign In With Github"}</Text>

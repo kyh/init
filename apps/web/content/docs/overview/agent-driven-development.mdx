@@ -45,14 +45,14 @@ The web app is the one surface an agent can drive headlessly. Mobile, desktop, a
 
 ## OAuth without the internet
 
-Email/password needs nothing external. For the **GitHub** button, Init wires [emulate](https://github.com/vercel-labs/emulate) — a local OAuth provider — so an agent can exercise the whole authorize → callback → session flow offline:
+Email/password needs nothing external. For the **GitHub** button, Init wires [emulate](https://github.com/vercel-labs/emulate) — a local OAuth provider — so the shipped button works offline in dev. Uncomment `NEXT_PUBLIC_GITHUB_EMULATOR_URL` in `.env`, then:
 
 ```bash
 pnpm emulate
-GITHUB_EMULATOR_URL=http://localhost:4000 pnpm dev:web
+pnpm dev:web
 ```
 
-With `GITHUB_EMULATOR_URL` set, better-auth routes GitHub through a dev-only `genericOAuth` provider aimed at the emulator; unset (the default, and all of production) the real provider is untouched. Fixtures live in `emulate.config.yaml`.
+With the var set, the "Continue with GitHub" button routes through a dev-only `genericOAuth` provider aimed at the emulator — the same button, no diverging prod path (unset ⇒ the real provider). Click it and the emulator's user-picker completes sign-in. Fixtures live in `emulate.config.yaml`.
 
 ## What an agent can verify
 

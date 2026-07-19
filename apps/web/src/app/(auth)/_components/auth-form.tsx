@@ -8,7 +8,7 @@ import { toast } from "@repo/ui/components/sonner";
 import { cn } from "@repo/ui/lib/utils";
 import { z } from "zod";
 
-import { authClient } from "@/lib/auth-client";
+import { authClient, signInWithGithub } from "@/lib/auth-client";
 import { useAppForm } from "@/lib/form";
 
 type AuthFormProps = {
@@ -80,8 +80,7 @@ const AuthFormInner = ({ className, type, ...props }: AuthFormProps) => {
 
   const handleAuthWithGithub = async () => {
     setSubmittingGithub(true);
-    await authClient.signIn.social({
-      provider: "github",
+    await signInWithGithub({
       // The OAuth flow is a full-page redirect; the server sends the user
       // here after the callback (client onSuccess never fires)
       callbackURL: nextPath,

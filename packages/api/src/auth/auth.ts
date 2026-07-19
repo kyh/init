@@ -82,14 +82,14 @@ export const auth = betterAuth({
         },
       },
     }),
-    // Dev-only: route GitHub OAuth to a local `emulate` server so agents/tests
-    // can drive the full authorize → callback → session flow offline. Active
-    // only when GITHUB_EMULATOR_URL is set; production leaves it unset and uses
-    // the real socialProviders.github below. The built-in github provider has
-    // hardcoded endpoints, so the emulated flow rides on genericOAuth — trigger
-    // it with signIn.oauth2({ providerId: "github" }). Creds are local fixtures
-    // matching emulate.config.yaml, not secrets.
-    ...(process.env.GITHUB_EMULATOR_URL
+    // Dev-only: route GitHub OAuth to a local `emulate` server so the shipped
+    // "Continue with GitHub" button works offline (agents and tests included).
+    // Active only when NEXT_PUBLIC_GITHUB_EMULATOR_URL is set; production leaves
+    // it unset and uses the real socialProviders.github below. The built-in
+    // github provider has hardcoded endpoints, so the emulated flow rides on
+    // genericOAuth — the signInWithGithub() client helper picks signIn.oauth2 in
+    // this mode. Creds are local fixtures matching emulate.config.yaml, not secrets.
+    ...(process.env.NEXT_PUBLIC_GITHUB_EMULATOR_URL
       ? [
           genericOAuth({
             config: [
@@ -97,9 +97,9 @@ export const auth = betterAuth({
                 providerId: "github",
                 clientId: "init-local-github",
                 clientSecret: "init-local-github-secret",
-                authorizationUrl: `${process.env.GITHUB_EMULATOR_URL}/login/oauth/authorize`,
-                tokenUrl: `${process.env.GITHUB_EMULATOR_URL}/login/oauth/access_token`,
-                userInfoUrl: `${process.env.GITHUB_EMULATOR_URL}/user`,
+                authorizationUrl: `${process.env.NEXT_PUBLIC_GITHUB_EMULATOR_URL}/login/oauth/authorize`,
+                tokenUrl: `${process.env.NEXT_PUBLIC_GITHUB_EMULATOR_URL}/login/oauth/access_token`,
+                userInfoUrl: `${process.env.NEXT_PUBLIC_GITHUB_EMULATOR_URL}/user`,
               },
             ],
           }),
