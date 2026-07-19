@@ -310,7 +310,7 @@ function createEnv(supabaseValues: Record<string, string>) {
     `AI_GATEWAY_API_KEY=""`,
     "",
     "# Uncomment and run 'pnpm emulate' to exercise GitHub OAuth offline (see AGENTS.md)",
-    `# GITHUB_EMULATOR_URL="http://localhost:4001"`,
+    `# GITHUB_EMULATOR_URL="http://localhost:4000"`,
     "",
   ].join("\n");
 
@@ -326,7 +326,16 @@ function pushSchema() {
 
 function runSeed() {
   console.log("\nSeeding database...");
-  exec("pnpm db:seed", { stdio: "inherit" });
+  try {
+    exec("pnpm db:seed", { stdio: "inherit" });
+  } catch (error) {
+    console.log(
+      `\n  ${DIM}✗ Seeding failed.${RESET} If the local database has a leftover or conflicting ` +
+        "schema (e.g. a Supabase volume shared with another project), run 'pnpm db:reset' to " +
+        "rebuild it, then re-run 'pnpm bootstrap'.",
+    );
+    throw error;
+  }
   console.log("  ✓ Seeded dev user + sample data");
 }
 

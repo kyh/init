@@ -54,11 +54,11 @@ Runtime — drive the **real** web UI (the only headless-driveable surface) with
 ```sh
 npm i -g agent-browser && agent-browser install   # once, if missing
 agent-browser open http://localhost:3000
-agent-browser snapshot -i         # interactive elements as @eN refs
+agent-browser snapshot            # accessibility tree with @eN refs
 agent-browser fill @e1 dev@init.local
 agent-browser fill @e2 password
 agent-browser click @e3           # sign in
-agent-browser read                # assert the seeded todos render
+agent-browser get text            # assert the seeded todos render
 agent-browser screenshot /tmp/after.png
 ```
 
@@ -69,8 +69,8 @@ Don't stop at typecheck/tests — exercise the actual flow and observe the resul
 Email/password (above) needs no external service. To verify the **GitHub** button offline, use [emulate](https://github.com/vercel-labs/emulate), a local OAuth provider. Config ships in `emulate.config.yaml`.
 
 ```sh
-pnpm emulate                                        # GitHub emulator on :4001
-GITHUB_EMULATOR_URL=http://localhost:4001 pnpm dev:web
+pnpm emulate                                        # GitHub emulator on :4000
+GITHUB_EMULATOR_URL=http://localhost:4000 pnpm dev:web
 ```
 
 When `GITHUB_EMULATOR_URL` is set, better-auth routes GitHub through a dev-only `genericOAuth` provider aimed at the emulator (the real provider is untouched otherwise — see `packages/api/src/auth/auth.ts`). Trigger the flow, then open the returned URL with agent-browser:

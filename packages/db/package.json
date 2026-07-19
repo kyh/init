@@ -17,7 +17,7 @@
     "stop": "pnpm with-env supabase stop",
     "reset": "pnpm with-env supabase db reset && pnpm push && pnpm with-env supabase seed buckets",
     "status": "pnpm with-env supabase status",
-    "push": "pnpm with-env drizzle-kit push",
+    "push": "pnpm with-env drizzle-kit push --force",
     "push:remote": "dotenv -e ../../.env.production.local -- drizzle-kit push",
     "studio": "pnpm with-env drizzle-kit studio",
     "with-env": "dotenv -e ../../.env --",

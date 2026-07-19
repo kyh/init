@@ -76,7 +76,7 @@ This template is built to be driven end-to-end by a coding agent. `AGENTS.md` is
 - **Provision headless**: `pnpm bootstrap --yes` (idempotent; needs Docker for local Supabase). Non-TTY runs auto-keep all apps, so a piped invocation won't hang on the app-picker.
 - **Seeded login**: `dev@init.local` / `password` (via `pnpm db:seed`) — a personal org + sample todos to verify against, no signup step.
 - **Verify**: `pnpm verify` for the static gate; drive the running web app with `agent-browser` for runtime checks. Only web is headless-driveable — mobile/desktop/extension get `typecheck` + `build` only.
-- **OAuth offline**: `pnpm emulate` + `GITHUB_EMULATOR_URL=http://localhost:4001` routes GitHub through a local emulator via a dev-only `genericOAuth` provider (real provider untouched).
+- **OAuth offline**: `pnpm emulate` + `GITHUB_EMULATOR_URL=http://localhost:4000` routes GitHub through a local emulator via a dev-only `genericOAuth` provider (real provider untouched).
 - **Fresh clone / scaffold**: `gh repo create <name> --template kyh/init --clone`, then `pnpm install && pnpm bootstrap --yes` (needs Docker). Headless auth: POST `dev@init.local` / `password` to `/api/auth/sign-in/email` for a session cookie. See `AGENTS.md` → Fresh clone.
 
 ## UI Package

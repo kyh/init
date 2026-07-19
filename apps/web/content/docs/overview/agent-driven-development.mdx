@@ -36,9 +36,9 @@ pnpm verify   # typecheck · lint · format · test
 ```bash
 npm i -g agent-browser && agent-browser install
 agent-browser open http://localhost:3000
-agent-browser snapshot -i        # interactive elements as @eN refs
+agent-browser snapshot           # accessibility tree with @eN refs
 agent-browser fill @e1 dev@init.local
-agent-browser click @e3          # sign in, then read / screenshot to assert
+agent-browser click @e3          # sign in, then 'get text' / screenshot to assert
 ```
 
 The web app is the one surface an agent can drive headlessly. Mobile, desktop, and extension build and typecheck, but a runtime check on those needs a human — see the matrix below.
@@ -49,7 +49,7 @@ Email/password needs nothing external. For the **GitHub** button, Init wires [em
 
 ```bash
 pnpm emulate
-GITHUB_EMULATOR_URL=http://localhost:4001 pnpm dev:web
+GITHUB_EMULATOR_URL=http://localhost:4000 pnpm dev:web
 ```
 
 With `GITHUB_EMULATOR_URL` set, better-auth routes GitHub through a dev-only `genericOAuth` provider aimed at the emulator; unset (the default, and all of production) the real provider is untouched. Fixtures live in `emulate.config.yaml`.
