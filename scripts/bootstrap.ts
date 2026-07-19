@@ -318,6 +318,30 @@ function createEnv(supabaseValues: Record<string, string>) {
   console.log("  ✓ .env created with Supabase credentials");
 }
 
+// Supabase namespaces local Docker volumes by project_id — its own convention is
+// the working-directory name. The template ships "init", so without this every
+// project cloned from it would share one local volume and leak schema between
+// them. Personalize it to this repo's folder before Supabase starts.
+function ensureProjectId() {
+  const configPath = "packages/db/supabase/config.toml";
+  if (!fileExists(configPath)) return;
+  const slug =
+    path
+      .basename(ROOT_DIR)
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "init";
+  const projectId = /^[a-z]/.test(slug) ? slug : `app-${slug}`;
+  const config = readText(configPath);
+  const current = config.match(/^project_id\s*=\s*"([^"]*)"/m)?.[1];
+  if (current === projectId) return;
+  writeText(
+    configPath,
+    config.replace(/^project_id\s*=\s*"[^"]*"/m, `project_id = "${projectId}"`),
+  );
+  console.log(`  ✓ Supabase project_id → "${projectId}" (isolates this project's local DB volume)`);
+}
+
 function pushSchema() {
   console.log("\nPushing database schema...");
   exec("pnpm db:push", { stdio: "inherit" });
@@ -401,6 +425,7 @@ async function main() {
   // ── Step 2: Check dependencies ──
   console.log("\nChecking dependencies...");
   checkDocker();
+  ensureProjectId();
 
   // ── Step 3: Start Supabase + create .env ──
   const supabaseValues = startSupabase();
