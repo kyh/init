@@ -2,12 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { AuthForm } from "@/app/(auth)/_components/auth-form";
+import { safeNextPath } from "@/app/(auth)/_components/next-path";
 
 export const metadata: Metadata = {
   title: "Register",
 };
 
-const Page = () => {
+const Page = async ({ searchParams }: { searchParams: Promise<{ nextPath?: string }> }) => {
+  const nextPath = safeNextPath((await searchParams).nextPath);
+
   return (
     <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
       <div className="flex flex-col text-center">
@@ -20,7 +23,7 @@ const Page = () => {
           .
         </p>
       </div>
-      <AuthForm type="register" />
+      <AuthForm type="register" nextPath={nextPath} />
       <p className="text-muted-foreground px-8 text-center text-sm">
         Already have an account?{" "}
         <Link href="/auth/login" className="underline">

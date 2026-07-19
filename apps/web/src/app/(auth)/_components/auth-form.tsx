@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@repo/ui/components/button";
 import { FieldGroup } from "@repo/ui/components/field";
 import { toast } from "@repo/ui/components/sonner";
@@ -13,23 +13,14 @@ import { useAppForm } from "@/lib/form";
 
 type AuthFormProps = {
   type: "login" | "register";
+  // Resolved server-side (see next-path.ts) and passed in, so the form has no
+  // useSearchParams hook and renders in a single pass — no Suspense boundary,
+  // no hydration gap where the GitHub button flickers out of the DOM.
+  nextPath: string;
 } & React.HTMLAttributes<HTMLDivElement>;
 
-// Only follow same-origin relative paths — nextPath is attacker-controllable
-const useNextPath = () => {
-  const nextPath = useSearchParams().get("nextPath");
-  return nextPath?.startsWith("/") && !nextPath.startsWith("//") ? nextPath : "/dashboard";
-};
-
-export const AuthForm = (props: AuthFormProps) => (
-  <Suspense>
-    <AuthFormInner {...props} />
-  </Suspense>
-);
-
-const AuthFormInner = ({ className, type, ...props }: AuthFormProps) => {
+export const AuthForm = ({ className, type, nextPath, ...props }: AuthFormProps) => {
   const router = useRouter();
-  const nextPath = useNextPath();
   const [submittingGithub, setSubmittingGithub] = useState(false);
 
   const form = useAppForm({
@@ -245,16 +236,10 @@ export const RequestPasswordResetForm = () => {
   );
 };
 
-export const UpdatePasswordForm = () => (
-  <Suspense>
-    <UpdatePasswordFormInner />
-  </Suspense>
-);
-
-const UpdatePasswordFormInner = () => {
+// better-auth appends the reset token to the redirectTo URL; the page reads it
+// from searchParams server-side and passes it in.
+export const UpdatePasswordForm = ({ token }: { token: string | null }) => {
   const router = useRouter();
-  // better-auth appends the reset token to the redirectTo URL
-  const token = useSearchParams().get("token");
 
   const form = useAppForm({
     defaultValues: {
