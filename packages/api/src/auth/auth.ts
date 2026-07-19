@@ -6,7 +6,7 @@ import { session as sessionSchema, user as userSchema } from "@repo/db/drizzle-s
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
-import { admin, oAuthProxy, organization } from "better-auth/plugins";
+import { admin, genericOAuth, oAuthProxy, organization } from "better-auth/plugins";
 import { and, eq, isNull } from "drizzle-orm";
 import Stripe from "stripe";
 
@@ -82,6 +82,29 @@ export const auth = betterAuth({
         },
       },
     }),
+    // Dev-only: route GitHub OAuth to a local `emulate` server so agents/tests
+    // can drive the full authorize → callback → session flow offline. Active
+    // only when GITHUB_EMULATOR_URL is set; production leaves it unset and uses
+    // the real socialProviders.github below. The built-in github provider has
+    // hardcoded endpoints, so the emulated flow rides on genericOAuth — trigger
+    // it with signIn.oauth2({ providerId: "github" }). Creds are local fixtures
+    // matching emulate.config.yaml, not secrets.
+    ...(process.env.GITHUB_EMULATOR_URL
+      ? [
+          genericOAuth({
+            config: [
+              {
+                providerId: "github",
+                clientId: "init-local-github",
+                clientSecret: "init-local-github-secret",
+                authorizationUrl: `${process.env.GITHUB_EMULATOR_URL}/login/oauth/authorize`,
+                tokenUrl: `${process.env.GITHUB_EMULATOR_URL}/login/oauth/access_token`,
+                userInfoUrl: `${process.env.GITHUB_EMULATOR_URL}/user`,
+              },
+            ],
+          }),
+        ]
+      : []),
     nextCookies(),
   ],
   emailAndPassword: {

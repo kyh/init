@@ -1,0 +1,75 @@
+---
+title: "Agent-Driven Development"
+---
+
+Init is built to be driven end-to-end by a coding agent — from a cold clone to a verified, running feature — without a human babysitting each step. This page is that workflow; [`AGENTS.md`](https://github.com/kyh/init/blob/main/AGENTS.md) at the repo root is the same guide your agent reads in-context.
+
+## One-command provisioning
+
+```bash
+pnpm install
+pnpm bootstrap --yes
+```
+
+`pnpm bootstrap` starts local Supabase, writes `.env`, pushes the schema, and seeds a dev user. It's interactive by default (a checklist to trim platforms you don't want), but `--yes` — or any piped, non-TTY invocation, which is how an agent runs it — keeps all apps and runs unattended. It needs Docker for local Supabase, and it's idempotent: re-run it, or `pnpm db:reset`, any time.
+
+## A seeded login
+
+Every provision leaves a known account, so an agent can verify authenticated flows with no signup step:
+
+```
+dev@init.local / password
+```
+
+It comes with a personal organization and a few sample todos (see `packages/api/src/seed.ts`). The seed goes through better-auth's own signup API, so it exercises the same organization-provisioning path a real user hits.
+
+## Verifying a change
+
+**Static gate** — mirrors CI, run before every commit:
+
+```bash
+pnpm verify   # typecheck · lint · format · test
+```
+
+**Runtime** — the part most templates skip. Passing types isn't proof the feature works. Init ships [agent-browser](https://github.com/vercel-labs/agent-browser) so an agent can drive the real web app:
+
+```bash
+npm i -g agent-browser && agent-browser install
+agent-browser open http://localhost:3000
+agent-browser snapshot -i        # interactive elements as @eN refs
+agent-browser fill @e1 dev@init.local
+agent-browser click @e3          # sign in, then read / screenshot to assert
+```
+
+The web app is the one surface an agent can drive headlessly. Mobile, desktop, and extension build and typecheck, but a runtime check on those needs a human — see the matrix below.
+
+## OAuth without the internet
+
+Email/password needs nothing external. For the **GitHub** button, Init wires [emulate](https://github.com/vercel-labs/emulate) — a local OAuth provider — so an agent can exercise the whole authorize → callback → session flow offline:
+
+```bash
+pnpm emulate
+GITHUB_EMULATOR_URL=http://localhost:4001 pnpm dev:web
+```
+
+With `GITHUB_EMULATOR_URL` set, better-auth routes GitHub through a dev-only `genericOAuth` provider aimed at the emulator; unset (the default, and all of production) the real provider is untouched. Fixtures live in `emulate.config.yaml`.
+
+## What an agent can verify
+
+| Platform           | Dev command          | Runtime-verifiable by an agent       |
+| ------------------ | -------------------- | ------------------------------------ |
+| Web (Next.js)      | `pnpm dev:web`       | **Yes** — headless via agent-browser |
+| Mobile (Expo)      | `pnpm dev:mobile`    | No — needs a simulator/device        |
+| Extension (WXT)    | `pnpm dev:extension` | No — real Chrome                     |
+| Desktop (Electron) | `pnpm dev:desktop`   | No — GUI window                      |
+
+## The rest of the surface
+
+Setup and verification are the runnable half of Init's agent story. The rest is context an agent loads on its own:
+
+- **`AGENTS.md` + `CLAUDE.md`** — conventions and this workflow, read automatically
+- **`llms.txt`** and **markdown negotiation** — the docs as machine-readable text
+- **`/.well-known/api-catalog`** — endpoint discovery, including the `/api/health` probe
+- **[Agent wiki](/docs/build/agent-wiki)** — an optional OpenWiki job that keeps a generated map current
+
+See [Local Development](/docs/overview/local-development) for the human day-to-day workflow.

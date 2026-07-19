@@ -7,6 +7,10 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DRY_RUN = process.argv.includes("--dry-run");
+// Non-interactive: keep all apps, skip the checkbox prompt. Explicit via --yes,
+// or implicit when stdin isn't a TTY (piped / CI / coding agent) so the raw-mode
+// prompt can't hang a headless run.
+const YES = process.argv.includes("--yes") || !process.stdin.isTTY;
 
 // ── Helpers ──────────────────────────────────────────────
 
@@ -305,6 +309,9 @@ function createEnv(supabaseValues: Record<string, string>) {
     `BETTER_AUTH_SECRET="${randomBytes(32).toString("base64")}"`,
     `AI_GATEWAY_API_KEY=""`,
     "",
+    "# Uncomment and run 'pnpm emulate' to exercise GitHub OAuth offline (see AGENTS.md)",
+    `# GITHUB_EMULATOR_URL="http://localhost:4001"`,
+    "",
   ].join("\n");
 
   writeText(envPath, env);
@@ -315,6 +322,30 @@ function pushSchema() {
   console.log("\nPushing database schema...");
   exec("pnpm db:push", { stdio: "inherit" });
   console.log("  ✓ Schema pushed");
+}
+
+function runSeed() {
+  console.log("\nSeeding database...");
+  exec("pnpm db:seed", { stdio: "inherit" });
+  console.log("  ✓ Seeded dev user + sample data");
+}
+
+// Agents drive the web app end-to-end with agent-browser and exercise the OAuth
+// button offline with emulate. Neither is a repo dependency: agent-browser is a
+// global CLI (detected here, never auto-installed) and emulate runs via npx.
+function checkAgentTooling() {
+  console.log("\nAgent tooling...");
+  if (commandExists("agent-browser")) {
+    console.log("  ✓ agent-browser found");
+  } else {
+    console.log(
+      `  ${DIM}○ agent-browser not found${RESET} (optional — drives the web app end-to-end)`,
+    );
+    console.log("    Install: npm i -g agent-browser && agent-browser install");
+  }
+  if (fileExists("emulate.config.yaml")) {
+    console.log("  ✓ emulate.config.yaml present (run 'pnpm emulate' for offline GitHub OAuth)");
+  }
 }
 
 // ── Main ─────────────────────────────────────────────────
@@ -330,12 +361,13 @@ async function main() {
     return;
   }
 
-  const selected = DRY_RUN
-    ? available.map(() => true)
-    : await checkbox(
-        "Which apps do you want to include?",
-        available.map((app) => ({ label: app.name, checked: true })),
-      );
+  const selected =
+    DRY_RUN || YES
+      ? available.map(() => true)
+      : await checkbox(
+          "Which apps do you want to include?",
+          available.map((app) => ({ label: app.name, checked: true })),
+        );
 
   const toKeep = available.filter((_, i) => selected[i]);
   const toRemove = available.filter((_, i) => !selected[i]);
@@ -369,8 +401,17 @@ async function main() {
   // ── Step 4: Push database schema ──
   pushSchema();
 
+  // ── Step 5: Seed dev data ──
+  runSeed();
+
+  // ── Step 6: Agent tooling ──
+  checkAgentTooling();
+
   console.log(`\n  ${GREEN}Setup complete!${RESET}\n`);
-  console.log(`  Run ${CYAN}pnpm dev${RESET} to start developing.\n`);
+  console.log(`  Start:  ${CYAN}pnpm dev${RESET}       (web → http://localhost:3000)`);
+  console.log(`  Verify: ${CYAN}pnpm verify${RESET}    (typecheck · lint · format · test)`);
+  console.log(`  Login:  ${CYAN}dev@init.local${RESET} / ${CYAN}password${RESET}  (seeded)`);
+  console.log(`  Agents: read ${CYAN}AGENTS.md${RESET}\n`);
 }
 
 main().catch((err) => {

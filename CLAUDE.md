@@ -43,6 +43,7 @@ Mutations go through tRPC or the better-auth client — never Next Server Action
 ## Common Commands
 
 ```bash
+pnpm bootstrap        # First-run: provision DB + .env + schema + seed (--yes = headless)
 pnpm dev              # Run all apps
 pnpm dev:web          # Run Next.js only
 pnpm dev:mobile       # Run Expo only
@@ -51,17 +52,32 @@ pnpm lint             # Lint all packages (oxlint)
 pnpm format           # Check formatting (oxfmt)
 pnpm format:fix       # Format all packages (oxfmt)
 pnpm test             # Run tests (vitest)
+pnpm verify           # typecheck · lint · format · test (CI gate)
 pnpm build            # Build all packages
 
 # Database
 pnpm db:start         # Start local Supabase
 pnpm db:stop          # Stop Supabase
 pnpm db:push          # Push Drizzle schema
-pnpm db:reset         # Reset and push schema
+pnpm db:reset         # Reset, push, and re-seed schema
+pnpm db:seed          # Seed dev user (dev@init.local / password) + sample data
+
+# Agents
+pnpm emulate          # Local GitHub OAuth emulator (offline auth tests)
 
 # UI — add shadcn components (base-vega / Base UI)
 cd packages/ui && pnpm dlx shadcn@latest add <component>
 ```
+
+## Agent-driven development
+
+This template is built to be driven end-to-end by a coding agent. `AGENTS.md` is the full workflow; the essentials:
+
+- **Provision headless**: `pnpm bootstrap --yes` (idempotent; needs Docker for local Supabase). Non-TTY runs auto-keep all apps, so a piped invocation won't hang on the app-picker.
+- **Seeded login**: `dev@init.local` / `password` (via `pnpm db:seed`) — a personal org + sample todos to verify against, no signup step.
+- **Verify**: `pnpm verify` for the static gate; drive the running web app with `agent-browser` for runtime checks. Only web is headless-driveable — mobile/desktop/extension get `typecheck` + `build` only.
+- **OAuth offline**: `pnpm emulate` + `GITHUB_EMULATOR_URL=http://localhost:4001` routes GitHub through a local emulator via a dev-only `genericOAuth` provider (real provider untouched).
+- **Fresh clone / scaffold**: `gh repo create <name> --template kyh/init --clone`, then `pnpm install && pnpm bootstrap --yes` (needs Docker). Headless auth: POST `dev@init.local` / `password` to `/api/auth/sign-in/email` for a session cookie. See `AGENTS.md` → Fresh clone.
 
 ## UI Package
 

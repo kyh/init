@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "prompt": "This template is built to be driven by coding agents — read AGENTS.md first. If .env is missing, run `pnpm bootstrap --yes` to provision (needs Docker).",
+  "permissions": {
+    "allow": [
+      "Bash(pnpm bootstrap:*)",
+      "Bash(pnpm db:start:*)",
+      "Bash(pnpm db:seed:*)",
+      "Bash(pnpm verify:*)",
+      "Bash(pnpm emulate:*)",
+      "Bash(agent-browser:*)"
+    ]
+  }
+}

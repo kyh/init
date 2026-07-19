@@ -18,7 +18,7 @@ pnpm install
 pnpm bootstrap
 ```
 
-The bootstrap script will select apps, start Supabase, configure your `.env`, and push the database schema.
+The bootstrap script selects apps, starts Supabase, configures your `.env`, pushes the schema, and seeds a dev user. It's interactive by default; pass `--yes` (or pipe it, as a coding agent would) to keep all apps and run unattended. See [`AGENTS.md`](./AGENTS.md) for the full agent-driven workflow.
 
 ## Project Structure
 

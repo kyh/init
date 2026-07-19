@@ -9,11 +9,12 @@ Most boilerplates optimize for the first `git clone`. Init optimizes for the ten
 
 1. **A stack AI already knows.** Tailwind, shadcn/ui, Drizzle, Postgres, Vitest, pnpm, Stripe — the same tools [Claude Code picks on its own](https://amplifying.ai/research/claude-code-picks) when given a free choice. Agents have seen these patterns millions of times; they stop guessing and start shipping.
 2. **Idiomatic implementations.** Auth, organizations, billing, AI chat — each built the way its library's docs say to. Agents extend code that matches their training instead of fighting house exotica.
-3. **Agent rules and surfaces built in.** `CLAUDE.md` conventions, `llms.txt`, markdown content negotiation on every docs page, and a discoverable API catalog.
-4. **Self-updating documentation.** A scheduled [OpenWiki](https://github.com/langchain-ai/openwiki) workflow regenerates an agent wiki and `AGENTS.md` from the code, so the docs agents read never rot.
+3. **Agent rules and surfaces built in.** `AGENTS.md` + `CLAUDE.md` conventions, `llms.txt`, markdown negotiation, a discoverable API catalog — and a runnable loop: `pnpm bootstrap --yes` provisions headlessly, a seeded login and `agent-browser` drive the real app, and `emulate` fakes OAuth offline. Agents build _and verify_, not just autocomplete.
+4. **Self-updating documentation.** A scheduled [OpenWiki](https://github.com/langchain-ai/openwiki) workflow regenerates an agent wiki from the code and refreshes a managed block in `AGENTS.md`, so the docs agents read never rot.
 
 Start here:
 
 - [Introduction](/docs/overview/introduction) - what's in the box and why it's AI-native
 - [Installation](/docs/overview/installation) - running locally in minutes
+- [Agent-Driven Development](/docs/overview/agent-driven-development) - provision, seed, and verify with an agent
 - [Architecture](/docs/architecture/folder-structure) - how the monorepo fits together
