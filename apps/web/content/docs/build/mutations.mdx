@@ -2,7 +2,7 @@
 title: "Data Mutations"
 ---
 
-Writes go through tRPC mutations: Zod validates, the procedure checks org access, TanStack Query refreshes the cache. The todo list and waitlist form are the two reference implementations.
+Writes go through tRPC mutations: Zod validates, `organizationProcedure` proves org membership, TanStack Query refreshes the cache. The todo list and waitlist form are the two reference implementations.
 
 ## Server Side
 
@@ -10,12 +10,10 @@ Every mutation is a procedure with a Zod input and an ownership check:
 
 ```typescript
 // packages/api/src/todo/todo-router.ts
-create: protectedProcedure.input(createTodoInput).mutation(async ({ ctx, input }) => {
-  const organization = await ensureOrganizationAccess(ctx, input.slug);
-
+create: organizationProcedure.input(createTodoInput).mutation(async ({ ctx, input }) => {
   const [createdTodo] = await ctx.db
     .insert(todo)
-    .values({ organizationId: organization.id, title: input.title })
+    .values({ organizationId: ctx.organization.id, title: input.title })
     .returning();
 
   return { todo: createdTodo };
@@ -25,14 +23,15 @@ create: protectedProcedure.input(createTodoInput).mutation(async ({ ctx, input }
 Rules the todo router demonstrates:
 
 - **Validate at the boundary** - inputs are parsed by Zod before your code runs; invalid input never reaches the database
+- **Membership before the handler** - `organizationProcedure` (`packages/api/src/trpc.ts`) takes the `slug`, resolves the org, and proves the caller is a member; the handler just reads `ctx.organization.id`
 - **Scope every write** - updates and deletes filter by `organizationId`, not just row id, so members of one org can't touch another's rows
 - **`.returning()` + explicit NOT_FOUND** - if the scoped write matched nothing, throw instead of silently succeeding
 
 ## Client Side: Two Styles
 
-### `mutationOptions` (simple case)
+### `mutationOptions` (the default)
 
-When you just need to fire the mutation, the options proxy is the shortest path - the waitlist form uses it:
+The options proxy builds a typed `useMutation` config. Bare, like the waitlist form:
 
 ```tsx
 // apps/web/src/app/(marketing)/_components/waitlist-form.tsx
@@ -42,20 +41,30 @@ const joinWaitlist = useMutation(trpc.waitlist.join.mutationOptions());
 joinWaitlist.mutateAsync({ email });
 ```
 
-### `mutationFn` with the raw client (full control)
-
-When you want custom `onError`/`onSuccess` per call site, the todo list uses the bare client:
+Or with `onError`/`onSuccess` per call site - the todo list passes both:
 
 ```tsx
 // _components/todo-list.tsx
-const trpcClient = useTRPCClient();
+const trpc = useTRPC();
+const queryClient = useQueryClient();
 
-const createTodo = useMutation({
-  mutationFn: (input: CreateTodoInput) => trpcClient.todo.create.mutate(input),
-  onError: (error) => toast.error(error.message),
-});
+const onError = (error: { message: string }) => toast.error(error.message);
+const invalidateTodos = () => queryClient.invalidateQueries(trpc.todo.list.queryFilter({ slug }));
+
+const createTodo = useMutation(
+  trpc.todo.create.mutationOptions({ onError, onSuccess: invalidateTodos }),
+);
 
 await createTodo.mutateAsync({ slug, title: trimmed });
+```
+
+### The raw client (manual control)
+
+`useTRPCClient()` returns the bare client - for calling a procedure outside React Query, or wiring a custom `mutationFn` yourself. The reference components don't need it; reach for it only when `mutationOptions` can't express what you want:
+
+```tsx
+const trpcClient = useTRPCClient();
+await trpcClient.todo.create.mutate({ slug, title });
 ```
 
 Input types come from the router, not hand-written:
@@ -68,27 +77,37 @@ type CreateTodoInput = RouterInputs["todo"]["create"];
 
 ## Cache Invalidation
 
-You don't write invalidation code for the common case. The mutation cache invalidates **everything** after any successful mutation:
-
-```typescript
-// apps/web/src/trpc/query-client.ts
-mutationCache: new MutationCache({
-  onSuccess: async (_data, _variables, _result, _mutation, context) => {
-    await context.client.invalidateQueries();
-  },
-}),
-```
-
-Blunt, but always correct - every list refetches with fresh data. Local callbacks compose with the cache callback:
+Each mutation invalidates the queries it changed, in its own `onSuccess`. The todo list refetches its org's list after every write:
 
 ```tsx
-const createTodo = useMutation({
-  mutationFn: (input: CreateTodoInput) => trpcClient.todo.create.mutate(input),
-  onSuccess: () => toast.success("Todo created"),
-});
+// _components/todo-list.tsx
+// Refetch this org's list after a write. Each mutation refreshes only what it
+// touched — there's no global invalidate-everything net behind it.
+const invalidateTodos = () => queryClient.invalidateQueries(trpc.todo.list.queryFilter({ slug }));
+
+const createTodo = useMutation(
+  trpc.todo.create.mutationOptions({ onError, onSuccess: invalidateTodos }),
+);
+const updateTodo = useMutation(
+  trpc.todo.update.mutationOptions({ onError, onSuccess: invalidateTodos }),
+);
+const deleteTodo = useMutation(
+  trpc.todo.delete.mutationOptions({ onError, onSuccess: invalidateTodos }),
+);
 ```
 
-To narrow a hot path, replace the global cache policy and add targeted invalidation to each mutation.
+Two filter helpers on the options proxy, both accepted by `queryClient.invalidateQueries(...)`:
+
+- **`trpc.todo.list.queryFilter({ slug })`** - one query, scoped to its input; drop the input to match every `todo.list`
+- **`trpc.todo.pathFilter()`** - every query under the `todo` router, for writes that touch several lists
+
+The same pattern covers mutations that wrap a better-auth call instead of a tRPC procedure:
+
+```tsx
+onSuccess: () => queryClient.invalidateQueries(trpc.organization.get.queryFilter({ slug })),
+```
+
+If the UI doesn't reflect a write, the mutation is missing an invalidation - add one to its `onSuccess`.
 
 ## Pending States
 

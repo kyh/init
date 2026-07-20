@@ -175,7 +175,7 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
 });
 ```
 
-Organization membership is checked per-router - see `ensureOrganizationAccess` in `packages/api/src/todo/todo-router.ts`.
+Organization membership is a layer on top: `organizationProcedure` in `packages/api/src/trpc.ts` takes an organization `slug`, resolves it, and proves the caller is a member before the handler runs - handlers get `ctx.organization` and `ctx.membership`.
 
 ## Client Usage
 

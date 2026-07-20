@@ -8,7 +8,7 @@ import { Checkbox } from "@repo/ui/components/checkbox";
 import { Input } from "@repo/ui/components/input";
 import { toast } from "@repo/ui/components/sonner";
 import { cn } from "@repo/ui/lib/utils";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { PencilIcon, Trash2Icon } from "lucide-react";
 
 import type { RouterOutputs } from "@repo/api";
@@ -26,12 +26,23 @@ const onError = (error: { message: string }) => {
 
 export const TodoList = ({ slug }: TodoListProps) => {
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const { data } = useSuspenseQuery(trpc.todo.list.queryOptions({ slug }));
   const todos = data.todos;
 
-  const createTodo = useMutation(trpc.todo.create.mutationOptions({ onError }));
-  const updateTodo = useMutation(trpc.todo.update.mutationOptions({ onError }));
-  const deleteTodo = useMutation(trpc.todo.delete.mutationOptions({ onError }));
+  // Refetch this org's list after a write. Each mutation refreshes only what it
+  // touched — there's no global invalidate-everything net behind it.
+  const invalidateTodos = () => queryClient.invalidateQueries(trpc.todo.list.queryFilter({ slug }));
+
+  const createTodo = useMutation(
+    trpc.todo.create.mutationOptions({ onError, onSuccess: invalidateTodos }),
+  );
+  const updateTodo = useMutation(
+    trpc.todo.update.mutationOptions({ onError, onSuccess: invalidateTodos }),
+  );
+  const deleteTodo = useMutation(
+    trpc.todo.delete.mutationOptions({ onError, onSuccess: invalidateTodos }),
+  );
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState("");

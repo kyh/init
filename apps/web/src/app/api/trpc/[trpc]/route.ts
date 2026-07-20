@@ -7,6 +7,11 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 // loads it, and React Native does not enforce CORS. Opening it up would only
 // widen the cross-site surface, which matters here because auth cookies are
 // SameSite=None (see packages/api/src/auth/auth.ts).
+
+// Errors that are normal control flow, not server faults: unauthenticated,
+// forbidden, missing row, and rejected input. Logging them would just add noise.
+const EXPECTED_ERROR_CODES = new Set(["UNAUTHORIZED", "FORBIDDEN", "NOT_FOUND", "BAD_REQUEST"]);
+
 const handler = async (req: NextRequest) =>
   fetchRequestHandler({
     endpoint: "/api/trpc",
@@ -14,7 +19,9 @@ const handler = async (req: NextRequest) =>
     req,
     createContext: () => createTRPCContext({ headers: req.headers }),
     onError: ({ error, path }) => {
-      console.error(`>>> tRPC Error on '${path}'`, error);
+      if (!EXPECTED_ERROR_CODES.has(error.code)) {
+        console.error(`>>> tRPC Error on '${path}'`, error);
+      }
     },
   });
 

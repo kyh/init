@@ -11,12 +11,13 @@ import { and, eq, isNull } from "drizzle-orm";
 import Stripe from "stripe";
 
 import { sendEmail } from "../email/send-email";
+import { env } from "../env";
 import { ac, roles, roleSchema } from "./permissions";
 import { FALLBACK_ORGANIZATION_SLUG, isSlugCollision, slugify } from "./utils";
 
-// No network call until first use, so a placeholder key keeps local dev
+// No network call until first use, so the env placeholder key keeps local dev
 // working without Stripe configured (checkout/portal will fail, list won't)
-const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY ?? "sk_test_placeholder");
+const stripeClient = new Stripe(env.STRIPE_SECRET_KEY);
 
 export const baseUrl =
   process.env.VERCEL_ENV === "production"
@@ -62,7 +63,7 @@ export const auth = betterAuth({
     admin(),
     stripe({
       stripeClient,
-      stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
+      stripeWebhookSecret: env.STRIPE_WEBHOOK_SECRET,
       // Lazy customer creation keeps signup independent of Stripe config
       createCustomerOnSignUp: false,
       subscription: {
@@ -70,7 +71,7 @@ export const auth = betterAuth({
         plans: [
           {
             name: "pro",
-            priceId: process.env.STRIPE_PRO_PRICE_ID ?? "",
+            priceId: env.STRIPE_PRO_PRICE_ID,
           },
         ],
         // Subscriptions are org-scoped (referenceId = organization id);
@@ -135,8 +136,8 @@ export const auth = betterAuth({
   },
   socialProviders: {
     github: {
-      clientId: process.env.GITHUB_CLIENT_ID ?? "",
-      clientSecret: process.env.GITHUB_CLIENT_SECRET ?? "",
+      clientId: env.GITHUB_CLIENT_ID,
+      clientSecret: env.GITHUB_CLIENT_SECRET,
     },
   },
   trustedOrigins,
@@ -192,10 +193,6 @@ const generateAvailableSlug = async (baseSlug: string, attempt = 0): Promise<str
   return slug;
 };
 
-/**
- * Creates the personal organization every new user gets. If creation fails the
- * user is deleted — the app assumes every user belongs to at least one org.
- */
 const MAX_SLUG_ATTEMPTS = 3;
 
 /**
@@ -232,6 +229,10 @@ const createPersonalOrganization = async (user: User) => {
   }
 };
 
+/**
+ * Creates the personal organization every new user gets. If creation fails the
+ * user is deleted — the app assumes every user belongs to at least one org.
+ */
 const createDefaultOrganization = async (user: User) => {
   try {
     const createdOrganization = await createPersonalOrganization(user);

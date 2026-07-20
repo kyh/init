@@ -6,13 +6,15 @@ import { Badge } from "@repo/ui/components/badge";
 import { DropdownMenuItem } from "@repo/ui/components/dropdown-menu";
 import { AutoTable } from "@repo/ui/components/table";
 import { toast } from "@repo/ui/components/sonner";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 
 import type { RouterOutputs } from "@repo/api";
 import type { ColumnDef } from "@tanstack/react-table";
 import { authClient } from "@/lib/auth-client";
-import { roleSchema } from "@/app/(dashboard)/dashboard/[slug]/_components/role";
+import { formatDate } from "@/lib/format";
+import { useTRPC } from "@/trpc/react";
+import { hasPermission } from "@/app/(dashboard)/dashboard/[slug]/_components/role";
 import { TableRowActions } from "@/app/(dashboard)/dashboard/[slug]/_components/table-row-actions";
 import { useOrganization } from "@/app/(dashboard)/dashboard/[slug]/_components/use-organization";
 
@@ -22,17 +24,11 @@ type InvitationsTableProps = {
   slug: string;
 };
 
-const dateFormatter = new Intl.DateTimeFormat("en-US", { timeZone: "UTC" });
-
 export const InvitationsTable = ({ slug }: InvitationsTableProps) => {
   const { data: organizationData } = useOrganization(slug);
-  const parsedUserRole = roleSchema.safeParse(organizationData.currentUserMember.role);
-  const canManageInvitations =
-    parsedUserRole.success &&
-    authClient.organization.checkRolePermission({
-      role: parsedUserRole.data,
-      permissions: { invitation: ["cancel"] },
-    });
+  const canManageInvitations = hasPermission(organizationData.currentUserMember.role, {
+    invitation: ["cancel"],
+  });
 
   const columns = useMemo(() => {
     const columnDefs: ColumnDef<Invitation>[] = [
@@ -46,19 +42,23 @@ export const InvitationsTable = ({ slug }: InvitationsTableProps) => {
       },
       {
         header: "Expires at",
-        cell: ({ row }) => dateFormatter.format(new Date(row.original.expiresAt)),
+        cell: ({ row }) => formatDate(row.original.expiresAt),
       },
       {
         header: "",
         id: "actions",
         cell: ({ row }) => (
-          <ActionsDropdown invitation={row.original} canManageInvitations={canManageInvitations} />
+          <ActionsDropdown
+            slug={slug}
+            invitation={row.original}
+            canManageInvitations={canManageInvitations}
+          />
         ),
       },
     ];
 
     return columnDefs;
-  }, [canManageInvitations]);
+  }, [slug, canManageInvitations]);
 
   const table = useReactTable({
     data: organizationData.invitations,
@@ -74,13 +74,15 @@ export const InvitationsTable = ({ slug }: InvitationsTableProps) => {
 };
 
 const ActionsDropdown = ({
+  slug,
   invitation,
   canManageInvitations,
 }: {
+  slug: string;
   invitation: Invitation;
   canManageInvitations: boolean;
 }) => {
-  const { mutateAsync: cancelInvitation } = useCancelInvitation(invitation.id);
+  const { mutateAsync: cancelInvitation } = useCancelInvitation(slug, invitation.id);
 
   const handleRemoveInvitation = () => {
     alertDialog.open(`Remove ${invitation.email}'s invite?`, {
@@ -103,13 +105,19 @@ const ActionsDropdown = ({
   );
 };
 
-const useCancelInvitation = (invitationId: string) =>
-  useMutation({
+const useCancelInvitation = (slug: string, invitationId: string) => {
+  const queryClient = useQueryClient();
+  const trpc = useTRPC();
+  return useMutation({
     mutationFn: async () => {
       await authClient.organization.cancelInvitation({
         invitationId,
       });
     },
-    onSuccess: () => toast.success("Invitation cancelled successfully"),
+    onSuccess: () => {
+      toast.success("Invitation cancelled successfully");
+      return queryClient.invalidateQueries(trpc.organization.get.queryFilter({ slug }));
+    },
     onError: (error) => toast.error(error.message),
   });
+};

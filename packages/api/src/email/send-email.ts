@@ -1,3 +1,5 @@
+import { env } from "../env";
+
 type SendEmailInput = {
   to: string;
   subject: string;
@@ -10,8 +12,8 @@ type SendEmailInput = {
  * dev-friendly, and never a silent drop.
  */
 export const sendEmail = async ({ to, subject, text }: SendEmailInput) => {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM ?? "onboarding@resend.dev";
+  const apiKey = env.RESEND_API_KEY;
+  const from = env.EMAIL_FROM;
 
   if (!apiKey) {
     console.info(

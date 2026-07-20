@@ -14,13 +14,19 @@ import {
 } from "@repo/ui/components/dropdown-menu";
 import { AutoTable } from "@repo/ui/components/table";
 import { toast } from "@repo/ui/components/sonner";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 
 import type { RouterOutputs } from "@repo/api";
 import type { ColumnDef } from "@tanstack/react-table";
 import { authClient } from "@/lib/auth-client";
-import { ROLES, roleSchema } from "@/app/(dashboard)/dashboard/[slug]/_components/role";
+import { formatDate } from "@/lib/format";
+import { useTRPC } from "@/trpc/react";
+import {
+  hasPermission,
+  ROLES,
+  roleSchema,
+} from "@/app/(dashboard)/dashboard/[slug]/_components/role";
 import { TableRowActions } from "@/app/(dashboard)/dashboard/[slug]/_components/table-row-actions";
 import { useOrganization } from "@/app/(dashboard)/dashboard/[slug]/_components/use-organization";
 
@@ -30,18 +36,12 @@ type MembersTableProps = {
   slug: string;
 };
 
-const dateFormatter = new Intl.DateTimeFormat("en-US", { timeZone: "UTC" });
-
 export const MembersTable = ({ slug }: MembersTableProps) => {
   const { data: organizationData } = useOrganization(slug);
   const userId = organizationData.currentUserMember.userId;
-  const parsedUserRole = roleSchema.safeParse(organizationData.currentUserMember.role);
-  const canManageMembers =
-    parsedUserRole.success &&
-    authClient.organization.checkRolePermission({
-      role: parsedUserRole.data,
-      permissions: { member: ["update", "delete"] },
-    });
+  const canManageMembers = hasPermission(organizationData.currentUserMember.role, {
+    member: ["update", "delete"],
+  });
 
   const columns = useMemo(() => {
     const columnDefs: ColumnDef<MemberWithUser>[] = [
@@ -78,13 +78,14 @@ export const MembersTable = ({ slug }: MembersTableProps) => {
       },
       {
         header: "Joined at",
-        cell: ({ row }) => dateFormatter.format(new Date(row.original.createdAt)),
+        cell: ({ row }) => formatDate(row.original.createdAt),
       },
       {
         header: "",
         id: "actions",
         cell: ({ row }) => (
           <ActionsDropdown
+            slug={slug}
             member={row.original}
             userId={userId}
             canManageMembers={canManageMembers}
@@ -94,7 +95,7 @@ export const MembersTable = ({ slug }: MembersTableProps) => {
     ];
 
     return columnDefs;
-  }, [userId, canManageMembers]);
+  }, [slug, userId, canManageMembers]);
 
   const table = useReactTable({
     data: organizationData.members,
@@ -110,10 +111,12 @@ export const MembersTable = ({ slug }: MembersTableProps) => {
 };
 
 const ActionsDropdown = ({
+  slug,
   member,
   userId,
   canManageMembers,
 }: {
+  slug: string;
   member: MemberWithUser;
   userId: string;
   canManageMembers: boolean;
@@ -122,16 +125,10 @@ const ActionsDropdown = ({
   // Only the owner role can delete the organization (see permissions.ts) —
   // used here as an "is this member the owner" check, since better-auth's
   // access control models permissions, not role identity.
-  const parsedMemberRole = roleSchema.safeParse(member.role);
-  const isMemberOwner =
-    parsedMemberRole.success &&
-    authClient.organization.checkRolePermission({
-      role: parsedMemberRole.data,
-      permissions: { organization: ["delete"] },
-    });
+  const isMemberOwner = hasPermission(member.role, { organization: ["delete"] });
   const displayName = getDisplayName(member);
 
-  const { mutateAsync: updateMemberRole } = useUpdateMemberRole(member.id);
+  const { mutateAsync: updateMemberRole } = useUpdateMemberRole(slug, member.id);
   const handleChangeRole = (newRole: string) => {
     alertDialog.open(`Change ${displayName}'s role?`, {
       description: `You are about to change ${displayName}'s role to ${newRole}. This may affect their permissions.`,
@@ -142,7 +139,7 @@ const ActionsDropdown = ({
     });
   };
 
-  const { mutateAsync: removeMember } = useRemoveMember(member.id);
+  const { mutateAsync: removeMember } = useRemoveMember(slug, member.id);
   const handleRemoveFromOrganization = () => {
     alertDialog.open(`Remove ${displayName} from the organization?`, {
       description: `You are about to remove ${displayName} from the organization. They will lose access to this organization.`,
@@ -190,25 +187,37 @@ const getDisplayName = (member: MemberWithUser) => {
   return member.user?.name ?? member.user?.email ?? "Unknown";
 };
 
-const useUpdateMemberRole = (memberId: string) =>
-  useMutation({
+const useUpdateMemberRole = (slug: string, memberId: string) => {
+  const queryClient = useQueryClient();
+  const trpc = useTRPC();
+  return useMutation({
     mutationFn: async (newRole: string) => {
       await authClient.organization.updateMemberRole({
         memberId,
         role: roleSchema.parse(newRole),
       });
     },
-    onSuccess: () => toast.success("Member role updated successfully"),
+    onSuccess: () => {
+      toast.success("Member role updated successfully");
+      return queryClient.invalidateQueries(trpc.organization.get.queryFilter({ slug }));
+    },
     onError: (error) => toast.error(error.message),
   });
+};
 
-const useRemoveMember = (memberId: string) =>
-  useMutation({
+const useRemoveMember = (slug: string, memberId: string) => {
+  const queryClient = useQueryClient();
+  const trpc = useTRPC();
+  return useMutation({
     mutationFn: async () => {
       await authClient.organization.removeMember({
         memberIdOrEmail: memberId,
       });
     },
-    onSuccess: () => toast.success("Member removed successfully"),
+    onSuccess: () => {
+      toast.success("Member removed successfully");
+      return queryClient.invalidateQueries(trpc.organization.get.queryFilter({ slug }));
+    },
     onError: (error) => toast.error(error.message),
   });
+};

@@ -96,25 +96,41 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
 
 #### Organization Access
 
-Membership checks happen per-router. The todo router shows the pattern:
+Org-scoping is its own procedure, built on `protectedProcedure`. `organizationProcedure` takes an organization `slug`, resolves it, and proves the caller is a member before the handler runs - so a handler cannot read or write another tenant's rows by forgetting a check:
 
 ```typescript
-// packages/api/src/todo/todo-router.ts
-const ensureOrganizationAccess = async (ctx: TRPCContext, slug: string) => {
-  const organization = await ctx.db.query.organization.findFirst({
-    where: (org, { eq }) => eq(org.slug, slug),
-  });
-  if (!organization) throw new TRPCError({ code: "NOT_FOUND" });
+// packages/api/src/trpc.ts
+export const organizationProcedure = protectedProcedure
+  .input(z.object({ slug: z.string().min(1, "Organization slug is required") }))
+  .use(async ({ ctx, input, next }) => {
+    const organization = await ctx.db.query.organization.findFirst({
+      where: (org, { eq }) => eq(org.slug, input.slug),
+    });
 
-  const membership = await ctx.db.query.member.findFirst({
-    where: (member, { and, eq }) =>
-      and(eq(member.organizationId, organization.id), eq(member.userId, userId)),
-  });
-  if (!membership) throw new TRPCError({ code: "UNAUTHORIZED" });
+    if (!organization) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Organization not found",
+      });
+    }
 
-  return organization;
-};
+    const membership = await ctx.db.query.member.findFirst({
+      where: (member, { and, eq }) =>
+        and(eq(member.organizationId, organization.id), eq(member.userId, ctx.session.user.id)),
+    });
+
+    if (!membership) {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "You do not have access to this organization",
+      });
+    }
+
+    return next({ ctx: { organization, membership } });
+  });
 ```
+
+Handlers get `ctx.organization` and `ctx.membership`, and should still scope their queries by `ctx.organization.id`. The `slug` input merges with whatever `.input()` the procedure adds, so feature schemas carry only their own fields.
 
 ### 3. Router Composition
 
@@ -137,18 +153,15 @@ Init uses the TanStack React Query integration (`@trpc/tanstack-react-query`).
 
 ```typescript
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
-import { useTRPC, useTRPCClient } from "@/trpc/react";
+import { useTRPC } from "@/trpc/react";
 
 const trpc = useTRPC();
-const trpcClient = useTRPCClient();
 
 // Query
 const { data } = useSuspenseQuery(trpc.todo.list.queryOptions({ slug }));
 
 // Mutation
-const createTodo = useMutation({
-  mutationFn: (input: CreateTodoInput) => trpcClient.todo.create.mutate(input),
-});
+const createTodo = useMutation(trpc.todo.create.mutationOptions());
 ```
 
 ### Server Components
@@ -184,11 +197,14 @@ All procedures validate inputs with Zod, colocated in `*-schema.ts`:
 
 ```typescript
 // packages/api/src/todo/todo-schema.ts
+const titleField = z.string().trim().min(1, "Title is required").max(255, "Title is too long");
+
 export const createTodoInput = z.object({
-  slug: z.string(),
-  title: z.string().min(1),
+  title: titleField,
 });
 ```
+
+Org-scoped schemas don't declare `slug` - `organizationProcedure` merges its own `{ slug }` input with them.
 
 Validation errors flatten into `zodError` via the error formatter in `trpc.ts`.
 
@@ -202,10 +218,11 @@ throw new TRPCError({
 });
 
 // Handle in clients
-const createTodo = useMutation({
-  mutationFn: (input: CreateTodoInput) => trpcClient.todo.create.mutate(input),
-  onError: (error) => toast.error(error.message),
-});
+const createTodo = useMutation(
+  trpc.todo.create.mutationOptions({
+    onError: (error) => toast.error(error.message),
+  }),
+);
 ```
 
 ### Common Error Codes
@@ -223,8 +240,9 @@ const createTodo = useMutation({
 // packages/api/src/post/post-schema.ts
 import { z } from "zod";
 
+// `slug` + the membership check come from `organizationProcedure` -
+// only the post's own fields here
 export const createPostInput = z.object({
-  slug: z.string(),
   title: z.string().min(1).max(255),
 });
 ```
@@ -233,14 +251,13 @@ export const createPostInput = z.object({
 
 ```typescript
 // packages/api/src/post/post-router.ts
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { createTRPCRouter, organizationProcedure } from "../trpc";
 import { createPostInput } from "./post-schema";
 
 export const postRouter = createTRPCRouter({
-  create: protectedProcedure.input(createPostInput).mutation(async ({ ctx, input }) => {
-    const organization = await ensureOrganizationAccess(ctx, input.slug);
+  create: organizationProcedure.input(createPostInput).mutation(async ({ ctx, input }) => {
     return ctx.db.insert(post).values({
-      organizationId: organization.id,
+      organizationId: ctx.organization.id,
       title: input.title,
     });
   }),
@@ -277,7 +294,7 @@ pnpm -F @repo/api test
 
 - **Organize by feature** - One folder per domain, router + schema + test
 - **Validate everything** - Zod at every boundary
-- **Check org access** - Every multi-tenant procedure verifies membership
+- **Check org access** - Every multi-tenant procedure builds on `organizationProcedure`, so membership is proven before the handler runs
 - **Allow-list columns** - Don't return full user rows; see `organization-router.ts`
 
 ## Next Steps

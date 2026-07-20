@@ -302,7 +302,7 @@ importers:
     dependencies:
       '@better-auth/stripe':
         specifier: 'catalog:'
-        version: 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0))(better-auth@1.6.23(49dc10827d04ce2b090f82dd3e5993d2))(better-call@1.3.7(zod@4.4.3))(stripe@22.3.1(@types/node@26.1.1))
+        version: 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0))(better-auth@1.6.23(6bf87ae641c0f40b4e5a32decaea55d1))(better-call@1.3.7(zod@4.4.3))(stripe@22.3.1(@types/node@26.1.1))
       '@repo/api':
         specifier: workspace:*
         version: link:../../packages/api
@@ -408,7 +408,7 @@ importers:
         version: 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0))(better-auth@1.6.23(6bf87ae641c0f40b4e5a32decaea55d1))(expo-constants@57.0.3)(expo-linking@57.0.2)(expo-network@8.0.8(expo@57.0.4)(react@19.2.7))(expo-web-browser@57.0.0(expo@57.0.4)(react-native@0.86.0(@babel/core@7.29.7)(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.7)))
       '@better-auth/stripe':
         specifier: 'catalog:'
-        version: 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0))(better-auth@1.6.23(49dc10827d04ce2b090f82dd3e5993d2))(better-call@1.3.7(zod@4.4.3))(stripe@22.3.1(@types/node@26.1.1))
+        version: 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0))(better-auth@1.6.23(6bf87ae641c0f40b4e5a32decaea55d1))(better-call@1.3.7(zod@4.4.3))(stripe@22.3.1(@types/node@26.1.1))
       '@repo/db':
         specifier: workspace:*
         version: link:../db
@@ -504,9 +504,6 @@ importers:
       react:
         specifier: 'catalog:'
         version: 19.2.7
-      shadcn:
-        specifier: ^4.13.0
-        version: 4.13.0(typescript@6.0.3)
       sonner:
         specifier: ^2.0.7
         version: 2.0.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -523,6 +520,9 @@ importers:
       '@types/react':
         specifier: 'catalog:'
         version: 19.2.17
+      shadcn:
+        specifier: ^4.13.0
+        version: 4.13.0(typescript@6.0.3)
       tailwindcss:
         specifier: 'catalog:'
         version: 4.3.2
@@ -9992,7 +9992,7 @@ snapshots:
       '@prisma/client': 7.4.2(prisma@7.4.2(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@6.0.3))(typescript@6.0.3)
       prisma: 7.4.2(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@6.0.3)
 
-  '@better-auth/stripe@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0))(better-auth@1.6.23(49dc10827d04ce2b090f82dd3e5993d2))(better-call@1.3.7(zod@4.4.3))(stripe@22.3.1(@types/node@26.1.1))':
+  '@better-auth/stripe@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0))(better-auth@1.6.23(6bf87ae641c0f40b4e5a32decaea55d1))(better-call@1.3.7(zod@4.4.3))(stripe@22.3.1(@types/node@26.1.1))':
     dependencies:
       '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0)
       better-auth: 1.6.23(49dc10827d04ce2b090f82dd3e5993d2)

@@ -1,19 +1,18 @@
 import { z } from "zod";
 
-export const todoSlugInput = z.object({
-  slug: z.string().min(1, "Organization slug is required"),
-});
-
+// Org scoping — the `slug` input plus the membership check — comes from
+// `organizationProcedure` (trpc.ts), which merges its own input with these. So
+// these schemas carry only the todo's own fields.
 const titleField = z.string().trim().min(1, "Title is required").max(255, "Title is too long");
 const idField = z.uuid();
 const completedField = z.boolean();
 
-export const createTodoInput = todoSlugInput.extend({
+export const createTodoInput = z.object({
   title: titleField,
 });
 
-export const updateTodoInput = todoSlugInput
-  .extend({
+export const updateTodoInput = z
+  .object({
     id: idField,
     title: titleField.optional(),
     completed: completedField.optional(),
@@ -23,10 +22,6 @@ export const updateTodoInput = todoSlugInput
     path: ["title"],
   });
 
-export const deleteTodoInput = todoSlugInput.extend({
+export const deleteTodoInput = z.object({
   id: idField,
 });
-
-export type CreateTodoInput = z.infer<typeof createTodoInput>;
-export type UpdateTodoInput = z.infer<typeof updateTodoInput>;
-export type DeleteTodoInput = z.infer<typeof deleteTodoInput>;

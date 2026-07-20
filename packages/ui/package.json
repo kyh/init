@@ -23,7 +23,6 @@
     "lucide-react": "catalog:",
     "nanoid": "^5.1.16",
     "next-themes": "catalog:",
-    "shadcn": "^4.13.0",
     "sonner": "^2.0.7",
     "tw-animate-css": "catalog:"
   },
@@ -31,6 +30,7 @@
     "@kyh/tsconfig": "catalog:",
     "@tailwindcss/postcss": "catalog:",
     "@types/react": "catalog:",
+    "shadcn": "^4.13.0",
     "tailwindcss": "catalog:",
     "typescript": "catalog:"
   },

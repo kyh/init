@@ -3,6 +3,8 @@ import { expoClient } from "@better-auth/expo/client";
 import { genericOAuthClient, organizationClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
+import { ac, roles } from "@repo/api/auth/permissions";
+
 import { getBaseUrl } from "./base-url";
 
 export const authClient = createAuthClient({
@@ -15,7 +17,7 @@ export const authClient = createAuthClient({
     }),
     // Exposes useListOrganizations() — todo procedures are organization-scoped,
     // so a screen needs an org slug before it can query.
-    organizationClient(),
+    organizationClient({ ac, roles }),
     genericOAuthClient(),
   ],
 });

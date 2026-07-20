@@ -7,14 +7,13 @@ import { toast } from "@repo/ui/components/sonner";
 import { useQuery } from "@tanstack/react-query";
 
 import { authClient } from "@/lib/auth-client";
+import { formatDate } from "@/lib/format";
 
 type BillingPlanProps = {
   organizationId: string;
   slug: string;
   canManage: boolean;
 };
-
-const dateFormatter = new Intl.DateTimeFormat("en-US", { timeZone: "UTC" });
 
 const useSubscriptions = (organizationId: string) =>
   useQuery({
@@ -88,7 +87,7 @@ export const BillingPlan = ({ organizationId, slug, canManage }: BillingPlanProp
       {subscription?.periodEnd && (
         <p className="text-muted-foreground text-sm">
           {subscription.cancelAtPeriodEnd ? "Access until" : "Renews"}{" "}
-          {dateFormatter.format(new Date(subscription.periodEnd))}
+          {formatDate(subscription.periodEnd)}
         </p>
       )}
       {canManage ? (

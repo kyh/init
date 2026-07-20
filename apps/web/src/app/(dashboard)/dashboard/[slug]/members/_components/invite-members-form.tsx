@@ -12,12 +12,13 @@ import {
 } from "@repo/ui/components/dialog";
 import { toast } from "@repo/ui/components/sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/components/tooltip";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { PlusIcon, XIcon } from "lucide-react";
 import { z } from "zod";
 
 import { authClient } from "@/lib/auth-client";
 import { useAppForm } from "@/lib/form";
+import { useTRPC } from "@/trpc/react";
 import { ROLES, type Role, roleSchema } from "@/app/(dashboard)/dashboard/[slug]/_components/role";
 import { useOrganization } from "@/app/(dashboard)/dashboard/[slug]/_components/use-organization";
 
@@ -76,6 +77,7 @@ type InviteMembersFormProps = {
 const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormProps) => {
   const { data: organizationData } = useOrganization(slug);
   const { mutateAsync: inviteMembers, isPending: isInvitingMembers } = useInviteMembers(
+    slug,
     organizationData.organization.id,
   );
 
@@ -189,8 +191,10 @@ const createEmptyInviteModel = (): { key: string; email: string; role: Role } =>
   role: "member",
 });
 
-const useInviteMembers = (organizationId: string) =>
-  useMutation({
+const useInviteMembers = (slug: string, organizationId: string) => {
+  const queryClient = useQueryClient();
+  const trpc = useTRPC();
+  return useMutation({
     mutationFn: async (data: z.infer<typeof inviteMembersSchema>) => {
       await Promise.all(
         data.organizationInvitations.map((invite) =>
@@ -202,6 +206,10 @@ const useInviteMembers = (organizationId: string) =>
         ),
       );
     },
-    onSuccess: () => toast.success("Invitations sent successfully"),
+    onSuccess: () => {
+      toast.success("Invitations sent successfully");
+      return queryClient.invalidateQueries(trpc.organization.get.queryFilter({ slug }));
+    },
     onError: (error) => toast.error(error.message),
   });
+};

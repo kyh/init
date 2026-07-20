@@ -59,53 +59,43 @@ No migration files, no codegen. Types flow from the schema definition immediatel
 // packages/api/src/post/post-schema.ts
 import { z } from "zod";
 
-export const postSlugInput = z.object({
-  slug: z.string().min(1, "Organization slug is required"),
-});
-
-export const createPostInput = postSlugInput.extend({
+export const createPostInput = z.object({
   title: z.string().trim().min(1, "Title is required").max(255),
   content: z.string().optional(),
 });
 
-export const deletePostInput = postSlugInput.extend({
+export const deletePostInput = z.object({
   id: z.uuid(),
 });
-
-export type CreatePostInput = z.infer<typeof createPostInput>;
 ```
 
-Every input carries the organization `slug` - the router uses it to verify membership.
+The organization `slug` and the membership check come from `organizationProcedure` (next step), which merges its own `{ slug }` input with these - so each schema carries only the post's own fields.
 
 ## 4. Write the Router
 
 ```typescript
 // packages/api/src/post/post-router.ts
-import { and, eq } from "@repo/db";
 import { post } from "@repo/db/drizzle-schema";
 import { TRPCError } from "@trpc/server";
+import { and, eq } from "drizzle-orm";
 
-import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { createPostInput, deletePostInput, postSlugInput } from "./post-schema";
+import { createTRPCRouter, organizationProcedure } from "../trpc";
+import { createPostInput, deletePostInput } from "./post-schema";
 
 export const postRouter = createTRPCRouter({
-  list: protectedProcedure.input(postSlugInput).query(async ({ ctx, input }) => {
-    const organization = await ensureOrganizationAccess(ctx, input.slug);
-
+  list: organizationProcedure.query(async ({ ctx }) => {
     const posts = await ctx.db.query.post.findMany({
-      where: (postTable, { eq }) => eq(postTable.organizationId, organization.id),
+      where: (postTable, { eq }) => eq(postTable.organizationId, ctx.organization.id),
       orderBy: (postTable, { desc }) => desc(postTable.createdAt),
     });
 
     return { posts };
   }),
-  create: protectedProcedure.input(createPostInput).mutation(async ({ ctx, input }) => {
-    const organization = await ensureOrganizationAccess(ctx, input.slug);
-
+  create: organizationProcedure.input(createPostInput).mutation(async ({ ctx, input }) => {
     const [createdPost] = await ctx.db
       .insert(post)
       .values({
-        organizationId: organization.id,
+        organizationId: ctx.organization.id,
         title: input.title,
         content: input.content,
       })
@@ -113,12 +103,10 @@ export const postRouter = createTRPCRouter({
 
     return { post: createdPost };
   }),
-  delete: protectedProcedure.input(deletePostInput).mutation(async ({ ctx, input }) => {
-    const organization = await ensureOrganizationAccess(ctx, input.slug);
-
+  delete: organizationProcedure.input(deletePostInput).mutation(async ({ ctx, input }) => {
     const [deletedPost] = await ctx.db
       .delete(post)
-      .where(and(eq(post.id, input.id), eq(post.organizationId, organization.id)))
+      .where(and(eq(post.id, input.id), eq(post.organizationId, ctx.organization.id)))
       .returning();
 
     if (!deletedPost) {
@@ -130,7 +118,7 @@ export const postRouter = createTRPCRouter({
 });
 ```
 
-`ensureOrganizationAccess` lives in `packages/api/src/todo/todo-router.ts` - copy it, or extract it to a shared module once two routers need it. Every mutation also filters by `organizationId` in the `where` clause, so a valid member of org A can never touch org B's rows.
+`organizationProcedure` (in `packages/api/src/trpc.ts`) takes the `slug`, resolves the org, and proves membership before any handler runs - `list` needs no `.input()` at all, and handlers read `ctx.organization.id`. Every mutation still filters by `organizationId` in the `where` clause, so a valid member of org A can never touch org B's rows.
 
 ## 5. Mount the Router
 
@@ -189,24 +177,27 @@ export default Page;
 "use client";
 
 import { toast } from "@repo/ui/components/sonner";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 
-import type { RouterInputs } from "@repo/api";
-import { useTRPC, useTRPCClient } from "@/trpc/react";
-
-type CreatePostInput = RouterInputs["post"]["create"];
+import { useTRPC } from "@/trpc/react";
 
 export const PostList = ({ slug }: { slug: string }) => {
   const trpc = useTRPC();
-  const trpcClient = useTRPCClient();
+  const queryClient = useQueryClient();
 
   // Resolves instantly from the server prefetch - no loading spinner
   const { data } = useSuspenseQuery(trpc.post.list.queryOptions({ slug }));
 
-  const createPost = useMutation({
-    mutationFn: (input: CreatePostInput) => trpcClient.post.create.mutate(input),
-    onError: (error) => toast.error(error.message),
-  });
+  // Refetch this org's list after a write - each mutation invalidates only
+  // what it touched; there's no global invalidate-everything net behind it
+  const invalidatePosts = () => queryClient.invalidateQueries(trpc.post.list.queryFilter({ slug }));
+
+  const createPost = useMutation(
+    trpc.post.create.mutationOptions({
+      onError: (error) => toast.error(error.message),
+      onSuccess: invalidatePosts,
+    }),
+  );
 
   return (
     <ul>
@@ -258,8 +249,8 @@ Nothing else to do. The mobile app (`apps/mobile/src/utils/api.tsx`) consumes th
 
 - Table has `organizationId` + index + `.enableRLS()`
 - `pnpm db:push` ran
-- Zod schema validates every input, including `slug`
-- Router checks org membership and filters mutations by `organizationId`
+- Zod schema validates the feature's own fields; `slug` comes from `organizationProcedure`
+- Router uses `organizationProcedure` and filters mutations by `organizationId`
 - Router mounted in `root-router.ts`
 - Page prefetches; client uses `useSuspenseQuery`
 - Tests cover the unauthorized paths

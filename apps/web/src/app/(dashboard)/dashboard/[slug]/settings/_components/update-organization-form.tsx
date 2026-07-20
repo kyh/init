@@ -5,12 +5,13 @@ import { slugify } from "@repo/api/auth/utils";
 import { Button } from "@repo/ui/components/button";
 import { FieldGroup } from "@repo/ui/components/field";
 import { toast } from "@repo/ui/components/sonner";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 
 import { authClient } from "@/lib/auth-client";
 import { useAppForm } from "@/lib/form";
 import { useTRPC } from "@/trpc/react";
+import { useOrganization } from "@/app/(dashboard)/dashboard/[slug]/_components/use-organization";
 
 const updateOrganizationSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -27,14 +28,10 @@ type UpdateOrganizationFormProps = {
 };
 
 export const UpdateOrganizationForm = ({ slug }: UpdateOrganizationFormProps) => {
-  const trpc = useTRPC();
-  const { data: organizationData } = useSuspenseQuery(
-    trpc.organization.get.queryOptions({
-      slug,
-    }),
-  );
+  const { data: organizationData } = useOrganization(slug);
 
   const { mutateAsync: updateOrganization, isPending } = useUpdateOrganization(
+    slug,
     organizationData.organization.id,
   );
 
@@ -95,8 +92,10 @@ export const UpdateOrganizationForm = ({ slug }: UpdateOrganizationFormProps) =>
   );
 };
 
-const useUpdateOrganization = (organizationId: string) => {
+const useUpdateOrganization = (slug: string, organizationId: string) => {
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const trpc = useTRPC();
 
   return useMutation({
     mutationFn: async (data: z.infer<typeof updateOrganizationSchema>) => {
@@ -112,8 +111,11 @@ const useUpdateOrganization = (organizationId: string) => {
 
       return updatedOrganization;
     },
-    onSuccess: (updatedOrganization) => {
+    onSuccess: async (updatedOrganization) => {
       toast.success("Organization successfully updated");
+      // A rename keeps the slug, so refresh the detail we're viewing; a slug
+      // change navigates below to a fresh query key.
+      await queryClient.invalidateQueries(trpc.organization.get.queryFilter({ slug }));
       router.replace(`/dashboard/${updatedOrganization.slug}/settings`);
     },
     onError: (error) => {

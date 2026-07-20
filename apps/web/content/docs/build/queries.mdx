@@ -70,7 +70,7 @@ const { todos } = await caller.todo.list({ slug });
 Defaults live in `apps/web/src/trpc/query-client.ts`:
 
 - **`staleTime: 30_000`** - queries are fresh for 30s, so hydrated data isn't refetched on mount
-- **Every mutation invalidates everything** - the global `onSuccess` calls `queryClient.invalidateQueries()`. Blunt but correct; see [Data Mutations](/docs/build/mutations) to narrow it
+- **Targeted invalidation** - each mutation invalidates the queries it changed in its own `onSuccess`; see [Data Mutations](/docs/build/mutations)
 - **SuperJSON transformer** - `Date`, `Map`, `undefined` survive the wire intact
 
 Transport is `httpBatchStreamLink` (`apps/web/src/trpc/react.tsx`): parallel queries in one render batch into a single `/api/trpc` request, and results stream back as each procedure finishes.

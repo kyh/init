@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
 import { getOrganizationBySlug, getSession } from "@/lib/auth-server";
 
-import { roleSchema } from "@/app/(dashboard)/dashboard/[slug]/_components/role";
+import { hasPermission } from "@/app/(dashboard)/dashboard/[slug]/_components/role";
 import { PageHeader } from "@/components/header";
 import { BillingHistory, BillingPlan } from "./_components/billing-plan";
 
@@ -27,13 +26,7 @@ const Page = async (props: PageProps) => {
   }
 
   const role = organization.members.find((member) => member.userId === session.user.id)?.role;
-  const parsedRole = roleSchema.safeParse(role);
-  const canManage =
-    parsedRole.success &&
-    authClient.organization.checkRolePermission({
-      role: parsedRole.data,
-      permissions: { billing: ["manage"] },
-    });
+  const canManage = hasPermission(role, { billing: ["manage"] });
 
   return (
     <main className="flex flex-1 flex-col px-5">

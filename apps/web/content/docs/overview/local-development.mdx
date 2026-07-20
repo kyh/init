@@ -104,16 +104,15 @@ Add a feature folder in `packages/api/src/` with a router and Zod schema:
 ```typescript
 // packages/api/src/post/post-router.ts
 export const postRouter = createTRPCRouter({
-  list: protectedProcedure.input(postSlugInput).query(async ({ ctx, input }) => {
-    const organization = await ensureOrganizationAccess(ctx, input.slug);
+  list: organizationProcedure.query(async ({ ctx }) => {
     return ctx.db.query.post.findMany({
-      where: (p, { eq }) => eq(p.organizationId, organization.id),
+      where: (p, { eq }) => eq(p.organizationId, ctx.organization.id),
     });
   }),
 });
 ```
 
-Register in `packages/api/src/root-router.ts`. See the [API guide](/docs/architecture/api) for the full pattern.
+`organizationProcedure` (from `../trpc`) supplies the `slug` input and proves membership before the handler runs. Register in `packages/api/src/root-router.ts`. See the [API guide](/docs/architecture/api) for the full pattern.
 
 ### Using Routes in Components
 

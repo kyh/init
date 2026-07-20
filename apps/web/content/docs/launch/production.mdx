@@ -25,7 +25,7 @@ Init ships with the author's defaults baked in. Change these before launch:
 Two layers, know both:
 
 1. **RLS deny-by-default** - every table calls `.enableRLS()` with no policies, so the anon key gets nothing through PostgREST
-2. **tRPC procedures** - the real authorization. `protectedProcedure` requires a session; org-scoped routers verify membership per call (`ensureOrganizationAccess` in `todo-router.ts`)
+2. **tRPC procedures** - the real authorization. `protectedProcedure` requires a session; `organizationProcedure` (in `packages/api/src/trpc.ts`) resolves the org and proves membership before any org-scoped handler runs
 
 On a hosted Supabase project, also disable the Data API (Settings → API) - local dev already has it off in `packages/db/supabase/config.toml`. And if you regenerate the auth schema, re-add `.enableRLS()` to every table.
 

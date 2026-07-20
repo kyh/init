@@ -7,7 +7,7 @@
     },
     "build": {
       "dependsOn": ["^topo"],
-      "outputs": [".cache/tsbuildinfo.json"]
+      "outputs": [".next/**", "!.next/cache/**", ".output/**"]
     },
     "dev": {
       "dependsOn": ["^dev"],

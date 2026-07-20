@@ -218,7 +218,7 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
                   render={<DropdownMenuItem className="flex w-full gap-2" />}
                 >
                   <PlusIcon className="size-4" />
-                  Create a Organization
+                  Create an Organization
                 </DialogTrigger>
               </DropdownMenuSubContent>
             </DropdownMenuSub>
