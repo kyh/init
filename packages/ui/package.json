@@ -7,8 +7,7 @@
     "./globals.css": "./src/styles/globals.css",
     "./postcss.config": "./postcss.config.mjs",
     "./lib/*": "./src/lib/*.ts",
-    "./components/*": "./src/components/*.tsx",
-    "./hooks/*": "./src/hooks/*.ts"
+    "./components/*": "./src/components/*.tsx"
   },
   "scripts": {
     "clean": "git clean -xdf .cache .turbo dist node_modules",
@@ -18,10 +17,8 @@
     "@base-ui/react": "catalog:",
     "@tanstack/react-table": "catalog:",
     "class-variance-authority": "^0.7.1",
-    "cmdk": "^1.1.1",
     "cnfast": "^0.0.8",
     "lucide-react": "catalog:",
-    "nanoid": "^5.1.16",
     "next-themes": "catalog:",
     "sonner": "^2.0.7",
     "tw-animate-css": "catalog:"

@@ -29,8 +29,6 @@ packages/
   ui/          # Shared React components (shadcn-style)
 ```
 
-The service-role Supabase client lives in `apps/web/src/lib/supabase-server.ts`, not in `packages/db` — `packages/db` only carries the Supabase CLI for local dev.
-
 ### Mutation path
 
 Mutations go through tRPC or the better-auth client — never Next Server Actions. All four platforms (web, mobile, extension, desktop) then share one typed surface. Each mutation invalidates the specific queries it affects in its `onSuccess` (e.g. `queryClient.invalidateQueries(trpc.todo.list.queryFilter({ slug }))`) — there is no global invalidate-everything cache. Do not introduce Server Actions alongside.

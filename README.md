@@ -30,7 +30,7 @@ apps/
   desktop/     # Electron desktop app
 packages/
   api/         # tRPC router + better-auth
-  db/          # Drizzle schema + Supabase client
+  db/          # Drizzle schema + Supabase config
   ui/          # Shared React components
 ```
 
