@@ -23,7 +23,7 @@
     "@trpc/server": "catalog:",
     "better-auth": "catalog:",
     "drizzle-orm": "catalog:",
-    "stripe": "^22.3.1",
+    "stripe": "^22.3.2",
     "superjson": "catalog:",
     "zod": "catalog:"
   },
