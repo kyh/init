@@ -5,6 +5,8 @@ import { z, ZodError } from "zod";
 
 import type { Session } from "./auth/auth";
 import { auth, trustedOrigins } from "./auth/auth";
+import { flags } from "./flags/flags";
+import { logRequest, resolveRequestId } from "./observability/logger";
 
 /**
  * Builds the per-request context. Callers supply headers rather than reading
@@ -33,6 +35,12 @@ export const createTRPCContext = async (opts: {
   return {
     session,
     db,
+    // Deploy-time feature flags, resolved once at load. On the context so a
+    // handler reads `ctx.flags.x` rather than reaching for process.env.
+    flags,
+    // Correlates this call's log line with the `x-request-id` on the HTTP
+    // response. Also captured here, for the same reason as the headers below.
+    requestId: resolveRequestId(opts.headers),
     // Browser-supplied request provenance. Captured here because a tRPC
     // middleware cannot read raw request headers; read by the mutation origin
     // guard below. Both null for non-browser callers (React Native,
@@ -97,10 +105,32 @@ const enforceTrustedOriginOnMutation = t.middleware(({ ctx, type, next }) => {
 });
 
 /**
+ * Emits the structured log line for a call. Outermost in the chain, so a
+ * request rejected by the origin guard or by input validation is logged too —
+ * those are exactly the calls worth seeing.
+ */
+const logProcedure = t.middleware(async ({ ctx, type, path, next }) => {
+  const startedAt = performance.now();
+  const result = await next();
+
+  logRequest({
+    requestId: ctx.requestId,
+    type,
+    path,
+    durationMs: Math.round(performance.now() - startedAt),
+    ok: result.ok,
+    ...(result.ok ? {} : { code: result.error.code }),
+    ...(ctx.session?.user ? { userId: ctx.session.user.id } : {}),
+  });
+
+  return result;
+});
+
+/**
  * Unauthenticated procedure. Does not require a session, but `ctx.session` is
  * still populated when the caller happens to be logged in.
  */
-export const publicProcedure = t.procedure.use(enforceTrustedOriginOnMutation);
+export const publicProcedure = t.procedure.use(logProcedure).use(enforceTrustedOriginOnMutation);
 
 /**
  * Requires a session, and narrows `ctx.session.user` to non-nullable for the

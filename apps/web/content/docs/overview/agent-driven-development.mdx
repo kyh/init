@@ -25,13 +25,32 @@ It comes with a personal organization and a few sample todos (see `packages/api/
 
 ## Verifying a change
 
+Three gates, cheapest first: static proves it compiles, smoke proves it runs, agent-browser proves the UI works. CI runs the first two on every commit.
+
 **Static gate** — mirrors CI, run before every commit:
 
 ```bash
 pnpm verify   # typecheck · lint · format · test
 ```
 
-**Runtime** — the part most templates skip. Passing types isn't proof the feature works. Init ships [agent-browser](https://github.com/vercel-labs/agent-browser) so an agent can drive the real web app:
+**Smoke gate** — the part most templates skip. Passing types isn't proof the app boots, that auth works, or that a mutation reached the database. `pnpm smoke` drives a _running_ server over plain HTTP and fails with the step that broke:
+
+```bash
+pnpm dev:web &
+pnpm smoke
+```
+
+```
+  ✓ server is live (/api/health)
+  ✓ signed in as dev@init.local
+  ✓ read the seeded todos
+  ✓ created a todo
+  ✗ todo.update did not persist `completed`
+```
+
+It needs no browser and nothing installed, so CI runs it on every commit against a real Supabase instance (see `.github/workflows/ci.yml`). Point it at a deployment with `SMOKE_URL=https://my-app-git-branch.vercel.app pnpm smoke` to verify a preview build instead of a local server.
+
+**UI** — Init ships [agent-browser](https://github.com/vercel-labs/agent-browser) so an agent can drive the real web app:
 
 ```bash
 npm i -g agent-browser && agent-browser install
@@ -56,12 +75,47 @@ With the var set, the "Continue with GitHub" button routes through a dev-only `g
 
 ## What an agent can verify
 
-| Platform           | Dev command          | Runtime-verifiable by an agent       |
-| ------------------ | -------------------- | ------------------------------------ |
-| Web (Next.js)      | `pnpm dev:web`       | **Yes** — headless via agent-browser |
-| Mobile (Expo)      | `pnpm dev:mobile`    | No — needs a simulator/device        |
-| Extension (WXT)    | `pnpm dev:extension` | No — real Chrome                     |
-| Desktop (Electron) | `pnpm dev:desktop`   | No — GUI window                      |
+| Platform           | Dev command          | Runtime-verifiable by an agent         |
+| ------------------ | -------------------- | -------------------------------------- |
+| Web (Next.js)      | `pnpm dev:web`       | **Yes** — `pnpm smoke` + agent-browser |
+| Mobile (Expo)      | `pnpm dev:mobile`    | No — needs a simulator/device          |
+| Extension (WXT)    | `pnpm dev:extension` | No — real Chrome                       |
+| Desktop (Electron) | `pnpm dev:desktop`   | No — GUI window                        |
+
+## Two agents on one machine
+
+Parallel agents mean parallel checkouts, each wanting a web server and a Supabase stack. `pnpm bootstrap` claims a free web port and a free Supabase port block on first provision, then pins both — `PORT` in `.env`, the block in `packages/db/supabase/config.toml`. Docker volumes are already namespaced per folder. The second checkout lands beside the first instead of on top of it, so read the port out of `.env` rather than assuming 3000.
+
+Auth follows suit: `baseUrl` derives from `PORT` in dev and from `VERCEL_URL` on a preview deployment, so redirects and OAuth callbacks work in both without configuration.
+
+## Shipping a change behind a flag
+
+A flagged change is reversible without a revert — flip one environment variable and redeploy. Declare the flag in `packages/api/src/flags/flags.ts`:
+
+```typescript
+export const flagDefaults = {
+  myFeature: false,
+} as const satisfies Record<string, boolean>;
+```
+
+The registry is the only source of flag names, so a typo at a read site is a type error rather than a flag that reads `false` forever. Read it server-side as `ctx.flags.myFeature`, or on any client via the `flag.list` query.
+
+```bash
+FEATURE_FLAGS="myFeature"         # on
+FEATURE_FLAGS="myFeature=false"   # off, explicitly
+```
+
+Set it per Vercel environment to land a change dark: on for preview, off in production, until a human decides. That is what makes an agent's change atomic — it goes in without changing what users see, and comes out without a git operation.
+
+## Tracing a failed call
+
+Every tRPC call emits one JSON line, and the request id in it comes back on the response as `x-request-id`:
+
+```text
+{"ts":"2026-08-05T…","requestId":"5f3c…","type":"mutation","path":"todo.create","durationMs":18,"ok":false,"code":"UNAUTHORIZED"}
+```
+
+Take the id off a failed response, grep the server output for it, and you have the record of that exact call — no correlating by timestamp. CI dumps these logs when the smoke gate fails, so a red build explains itself without a rerun. See `packages/api/src/observability/logger.ts`.
 
 ## The rest of the surface
 

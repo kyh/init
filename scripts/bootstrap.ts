@@ -1,6 +1,7 @@
 import { execSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import fs from "node:fs";
+import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -58,10 +59,9 @@ function checkbox(message: string, items: CheckboxItem[]): Promise<boolean[]> {
 
     const render = () => {
       stdout.write(HIDE_CURSOR);
-      for (let i = 0; i < items.length; i++) {
+      for (const [i, item] of items.entries()) {
         stdout.write(CLEAR_LINE);
         const isActive = i === cursor;
-        const item = items[i];
         const checkbox = item.checked ? `${GREEN}◼${RESET}` : `${DIM}◻${RESET}`;
         const label = isActive ? `${CYAN}${BOLD}${item.label}${RESET}` : item.label;
         const pointer = isActive ? `${CYAN}❯${RESET}` : " ";
@@ -99,7 +99,8 @@ function checkbox(message: string, items: CheckboxItem[]): Promise<boolean[]> {
 
       // Space – toggle
       if (key === " ") {
-        items[cursor].checked = !items[cursor].checked;
+        const item = items[cursor];
+        if (item) item.checked = !item.checked;
         render();
         return;
       }
@@ -279,16 +280,16 @@ function startSupabase(): Record<string, string> {
 
   const values: Record<string, string> = {};
   for (const line of output.split("\n")) {
-    const match = line.match(/^\s*(.+?):\s+(.+)$/);
-    if (match) {
-      values[match[1].trim()] = match[2].trim();
+    const [, key, value] = line.match(/^\s*(.+?):\s+(.+)$/) ?? [];
+    if (key && value) {
+      values[key.trim()] = value.trim();
     }
   }
   console.log("  ✓ Supabase started");
   return values;
 }
 
-function createEnv(supabaseValues: Record<string, string>) {
+function createEnv(supabaseValues: Record<string, string>, ports: Ports) {
   const envPath = ".env";
   if (fileExists(envPath)) {
     console.log("  ✓ .env already exists, skipping");
@@ -297,7 +298,7 @@ function createEnv(supabaseValues: Record<string, string>) {
 
   // With the Data API disabled, `supabase start` doesn't print these — fall
   // back to the fixed local-dev values (identical for every local instance)
-  const apiUrl = supabaseValues["API URL"] ?? "http://127.0.0.1:54321";
+  const apiUrl = supabaseValues["API URL"] ?? `http://127.0.0.1:${ports.supabaseApi}`;
   const serviceRoleKey =
     supabaseValues["service_role key"] ??
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU";
@@ -305,8 +306,16 @@ function createEnv(supabaseValues: Record<string, string>) {
   const env = [
     `NEXT_PUBLIC_SUPABASE_URL="${apiUrl}"`,
     `SUPABASE_SERVICE_ROLE_KEY="${serviceRoleKey}"`,
-    `POSTGRES_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"`,
+    `POSTGRES_URL="postgresql://postgres:postgres@127.0.0.1:${ports.supabaseDb}/postgres"`,
     `BETTER_AUTH_SECRET="${randomBytes(32).toString("base64")}"`,
+    "",
+    "# The web app's port, claimed at bootstrap so parallel checkouts don't collide.",
+    "# Drives auth's baseUrl too, so changing it by hand means changing it here.",
+    `PORT=${ports.web}`,
+    "",
+    "# Comma-separated feature flags: `name` enables, `name=false` disables.",
+    "# Registry + defaults live in packages/api/src/flags/flags.ts.",
+    `# FEATURE_FLAGS=""`,
     "",
     "# Uncomment + run 'pnpm emulate' so the GitHub button works offline (see AGENTS.md)",
     `# NEXT_PUBLIC_GITHUB_EMULATOR_URL="http://localhost:4000"`,
@@ -340,6 +349,116 @@ function ensureProjectId() {
     config.replace(/^project_id\s*=\s*"[^"]*"/m, `project_id = "${projectId}"`),
   );
   console.log(`  ✓ Supabase project_id → "${projectId}" (isolates this project's local DB volume)`);
+}
+
+// ── Port selection ───────────────────────────────────────
+// Two agents working on the same machine mean two checkouts, each wanting a web
+// server and a local Supabase stack. `ensureProjectId` already keeps their
+// Docker volumes apart; ports are the other half. On a first provision we claim
+// a free web port and a free block for Supabase, then pin both — in .env and in
+// config.toml — so the second checkout lands beside the first instead of on top
+// of it.
+//
+// Only on a first provision: once .env exists its POSTGRES_URL is pinned to a
+// block, so re-running must not move it. That also makes re-runs idempotent.
+
+const SUPABASE_BLOCK_SIZE = 10;
+const SUPABASE_BLOCK_START = 54320;
+const DEFAULT_WEB_PORT = 3000;
+const SUPABASE_CONFIG_PATH = "packages/db/supabase/config.toml";
+
+interface Ports {
+  web: number;
+  supabaseApi: number;
+  supabaseDb: number;
+}
+
+const isPortFree = (port: number) =>
+  new Promise<boolean>((resolve) => {
+    const server = net.createServer();
+    server.once("error", () => resolve(false));
+    server.once("listening", () => server.close(() => resolve(true)));
+    server.listen(port, "127.0.0.1");
+  });
+
+async function findFreePort(start: number): Promise<number> {
+  for (let port = start; port < start + 100; port++) {
+    if (await isPortFree(port)) return port;
+  }
+  throw new Error(`No free port found in ${start}–${start + 99}`);
+}
+
+/** Lowest wholly-free block, so Supabase's services stay contiguous and legible. */
+async function findFreeSupabaseBlock(): Promise<number> {
+  for (
+    let base = SUPABASE_BLOCK_START;
+    base < SUPABASE_BLOCK_START + 200;
+    base += SUPABASE_BLOCK_SIZE
+  ) {
+    const ports = Array.from({ length: SUPABASE_BLOCK_SIZE }, (_, i) => base + i);
+    const free = await Promise.all(ports.map(isPortFree));
+    if (free.every(Boolean)) return base;
+  }
+  throw new Error("No free Supabase port block found");
+}
+
+// Every `port`/`shadow_port`/`vector_port` key in config.toml is a Supabase
+// service port in one contiguous block, so the whole block shifts together.
+const PORT_LINE = /^(\s*(?:shadow_|vector_)?port\s*=\s*)(\d+)$/gm;
+
+/** The `port` of a top-level section, e.g. `[db]` — not `[db.pooler]`. */
+function readSectionPort(config: string, section: string): number | undefined {
+  const body = config.split(/^\[/m).find((chunk) => chunk.startsWith(`${section}]`));
+  const port = body?.match(/^\s*port\s*=\s*(\d+)/m)?.[1];
+  return port ? Number(port) : undefined;
+}
+
+function readSupabasePorts(config: string) {
+  return {
+    supabaseApi: readSectionPort(config, "api") ?? SUPABASE_BLOCK_START + 1,
+    supabaseDb: readSectionPort(config, "db") ?? SUPABASE_BLOCK_START + 2,
+  };
+}
+
+async function selectPorts(firstProvision: boolean): Promise<Ports> {
+  const config = fileExists(SUPABASE_CONFIG_PATH) ? readText(SUPABASE_CONFIG_PATH) : "";
+
+  // Already provisioned: whatever is on disk is what the running stack uses.
+  if (!firstProvision || !config) {
+    return {
+      web: Number(process.env.PORT) || DEFAULT_WEB_PORT,
+      ...readSupabasePorts(config),
+    };
+  }
+
+  const web = await findFreePort(DEFAULT_WEB_PORT);
+  if (web !== DEFAULT_WEB_PORT) {
+    console.log(`  ✓ Web port ${DEFAULT_WEB_PORT} is taken — using ${web}`);
+  }
+
+  const base = await findFreeSupabaseBlock();
+  const currentBase = Math.min(...[...config.matchAll(PORT_LINE)].map((match) => Number(match[2])));
+  const delta = base - currentBase;
+
+  if (delta !== 0) {
+    writeText(
+      SUPABASE_CONFIG_PATH,
+      config.replace(
+        PORT_LINE,
+        (_, prefix: string, port: string) => `${prefix}${Number(port) + delta}`,
+      ),
+    );
+    console.log(`  ✓ Supabase ports ${currentBase}+ are taken — shifted to ${base}+`);
+  }
+
+  // Derived from the delta rather than re-read, so --dry-run (which skips the
+  // write) still reports the ports it would have chosen.
+  const current = readSupabasePorts(config);
+  return {
+    web,
+    supabaseApi: current.supabaseApi + delta,
+    supabaseDb: current.supabaseDb + delta,
+  };
 }
 
 function pushSchema() {
@@ -426,11 +545,12 @@ async function main() {
   console.log("\nChecking dependencies...");
   checkDocker();
   ensureProjectId();
+  const ports = await selectPorts(!fileExists(".env"));
 
   // ── Step 3: Start Supabase + create .env ──
   const supabaseValues = startSupabase();
   console.log("\nConfiguring environment...");
-  createEnv(supabaseValues);
+  createEnv(supabaseValues, ports);
 
   // ── Step 4: Push database schema ──
   pushSchema();
@@ -442,8 +562,9 @@ async function main() {
   checkAgentTooling();
 
   console.log(`\n  ${GREEN}Setup complete!${RESET}\n`);
-  console.log(`  Start:  ${CYAN}pnpm dev${RESET}       (web → http://localhost:3000)`);
+  console.log(`  Start:  ${CYAN}pnpm dev${RESET}       (web → http://localhost:${ports.web})`);
   console.log(`  Verify: ${CYAN}pnpm verify${RESET}    (typecheck · lint · format · test)`);
+  console.log(`  Smoke:  ${CYAN}pnpm smoke${RESET}     (drives the running app end-to-end)`);
   console.log(`  Login:  ${CYAN}dev@init.local${RESET} / ${CYAN}password${RESET}  (seeded)`);
   console.log(`  Agents: read ${CYAN}AGENTS.md${RESET}\n`);
 }

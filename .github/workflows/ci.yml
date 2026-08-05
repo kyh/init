@@ -41,3 +41,63 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+  # The runtime gate. `ci` proves the code compiles and units behave; this proves
+  # the app actually boots, that auth works, and that a mutation reaches the
+  # database — the breakage a typecheck-only pipeline waves through. Runs in
+  # parallel with `ci` because it needs none of its output.
+  smoke:
+    runs-on: ubuntu-latest
+    env:
+      TURBO_TELEMETRY_DISABLED: 1
+      # Matches the port the web server is started on below. Also drives
+      # better-auth's baseUrl (see packages/api/src/auth/auth.ts).
+      PORT: 3000
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Not `pnpm bootstrap`: the runner already has Docker, and bootstrap's
+      # port-claiming exists for developer machines running other stacks. A
+      # runner is empty, so pinning the ports keeps this job predictable.
+      - name: Write environment
+        run: |
+          cat > .env <<'EOF'
+          POSTGRES_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          BETTER_AUTH_SECRET="ci-only-secret-never-leaves-this-job"
+          NEXT_PUBLIC_SUPABASE_URL="http://127.0.0.1:54321"
+          SUPABASE_SERVICE_ROLE_KEY=""
+          PORT=3000
+          EOF
+
+      - name: Start Supabase
+        run: pnpm db:start
+
+      - name: Push schema and seed
+        run: pnpm db:push && pnpm db:seed
+
+      - name: Build web
+        run: pnpm -F @repo/web build
+
+      - name: Start web
+        run: pnpm -F @repo/web start > /tmp/web.log 2>&1 &
+
+      # Polls /api/health until the server answers, then drives sign-in, the
+      # todo lifecycle, and the authenticated dashboard render.
+      - name: Smoke test
+        run: pnpm smoke
+
+      # The structured request logs (one JSON line per tRPC call, each with its
+      # request id) make a failure readable without a rerun.
+      - name: Server logs
+        if: failure()
+        run: cat /tmp/web.log || true

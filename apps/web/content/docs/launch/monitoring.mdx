@@ -15,6 +15,22 @@ curl https://your-domain.com/api/health
 # {"status":"ok"}
 ```
 
+### Structured Request Logs
+
+Every tRPC call emits one JSON line on the server (`packages/api/src/observability/logger.ts`):
+
+```text
+{"ts":"2026-08-05T12:04:31.882Z","requestId":"5f3c…","type":"mutation","path":"todo.create","durationMs":18,"ok":true,"userId":"usr_…"}
+```
+
+Successes go to stdout and failures to stderr, so a log drain can split streams without parsing. The `requestId` also comes back on the HTTP response as `x-request-id` — take it off a failed response and grep for that one line instead of correlating by timestamp:
+
+```bash
+grep '"requestId":"5f3c…"' /tmp/web.log
+```
+
+On Vercel these land in runtime logs as-is; any drain that understands JSON lines (Better Stack, Axiom, Datadog) can index them without a parser. The lines are silent under vitest so unit tests aren't drowned in them.
+
 ### Dev-Time Logging
 
 - The tRPC client's `loggerLink` logs every procedure call in development and errors in production (`apps/web/src/trpc/react.tsx`)

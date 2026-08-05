@@ -43,7 +43,18 @@ The auth base URL derives from Vercel's built-in `VERCEL_ENV` / `VERCEL_PROJECT_
 
 ### 3. Preview Deployments
 
-The `oAuthProxy` plugin in `packages/api/src/auth/auth.ts` routes OAuth callbacks through the production URL, so GitHub login works on preview deployments without registering every preview domain.
+Every push gets its own URL, which is the isolated environment an agent needs to verify a change against something real rather than against localhost. Two things make it work unmodified:
+
+- `baseUrl` derives from `VERCEL_URL` on a preview, so redirects land back on the right host
+- The `oAuthProxy` plugin in `packages/api/src/auth/auth.ts` routes OAuth callbacks through the production URL, so GitHub login works without registering every preview domain
+
+Verify a preview the same way CI verifies a local server:
+
+```bash
+SMOKE_URL=https://my-app-git-branch.vercel.app pnpm smoke
+```
+
+Set `FEATURE_FLAGS` per environment (Vercel → Settings → Environment Variables, scoped to Preview) to exercise a change on preview while production stays dark.
 
 ### 4. Custom Domain
 
@@ -102,8 +113,10 @@ Vercel deploys on push once the repo is connected - previews per PR, production 
 Run checks before merging:
 
 ```bash
-pnpm lint && pnpm typecheck && pnpm test && pnpm build
+pnpm verify   # typecheck · lint · format · test
 ```
+
+`.github/workflows/ci.yml` runs that plus a `smoke` job that boots Supabase, seeds it, starts the built web app, and drives sign-in and the todo lifecycle over HTTP — the gate that catches a change that compiles but doesn't run. On failure it dumps the server's structured request logs, so a red build explains itself without a rerun.
 
 ## Health Checks
 
@@ -115,6 +128,14 @@ curl https://your-domain.com/api/health
 ```
 
 ## Rollback
+
+Cheapest first: if the change shipped behind a flag, turning it off is one environment variable and a redeploy — no revert, no rebuild of unrelated work.
+
+```bash
+FEATURE_FLAGS="myFeature=false"    # then redeploy
+```
+
+Otherwise roll the deployment back:
 
 ```bash
 vercel ls                          # List deployments
@@ -136,6 +157,7 @@ Supabase paid plans also keep automated backups.
 - `POSTGRES_URL` uses the transaction pooler (:6543) - the client is configured for it
 - Avatars bucket exists in the production Supabase project (no policies needed)
 - Uptime monitor on `/api/health`
+- `FEATURE_FLAGS` reviewed per environment — a flag left on in Preview shouldn't carry into Production
 
 ## Next Steps
 

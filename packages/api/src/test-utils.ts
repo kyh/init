@@ -1,6 +1,7 @@
 import { vi } from "vitest";
 
 import type { TRPCContext } from "./trpc";
+import { flagDefaults } from "./flags/flags";
 
 const mockUser = {
   id: "user-1",
@@ -72,6 +73,7 @@ export function createMockContext(
     db?: MockDb;
     origin?: string | null;
     secFetchSite?: string | null;
+    flags?: TRPCContext["flags"];
   } = {},
 ): TRPCContext & { db: MockDb } {
   const db = overrides.db ?? createMockDb();
@@ -91,6 +93,9 @@ export function createMockContext(
     // a test opts into cross-origin headers.
     origin: overrides.origin ?? null,
     secFetchSite: overrides.secFetchSite ?? null,
+    // Registry defaults unless a test gates on a specific flag.
+    flags: overrides.flags ?? flagDefaults,
+    requestId: "test-request-id",
   };
 }
 

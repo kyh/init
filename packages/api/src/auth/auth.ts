@@ -19,12 +19,16 @@ import { FALLBACK_ORGANIZATION_SLUG, isSlugCollision, slugify } from "./utils";
 // working without Stripe configured (checkout/portal will fail, list won't)
 const stripeClient = new Stripe(env.STRIPE_SECRET_KEY);
 
+// Locally this follows PORT, which `pnpm bootstrap` writes into .env after
+// picking a free one — so two checkouts (two agents) can run side by side and
+// each still gets a baseUrl that matches the server it's actually serving from.
+// Redirects and the trusted-origin list below both hang off this.
 export const baseUrl =
   process.env.VERCEL_ENV === "production"
     ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
     : process.env.VERCEL_ENV === "preview"
       ? `https://${process.env.VERCEL_URL}`
-      : "http://localhost:3000";
+      : `http://localhost:${process.env.PORT ?? "3000"}`;
 
 // Origins allowed to drive authenticated requests. The web app, extension popup
 // iframe, and desktop shell all run same-origin as baseUrl; React Native uses

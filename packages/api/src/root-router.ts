@@ -1,3 +1,4 @@
+import { flagRouter } from "./flags/flag-router";
 import { organizationRouter } from "./organization/organization-router";
 import { todoRouter } from "./todo/todo-router";
 import { createTRPCRouter } from "./trpc";
@@ -7,6 +8,7 @@ export const appRouter = createTRPCRouter({
   waitlist: waitlistRouter,
   organization: organizationRouter,
   todo: todoRouter,
+  flag: flagRouter,
 });
 
 export type AppRouter = typeof appRouter;

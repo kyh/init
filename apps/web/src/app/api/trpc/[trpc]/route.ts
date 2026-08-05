@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { appRouter, createTRPCContext } from "@repo/api";
+import { appRouter, createTRPCContext, REQUEST_ID_HEADER } from "@repo/api";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 
 // No CORS headers: every client reaches this route same-origin. The web app is
@@ -18,9 +18,15 @@ const handler = async (req: NextRequest) =>
     router: appRouter,
     req,
     createContext: () => createTRPCContext({ headers: req.headers }),
-    onError: ({ error, path }) => {
+    // Hands the caller the id its log lines were tagged with, so a failed
+    // response can be traced back to the server-side record of the call
+    // without correlating by timestamp. `ctx` is undefined only if context
+    // creation itself threw, in which case there is no id to report.
+    responseMeta: ({ ctx }) =>
+      ctx?.requestId ? { headers: { [REQUEST_ID_HEADER]: ctx.requestId } } : {},
+    onError: ({ error, path, ctx }) => {
       if (!EXPECTED_ERROR_CODES.has(error.code)) {
-        console.error(`>>> tRPC Error on '${path}'`, error);
+        console.error(`>>> tRPC Error on '${path}' [${ctx?.requestId ?? "no-request-id"}]`, error);
       }
     },
   });
