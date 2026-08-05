@@ -33,6 +33,14 @@ curl -s -i -X POST localhost:3000/api/auth/sign-in/email \
   -d '{"email":"dev@init.local","password":"password"}' | grep -i set-cookie
 ```
 
+**Writing a `fetch`-based client instead of curl? Send an `Origin` header.** Node's
+`fetch` always sends `Sec-Fetch-Mode: cors`, and that fetch metadata puts
+better-auth's CSRF check into strict mode, where a missing `Origin` is a 403
+(`MISSING_OR_NULL_ORIGIN`) with nothing logged server-side — a confusing failure
+to debug. A browser sends both headers; sending metadata without an origin is a
+combination nothing real produces. curl sends neither, which is why the recipe
+above needs no such header. See `scripts/smoke.ts`.
+
 ## Seeded login
 
 ```

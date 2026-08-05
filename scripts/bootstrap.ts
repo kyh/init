@@ -420,11 +420,31 @@ function readSupabasePorts(config: string) {
   };
 }
 
+/**
+ * True when this project's local Supabase is already up. Its own containers are
+ * then holding the ports in config.toml, and a free-port scan would read them as
+ * taken by someone else and shift the whole block out from under the running
+ * stack — leaving a POSTGRES_URL pointing at nothing. Matters because `.env` can
+ * be deleted while Supabase keeps running, which otherwise looks like a first
+ * provision.
+ */
+function isSupabaseRunning(): boolean {
+  // In a dry run nothing is inspected, so report "not running" and let the
+  // port-claiming path print what it would do.
+  if (DRY_RUN) return false;
+  try {
+    execSync("pnpm -F db supabase status", { cwd: ROOT_DIR, stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function selectPorts(firstProvision: boolean): Promise<Ports> {
   const config = fileExists(SUPABASE_CONFIG_PATH) ? readText(SUPABASE_CONFIG_PATH) : "";
 
-  // Already provisioned: whatever is on disk is what the running stack uses.
-  if (!firstProvision || !config) {
+  // Already provisioned: .env pins both, and moving either would orphan it.
+  if (!firstProvision) {
     return {
       web: Number(process.env.PORT) || DEFAULT_WEB_PORT,
       ...readSupabasePorts(config),
@@ -434,6 +454,14 @@ async function selectPorts(firstProvision: boolean): Promise<Ports> {
   const web = await findFreePort(DEFAULT_WEB_PORT);
   if (web !== DEFAULT_WEB_PORT) {
     console.log(`  ✓ Web port ${DEFAULT_WEB_PORT} is taken — using ${web}`);
+  }
+
+  // The Supabase block is claimed separately from the web port: a stack can
+  // already be up (say .env was deleted but the containers kept running), in
+  // which case its ports are correct and must not move, even though a fresh web
+  // port is still worth claiming.
+  if (!config || isSupabaseRunning()) {
+    return { web, ...readSupabasePorts(config) };
   }
 
   const base = await findFreeSupabaseBlock();

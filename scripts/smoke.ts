@@ -27,6 +27,24 @@ const BASE_URL = (
 const EMAIL = "dev@init.local";
 const PASSWORD = "password";
 
+/**
+ * Node's `fetch` sends `Sec-Fetch-Mode: cors` on every request. That fetch
+ * metadata puts better-auth's CSRF middleware into strict mode, where it
+ * *requires* an Origin and answers 403 without logging anything server-side when
+ * one is missing. A browser sends both headers together; sending neither is the
+ * combination nothing real produces. So send the Origin a browser would.
+ *
+ * It also satisfies the tRPC mutation origin guard (packages/api/src/trpc.ts),
+ * which checks the same value against the same trusted-origin list.
+ *
+ * (`curl` needs none of this — it sends no fetch metadata, so the strict path
+ * never engages. That is why the curl recipe in AGENTS.md works as written.)
+ *
+ * Against a deployment, SMOKE_URL must be that deployment's own origin, since
+ * that is what the server derives its trusted origin from.
+ */
+const BROWSER_HEADERS = { origin: BASE_URL };
+
 const DIM = "\x1b[2m";
 const RED = "\x1b[31m";
 const GREEN = "\x1b[32m";
@@ -69,12 +87,23 @@ type TrpcResponse<T> = {
 // oxlint-disable-next-line typescript/consistent-type-assertions -- untrusted HTTP body, decoded once, here
 const decode = async <T>(res: Response): Promise<T> => (await res.json()) as T;
 
-const unwrap = async <T>(res: Response, label: string): Promise<T> => {
-  const parsed = await decode<TrpcResponse<T> | null>(res).catch(() => null);
+/**
+ * Renders a failed response as `status + body`. A gate that reports only a bare
+ * status makes you re-run CI just to learn what the server said, so every
+ * failure path below goes through this. Truncated because an error page can be
+ * a whole HTML document.
+ */
+const describe = async (res: Response): Promise<string> => {
+  const body = await res.text().catch(() => "<unreadable body>");
+  const trimmed = body.replaceAll(/\s+/g, " ").trim();
+  return `HTTP ${res.status} — ${trimmed.slice(0, 400) || "<empty body>"}`;
+};
 
-  if (!res.ok || parsed?.error) {
-    fail(`${label} failed: ${parsed?.error?.json?.message ?? `HTTP ${res.status}`}`);
-  }
+const unwrap = async <T>(res: Response, label: string): Promise<T> => {
+  if (!res.ok) fail(`${label} failed: ${await describe(res)}`);
+
+  const parsed = await decode<TrpcResponse<T> | null>(res).catch(() => null);
+  if (parsed?.error) fail(`${label} failed: ${parsed.error.json?.message ?? "unknown tRPC error"}`);
 
   const data = parsed?.result?.data?.json;
   if (data === undefined) fail(`${label} returned no data`);
@@ -84,14 +113,16 @@ const unwrap = async <T>(res: Response, label: string): Promise<T> => {
 
 const trpcQuery = async <T>(path: string, input: unknown, cookie: string) => {
   const query = `?input=${encodeURIComponent(JSON.stringify({ json: input }))}`;
-  const res = await fetch(url(`/api/trpc/${path}${query}`), { headers: { cookie } });
+  const res = await fetch(url(`/api/trpc/${path}${query}`), {
+    headers: { ...BROWSER_HEADERS, cookie },
+  });
   return { data: await unwrap<T>(res, `query ${path}`), res };
 };
 
 const trpcMutation = async <T>(path: string, input: unknown, cookie: string) => {
   const res = await fetch(url(`/api/trpc/${path}`), {
     method: "POST",
-    headers: { cookie, "content-type": "application/json" },
+    headers: { ...BROWSER_HEADERS, cookie, "content-type": "application/json" },
     body: JSON.stringify({ json: input }),
   });
   return { data: await unwrap<T>(res, `mutation ${path}`), res };
@@ -100,24 +131,35 @@ const trpcMutation = async <T>(path: string, input: unknown, cookie: string) => 
 // ── Steps ────────────────────────────────────────────────
 
 /**
- * Polls the liveness endpoint until the server answers. CI starts the server in
- * the background, so the first request would otherwise race the boot.
+ * Polls the liveness endpoint until the server answers healthy. CI starts the
+ * server in the background, so the first request would otherwise race the boot.
+ *
+ * Every unhealthy outcome retries, not just a refused connection: a server that
+ * is still booting accepts TCP well before it can route, so it answers 404 or
+ * 500 for a while. Treating that as final would make the gate flake on exactly
+ * the timing this function exists to absorb. Only running out of attempts fails,
+ * and it reports the last thing it saw so the failure is diagnosable.
  */
 const waitForServer = async (attempts = 60) => {
+  let lastSeen = "no response at all";
+
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
-      const res = await fetch(url("/api/health"));
+      const res = await fetch(url("/api/health"), { headers: BROWSER_HEADERS });
       const body = await decode<{ status?: string }>(res);
       if (res.ok && body.status === "ok") return;
-      fail(`/api/health answered ${res.status} ${JSON.stringify(body)}`);
+      lastSeen = `HTTP ${res.status} ${JSON.stringify(body)}`;
     } catch (error) {
-      if (error instanceof SmokeError) throw error;
-      if (attempt === attempts) {
-        fail(`server never came up at ${BASE_URL} (${attempts} attempts)`);
-      }
-      await sleep(1000);
+      // Includes a non-JSON body (a framework error page), which is itself a
+      // normal thing to see mid-boot.
+      lastSeen = error instanceof Error ? error.message : String(error);
     }
+    await sleep(1000);
   }
+
+  fail(
+    `server never became healthy at ${BASE_URL} after ${attempts} attempts — last saw: ${lastSeen}`,
+  );
 };
 
 /** Exchanges the seeded login for a session cookie — the same call AGENTS.md
@@ -125,12 +167,15 @@ const waitForServer = async (attempts = 60) => {
 const signIn = async (): Promise<string> => {
   const res = await fetch(url("/api/auth/sign-in/email"), {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: { ...BROWSER_HEADERS, "content-type": "application/json" },
     body: JSON.stringify({ email: EMAIL, password: PASSWORD }),
   });
 
   if (!res.ok) {
-    fail(`sign-in as ${EMAIL} returned ${res.status}. Is the database seeded? (pnpm db:seed)`);
+    fail(
+      `sign-in as ${EMAIL} failed: ${await describe(res)}. ` +
+        `Is the database seeded? (pnpm db:seed)`,
+    );
   }
 
   const cookies = res.headers.getSetCookie();
@@ -141,8 +186,10 @@ const signIn = async (): Promise<string> => {
 };
 
 const firstOrganizationSlug = async (cookie: string): Promise<string> => {
-  const res = await fetch(url("/api/auth/organization/list"), { headers: { cookie } });
-  if (!res.ok) fail(`organization list returned ${res.status}`);
+  const res = await fetch(url("/api/auth/organization/list"), {
+    headers: { ...BROWSER_HEADERS, cookie },
+  });
+  if (!res.ok) fail(`organization list failed: ${await describe(res)}`);
 
   const organizations = await decode<{ slug?: string }[]>(res);
   const slug = organizations[0]?.slug;
@@ -222,8 +269,10 @@ const main = async () => {
   });
 
   await step("the authenticated dashboard renders", async () => {
-    const res = await fetch(url(`/dashboard/${slug}`), { headers: { cookie } });
-    if (!res.ok) fail(`/dashboard/${slug} returned ${res.status}`);
+    const res = await fetch(url(`/dashboard/${slug}`), {
+      headers: { ...BROWSER_HEADERS, cookie },
+    });
+    if (!res.ok) fail(`/dashboard/${slug} failed: ${await describe(res)}`);
 
     // A seeded title in the HTML proves the page rendered real data, not just
     // that it returned 200 with an empty shell.
