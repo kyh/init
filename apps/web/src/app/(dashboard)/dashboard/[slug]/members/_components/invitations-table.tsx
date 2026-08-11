@@ -4,12 +4,13 @@ import { useMemo } from "react";
 import { alertDialog } from "@repo/ui/components/alert-dialog";
 import { Badge } from "@repo/ui/components/badge";
 import { DropdownMenuItem } from "@repo/ui/components/dropdown-menu";
-import { AutoTable } from "@repo/ui/components/table";
+import { AutoTable, autoTableFeatures } from "@repo/ui/components/table";
 import { toast } from "@repo/ui/components/sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { useTable } from "@tanstack/react-table";
 
 import type { RouterOutputs } from "@repo/api";
+import type { AutoTableFeatures } from "@repo/ui/components/table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { authClient } from "@/lib/auth-client";
 import { formatDate } from "@/lib/format";
@@ -31,7 +32,7 @@ export const InvitationsTable = ({ slug }: InvitationsTableProps) => {
   });
 
   const columns = useMemo(() => {
-    const columnDefs: ColumnDef<Invitation>[] = [
+    const columnDefs: ColumnDef<AutoTableFeatures, Invitation>[] = [
       {
         header: "Email",
         cell: ({ row }) => row.original.email,
@@ -60,10 +61,10 @@ export const InvitationsTable = ({ slug }: InvitationsTableProps) => {
     return columnDefs;
   }, [slug, canManageInvitations]);
 
-  const table = useReactTable({
+  const table = useTable({
+    features: autoTableFeatures,
     data: organizationData.invitations,
     columns,
-    getCoreRowModel: getCoreRowModel(),
   });
 
   return (
