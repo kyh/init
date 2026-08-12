@@ -13,7 +13,8 @@
 - **Backend**: tRPC, better-auth, Drizzle ORM
 - **Billing**: Stripe via @better-auth/stripe
 - **Email**: Resend REST API (console fallback in dev)
-- **Database**: Supabase (Postgres + avatars storage bucket only — auth is better-auth, Data API disabled)
+- **Database**: Postgres — Docker Compose locally, Neon in production (auth is better-auth)
+- **Storage**: Vercel Blob (avatars only; no local emulator, so that route 501s offline)
 
 ## Monorepo Structure
 
@@ -25,7 +26,7 @@ apps/
   desktop/     # Desktop app (Electron)
 packages/
   api/         # tRPC router + better-auth
-  db/          # Drizzle schema + client, Supabase local dev/migrations
+  db/          # Drizzle schema + client, local Postgres compose file
   ui/          # Shared React components (shadcn-style)
 ```
 
@@ -53,8 +54,8 @@ pnpm verify           # typecheck · lint · format · test (CI gate)
 pnpm build            # Build all packages
 
 # Database
-pnpm db:start         # Start local Supabase
-pnpm db:stop          # Stop Supabase
+pnpm db:start         # Start local Postgres (Docker)
+pnpm db:stop          # Stop local Postgres
 pnpm db:push          # Push Drizzle schema
 pnpm db:reset         # Reset, push, and re-seed schema
 pnpm db:seed          # Seed dev user (dev@init.local / password) + sample data
@@ -70,7 +71,7 @@ cd packages/ui && pnpm dlx shadcn@latest add <component>
 
 This template is built to be driven end-to-end by a coding agent. `AGENTS.md` is the full workflow; the essentials:
 
-- **Provision headless**: `pnpm bootstrap --yes` (idempotent; needs Docker for local Supabase). Non-TTY runs auto-keep all apps, so a piped invocation won't hang on the app-picker.
+- **Provision headless**: `pnpm bootstrap --yes` (idempotent; needs Docker for local Postgres). Non-TTY runs auto-keep all apps, so a piped invocation won't hang on the app-picker.
 - **Seeded login**: `dev@init.local` / `password` (via `pnpm db:seed`) — a personal org + sample todos to verify against, no signup step.
 - **Verify**: `pnpm verify` for the static gate; drive the running web app with `agent-browser` for runtime checks. Only web is headless-driveable — mobile/desktop/extension get `typecheck` + `build` only.
 - **OAuth offline**: uncomment `NEXT_PUBLIC_GITHUB_EMULATOR_URL` in `.env` + `pnpm emulate`, then `pnpm dev:web` — the shipped "Continue with GitHub" button runs through a local emulator (dev-only `genericOAuth`; real provider untouched in prod).

@@ -10,7 +10,7 @@ pnpm bootstrap --yes  # provision everything, non-interactively
 pnpm dev:web          # web app → http://localhost:3000
 ```
 
-`pnpm bootstrap --yes` (or any piped / non-TTY run — e.g. an agent) keeps all apps and: checks Docker → starts local Supabase → writes `.env` → pushes the Drizzle schema → seeds a dev user → reports agent tooling. It's idempotent; re-run any time, or `pnpm db:reset` to rebuild + re-seed. **Requires Docker** (local Supabase); without it, the data and auth layer can't come up.
+`pnpm bootstrap --yes` (or any piped / non-TTY run — e.g. an agent) keeps all apps and: checks Docker → starts local Postgres → writes `.env` → pushes the Drizzle schema → seeds a dev user → reports agent tooling. It's idempotent; re-run any time, or `pnpm db:reset` to rebuild + re-seed. **Requires Docker** (local Postgres runs in a container defined by `packages/db/docker-compose.yml`); without it, the data and auth layer can't come up.
 
 Liveness: `curl -s localhost:3000/api/health` → `{"status":"ok"}`.
 
@@ -23,7 +23,9 @@ gh repo create my-app --template kyh/init --clone && cd my-app   # new project f
 pnpm install && pnpm bootstrap --yes                             # any clone: install + provision
 ```
 
-A clone has everything except `node_modules` and `.env` (bootstrap writes `.env`), and it **needs Docker** for local Supabase — the data + auth layer. Without Docker, `pnpm verify` and `pnpm build` still work, but authed/data flows can't run. The committed `.codex` / `.superset` cloud-runner descriptors install deps on clone; a cloud sandbox with Docker runs the full stack, without it stays static-only.
+A clone has everything except `node_modules` and `.env` (bootstrap writes `.env`), and it **needs Docker** for local Postgres — the data + auth layer. Without Docker, `pnpm verify` and `pnpm build` still work, but authed/data flows can't run. The committed `.codex` / `.superset` cloud-runner descriptors install deps on clone; a cloud sandbox with Docker runs the full stack, without it stays static-only.
+
+A sandbox without Docker can instead point `POSTGRES_URL` at a hosted Postgres. Neon's database branching is the cheap way to do that safely: each agent or preview deployment gets an isolated copy-on-write branch of production data (Vercel's Neon integration creates one per preview deployment).
 
 Headless auth (no browser) — exchange the seeded login (below) for a session cookie and hand it to agent-browser or curl:
 

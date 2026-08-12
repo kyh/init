@@ -6,9 +6,11 @@ import { index, pgTable } from "drizzle-orm/pg-core";
 
 import { organization, user } from "./drizzle-schema-auth";
 
-// All tables enable RLS with no policies (deny-by-default): the public schema
-// is reachable through PostgREST with the anon key, and authz lives in tRPC.
-// The server's drizzle connection is unaffected (table owner bypasses RLS).
+// All tables enable RLS with no policies (deny-by-default). Nothing here
+// exposes Postgres to untrusted clients, so this is defense in depth: any
+// connection made with a non-owner role reads nothing unless a policy says
+// otherwise, and authz lives in tRPC. The server's drizzle connection is
+// unaffected (table owner bypasses RLS).
 export const waitlist = pgTable(
   "waitlist",
   (t) => ({

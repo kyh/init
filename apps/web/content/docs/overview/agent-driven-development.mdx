@@ -11,7 +11,7 @@ pnpm install
 pnpm bootstrap --yes
 ```
 
-`pnpm bootstrap` starts local Supabase, writes `.env`, pushes the schema, and seeds a dev user. It's interactive by default (a checklist to trim platforms you don't want), but `--yes` — or any piped, non-TTY invocation, which is how an agent runs it — keeps all apps and runs unattended. It needs Docker for local Supabase, and it's idempotent: re-run it, or `pnpm db:reset`, any time.
+`pnpm bootstrap` starts the local Postgres container, writes `.env`, pushes the schema, and seeds a dev user. It's interactive by default (a checklist to trim platforms you don't want), but `--yes` — or any piped, non-TTY invocation, which is how an agent runs it — keeps all apps and runs unattended. It needs Docker for that container, and it's idempotent: re-run it, or `pnpm db:reset`, any time.
 
 ## A seeded login
 
@@ -53,6 +53,8 @@ pnpm dev:web
 ```
 
 With the var set, the "Continue with GitHub" button routes through a dev-only `genericOAuth` provider aimed at the emulator — the same button, no diverging prod path (unset ⇒ the real provider). Click it and the emulator's user-picker completes sign-in. Fixtures live in `emulate.config.yaml`.
+
+One gap: avatar uploads go to Vercel Blob, which has no local emulator. Without `BLOB_READ_WRITE_TOKEN` that one route returns 501 with a pointer message — every other flow works offline.
 
 ## What an agent can verify
 

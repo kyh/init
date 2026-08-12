@@ -2,13 +2,13 @@
 title: "Database"
 ---
 
-Init uses Supabase (Postgres) with Drizzle ORM for type-safe queries. This guide covers the setup, schema, and development workflow.
+Init uses Postgres with Drizzle ORM for type-safe queries - a Docker container locally, Neon in production. This guide covers the setup, schema, and development workflow.
 
 ## Overview
 
 The stack:
 
-- **Supabase** - Managed Postgres, local dev via the Supabase CLI
+- **Postgres** - `postgres:17-alpine` via Docker Compose locally, Neon in production
 - **Drizzle ORM** - Type-safe queries over postgres.js
 - **drizzle-kit push** - Schema sync, no migration files
 - **RLS deny-by-default** - Authorization lives in tRPC, not the database
@@ -19,7 +19,7 @@ The stack:
 graph TB
     A[tRPC Procedures] --> B[Drizzle ORM]
     B --> C[postgres.js]
-    C --> D[Supabase Postgres]
+    C --> D[(Postgres)]
 
     E[drizzle-schema.ts] --> F[drizzle-kit push]
     F --> D
@@ -39,8 +39,9 @@ import * as schemaAuth from "./drizzle-schema-auth";
 
 const client = postgres(
   process.env.POSTGRES_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres",
-  // POSTGRES_URL points at Supavisor's transaction-mode pooler (:6543) in
-  // production, which does not support server-side prepared statements
+  // POSTGRES_URL points at a transaction-mode pooler in production (Neon's
+  // `-pooler` endpoint, backed by PgBouncer), which does not support
+  // server-side prepared statements
   { prepare: false },
 );
 
@@ -51,7 +52,7 @@ export const db = drizzle({
 });
 ```
 
-`POSTGRES_URL` is the only connection env var. It defaults to local Supabase.
+`POSTGRES_URL` is the only connection env var. It defaults to the local Docker container.
 
 ## Schema
 
@@ -91,7 +92,7 @@ export const todo = pgTable(
 
 ### Row Level Security
 
-Every table calls `.enableRLS()` with no policies - deny by default. The public schema is reachable through PostgREST with the anon key, so this blocks direct access. Authorization lives in tRPC. The server's Drizzle connection is unaffected: the table owner bypasses RLS.
+Every table calls `.enableRLS()` with no policies - deny by default. Nothing in this stack exposes Postgres to untrusted clients, so it's defense in depth rather than the primary control: it means a connection made with a non-owner role reads nothing by default. Authorization lives in tRPC. The server's Drizzle connection is unaffected: the table owner bypasses RLS.
 
 If you regenerate the auth schema, re-add `.enableRLS()` to every table.
 
@@ -109,7 +110,7 @@ cd packages/db && pnpm generate:auth-schema
 // packages/db/drizzle.config.ts
 export default {
   schema: ["./src/drizzle-schema-auth.ts", "./src/drizzle-schema.ts"],
-  out: "./supabase/migrations",
+  out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {
     // drizzle-kit needs a direct connection, not the pooler
@@ -125,8 +126,8 @@ export default {
 Init uses `drizzle-kit push` - schema goes straight to the database, no migration files.
 
 ```bash
-pnpm db:start         # Start local Supabase
-pnpm db:stop          # Stop local Supabase
+pnpm db:start         # Start local Postgres (Docker)
+pnpm db:stop          # Stop local Postgres
 pnpm db:push          # Push schema to local database
 pnpm db:push-remote   # Push schema to production (.env.production.local)
 pnpm db:reset         # Reset local database, then push schema
@@ -196,31 +197,34 @@ type Todo = InferSelectModel<typeof todo>;
 type NewTodo = InferInsertModel<typeof todo>;
 ```
 
-## Local Supabase
+## Local Postgres
 
-Config lives in `packages/db/supabase/config.toml`. Supabase Auth and the Data API (PostgREST) are disabled — better-auth owns auth, and all queries go through tRPC/Drizzle. Storage is enabled with a public `avatars` bucket; writes go through `/api/account/avatar` with the service-role key, so no storage policies are needed.
-
-Every table enables RLS with no policies, so the Data API serves zero rows to `anon`/`authenticated` — authorization lives in tRPC. Hosted projects should disable the Data API under Settings → API; nothing in the app uses it.
+One container, defined in `packages/db/docker-compose.yml`:
 
 ```bash
-pnpm db:start   # supabase start (Postgres on :54322, Studio on :54323)
+pnpm db:start    # docker compose up -d --wait (Postgres on :54322)
+pnpm db:stop     # Stop the container, keep the data
+pnpm db:reset    # Drop the volume, recreate, re-push the schema
+pnpm -F db studio  # Drizzle Studio, to browse data
 ```
 
-For hosted projects, create the `avatars` bucket in the Supabase dashboard.
+Port 54322 rather than 5432, so a Postgres already installed on the host doesn't clash. `--wait` blocks on the container's healthcheck, which checks over TCP - the throwaway server that runs during first-boot `initdb` answers on the Unix socket, so a socket check would return before the real server is listening.
+
+`COMPOSE_PROJECT_NAME` in `.env` namespaces the Docker volume. Compose otherwise derives the project name from the compose file's directory - `db` for every repo cloned from this template - and they would all share one database. `pnpm bootstrap` sets it from the repo folder name.
 
 ## Best Practices
 
 - **Scope by organization** - Multi-tenant tables reference `organization.id` and get an index on it
 - **Check membership in tRPC** - RLS won't save you; procedures must verify org access
 - **Use relational queries** - `db.query.x.findMany({ with })` beats N+1s
-- **Let the pooler pool** - Don't tune postgres.js connection counts; Supavisor handles it
+- **Let the pooler pool** - Don't tune postgres.js connection counts; the pooler handles it
 
 ## Troubleshooting
 
 **Connection errors**
 
 ```bash
-pnpm -F db status   # Is Supabase running?
+pnpm -F db status   # Is the Postgres container running?
 echo $POSTGRES_URL
 ```
 
@@ -232,7 +236,7 @@ pnpm db:reset   # Nuke local, re-push schema
 
 **Prepared statement errors in production**
 
-`POSTGRES_URL` points at the transaction pooler (:6543) - the client must keep `prepare: false`.
+`POSTGRES_URL` points at a transaction-mode pooler (Neon's `-pooler` endpoint) - the client must keep `prepare: false`.
 
 ## Next Steps
 

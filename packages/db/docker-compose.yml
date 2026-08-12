@@ -1,0 +1,35 @@
+# Local Postgres for development. Production runs on Neon (or any Postgres) —
+# the app's only connection input is POSTGRES_URL, so nothing here is required
+# beyond `pnpm dev`.
+#
+# The project name namespaces the volume. Every repo cloned from this template
+# has a `db` directory, and Compose would otherwise derive the same project
+# name for all of them and share one volume; `pnpm bootstrap` writes
+# COMPOSE_PROJECT_NAME into .env to keep each project isolated.
+name: ${COMPOSE_PROJECT_NAME:-init}
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    # 54322, not 5432, so a Postgres already installed on the host doesn't clash
+    ports:
+      - "54322:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      # -h 127.0.0.1 forces a TCP check. Without it pg_isready uses the Unix
+      # socket, which the throwaway server that runs during first-boot initdb
+      # already answers — so `--wait` would return before the real server is
+      # listening on the port, and the schema push would race it.
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres -h 127.0.0.1"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+volumes:
+  postgres-data:

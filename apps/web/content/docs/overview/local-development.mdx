@@ -22,7 +22,7 @@ Daily workflows, debugging, and conventions for building with Init.
 
 3. **Open your tools**:
    - Web app: http://localhost:3000
-   - Supabase Studio: http://localhost:54323
+   - Drizzle Studio: `pnpm -F db studio`
    - Mobile: Expo Go or a simulator
 
 ### Daily Commands
@@ -59,7 +59,7 @@ apps/
 
 packages/
 ├── api/          # tRPC routers + better-auth
-├── db/           # Drizzle schema + Supabase config
+├── db/           # Drizzle schema + local Postgres compose
 └── ui/           # Shared React components
 ```
 
@@ -74,7 +74,7 @@ Every platform shares the API, auth, and database packages. Write business logic
    ```bash
    pnpm db:push
    ```
-3. **Verify** in Supabase Studio or Drizzle Studio (`pnpm -F db studio`)
+3. **Verify** in Drizzle Studio (`pnpm -F db studio`)
 
 No migration files - `drizzle-kit push` diffs the schema straight against the database.
 
@@ -93,7 +93,7 @@ export const post = pgTable("post", (t) => ({
 })).enableRLS();
 ```
 
-Always `.enableRLS()` - authorization lives in tRPC, RLS blocks direct PostgREST access.
+Always `.enableRLS()` - authorization lives in tRPC, and deny-by-default RLS means a non-owner connection reads nothing.
 
 ## API Development
 
@@ -219,8 +219,7 @@ pnpm lint:fix && pnpm format:fix
 ### API / Database
 
 - Server logs in the `pnpm dev` terminal
-- Supabase Studio (http://localhost:54323) for data
-- `pnpm -F db studio` for Drizzle Studio
+- `pnpm -F db studio` for Drizzle Studio - browse and edit data
 
 ### Common Issues
 
@@ -249,12 +248,16 @@ One root `.env` file. Apps and packages load it via `dotenv -e ../../.env`. Turb
 
 ```
 POSTGRES_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres
+COMPOSE_PROJECT_NAME=init
 BETTER_AUTH_SECRET=...
 GITHUB_CLIENT_ID=...
 GITHUB_CLIENT_SECRET=...
-NEXT_PUBLIC_SUPABASE_URL=...
-SUPABASE_SERVICE_ROLE_KEY=...
+BLOB_READ_WRITE_TOKEN=...
 ```
+
+`POSTGRES_URL` is the only database input - the local Docker container in dev, Neon (or any Postgres) in production. `COMPOSE_PROJECT_NAME` namespaces that container's volume so two clones don't share one database; `pnpm bootstrap` writes it from the repo folder name.
+
+`BLOB_READ_WRITE_TOKEN` is for avatar uploads via Vercel Blob, which has no local emulator. Leave it unset offline - the avatar route returns 501 with a pointer, everything else works.
 
 Production values live in your deployment platform, plus `.env.production.local` for `pnpm db:push-remote`.
 

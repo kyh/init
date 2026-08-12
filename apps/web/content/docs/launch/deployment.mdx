@@ -2,7 +2,7 @@
 title: "Deployment"
 ---
 
-Ship Init to production. The web app targets Vercel; the database targets Supabase. Mobile, extension, and desktop each have their own pipeline.
+Ship Init to production. The web app targets Vercel; the database targets Neon. Mobile, extension, and desktop each have their own pipeline.
 
 ## Web App (Vercel)
 
@@ -26,7 +26,7 @@ vercel   # from apps/web
 Set in the Vercel dashboard (same keys as `.env.example`):
 
 ```
-# Database — Supavisor transaction pooler URL (:6543)
+# Database — Neon's pooled connection string (hostname contains -pooler)
 POSTGRES_URL=postgresql://...
 
 # Auth
@@ -34,12 +34,11 @@ BETTER_AUTH_SECRET=generate-with-openssl-rand--base64-32
 GITHUB_CLIENT_ID=...
 GITHUB_CLIENT_SECRET=...
 
-# Avatar uploads (Supabase Storage)
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=...
+# Avatar uploads (Vercel Blob)
+BLOB_READ_WRITE_TOKEN=...
 ```
 
-The auth base URL derives from Vercel's built-in `VERCEL_ENV` / `VERCEL_PROJECT_PRODUCTION_URL` / `VERCEL_URL` - nothing to set. Adding the Supabase integration to the Vercel project populates the Postgres and Supabase vars for you.
+The auth base URL derives from Vercel's built-in `VERCEL_ENV` / `VERCEL_PROJECT_PRODUCTION_URL` / `VERCEL_URL` - nothing to set. Adding the Neon integration to the Vercel project populates `POSTGRES_URL`, and creating a Blob store under Storage populates `BLOB_READ_WRITE_TOKEN`.
 
 ### 3. Preview Deployments
 
@@ -52,9 +51,9 @@ The `oAuthProxy` plugin in `packages/api/src/auth/auth.ts` routes OAuth callback
 3. SSL is automatic
 4. Update your GitHub OAuth app's callback URL
 
-## Database (Supabase)
+## Database (Neon)
 
-1. **Create a production project** at [supabase.com](https://supabase.com)
+1. **Create a production project** at [neon.tech](https://neon.tech), or add the Neon integration from the Vercel dashboard
 2. **Push the schema**:
 
    ```bash
@@ -62,11 +61,26 @@ The `oAuthProxy` plugin in `packages/api/src/auth/auth.ts` routes OAuth callback
    pnpm db:push-remote
    ```
 
-   `drizzle-kit push` connects directly (the config swaps :6543 for :5432 automatically).
+   `drizzle-kit push` needs a direct connection, so the config strips `-pooler` from the hostname automatically.
 
-3. **Create the avatars bucket** - a public `avatars` bucket, no policies needed (writes go through `/api/account/avatar` with the service-role key). Local dev gets this from `config.toml`; hosted projects need it created in the dashboard.
+Any Postgres works - Neon is the default because of branching (below), not because anything in the code depends on it.
 
-RLS is already on for every table with no policies - deny by default. Authorization lives in tRPC; the server connection bypasses RLS as table owner.
+RLS is already on for every table with no policies - deny by default. Nothing exposes Postgres directly, so this is belt-and-braces; authorization lives in tRPC, and the server connection bypasses RLS as table owner.
+
+### Branching
+
+Neon branches are copy-on-write, so a branch is a full database with production's data at a fraction of the storage. Two uses:
+
+- **Preview deployments** - the Vercel integration creates a branch per preview automatically, so PRs run against real-shaped data without touching production
+- **Agents and experiments** - `neonctl branches create --name agent/<task>` gives an isolated database to migrate against or destroy freely
+
+Delete a branch when you're done; nothing else in the stack needs to know it existed.
+
+## Avatar Storage (Vercel Blob)
+
+Create a Blob store in the Vercel dashboard (Storage → Create → Blob) and add `BLOB_READ_WRITE_TOKEN` to the project. Uploads go through `/api/account/avatar`, which checks the better-auth session, caps size at 1MB, and derives the stored Content-Type from the file's magic bytes rather than the client-supplied MIME type.
+
+There is no local emulator for Blob. Without the token that one route returns 501 with a pointer; the rest of the app is unaffected, so local development doesn't need a store.
 
 ## Mobile (EAS)
 
@@ -127,14 +141,14 @@ vercel rollback [deployment-url]   # Roll back the web app
 pg_dump $POSTGRES_URL > backup_$(date +%Y%m%d_%H%M%S).sql
 ```
 
-Supabase paid plans also keep automated backups.
+Neon also keeps point-in-time restore over a retention window, and a branch taken before a migration is itself a cheap rollback target.
 
 ## Production Checklist
 
 - `BETTER_AUTH_SECRET` set and unique per environment
 - Separate GitHub OAuth apps for dev and prod (callback: `https://your-domain.com/api/auth/callback/github`)
-- `POSTGRES_URL` uses the transaction pooler (:6543) - the client is configured for it
-- Avatars bucket exists in the production Supabase project (no policies needed)
+- `POSTGRES_URL` uses Neon's pooled endpoint (`-pooler` in the hostname) - the client is configured for it
+- `BLOB_READ_WRITE_TOKEN` set, with a Blob store created in the Vercel project
 - Uptime monitor on `/api/health`
 
 ## Next Steps

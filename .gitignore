@@ -55,9 +55,7 @@ yarn-error.log*
 # turbo
 .turbo
 
-# Supabase
-.branches
-.temp
+# cloud runners
 .superset
 
 # claude

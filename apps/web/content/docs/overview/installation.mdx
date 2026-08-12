@@ -9,7 +9,7 @@ Get Init running locally in a few minutes.
 - **Node.js** v24+ - [Download Node.js](https://nodejs.org/)
 - **pnpm** v10+ - Fast, disk space efficient package manager
 - **Git**
-- **Docker** - Required by local Supabase
+- **Docker** - Required by local Postgres
 
 ### Install pnpm
 
@@ -56,25 +56,26 @@ cp .env.example .env
 
 Fill in as needed:
 
-- `POSTGRES_URL` - defaults to local Supabase; leave as-is for local dev
+- `POSTGRES_URL` - defaults to the local Postgres container; leave as-is for local dev
+- `COMPOSE_PROJECT_NAME` - namespaces the local Docker volume so clones don't share one database
 - `BETTER_AUTH_SECRET` - generate with `openssl rand -base64 32`
 - `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` - only for GitHub login
-- `NEXT_PUBLIC_SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` - only for avatar uploads
+- `BLOB_READ_WRITE_TOKEN` - only for avatar uploads (Vercel Blob). There's no local emulator, so leave it unset offline: the avatar route returns 501 with a pointer and the rest of the app is unaffected.
 
 ### 4. Database Setup
 
-Start local Supabase and push the schema:
+Start local Postgres and push the schema:
 
 ```bash
-pnpm db:start   # Postgres on :54322, Studio on :54323
+pnpm db:start   # Postgres on :54322
 pnpm db:push    # drizzle-kit push
 ```
 
-Using Supabase Cloud instead? Create a project at [supabase.com](https://supabase.com), point `POSTGRES_URL` at it, and run `pnpm db:push`.
+Using a hosted database instead? Create one on [Neon](https://neon.tech) (or any Postgres host), point `POSTGRES_URL` at it, and run `pnpm db:push`.
 
 ### 5. Trim the Starter (Optional)
 
-`pnpm bootstrap` is the one-command alternative to steps 3–4: it starts Supabase, writes `.env`, pushes the schema, and seeds a dev user (`dev@init.local` / `password`), then ends with an interactive checklist — deselect mobile, extension, or desktop and it deletes them cleanly. Pass `--yes` to keep all apps and run unattended (how a coding agent provisions).
+`pnpm bootstrap` is the one-command alternative to steps 3–4: it starts Postgres, writes `.env`, pushes the schema, and seeds a dev user (`dev@init.local` / `password`), then ends with an interactive checklist — deselect mobile, extension, or desktop and it deletes them cleanly. Pass `--yes` to keep all apps and run unattended (how a coding agent provisions).
 
 ```bash
 pnpm bootstrap        # interactive
@@ -89,7 +90,7 @@ pnpm dev:web    # Web only
 ```
 
 - **Web app**: http://localhost:3000
-- **Supabase Studio**: http://localhost:54323
+- **Drizzle Studio**: `pnpm -F db studio` - browse the database
 
 ## Project Structure Overview
 
@@ -102,7 +103,7 @@ init/
 │   └── desktop/       # Electron desktop app
 ├── packages/
 │   ├── api/           # tRPC router + better-auth
-│   ├── db/            # Drizzle schema + Supabase config
+│   ├── db/            # Drizzle schema + local Postgres compose
 │   └── ui/            # Shared UI components
 └── package.json       # Root workspace scripts
 ```
@@ -116,7 +117,7 @@ init/
 
 ### Database
 
-- `pnpm db:start` / `pnpm db:stop` - Local Supabase
+- `pnpm db:start` / `pnpm db:stop` - Local Postgres container
 - `pnpm db:push` - Push schema to local database
 - `pnpm db:seed` - Seed a dev user + sample data
 - `pnpm db:push-remote` - Push schema to production
@@ -136,7 +137,7 @@ init/
 
 ## Troubleshooting
 
-**Port already in use** - Free ports 3000, 54321-54323.
+**Port already in use** - Free ports 3000 and 54322.
 
 **pnpm install fails**
 

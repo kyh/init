@@ -18,7 +18,7 @@ pnpm install
 pnpm bootstrap
 ```
 
-The bootstrap script selects apps, starts Supabase, configures your `.env`, pushes the schema, and seeds a dev user. It's interactive by default; pass `--yes` (or pipe it, as a coding agent would) to keep all apps and run unattended. See [`AGENTS.md`](./AGENTS.md) for the full agent-driven workflow.
+The bootstrap script selects apps, starts local Postgres, configures your `.env`, pushes the schema, and seeds a dev user. It's interactive by default; pass `--yes` (or pipe it, as a coding agent would) to keep all apps and run unattended. See [`AGENTS.md`](./AGENTS.md) for the full agent-driven workflow.
 
 ## Project Structure
 
@@ -30,7 +30,7 @@ apps/
   desktop/     # Electron desktop app
 packages/
   api/         # tRPC router + better-auth
-  db/          # Drizzle schema + Supabase config
+  db/          # Drizzle schema + local Postgres compose
   ui/          # Shared React components
 ```
 
@@ -43,7 +43,7 @@ packages/
 - [Tailwind CSS](https://tailwindcss.com)
 - [tRPC](https://trpc.io)
 - [Drizzle](https://orm.drizzle.team)
-- [Supabase](https://supabase.com)
+- [Neon](https://neon.tech)
 - [better-auth](https://www.better-auth.com)
 
 ## Scripts
@@ -59,8 +59,8 @@ packages/
 | `pnpm typecheck`     | Type check all packages       |
 | `pnpm lint`          | Lint all packages (oxlint)    |
 | `pnpm format`        | Format all packages (oxfmt)   |
-| `pnpm db:start`      | Start local Supabase (Docker) |
-| `pnpm db:stop`       | Stop local Supabase           |
+| `pnpm db:start`      | Start local Postgres (Docker) |
+| `pnpm db:stop`       | Stop local Postgres           |
 | `pnpm db:push`       | Push Drizzle schema           |
 | `pnpm db:reset`      | Reset and push schema         |
 

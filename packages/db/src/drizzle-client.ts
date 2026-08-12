@@ -6,8 +6,9 @@ import * as schemaAuth from "./drizzle-schema-auth";
 
 const client = postgres(
   process.env.POSTGRES_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres",
-  // POSTGRES_URL points at Supavisor's transaction-mode pooler (:6543) in
-  // production, which does not support server-side prepared statements
+  // POSTGRES_URL points at a transaction-mode pooler in production (Neon's
+  // `-pooler` endpoint, backed by PgBouncer), which does not support
+  // server-side prepared statements
   { prepare: false },
 );
 
