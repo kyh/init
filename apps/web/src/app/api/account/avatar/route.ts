@@ -91,29 +91,34 @@ export async function POST(request: Request) {
 
   const userId = session.user.id;
 
+  let blob;
   try {
     // Upload the sniffed bytes as a type-less Blob rather than the original
     // File, so the stored Content-Type can only come from `imageType` — never
     // from the File's client-supplied `type`
-    const blob = await put(
-      `${avatarPrefix(userId)}avatar.${imageType.extension}`,
-      new Blob([bytes]),
-      {
-        access: "public",
-        contentType: imageType.contentType,
-        addRandomSuffix: true,
-      },
-    );
-
-    // Sweep the previous avatars only once the new one is live, so a failed
-    // upload never leaves the user with no image at all
-    await removeAvatars(userId, blob.url);
-
-    return Response.json({ url: blob.url });
+    blob = await put(`${avatarPrefix(userId)}avatar.${imageType.extension}`, new Blob([bytes]), {
+      access: "public",
+      contentType: imageType.contentType,
+      addRandomSuffix: true,
+    });
   } catch (error) {
     console.error("Avatar upload failed:", error);
     return new Response("Upload failed", { status: 500 });
   }
+
+  // Sweep the previous avatars only once the new one is live, so a failed
+  // upload never leaves the user with no image at all. Deliberately outside
+  // the upload's catch and best-effort: the new blob is already served, and
+  // failing here would withhold its URL from the client while potentially
+  // having deleted the old one it still points at. An orphaned blob is the
+  // better failure.
+  try {
+    await removeAvatars(userId, blob.url);
+  } catch (error) {
+    console.error("Avatar cleanup failed, leaving orphaned blobs:", error);
+  }
+
+  return Response.json({ url: blob.url });
 }
 
 export async function DELETE() {
