@@ -440,13 +440,31 @@ function isSupabaseRunning(): boolean {
   }
 }
 
+/**
+ * The web port an earlier provision pinned in `.env`.
+ *
+ * Bootstrap deliberately runs without dotenv — it has to work before `.env`
+ * exists — so on a re-run `process.env.PORT` is unset and `.env` is the only
+ * record of the port this checkout actually claimed. Reading it back keeps the
+ * summary line honest; printing 3000 at a checkout pinned to 3001 would send an
+ * agent straight at the wrong server.
+ */
+function readPinnedWebPort(): number | undefined {
+  if (!fileExists(".env")) return undefined;
+  const pinned = readText(".env").match(/^\s*PORT\s*=\s*"?(\d+)"?\s*$/m)?.[1];
+  return pinned ? Number(pinned) : undefined;
+}
+
 async function selectPorts(firstProvision: boolean): Promise<Ports> {
   const config = fileExists(SUPABASE_CONFIG_PATH) ? readText(SUPABASE_CONFIG_PATH) : "";
 
   // Already provisioned: .env pins both, and moving either would orphan it.
   if (!firstProvision) {
     return {
-      web: Number(process.env.PORT) || DEFAULT_WEB_PORT,
+      // Precedence mirrors what the app will actually do at runtime: dotenv
+      // doesn't overwrite an already-set variable, so a PORT from the shell wins
+      // over the one in .env, which in turn beats the default.
+      web: Number(process.env.PORT) || readPinnedWebPort() || DEFAULT_WEB_PORT,
       ...readSupabasePorts(config),
     };
   }
