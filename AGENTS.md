@@ -94,6 +94,20 @@ For the three non-web targets, verify with `pnpm typecheck` and `pnpm build`; a 
 - **No `any`, no non-null `!`, no `as` casts.** Kebab-case filenames. Make illegal states unrepresentable.
 - Env degrades gracefully: missing keys (Stripe, Resend) disable a feature, they don't crash boot.
 
+## Code Review Rules
+
+For automated reviewers (Codex reads this section). `pnpm verify` already gates typecheck, lint, format, and tests — don't spend review on what CI catches. Flag these instead, and treat them as higher severity than their size suggests, because each one is cheap to wave through and expensive to unwind:
+
+- **A Next Server Action, or any mutation path that isn't tRPC or the better-auth client.** The four apps share one typed surface; a Server Action silently makes a change web-only.
+- **A blanket `queryClient.invalidateQueries()`** where the mutation should invalidate the specific queries it affects in `onSuccess`. There is no global invalidate-everything cache here, and adding one degrades every screen at once.
+- **Supabase used as anything but Postgres + the avatars storage bucket.** Auth is better-auth and the Data API is disabled; a `supabase-js` query or auth call is a wrong turn, not a style choice.
+- **An env var whose absence crashes boot.** Missing optional keys (Stripe, Resend) must disable their feature and let the app come up.
+- **Unpinning `nativewind` off the `5.0.0-preview` channel, or `react-native-css` off its exact version.** These are deliberate — preview is the only Tailwind 4-compatible line. A dependency bump that looks like tidying breaks mobile styling.
+- **A change under `packages/api` or `packages/db` justified by one app's needs.** Say which of web/mobile/extension/desktop were considered; the non-web three can only be verified by `typecheck` and `build`, so regressions there surface late.
+- **`any`, non-null `!`, or `as` casts** introduced to get past a type error rather than to model the domain.
+
+Imports from the UI package go through `@repo/ui/components/<name>` and `@repo/ui/lib/utils` — a deep relative path into `packages/ui/src` is a defect worth a comment.
+
 ## Map
 
 - `apps/{web,mobile,extension,desktop}` · `packages/{api,db,ui}`
