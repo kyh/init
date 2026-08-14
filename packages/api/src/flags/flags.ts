@@ -37,6 +37,9 @@ type ParsedFlags = {
   /** Names present in the input that aren't in the registry — surfaced so a
    * typo in `FEATURE_FLAGS` is reported rather than silently doing nothing. */
   unknown: string[];
+  /** Entries that aren't `name` or `name=value` at all. Reported for the same
+   * reason, and never applied — see the refusal in the loop below. */
+  malformed: string[];
 };
 
 /**
@@ -51,21 +54,30 @@ type ParsedFlags = {
 export const parseFlags = (raw: string | undefined): ParsedFlags => {
   const overrides: Partial<Flags> = {};
   const unknown: string[] = [];
+  const malformed: string[] = [];
 
   for (const entry of raw?.split(",") ?? []) {
-    const [rawName, rawValue] = entry.split("=");
-    const name = rawName?.trim();
+    const parts = entry.split("=");
+    const name = parts[0]?.trim();
     if (!name) continue;
     if (!isFlagName(name)) {
       unknown.push(name);
       continue;
     }
+    // More than one `=` isn't this format. Refuse rather than guess at which
+    // half was meant: `myFlag=true=false` would otherwise read the first half
+    // and turn the flag *on*, which is the one outcome garbled config must
+    // never produce.
+    if (parts.length > 2) {
+      malformed.push(entry.trim());
+      continue;
+    }
     // A bare name means "on"; anything else must say `true` to enable, so a
     // stray value can never accidentally turn a flag on.
-    overrides[name] = rawValue === undefined ? true : rawValue.trim() === "true";
+    overrides[name] = parts.length === 1 ? true : parts[1]?.trim() === "true";
   }
 
-  return { overrides, unknown };
+  return { overrides, unknown, malformed };
 };
 
 /** Registry defaults with the given `FEATURE_FLAGS` string applied over them. */
@@ -76,11 +88,19 @@ export const resolveFlags = (raw: string | undefined): Flags => ({
 
 const parsed = parseFlags(process.env.FEATURE_FLAGS);
 
-if (parsed.unknown.length > 0 && process.env.NODE_ENV !== "test") {
-  console.warn(
-    `[flags] ignoring unknown flag(s) in FEATURE_FLAGS: ${parsed.unknown.join(", ")}. ` +
-      `Known flags: ${Object.keys(flagDefaults).join(", ") || "(none)"}`,
-  );
+if (process.env.NODE_ENV !== "test") {
+  if (parsed.unknown.length > 0) {
+    console.warn(
+      `[flags] ignoring unknown flag(s) in FEATURE_FLAGS: ${parsed.unknown.join(", ")}. ` +
+        `Known flags: ${Object.keys(flagDefaults).join(", ") || "(none)"}`,
+    );
+  }
+  if (parsed.malformed.length > 0) {
+    console.warn(
+      `[flags] ignoring malformed entr(ies) in FEATURE_FLAGS: ${parsed.malformed.join(", ")}. ` +
+        `Expected \`name\` or \`name=true\`/\`name=false\`.`,
+    );
+  }
 }
 
 /** The resolved flag set for this process. Read it via `ctx.flags` in a

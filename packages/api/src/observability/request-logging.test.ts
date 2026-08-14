@@ -59,7 +59,7 @@ describe("request logging middleware", () => {
     ]);
   });
 
-  it("carries the context's request id and the caller's user id", async () => {
+  it("carries the request id, and no user id when nobody is signed in", async () => {
     logged.mockClear();
     const caller = appRouter.createCaller(createMockContext({ session: null }));
 

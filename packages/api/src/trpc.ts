@@ -26,7 +26,18 @@ export const createTRPCContext = async (opts: {
    * a lookup here.
    */
   session?: Session | null;
+  /**
+   * Reuse an id the caller already minted. The fetch handler does this so the
+   * `x-request-id` it puts on the response is the same one these logs carry
+   * even when context creation itself fails — which is exactly when a caller
+   * most needs something to report.
+   */
+  requestId?: string;
 }) => {
+  // Resolved before the session lookup, which can throw: an id derived purely
+  // from headers cannot, so it is available to everything below regardless.
+  const requestId = opts.requestId ?? resolveRequestId(opts.headers);
+
   const session =
     opts.session === undefined
       ? await auth.api.getSession({ headers: opts.headers })
@@ -39,8 +50,8 @@ export const createTRPCContext = async (opts: {
     // handler reads `ctx.flags.x` rather than reaching for process.env.
     flags,
     // Correlates this call's log line with the `x-request-id` on the HTTP
-    // response. Also captured here, for the same reason as the headers below.
-    requestId: resolveRequestId(opts.headers),
+    // response.
+    requestId,
     // Browser-supplied request provenance. Captured here because a tRPC
     // middleware cannot read raw request headers; read by the mutation origin
     // guard below. Both null for non-browser callers (React Native,

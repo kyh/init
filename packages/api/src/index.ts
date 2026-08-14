@@ -2,7 +2,7 @@ import type { AppRouter } from "./root-router";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import type { FlagName, Flags } from "./flags/flags";
 import { flagDefaults, flags } from "./flags/flags";
-import { REQUEST_ID_HEADER } from "./observability/logger";
+import { REQUEST_ID_HEADER, resolveRequestId } from "./observability/logger";
 import { appRouter } from "./root-router";
 import { createTRPCContext } from "./trpc";
 
@@ -21,5 +21,5 @@ type RouterInputs = inferRouterInputs<AppRouter>;
  **/
 type RouterOutputs = inferRouterOutputs<AppRouter>;
 
-export { createTRPCContext, appRouter, flagDefaults, flags, REQUEST_ID_HEADER };
+export { createTRPCContext, appRouter, flagDefaults, flags, REQUEST_ID_HEADER, resolveRequestId };
 export type { AppRouter, RouterInputs, RouterOutputs, FlagName, Flags };

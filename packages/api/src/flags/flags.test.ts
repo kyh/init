@@ -30,9 +30,26 @@ describe("parseFlags", () => {
     expect(unknown).toEqual(["nosuchflag"]);
   });
 
+  it("refuses an entry with an extra `=` rather than reading half of it", () => {
+    // Splitting naively would take "true" and turn the flag on — the one thing
+    // garbled config must never do.
+    const { overrides, malformed } = parseFlags("exampleNewFeature=true=false");
+
+    expect(overrides).toEqual({});
+    expect(malformed).toEqual(["exampleNewFeature=true=false"]);
+  });
+
+  it("keeps well-formed entries alongside a malformed one", () => {
+    const { overrides, malformed } = parseFlags("exampleNewFeature, other=a=b");
+
+    expect(overrides).toEqual({ exampleNewFeature: true });
+    // `other` isn't in the registry, so it never reaches the malformed check.
+    expect(malformed).toEqual([]);
+  });
+
   it("returns nothing for an unset variable", () => {
-    expect(parseFlags(undefined)).toEqual({ overrides: {}, unknown: [] });
-    expect(parseFlags("")).toEqual({ overrides: {}, unknown: [] });
+    expect(parseFlags(undefined)).toEqual({ overrides: {}, unknown: [], malformed: [] });
+    expect(parseFlags("")).toEqual({ overrides: {}, unknown: [], malformed: [] });
   });
 });
 

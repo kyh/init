@@ -45,6 +45,26 @@ const PASSWORD = "password";
  */
 const BROWSER_HEADERS = { origin: BASE_URL };
 
+/**
+ * Node's `fetch` has no default timeout, so a server that accepts the
+ * connection and then never answers would leave a request pending forever. In
+ * CI that turns a failing gate into a hanging job — the worst outcome of the
+ * three, since it burns the runner's whole time budget to tell you nothing.
+ * Every request below carries this deadline; an abort rejects, which the retry
+ * loop treats as retryable and the later steps report as a failed step.
+ */
+const REQUEST_TIMEOUT_MS = 15_000;
+const deadline = () => AbortSignal.timeout(REQUEST_TIMEOUT_MS);
+
+/**
+ * How long to wait for the server to come up. A wall-clock budget rather than a
+ * count of attempts: attempts vary from milliseconds (connection refused) to a
+ * full REQUEST_TIMEOUT_MS (a server that accepts and then stalls), so a fixed
+ * count would mean anywhere from one to sixteen minutes. A budget is the same
+ * bound either way, which is what CI needs.
+ */
+const BOOT_BUDGET_MS = 90_000;
+
 const DIM = "\x1b[2m";
 const RED = "\x1b[31m";
 const GREEN = "\x1b[32m";
@@ -115,6 +135,7 @@ const trpcQuery = async <T>(path: string, input: unknown, cookie: string) => {
   const query = `?input=${encodeURIComponent(JSON.stringify({ json: input }))}`;
   const res = await fetch(url(`/api/trpc/${path}${query}`), {
     headers: { ...BROWSER_HEADERS, cookie },
+    signal: deadline(),
   });
   return { data: await unwrap<T>(res, `query ${path}`), res };
 };
@@ -124,6 +145,7 @@ const trpcMutation = async <T>(path: string, input: unknown, cookie: string) => 
     method: "POST",
     headers: { ...BROWSER_HEADERS, cookie, "content-type": "application/json" },
     body: JSON.stringify({ json: input }),
+    signal: deadline(),
   });
   return { data: await unwrap<T>(res, `mutation ${path}`), res };
 };
@@ -140,25 +162,32 @@ const trpcMutation = async <T>(path: string, input: unknown, cookie: string) => 
  * the timing this function exists to absorb. Only running out of attempts fails,
  * and it reports the last thing it saw so the failure is diagnosable.
  */
-const waitForServer = async (attempts = 60) => {
+const waitForServer = async (budgetMs = BOOT_BUDGET_MS) => {
+  const startedAt = performance.now();
   let lastSeen = "no response at all";
+  let attempts = 0;
 
-  for (let attempt = 1; attempt <= attempts; attempt++) {
+  while (performance.now() - startedAt < budgetMs) {
+    attempts++;
     try {
-      const res = await fetch(url("/api/health"), { headers: BROWSER_HEADERS });
+      const res = await fetch(url("/api/health"), {
+        headers: BROWSER_HEADERS,
+        signal: deadline(),
+      });
       const body = await decode<{ status?: string }>(res);
       if (res.ok && body.status === "ok") return;
       lastSeen = `HTTP ${res.status} ${JSON.stringify(body)}`;
     } catch (error) {
-      // Includes a non-JSON body (a framework error page), which is itself a
-      // normal thing to see mid-boot.
+      // Includes a non-JSON body (a framework error page) and a timed-out
+      // request, both of which are normal things to see mid-boot.
       lastSeen = error instanceof Error ? error.message : String(error);
     }
     await sleep(1000);
   }
 
   fail(
-    `server never became healthy at ${BASE_URL} after ${attempts} attempts — last saw: ${lastSeen}`,
+    `server never became healthy at ${BASE_URL} within ${Math.round(budgetMs / 1000)}s ` +
+      `(${attempts} attempts) — last saw: ${lastSeen}`,
   );
 };
 
@@ -169,6 +198,7 @@ const signIn = async (): Promise<string> => {
     method: "POST",
     headers: { ...BROWSER_HEADERS, "content-type": "application/json" },
     body: JSON.stringify({ email: EMAIL, password: PASSWORD }),
+    signal: deadline(),
   });
 
   if (!res.ok) {
@@ -188,6 +218,7 @@ const signIn = async (): Promise<string> => {
 const firstOrganizationSlug = async (cookie: string): Promise<string> => {
   const res = await fetch(url("/api/auth/organization/list"), {
     headers: { ...BROWSER_HEADERS, cookie },
+    signal: deadline(),
   });
   if (!res.ok) fail(`organization list failed: ${await describe(res)}`);
 
@@ -271,6 +302,7 @@ const main = async () => {
   await step("the authenticated dashboard renders", async () => {
     const res = await fetch(url(`/dashboard/${slug}`), {
       headers: { ...BROWSER_HEADERS, cookie },
+      signal: deadline(),
     });
     if (!res.ok) fail(`/dashboard/${slug} failed: ${await describe(res)}`);
 
