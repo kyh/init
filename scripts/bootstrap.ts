@@ -289,12 +289,13 @@ function composeProjectName() {
 
 function createEnv() {
   const envPath = ".env";
-  const projectName = composeProjectName();
 
   if (fileExists(envPath)) {
     console.log("  ✓ .env already exists, skipping");
     return;
   }
+
+  const projectName = composeProjectName();
 
   const env = [
     `POSTGRES_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"`,

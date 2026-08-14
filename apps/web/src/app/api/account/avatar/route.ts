@@ -53,12 +53,52 @@ const requireBlobToken = () =>
 // the previous image until the blob cache expires.
 const avatarPrefix = (userId: string) => `avatars/${userId}/`;
 
+/** Every blob under the user's prefix. `list` pages at 1000; follow the cursor. */
+const listAvatars = async (userId: string) => {
+  const prefix = avatarPrefix(userId);
+  const first = await list({ prefix });
+  const blobs = first.blobs;
+  let cursor = first.hasMore ? first.cursor : undefined;
+
+  while (cursor) {
+    const page = await list({ prefix, cursor });
+    blobs.push(...page.blobs);
+    cursor = page.hasMore ? page.cursor : undefined;
+  }
+
+  return blobs;
+};
+
+type AvatarBlob = Awaited<ReturnType<typeof listAvatars>>[number];
+
+/**
+ * Which of the user's avatars to delete. With no `keepUrl` (an explicit
+ * removal) that's all of them.
+ *
+ * Otherwise it's everything strictly older than the blob we just uploaded —
+ * not simply "everything but ours". Two concurrent uploads each write their
+ * own randomized pathname, so the other request's blob can land between our
+ * `put` and our `list`; deleting it would strand the URL that request is
+ * about to return.
+ */
+const staleAvatars = (blobs: AvatarBlob[], keepUrl?: string) => {
+  if (!keepUrl) {
+    return blobs;
+  }
+  const keep = blobs.find((blob) => blob.url === keepUrl);
+  // Our own upload isn't listed yet — sweep nothing rather than risk deleting
+  // a blob that is newer than it. The next upload picks up the leftovers.
+  if (!keep) {
+    return [];
+  }
+  return blobs.filter((blob) => blob.uploadedAt < keep.uploadedAt);
+};
+
 /** Deletes the user's avatars, optionally sparing a freshly uploaded one. */
 const removeAvatars = async (userId: string, keepUrl?: string) => {
-  const { blobs } = await list({ prefix: avatarPrefix(userId) });
-  const stale = blobs.filter((blob) => blob.url !== keepUrl).map((blob) => blob.url);
+  const stale = staleAvatars(await listAvatars(userId), keepUrl);
   if (stale.length > 0) {
-    await del(stale);
+    await del(stale.map((blob) => blob.url));
   }
 };
 

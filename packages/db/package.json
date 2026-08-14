@@ -15,7 +15,7 @@
     "start": "pnpm with-env docker compose up -d --wait",
     "stop": "pnpm with-env docker compose stop",
     "reset": "pnpm with-env docker compose down -v && pnpm start && pnpm push",
-    "status": "pnpm with-env docker compose ps",
+    "status": "pnpm with-env docker compose ps --all",
     "push": "pnpm with-env drizzle-kit push --force",
     "push:remote": "dotenv -e ../../.env.production.local -- drizzle-kit push",
     "studio": "pnpm with-env drizzle-kit studio",
