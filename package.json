@@ -21,13 +21,16 @@
     "lint:fix": "oxlint --fix",
     "format": "oxfmt --check",
     "format:fix": "oxfmt --write",
-    "typecheck": "turbo run typecheck",
+    "typecheck": "turbo run typecheck && tsc -p scripts --noEmit",
     "test": "turbo run test",
     "verify": "pnpm typecheck && pnpm lint && pnpm format && pnpm test",
     "bootstrap": "tsx scripts/bootstrap.ts",
+    "smoke": "dotenv -e .env -- tsx scripts/smoke.ts",
     "emulate": "npx emulate@0.9.0 --service github"
   },
   "devDependencies": {
+    "@kyh/tsconfig": "catalog:",
+    "@types/node": "catalog:",
     "dotenv-cli": "^11.0.0",
     "oxfmt": "^0.63.0",
     "oxlint": "^1.78.0",
