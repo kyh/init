@@ -292,15 +292,7 @@ function createEnv() {
   const projectName = composeProjectName();
 
   if (fileExists(envPath)) {
-    // An .env from before this template used Compose won't have the project
-    // name, and defaulting it would put this repo on the shared volume
-    const existing = readText(envPath);
-    if (/^COMPOSE_PROJECT_NAME=/m.test(existing)) {
-      console.log("  ✓ .env already exists, skipping");
-      return;
-    }
-    writeText(envPath, `${existing.trimEnd()}\n\nCOMPOSE_PROJECT_NAME="${projectName}"\n`);
-    console.log(`  ✓ .env already exists, added COMPOSE_PROJECT_NAME="${projectName}"`);
+    console.log("  ✓ .env already exists, skipping");
     return;
   }
 
