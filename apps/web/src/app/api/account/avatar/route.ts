@@ -71,27 +71,29 @@ const listAvatars = async (userId: string) => {
 
 type AvatarBlob = Awaited<ReturnType<typeof listAvatars>>[number];
 
+// Concurrent uploads each write their own randomized pathname, so a sweep can
+// see a blob whose own request hasn't returned yet — in either direction,
+// since which upload finishes first says nothing about which swept first.
+// Deleting one strands the URL that request is about to hand the client, so
+// the sweep only touches blobs old enough that no request can still be holding
+// one. Being too generous here just leaves an orphan for the next sweep.
+const SWEEP_GRACE_MS = 5 * 60 * 1000;
+
 /**
- * Which of the user's avatars to delete. With no `keepUrl` (an explicit
- * removal) that's all of them.
+ * Which of the user's avatars to delete. With no `keepUrl` — an explicit
+ * removal — that's all of them.
  *
- * Otherwise it's everything strictly older than the blob we just uploaded —
- * not simply "everything but ours". Two concurrent uploads each write their
- * own randomized pathname, so the other request's blob can land between our
- * `put` and our `list`; deleting it would strand the URL that request is
- * about to return.
+ * Otherwise it's every blob outside the grace window, except the one just
+ * uploaded. Replacing an avatar still collects the previous one right away:
+ * it predates the window by definition. What survives is a blob from a
+ * near-simultaneous second upload, which is exactly the one still in flight.
  */
 const staleAvatars = (blobs: AvatarBlob[], keepUrl?: string) => {
   if (!keepUrl) {
     return blobs;
   }
-  const keep = blobs.find((blob) => blob.url === keepUrl);
-  // Our own upload isn't listed yet — sweep nothing rather than risk deleting
-  // a blob that is newer than it. The next upload picks up the leftovers.
-  if (!keep) {
-    return [];
-  }
-  return blobs.filter((blob) => blob.uploadedAt < keep.uploadedAt);
+  const cutoff = Date.now() - SWEEP_GRACE_MS;
+  return blobs.filter((blob) => blob.url !== keepUrl && blob.uploadedAt.getTime() < cutoff);
 };
 
 /** Deletes the user's avatars, optionally sparing a freshly uploaded one. */
