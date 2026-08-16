@@ -171,7 +171,7 @@ const ActionsDropdown = ({
       </DropdownMenuSub>
     ),
     !isMemberOwner && (
-      <DropdownMenuItem key="remove-member" onSelect={handleRemoveFromOrganization}>
+      <DropdownMenuItem key="remove-member" onClick={handleRemoveFromOrganization}>
         Remove from Organization
       </DropdownMenuItem>
     ),

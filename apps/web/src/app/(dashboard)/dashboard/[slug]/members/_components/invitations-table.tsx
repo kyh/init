@@ -101,7 +101,7 @@ const ActionsDropdown = ({
 
   return (
     <TableRowActions>
-      <DropdownMenuItem onSelect={handleRemoveInvitation}>Remove Invitation</DropdownMenuItem>
+      <DropdownMenuItem onClick={handleRemoveInvitation}>Remove Invitation</DropdownMenuItem>
     </TableRowActions>
   );
 };
