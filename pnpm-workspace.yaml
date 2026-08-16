@@ -34,4 +34,13 @@ catalog:
   vitest: ^4.1.10
   zod: ^4.4.3
 
+catalogs:
+  # Expo must hold an SDK-blessed React, which may diverge from web's. Pinning it in a
+  # NAMED catalog keeps that constraint explicit and separately bumpable, instead of an
+  # unexplained version literal in apps/mobile/package.json that looks like drift.
+  # Bump only alongside an Expo SDK upgrade.
+  expo:
+    react: 19.2.3
+    react-dom: 19.2.3
+
 linkWorkspacePackages: true
