@@ -19,12 +19,15 @@ import { getBaseUrl } from "./base-url";
  * Drop this once @better-auth/expo lines its signature back up (broken from
  * 1.6.25 through at least 1.6.26).
  */
+// SAFETY: only the `getActions` signature is restated; at runtime it really
+// returns an object exposing `getCookie(): string`, which the misdeclared
+// upstream type also claims — the assertion changes no runtime value.
 // oxlint-disable-next-line typescript/consistent-type-assertions -- an annotation can't express this; the source signature is the thing being corrected
 const expoAuthClient = expoClient({
   scheme: "expo",
   storagePrefix: "expo",
   storage: SecureStore,
-}) as unknown as Omit<ReturnType<typeof expoClient>, "getActions"> & {
+}) as Omit<ReturnType<typeof expoClient>, "getActions"> & {
   getActions: () => { getCookie: () => string };
 };
 

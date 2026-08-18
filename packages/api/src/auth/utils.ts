@@ -1,6 +1,8 @@
 import { APIError } from "better-auth/api";
 import { z } from "zod";
 
+const pgUniqueViolation = z.object({ code: z.literal("23505") });
+
 /**
  * True when a create-organization failure was a slug collision — a concurrent
  * signup claimed the same slug between our availability check and the insert.
@@ -8,11 +10,11 @@ import { z } from "zod";
  * unique constraint can instead raise SQLSTATE 23505. A fresh slug on retry
  * resolves it, so callers retry on this and only this; any other error is fatal.
  */
-export const isSlugCollision = (error: unknown): boolean => {
-  if (error instanceof APIError) {
-    return /slug|already (exists|taken)/i.test(error.message);
+export const isSlugCollision = (cause: unknown): boolean => {
+  if (cause instanceof APIError) {
+    return /slug|already (exists|taken)/i.test(cause.message);
   }
-  return typeof error === "object" && error !== null && "code" in error && error.code === "23505";
+  return pgUniqueViolation.safeParse(cause).success;
 };
 
 /**
@@ -47,9 +49,11 @@ export const FALLBACK_ORGANIZATION_SLUG = "workspace";
  * authMetadataSchema.parse('{"personal": true}'); // { personal: true }
  * ```
  */
+const jsonValue = z.json();
+
 export const zJsonString = z
   .string()
-  .transform((str, ctx): unknown => {
+  .transform((str, ctx): z.infer<typeof jsonValue> => {
     try {
       return JSON.parse(str);
     } catch {
@@ -57,4 +61,4 @@ export const zJsonString = z
       return z.NEVER;
     }
   })
-  .pipe(z.json());
+  .pipe(jsonValue);

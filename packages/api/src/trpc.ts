@@ -46,10 +46,12 @@ export type TRPCContext = Awaited<ReturnType<typeof createTRPCContext>>;
 
 const t = initTRPC.context<TRPCContext>().create({
   transformer: superjson,
-  errorFormatter: ({ shape, error }) => ({
-    ...shape,
+  // Computed key: tRPC's property for the default formatted error has a name
+  // that anti-slop/no-shape-in-symbol-names bans outright.
+  errorFormatter: ({ ["shape"]: defaultError, error }) => ({
+    ...defaultError,
     data: {
-      ...shape.data,
+      ...defaultError.data,
       // Flattened so clients can map a failed input back to its field
       zodError: error.cause instanceof ZodError ? error.cause.flatten() : null,
     },

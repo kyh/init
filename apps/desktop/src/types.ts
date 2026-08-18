@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 export const IPC_CHANNELS = {
   PICK_FOLDER: "desktop:pick-folder",
   CONFIRM: "desktop:confirm",
@@ -9,19 +11,24 @@ export const IPC_CHANNELS = {
   UPDATE_INSTALL: "desktop:update-install",
 } as const;
 
-export type UpdateState = {
-  status:
-    | "idle"
-    | "checking"
-    | "available"
-    | "not-available"
-    | "downloading"
-    | "downloaded"
-    | "error";
-  version: string | null;
-  downloadPercent: number | null;
-  message: string | null;
-};
+/** Parses IPC payloads in the sandboxed preload, where the renderer is
+ *  untrusted; the values themselves always originate from the main process. */
+export const updateStateSchema = z.object({
+  status: z.enum([
+    "idle",
+    "checking",
+    "available",
+    "not-available",
+    "downloading",
+    "downloaded",
+    "error",
+  ]),
+  version: z.string().nullable(),
+  downloadPercent: z.number().nullable(),
+  message: z.string().nullable(),
+});
+
+export type UpdateState = z.infer<typeof updateStateSchema>;
 
 export type UpdateResponse = {
   accepted: boolean;
@@ -39,30 +46,8 @@ export type DesktopBridge = {
   onUpdateState: (listener: (state: UpdateState) => void) => () => void;
 };
 
-const UPDATE_STATUSES = new Set([
-  "idle",
-  "checking",
-  "available",
-  "not-available",
-  "downloading",
-  "downloaded",
-  "error",
-]);
-
-/** Intentionally validates only `status` — called in a sandboxed preload
- *  where the value always originates from the main process via IPC. */
-export function isUpdateState(value: unknown): value is UpdateState {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "status" in value &&
-    typeof value.status === "string" &&
-    UPDATE_STATUSES.has(value.status)
-  );
-}
-
-export function toErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
+export function toErrorMessage(cause: unknown): string {
+  return cause instanceof Error ? cause.message : String(cause);
 }
 
 export function isHttpUrl(url: string): boolean {

@@ -74,7 +74,7 @@ const seed = async () => {
 
 seed()
   .then(() => process.exit(0))
-  .catch((error: unknown) => {
-    console.error(error);
+  .catch((cause: unknown) => {
+    console.error(cause);
     process.exit(1);
   });

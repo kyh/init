@@ -19,7 +19,7 @@ import { z } from "zod";
 import { authClient } from "@/lib/auth-client";
 import { useAppForm } from "@/lib/form";
 import { useTRPC } from "@/trpc/react";
-import { ROLES, type Role, roleSchema } from "@/app/(dashboard)/dashboard/[slug]/_components/role";
+import { ROLES, roleSchema } from "@/app/(dashboard)/dashboard/[slug]/_components/role";
 import { useOrganization } from "@/app/(dashboard)/dashboard/[slug]/_components/use-organization";
 
 /**
@@ -185,7 +185,9 @@ const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormProps) =>
 };
 
 // `key` is client-only (React list identity); the mutation maps email/role explicitly
-const createEmptyInviteModel = (): { key: string; email: string; role: Role } => ({
+type InviteModel = z.infer<typeof inviteMembersSchema>["organizationInvitations"][number];
+
+const createEmptyInviteModel = (): InviteModel => ({
   key: crypto.randomUUID(),
   email: "",
   role: "member",

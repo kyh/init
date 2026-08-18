@@ -1,20 +1,17 @@
+import { z } from "zod";
+
 /**
  * TanStack validators return either a raw string or a `{ message }` object
- * (Zod). FieldError reads `.message`, so normalize both shapes to it. Kept as a
- * type guard rather than a cast so a malformed error never slips through typed.
+ * (Zod). FieldError reads `.message`, so normalize both to it. Parsed with a
+ * schema rather than cast so a malformed error never slips through typed.
  */
+const fieldError = z.union([
+  z.string().transform((message) => ({ message })),
+  z.object({ message: z.string() }),
+]);
+
 export const toFieldErrors = (errors: readonly unknown[]): Array<{ message?: string }> =>
   errors.map((error) => {
-    if (typeof error === "string") {
-      return { message: error };
-    }
-    if (
-      error !== null &&
-      typeof error === "object" &&
-      "message" in error &&
-      typeof error.message === "string"
-    ) {
-      return { message: error.message };
-    }
-    return {};
+    const parsed = fieldError.safeParse(error);
+    return parsed.success ? parsed.data : {};
   });

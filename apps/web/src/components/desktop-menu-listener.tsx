@@ -14,7 +14,7 @@ export function DesktopMenuListener() {
 
   useEffect(() => {
     const { desktopBridge } = window;
-    if (typeof desktopBridge === "undefined") return;
+    if (!desktopBridge) return;
 
     return desktopBridge.onMenuAction((action) => {
       if (action === "open-settings") {
