@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { cn } from "@repo/ui/lib/utils";
+
+import { useIsHydrated } from "@/lib/use-is-hydrated";
 
 type MeteorsProps = {
   top?: number;
@@ -9,17 +11,22 @@ type MeteorsProps = {
 };
 
 export const Meteors = ({ top = -5, number = 20 }: MeteorsProps) => {
-  const [meteorStyles, setMeteorStyles] = useState<React.CSSProperties[]>([]);
+  const hydrated = useIsHydrated();
 
-  useEffect(() => {
-    const styles = Array.from({ length: number }, () => ({
+  // Positions are random and read window.innerWidth, so the server can't
+  // produce them; the key regenerates the field when the props change.
+  return hydrated ? <MeteorField key={`${top}-${number}`} top={top} number={number} /> : null;
+};
+
+const MeteorField = ({ top, number }: Required<MeteorsProps>) => {
+  const [meteorStyles] = useState<React.CSSProperties[]>(() =>
+    Array.from({ length: number }, () => ({
       top,
       left: Math.floor(Math.random() * window.innerWidth) + "px",
       animationDelay: Math.random() * 1 + 0.2 + "s",
       animationDuration: Math.floor(Math.random() * 8 + 2) + "s",
-    }));
-    setMeteorStyles(styles);
-  }, [top, number]);
+    })),
+  );
 
   return (
     <div className="rotate-y-180 pointer-events-none absolute inset-0 h-full w-full overflow-hidden">

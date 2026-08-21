@@ -7,34 +7,14 @@ import { ac, roles } from "@repo/api/auth/permissions";
 
 import { getBaseUrl } from "./base-url";
 
-/**
- * expoClient()'s `getActions` types its `$fetch` parameter as a bare
- * `BetterFetch`, which better-auth's `BetterAuthClientPlugin` no longer accepts
- * — the two call signatures disagree on the fetch option generics. One rejected
- * element makes TypeScript give up on the whole `plugins` array, which is what
- * takes `useListOrganizations`, `getCookie` and `signIn.oauth2` down with it.
- *
- * Restating the plugin's shape re-satisfies the constraint while keeping
- * `getCookie` inferred, since the actions come from `getActions`' return type.
- * Drop this once @better-auth/expo lines its signature back up (broken from
- * 1.6.25 through at least 1.6.26).
- */
-// SAFETY: only the `getActions` signature is restated; at runtime it really
-// returns an object exposing `getCookie(): string`, which the misdeclared
-// upstream type also claims — the assertion changes no runtime value.
-// oxlint-disable-next-line typescript/consistent-type-assertions -- an annotation can't express this; the source signature is the thing being corrected
-const expoAuthClient = expoClient({
-  scheme: "expo",
-  storagePrefix: "expo",
-  storage: SecureStore,
-}) as Omit<ReturnType<typeof expoClient>, "getActions"> & {
-  getActions: () => { getCookie: () => string };
-};
-
 export const authClient = createAuthClient({
   baseURL: getBaseUrl(),
   plugins: [
-    expoAuthClient,
+    expoClient({
+      scheme: "expo",
+      storagePrefix: "expo",
+      storage: SecureStore,
+    }),
     // Exposes useListOrganizations() — todo procedures are organization-scoped,
     // so a screen needs an org slug before it can query.
     organizationClient({ ac, roles }),

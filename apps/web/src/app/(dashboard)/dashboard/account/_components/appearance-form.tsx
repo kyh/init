@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Image from "next/image";
 import { RadioGroup, RadioGroupItem } from "@repo/ui/components/radio-group";
 import { Skeleton } from "@repo/ui/components/skeleton";
 import { useTheme } from "next-themes";
 import { Check, Minus } from "lucide-react";
+
+import { useIsHydrated } from "@/lib/use-is-hydrated";
 
 const items = [
   {
@@ -30,15 +31,12 @@ const items = [
 
 export const AppearanceForm = () => {
   const { theme, setTheme } = useTheme();
-  // next-themes resolves the theme only on the client, so gate rendering on mount:
-  // a controlled value={undefined} during SSR would leave every radio unchecked,
-  // and that unchecked DOM would persist after hydration.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  // next-themes resolves the theme only on the client, so gate rendering on
+  // hydration: a controlled value={undefined} during SSR would leave every radio
+  // unchecked, and that unchecked DOM would persist after hydration.
+  const hydrated = useIsHydrated();
 
-  if (!mounted) {
+  if (!hydrated) {
     return (
       <div className="flex gap-5">
         {items.map((item) => (
