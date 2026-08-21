@@ -17,6 +17,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@better-auth/core": "~1.6.30",
     "@better-auth/expo": "catalog:",
     "@better-auth/stripe": "catalog:",
     "@repo/db": "workspace:*",
