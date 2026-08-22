@@ -75,7 +75,7 @@ pnpm dev:web
 
 With the var set, the shipped "Continue with GitHub" button routes through a dev-only `genericOAuth` provider aimed at the emulator — same button, no diverging prod path (unset ⇒ the real provider; see `packages/api/src/auth/auth.ts`). Open `/auth/login`, click the button, and the emulator's user-picker (octocat) completes sign-in.
 
-(Pure HTTP: `POST /api/auth/sign-in/oauth2 {"providerId":"github"}` returns the authorize URL directly — the same flow the button triggers.)
+(Pure HTTP: `POST /api/auth/sign-in/social {"provider":"github"}` returns the authorize URL directly — the same flow the button triggers.)
 
 ## Platform matrix
 

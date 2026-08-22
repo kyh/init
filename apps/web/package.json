@@ -13,7 +13,6 @@
     "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
-    "@better-auth/core": "~1.6.30",
     "@better-auth/stripe": "catalog:",
     "@repo/api": "workspace:*",
     "@repo/ui": "workspace:*",
