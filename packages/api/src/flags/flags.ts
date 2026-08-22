@@ -103,6 +103,16 @@ if (process.env.NODE_ENV !== "test") {
   }
 }
 
-/** The resolved flag set for this process. Read it via `ctx.flags` in a
- * procedure, or `flag.list` from a client. */
-export const flags: Flags = { ...flagDefaults, ...parsed.overrides };
+/**
+ * The resolved flag set for this process. Read it via `ctx.flags` in a
+ * procedure, or `flag.list` from a client.
+ *
+ * Frozen, and typed readonly: one object serves every request for the lifetime
+ * of the process, so a handler that assigned to it would silently change what
+ * every later request sees. Deploy-time config should only be changed by
+ * redeploying.
+ *
+ * Built through `resolveFlags` rather than repeating the merge, so there is one
+ * definition of how defaults and overrides combine.
+ */
+export const flags: Readonly<Flags> = Object.freeze(resolveFlags(process.env.FEATURE_FLAGS));

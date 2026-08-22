@@ -4,6 +4,16 @@ import { mockSession } from "../test-utils";
 import { createTRPCContext } from "../trpc";
 import { auth } from "./auth";
 
+// Wrapped, not stubbed: the real implementation still runs, but the call is
+// recorded so the ordering test below can compare invocation order against the
+// session lookup.
+vi.mock("../observability/logger", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../observability/logger")>();
+  return { ...actual, resolveRequestId: vi.fn(actual.resolveRequestId) };
+});
+
+const { resolveRequestId } = await import("../observability/logger");
+
 const headers = () => new Headers();
 
 describe("createTRPCContext", () => {
@@ -48,13 +58,30 @@ describe("createTRPCContext", () => {
   });
 
   it("resolves the request id before the session lookup, which can throw", async () => {
-    // The fetch handler mints the id itself precisely so a failure here still
-    // leaves it something to put on the response — assert the ordering that
-    // makes that possible, rather than the handler's use of it.
+    // Asserting only that the rejection propagates would pass even if the id
+    // were resolved after the lookup, which is the ordering that matters — so
+    // compare when each was actually called.
+    const resolved = vi.mocked(resolveRequestId);
+    resolved.mockClear();
     const spy = vi.spyOn(auth.api, "getSession").mockRejectedValue(new Error("database is down"));
 
     await expect(createTRPCContext({ headers: headers() })).rejects.toThrow("database is down");
-    expect(spy).toHaveBeenCalledOnce();
+
+    const resolvedAt = resolved.mock.invocationCallOrder[0];
+    const lookedUpAt = spy.mock.invocationCallOrder[0];
+    expect(resolvedAt).toBeDefined();
+    expect(lookedUpAt).toBeDefined();
+    expect(resolvedAt ?? 0).toBeLessThan(lookedUpAt ?? 0);
+
     spy.mockRestore();
+  });
+
+  it("does not re-resolve an id the caller supplied", async () => {
+    const resolved = vi.mocked(resolveRequestId);
+    resolved.mockClear();
+
+    await createTRPCContext({ headers: headers(), session: null, requestId: "given" });
+
+    expect(resolved).not.toHaveBeenCalled();
   });
 });

@@ -119,14 +119,42 @@ const describe = async (res: Response): Promise<string> => {
   return `HTTP ${res.status} — ${trimmed.slice(0, 400) || "<empty body>"}`;
 };
 
+/** The entities React emits when escaping text and attribute content. */
+const HTML_ENTITIES: Record<string, string> = {
+  "&amp;": "&",
+  "&lt;": "<",
+  "&gt;": ">",
+  "&quot;": '"',
+  "&#x27;": "'",
+  "&#39;": "'",
+};
+
+/** Undoes that escaping so a substring check tests what rendered, not how it
+ * was encoded. `&amp;` is handled by the same pass, not a second one, so
+ * `&amp;lt;` never collapses into `<`. */
+const decodeEntities = (html: string) =>
+  html.replaceAll(/&(?:amp|lt|gt|quot|#x27|#39);/g, (entity) => HTML_ENTITIES[entity] ?? entity);
+
+/**
+ * The id the server tagged this call's log line with, ready to paste into a
+ * failure message. Quoting it is the whole point of the header — without it you
+ * are back to correlating CI output against server logs by timestamp.
+ */
+const traceOf = (res: Response) => {
+  const id = res.headers.get("x-request-id");
+  return id ? ` [x-request-id: ${id}]` : "";
+};
+
 const unwrap = async <T>(res: Response, label: string): Promise<T> => {
-  if (!res.ok) fail(`${label} failed: ${await describe(res)}`);
+  if (!res.ok) fail(`${label} failed: ${await describe(res)}${traceOf(res)}`);
 
   const parsed = await decode<TrpcResponse<T> | null>(res).catch(() => null);
-  if (parsed?.error) fail(`${label} failed: ${parsed.error.json?.message ?? "unknown tRPC error"}`);
+  if (parsed?.error) {
+    fail(`${label} failed: ${parsed.error.json?.message ?? "unknown tRPC error"}${traceOf(res)}`);
+  }
 
   const data = parsed?.result?.data?.json;
-  if (data === undefined) fail(`${label} returned no data`);
+  if (data === undefined) fail(`${label} returned no data${traceOf(res)}`);
 
   return data;
 };
@@ -241,7 +269,19 @@ const listTodos = async (slug: string, cookie: string): Promise<Todo[]> => {
 
 const step = async <T>(label: string, run: () => Promise<T>): Promise<T> => {
   const startedAt = performance.now();
-  const result = await run();
+
+  let result: T;
+  try {
+    result = await run();
+  } catch (error) {
+    // A SmokeError already names what went wrong and where. Anything else is
+    // unplanned — a socket error, a JSON parse failure — and arrives as a bare
+    // message like "fetch failed" with nothing to locate it. Attach the step.
+    if (error instanceof SmokeError) throw error;
+    const message = error instanceof Error ? error.message : String(error);
+    fail(`${label}: ${message}`);
+  }
+
   const ms = Math.round(performance.now() - startedAt);
   console.log(`  ${GREEN}✓${RESET} ${label} ${DIM}${ms}ms${RESET}`);
   return result;
@@ -308,7 +348,13 @@ const main = async () => {
 
     // A seeded title in the HTML proves the page rendered real data, not just
     // that it returned 200 with an empty shell.
-    const html = await res.text();
+    //
+    // Entities are decoded first: React escapes `&`, `<` and `>` in text, so a
+    // todo titled `Ben & Jerry` renders as `Ben &amp; Jerry` and a raw
+    // substring match would fail on a page that rendered perfectly. Today's
+    // seed titles are plain ASCII, which is the only reason this hasn't bitten
+    // — the check should be about rendering, not about escaping.
+    const html = decodeEntities(await res.text());
     const title = seeded[0]?.title;
     if (title && !html.includes(title)) {
       fail(`dashboard rendered without the seeded todo "${title}"`);
