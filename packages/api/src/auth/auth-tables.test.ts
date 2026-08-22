@@ -1,7 +1,8 @@
+import assert from "node:assert/strict";
+import { describe, test } from "node:test";
 import * as drizzleSchema from "@repo/db/drizzle-schema-auth";
 import { getAuthTables } from "better-auth/db";
 import { getTableColumns, is, Table } from "drizzle-orm";
-import { describe, expect, it } from "vitest";
 
 import { auth } from "./auth";
 
@@ -26,54 +27,53 @@ const drizzleTables = new Map<string, Table>(
 );
 
 const fieldNamesOf = (authTable: (typeof authTables)[string]) =>
-  Object.entries(authTable.fields).map(
-    ([key, field]) => field.fieldName ?? key,
-  );
+  Object.entries(authTable.fields).map(([key, field]) => field.fieldName ?? key);
 
-describe.each(Object.keys(authTables))("%s", (key) => {
-  const authTable = authTables[key];
+for (const key of Object.keys(authTables)) {
+  describe(key, () => {
+    const authTable = authTables[key];
 
-  it("is exported from the Drizzle schema", () => {
-    expect({
-      model: authTable?.modelName,
-      found: drizzleTables.has(authTable?.modelName ?? ""),
-    }).toEqual({ model: authTable?.modelName, found: true });
+    test("is exported from the Drizzle schema", () => {
+      assert.deepEqual(
+        {
+          model: authTable?.modelName,
+          found: drizzleTables.has(authTable?.modelName ?? ""),
+        },
+        { model: authTable?.modelName, found: true },
+      );
+    });
+
+    test("declares every field better-auth requires", () => {
+      const table = drizzleTables.get(authTable?.modelName ?? "");
+      if (!authTable || !table) return;
+      const properties = new Set(Object.keys(getTableColumns(table)));
+      const missing = fieldNamesOf(authTable).filter((fieldName) => !properties.has(fieldName));
+      assert.deepEqual(missing, []);
+    });
+
+    test("does not declare fields better-auth does not know about", () => {
+      const table = drizzleTables.get(authTable?.modelName ?? "");
+      if (!authTable || !table) return;
+      const known = new Set([...fieldNamesOf(authTable), "id"]);
+      const extra = Object.keys(getTableColumns(table)).filter((property) => !known.has(property));
+      assert.deepEqual(extra, []);
+    });
+
+    test("matches better-auth on which fields are NOT NULL", () => {
+      const table = drizzleTables.get(authTable?.modelName ?? "");
+      if (!authTable || !table) return;
+      const columns = getTableColumns(table);
+      const mismatched = Object.entries(authTable.fields)
+        .map(([key, field]) => ({
+          fieldName: field.fieldName ?? key,
+          required: field.required === true,
+        }))
+        .filter(({ fieldName, required }) => {
+          const column = columns[fieldName];
+          return column !== undefined && column.notNull !== required;
+        })
+        .map(({ fieldName, required }) => `${fieldName}: expected notNull=${required}`);
+      assert.deepEqual(mismatched, []);
+    });
   });
-
-  it("declares every field better-auth requires", () => {
-    const table = drizzleTables.get(authTable?.modelName ?? "");
-    if (!authTable || !table) return;
-    const properties = new Set(Object.keys(getTableColumns(table)));
-    const missing = fieldNamesOf(authTable).filter(
-      (fieldName) => !properties.has(fieldName),
-    );
-    expect(missing).toEqual([]);
-  });
-
-  it("does not declare fields better-auth does not know about", () => {
-    const table = drizzleTables.get(authTable?.modelName ?? "");
-    if (!authTable || !table) return;
-    const known = new Set([...fieldNamesOf(authTable), "id"]);
-    const extra = Object.keys(getTableColumns(table)).filter(
-      (property) => !known.has(property),
-    );
-    expect(extra).toEqual([]);
-  });
-
-  it("matches better-auth on which fields are NOT NULL", () => {
-    const table = drizzleTables.get(authTable?.modelName ?? "");
-    if (!authTable || !table) return;
-    const columns = getTableColumns(table);
-    const mismatched = Object.entries(authTable.fields)
-      .map(([key, field]) => ({
-        fieldName: field.fieldName ?? key,
-        required: field.required === true,
-      }))
-      .filter(({ fieldName, required }) => {
-        const column = columns[fieldName];
-        return column !== undefined && column.notNull !== required;
-      })
-      .map(({ fieldName, required }) => `${fieldName}: expected notNull=${required}`);
-    expect(mismatched).toEqual([]);
-  });
-});
+}

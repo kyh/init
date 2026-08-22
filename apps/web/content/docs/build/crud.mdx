@@ -217,7 +217,8 @@ Routers test without a database. `createCallerFactory` plus the mock context fro
 
 ```typescript
 // packages/api/src/post/post-router.test.ts
-import { describe, expect, it } from "vitest";
+import assert from "node:assert/strict";
+import { test } from "node:test";
 
 import { createMockContext } from "../test-utils";
 import { createCallerFactory } from "../trpc";
@@ -225,13 +226,15 @@ import { postRouter } from "./post-router";
 
 const createCaller = createCallerFactory(postRouter);
 
-it("throws UNAUTHORIZED when user is not a member", async () => {
+test("throws UNAUTHORIZED when user is not a member", async () => {
   const ctx = createMockContext();
-  ctx.db.query.organization.findFirst.mockResolvedValue({ id: "org-1", slug: "acme" });
-  ctx.db.query.member.findFirst.mockResolvedValue(undefined);
+  ctx.db.query.organization.findFirst.mock.mockImplementation(() =>
+    Promise.resolve({ id: "org-1", slug: "acme" }),
+  );
+  ctx.db.query.member.findFirst.mock.mockImplementation(() => Promise.resolve(undefined));
 
   const caller = createCaller(ctx);
-  await expect(caller.list({ slug: "acme" })).rejects.toThrow();
+  await assert.rejects(caller.list({ slug: "acme" }));
 });
 ```
 

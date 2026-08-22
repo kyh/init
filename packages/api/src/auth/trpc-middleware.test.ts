@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import assert from "node:assert/strict";
+import { describe, test } from "node:test";
 import { TRPCError } from "@trpc/server";
 
 import { createMockContext } from "../test-utils";
@@ -30,126 +31,123 @@ const testRouter = createTRPCRouter({
 const createCaller = createCallerFactory(testRouter);
 
 describe("protectedProcedure", () => {
-  it("provides non-nullable session to handler", async () => {
+  test("provides non-nullable session to handler", async () => {
     const caller = createCaller(createMockContext());
     const result = await caller.protectedQuery();
-    expect(result.userId).toBe("user-1");
+    assert.strictEqual(result.userId, "user-1");
   });
 
-  it("rejects unauthenticated users with UNAUTHORIZED", async () => {
+  test("rejects unauthenticated users with UNAUTHORIZED", async () => {
     const caller = createCaller(createMockContext({ session: null }));
-    await expect(caller.protectedQuery()).rejects.toThrow(TRPCError);
-    await expect(caller.protectedQuery()).rejects.toThrow("You must be logged in");
+    await assert.rejects(caller.protectedQuery(), TRPCError);
+    await assert.rejects(caller.protectedQuery(), /You must be logged in/);
   });
 });
 
 describe("organizationProcedure", () => {
   const memberContext = () => {
     const ctx = createMockContext();
-    ctx.db.query.organization.findFirst.mockResolvedValue(ORG);
-    ctx.db.query.member.findFirst.mockResolvedValue(MEMBERSHIP);
+    ctx.db.query.organization.findFirst.mock.mockImplementation(() => Promise.resolve(ORG));
+    ctx.db.query.member.findFirst.mock.mockImplementation(() => Promise.resolve(MEMBERSHIP));
     return ctx;
   };
 
-  it("provides the resolved organization and membership to the handler", async () => {
+  test("provides the resolved organization and membership to the handler", async () => {
     const caller = createCaller(memberContext());
     const result = await caller.organizationQuery({ slug: "acme" });
-    expect(result).toEqual({ organizationId: "org-1", role: "owner" });
+    assert.deepEqual(result, { organizationId: "org-1", role: "owner" });
   });
 
-  it("rejects a non-member with UNAUTHORIZED without running the handler", async () => {
+  test("rejects a non-member with UNAUTHORIZED without running the handler", async () => {
     const ctx = createMockContext();
-    ctx.db.query.organization.findFirst.mockResolvedValue(ORG);
-    ctx.db.query.member.findFirst.mockResolvedValue(undefined);
+    ctx.db.query.organization.findFirst.mock.mockImplementation(() => Promise.resolve(ORG));
+    ctx.db.query.member.findFirst.mock.mockImplementation(() => Promise.resolve(undefined));
 
     const caller = createCaller(ctx);
-    await expect(caller.organizationQuery({ slug: "acme" })).rejects.toThrow(
-      "You do not have access to this organization",
+    await assert.rejects(
+      caller.organizationQuery({ slug: "acme" }),
+      /You do not have access to this organization/,
     );
   });
 
-  it("reports a missing organization as NOT_FOUND, distinct from non-membership", async () => {
+  test("reports a missing organization as NOT_FOUND, distinct from non-membership", async () => {
     const ctx = createMockContext();
-    ctx.db.query.organization.findFirst.mockResolvedValue(undefined);
+    ctx.db.query.organization.findFirst.mock.mockImplementation(() => Promise.resolve(undefined));
 
     const caller = createCaller(ctx);
-    await expect(caller.organizationQuery({ slug: "nope" })).rejects.toThrow(
-      "Organization not found",
-    );
-    expect(ctx.db.query.member.findFirst).not.toHaveBeenCalled();
+    await assert.rejects(caller.organizationQuery({ slug: "nope" }), /Organization not found/);
+    assert.strictEqual(ctx.db.query.member.findFirst.mock.callCount(), 0);
   });
 
-  it("rejects unauthenticated callers before touching the database", async () => {
+  test("rejects unauthenticated callers before touching the database", async () => {
     const ctx = createMockContext({ session: null });
     const caller = createCaller(ctx);
-    await expect(caller.organizationQuery({ slug: "acme" })).rejects.toThrow(
-      "You must be logged in",
-    );
-    expect(ctx.db.query.organization.findFirst).not.toHaveBeenCalled();
+    await assert.rejects(caller.organizationQuery({ slug: "acme" }), /You must be logged in/);
+    assert.strictEqual(ctx.db.query.organization.findFirst.mock.callCount(), 0);
   });
 
-  it("rejects an empty slug at the input boundary", async () => {
+  test("rejects an empty slug at the input boundary", async () => {
     const caller = createCaller(memberContext());
-    await expect(caller.organizationQuery({ slug: "" })).rejects.toThrow(TRPCError);
+    await assert.rejects(caller.organizationQuery({ slug: "" }), TRPCError);
   });
 });
 
 describe("publicProcedure", () => {
-  it("allows unauthenticated access", async () => {
+  test("allows unauthenticated access", async () => {
     const caller = createCaller(createMockContext({ session: null }));
     const result = await caller.publicQuery();
-    expect(result.hasSession).toBe(false);
+    assert.strictEqual(result.hasSession, false);
   });
 
-  it("passes session through when authenticated", async () => {
+  test("passes session through when authenticated", async () => {
     const caller = createCaller(createMockContext());
     const result = await caller.publicQuery();
-    expect(result.hasSession).toBe(true);
+    assert.strictEqual(result.hasSession, true);
   });
 });
 
 describe("cross-origin mutation guard", () => {
-  it("allows a mutation the browser labels same-origin", async () => {
+  test("allows a mutation the browser labels same-origin", async () => {
     const caller = createCaller(createMockContext({ secFetchSite: "same-origin" }));
-    expect(await caller.publicMutation()).toEqual({ ok: true });
+    assert.deepEqual(await caller.publicMutation(), { ok: true });
   });
 
-  it("allows a user-initiated mutation (Sec-Fetch-Site: none)", async () => {
+  test("allows a user-initiated mutation (Sec-Fetch-Site: none)", async () => {
     const caller = createCaller(createMockContext({ secFetchSite: "none" }));
-    expect(await caller.publicMutation()).toEqual({ ok: true });
+    assert.deepEqual(await caller.publicMutation(), { ok: true });
   });
 
-  it("allows a mutation whose Origin matches the app", async () => {
+  test("allows a mutation whose Origin matches the app", async () => {
     const caller = createCaller(createMockContext({ origin: "http://localhost:3000" }));
-    expect(await caller.publicMutation()).toEqual({ ok: true });
+    assert.deepEqual(await caller.publicMutation(), { ok: true });
   });
 
-  it("allows a non-browser mutation with no Origin or Sec-Fetch-Site", async () => {
+  test("allows a non-browser mutation with no Origin or Sec-Fetch-Site", async () => {
     const caller = createCaller(createMockContext());
-    expect(await caller.publicMutation()).toEqual({ ok: true });
+    assert.deepEqual(await caller.publicMutation(), { ok: true });
   });
 
-  it("rejects a mutation the browser labels cross-site", async () => {
+  test("rejects a mutation the browser labels cross-site", async () => {
     const caller = createCaller(
       createMockContext({ secFetchSite: "cross-site", origin: "https://evil.example" }),
     );
-    await expect(caller.publicMutation()).rejects.toThrow("Cross-origin request rejected");
+    await assert.rejects(caller.publicMutation(), /Cross-origin request rejected/);
   });
 
-  it("rejects a mutation from an untrusted Origin when Sec-Fetch-Site is absent", async () => {
+  test("rejects a mutation from an untrusted Origin when Sec-Fetch-Site is absent", async () => {
     const caller = createCaller(createMockContext({ origin: "https://evil.example" }));
-    await expect(caller.publicMutation()).rejects.toThrow("Cross-origin request rejected");
+    await assert.rejects(caller.publicMutation(), /Cross-origin request rejected/);
   });
 
-  it("rejects a cross-site mutation even if the Origin header is stripped", async () => {
+  test("rejects a cross-site mutation even if the Origin header is stripped", async () => {
     const caller = createCaller(createMockContext({ secFetchSite: "cross-site", origin: null }));
-    await expect(caller.publicMutation()).rejects.toThrow("Cross-origin request rejected");
+    await assert.rejects(caller.publicMutation(), /Cross-origin request rejected/);
   });
 
-  it("does not guard queries, only mutations", async () => {
+  test("does not guard queries, only mutations", async () => {
     const caller = createCaller(
       createMockContext({ secFetchSite: "cross-site", origin: "https://evil.example" }),
     );
-    expect(await caller.publicQuery()).toEqual({ hasSession: true });
+    assert.deepEqual(await caller.publicQuery(), { hasSession: true });
   });
 });

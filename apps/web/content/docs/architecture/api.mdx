@@ -30,7 +30,7 @@ packages/api/src/
 └── index.ts               # Package exports
 ```
 
-Each feature folder holds a `*-router.ts` (procedures), `*-schema.ts` (Zod inputs), and `*.test.ts` (Vitest).
+Each feature folder holds a `*-router.ts` (procedures), `*-schema.ts` (Zod inputs), and `*.test.ts` (node:test).
 
 ## Core Components
 
@@ -284,7 +284,7 @@ const { data } = useSuspenseQuery(trpc.post.list.queryOptions({ slug }));
 
 ## Testing
 
-Routers ship with Vitest tests next to the code (`todo-router.test.ts`). Shared helpers live in `packages/api/src/test-utils.ts`.
+Routers ship with node:test tests next to the code (`todo-router.test.ts`). Shared helpers live in `packages/api/src/test-utils.ts`.
 
 ```bash
 pnpm -F @repo/api test

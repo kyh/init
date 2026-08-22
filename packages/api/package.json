@@ -13,7 +13,7 @@
   "scripts": {
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "seed": "dotenv -e ../../.env -- tsx src/seed.ts",
-    "test": "vitest run",
+    "test": "node --import tsx --test 'src/**/*.test.ts'",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -31,7 +31,7 @@
     "@kyh/tsconfig": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
-    "typescript": "catalog:",
-    "vitest": "catalog:"
+    "tsx": "catalog:",
+    "typescript": "catalog:"
   }
 }

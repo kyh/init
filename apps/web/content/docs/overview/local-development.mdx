@@ -45,7 +45,7 @@ pnpm db:push         # Push schema changes
 pnpm lint            # oxlint
 pnpm typecheck       # TypeScript
 pnpm format          # oxfmt
-pnpm test            # Vitest
+pnpm test            # node:test
 ```
 
 ## Monorepo Structure
@@ -126,7 +126,7 @@ const { data } = useSuspenseQuery(trpc.todo.list.queryOptions({ slug }));
 
 ### Testing Routes
 
-Routers have Vitest tests next to the code (`*-router.test.ts`):
+Routers have node:test tests next to the code (`*-router.test.ts`):
 
 ```bash
 pnpm -F @repo/api test

@@ -48,7 +48,7 @@ pnpm typecheck        # Type check all packages
 pnpm lint             # Lint all packages (oxlint)
 pnpm format           # Check formatting (oxfmt)
 pnpm format:fix       # Format all packages (oxfmt)
-pnpm test             # Run tests (vitest)
+pnpm test             # Run tests (node:test — do not add vitest or jest)
 pnpm verify           # typecheck · lint · format · test (CI gate)
 pnpm build            # Build all packages
 

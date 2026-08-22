@@ -1,4 +1,7 @@
-import { vi } from "vitest";
+import type { Mock } from "node:test";
+import { mock } from "node:test";
+import type { SQL, Table } from "drizzle-orm";
+import type { Operators } from "drizzle-orm/relations";
 
 import type { TRPCContext } from "./trpc";
 
@@ -27,42 +30,70 @@ const mockSession = {
   },
 };
 
+/** The slice of a drizzle relational-query config the tests read back. */
+type MockQueryConfig = {
+  where?: (table: Table, operators: Pick<Operators, "and" | "eq" | "ne">) => SQL | undefined;
+  with?: { user?: { columns?: Record<string, boolean> } };
+};
+
+// Every stub is declared as returning void: routers reach these through the
+// real drizzle types (see the assertion in createMockContext), so the mock's own
+// signature only has to describe what a *test* reads back.
+type MockQueryFn = Mock<(config?: MockQueryConfig) => void>;
+type MockChainFn = Mock<(...args: unknown[]) => void>;
+
+type MockChain = {
+  values: MockChainFn;
+  set: MockChainFn;
+  where: MockChainFn;
+  onConflictDoNothing: MockChainFn;
+  returning: MockChainFn;
+};
+
 type MockDb = {
   query: {
-    organization: { findFirst: ReturnType<typeof vi.fn> };
-    member: { findFirst: ReturnType<typeof vi.fn>; findMany: ReturnType<typeof vi.fn> };
-    todo: { findMany: ReturnType<typeof vi.fn> };
-    invitation: { findMany: ReturnType<typeof vi.fn> };
-    user: { findMany: ReturnType<typeof vi.fn> };
+    organization: { findFirst: MockQueryFn };
+    member: { findFirst: MockQueryFn; findMany: MockQueryFn };
+    todo: { findMany: MockQueryFn };
+    invitation: { findMany: MockQueryFn };
+    user: { findMany: MockQueryFn };
   };
-  insert: ReturnType<typeof vi.fn>;
-  update: ReturnType<typeof vi.fn>;
-  delete: ReturnType<typeof vi.fn>;
+  insert: MockChainFn;
+  update: MockChainFn;
+  delete: MockChainFn;
 };
 
-const chainable = () => {
-  const chain = {
-    values: vi.fn().mockReturnThis(),
-    set: vi.fn().mockReturnThis(),
-    where: vi.fn().mockReturnThis(),
-    onConflictDoNothing: vi.fn().mockReturnThis(),
-    returning: vi.fn().mockResolvedValue([]),
+const queryFn = (): MockQueryFn => mock.fn<(config?: MockQueryConfig) => void>();
+
+/** A drizzle insert/update/delete builder: every step returns the same chain. */
+export function createMockChain(rows: unknown[] = []): MockChain {
+  const step = (): MockChainFn => mock.fn<(...args: unknown[]) => void>(() => chain);
+  const chain: MockChain = {
+    values: step(),
+    set: step(),
+    where: step(),
+    onConflictDoNothing: step(),
+    returning: mock.fn<(...args: unknown[]) => void>(() => Promise.resolve(rows)),
   };
   return chain;
-};
+}
 
 export function createMockDb(): MockDb {
+  const chainFn = (): MockChainFn => {
+    const chain = createMockChain();
+    return mock.fn<(...args: unknown[]) => void>(() => chain);
+  };
   return {
     query: {
-      organization: { findFirst: vi.fn() },
-      member: { findFirst: vi.fn(), findMany: vi.fn() },
-      todo: { findMany: vi.fn() },
-      invitation: { findMany: vi.fn() },
-      user: { findMany: vi.fn() },
+      organization: { findFirst: queryFn() },
+      member: { findFirst: queryFn(), findMany: queryFn() },
+      todo: { findMany: queryFn() },
+      invitation: { findMany: queryFn() },
+      user: { findMany: queryFn() },
     },
-    insert: vi.fn().mockReturnValue(chainable()),
-    update: vi.fn().mockReturnValue(chainable()),
-    delete: vi.fn().mockReturnValue(chainable()),
+    insert: chainFn(),
+    update: chainFn(),
+    delete: chainFn(),
   };
 }
 

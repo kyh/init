@@ -1,30 +1,31 @@
-import { describe, expect, it } from "vitest";
+import assert from "node:assert/strict";
+import { describe, test } from "node:test";
 
 import { authMetadataSchema } from "./auth-schema";
 
 describe("authMetadataSchema", () => {
-  it("parses valid metadata with personal flag", () => {
+  test("parses valid metadata with personal flag", () => {
     const result = authMetadataSchema.parse('{"personal": true}');
-    expect(result).toEqual({ personal: true });
+    assert.deepEqual(result, { personal: true });
   });
 
-  it("parses metadata without personal flag", () => {
+  test("parses metadata without personal flag", () => {
     const result = authMetadataSchema.parse("{}");
-    expect(result).toEqual({});
+    assert.deepEqual(result, {});
   });
 
-  it("rejects invalid JSON", () => {
+  test("rejects invalid JSON", () => {
     const result = authMetadataSchema.safeParse("not-json");
-    expect(result.success).toBe(false);
+    assert.strictEqual(result.success, false);
   });
 
-  it("rejects non-boolean personal field", () => {
+  test("rejects non-boolean personal field", () => {
     const result = authMetadataSchema.safeParse('{"personal": "yes"}');
-    expect(result.success).toBe(false);
+    assert.strictEqual(result.success, false);
   });
 
-  it("strips unknown fields", () => {
+  test("strips unknown fields", () => {
     const result = authMetadataSchema.parse('{"personal": false, "extra": 1}');
-    expect(result).toEqual({ personal: false });
+    assert.deepEqual(result, { personal: false });
   });
 });
