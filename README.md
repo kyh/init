@@ -29,7 +29,7 @@ apps/
   extension/   # WXT Chrome extension
   desktop/     # Electron desktop app
 packages/
-  api/         # tRPC router + better-auth
+  api/         # oRPC router + better-auth
   db/          # Drizzle schema + Supabase config
   ui/          # Shared React components
 ```

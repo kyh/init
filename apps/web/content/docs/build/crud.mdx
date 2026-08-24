@@ -59,7 +59,7 @@ No migration files, no codegen. Types flow from the schema definition immediatel
 // packages/api/src/post/post-schema.ts
 import { z } from "zod";
 
-import { organizationInput } from "../orpc";
+import { organizationInput } from "../organization/organization-schema";
 
 export const createPostInput = organizationInput.extend({
   title: z.string().trim().min(1, "Title is required").max(255),
@@ -71,7 +71,7 @@ export const deletePostInput = organizationInput.extend({
 });
 ```
 
-Org-scoped schemas extend `organizationInput`, so the `slug` is part of each procedure's declared contract - and `requireOrganization` (next step) will only compose onto a procedure whose input carries it.
+Org-scoped schemas extend `organizationInput`, so the `slug` is part of each procedure's declared contract - `organizationProcedure` (next step) takes the schema and reads the slug off it.
 
 ## 4. Write the Router
 
@@ -81,11 +81,12 @@ import { post } from "@repo/db/drizzle-schema";
 import { ORPCError } from "@orpc/server";
 import { and, eq } from "drizzle-orm";
 
-import { organizationProcedure, protectedProcedure, requireOrganization } from "../orpc";
+import { organizationProcedure } from "../orpc";
+import { organizationInput } from "../organization/organization-schema";
 import { createPostInput, deletePostInput } from "./post-schema";
 
 export const postRouter = {
-  list: organizationProcedure.handler(async ({ context }) => {
+  list: organizationProcedure(organizationInput).handler(async ({ context }) => {
     const posts = await context.db.query.post.findMany({
       where: (postTable, { eq }) => eq(postTable.organizationId, context.organization.id),
       orderBy: (postTable, { desc }) => desc(postTable.createdAt),
@@ -93,40 +94,34 @@ export const postRouter = {
 
     return { posts };
   }),
-  create: protectedProcedure
-    .input(createPostInput)
-    .use(requireOrganization)
-    .handler(async ({ context, input }) => {
-      const [createdPost] = await context.db
-        .insert(post)
-        .values({
-          organizationId: context.organization.id,
-          title: input.title,
-          content: input.content,
-        })
-        .returning();
+  create: organizationProcedure(createPostInput).handler(async ({ context, input }) => {
+    const [createdPost] = await context.db
+      .insert(post)
+      .values({
+        organizationId: context.organization.id,
+        title: input.title,
+        content: input.content,
+      })
+      .returning();
 
-      return { post: createdPost };
-    }),
-  delete: protectedProcedure
-    .input(deletePostInput)
-    .use(requireOrganization)
-    .handler(async ({ context, input }) => {
-      const [deletedPost] = await context.db
-        .delete(post)
-        .where(and(eq(post.id, input.id), eq(post.organizationId, context.organization.id)))
-        .returning();
+    return { post: createdPost };
+  }),
+  delete: organizationProcedure(deletePostInput).handler(async ({ context, input }) => {
+    const [deletedPost] = await context.db
+      .delete(post)
+      .where(and(eq(post.id, input.id), eq(post.organizationId, context.organization.id)))
+      .returning();
 
-      if (!deletedPost) {
-        throw new ORPCError("NOT_FOUND", { message: "Post not found" });
-      }
+    if (!deletedPost) {
+      throw new ORPCError("NOT_FOUND", { message: "Post not found" });
+    }
 
-      return { post: deletedPost };
-    }),
+    return { post: deletedPost };
+  }),
 };
 ```
 
-`requireOrganization` (in `packages/api/src/orpc.ts`) resolves the org named by `input.slug` and proves membership before any handler runs, so handlers just read `context.organization.id`. `list` takes nothing but the slug, so it uses `organizationProcedure` - the prebuilt combination of the two. Every mutation still filters by `organizationId` in the `where` clause, so a valid member of org A can never touch org B's rows.
+`organizationProcedure` (in `packages/api/src/orpc.ts`) takes the procedure's input schema, resolves the org named by `input.slug`, and proves membership before any handler runs - so handlers just read `context.organization.id`. `list` needs nothing but the slug, so it passes `organizationInput` itself. Every mutation still filters by `organizationId` in the `where` clause, so a valid member of org A can never touch org B's rows.
 
 ## 5. Mount the Router
 
@@ -263,7 +258,7 @@ Nothing else to do. The mobile app (`apps/mobile/src/utils/api.ts`) consumes the
 - Table has `organizationId` + index + `.enableRLS()`
 - `pnpm db:push` ran
 - Zod schema extends `organizationInput` and validates the feature's own fields
-- Router applies `requireOrganization` and filters mutations by `organizationId`
+- Router is built with `organizationProcedure` and filters mutations by `organizationId`
 - Router mounted in `root-router.ts`
 - Page prefetches; client uses `useSuspenseQuery`
 - Tests cover the unauthorized paths

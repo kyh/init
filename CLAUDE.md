@@ -10,7 +10,7 @@
 - **Build**: Turborepo, Vite, Next.js Turbopack
 - **Language**: TypeScript 5.x, React 19
 - **Styling**: Tailwind CSS 4.x, Base UI, shadcn/ui (base-vega registry)
-- **Backend**: tRPC, better-auth, Drizzle ORM
+- **Backend**: oRPC, better-auth, Drizzle ORM
 - **Billing**: Stripe via @better-auth/stripe
 - **Email**: Resend REST API (console fallback in dev)
 - **Database**: Supabase (Postgres + avatars storage bucket only — auth is better-auth, Data API disabled)
@@ -24,7 +24,7 @@ apps/
   extension/   # Chrome extension (wxt)
   desktop/     # Desktop app (Electron)
 packages/
-  api/         # tRPC router + better-auth
+  api/         # oRPC router + better-auth
   db/          # Drizzle schema + client, Supabase local dev/migrations
   ui/          # Shared React components (shadcn-style)
 ```

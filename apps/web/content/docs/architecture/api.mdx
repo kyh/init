@@ -100,7 +100,7 @@ export const protectedProcedure = publicProcedure.use(({ context, next }) => {
 
 #### Organization Access
 
-Org-scoping is a middleware, `requireOrganization`. It reads `input.slug`, resolves the organization, and proves the caller is a member before the handler runs - so a handler cannot read or write another tenant's rows by forgetting a check:
+Org-scoping is a procedure factory. It takes the procedure's input schema, resolves the organization named by `input.slug`, and proves the caller is a member before the handler runs - so a handler cannot read or write another tenant's rows by forgetting a check:
 
 ```typescript
 // packages/api/src/orpc.ts
@@ -108,11 +108,12 @@ export const organizationInput = z.object({
   slug: z.string().min(1, "Organization slug is required"),
 });
 
-export const requireOrganization = os
-  .$context<{ db: ORPCContext["db"]; session: NonNullable<ORPCContext["session"]> }>()
-  .middleware(async ({ context, next }, input: z.infer<typeof organizationInput>) => {
+export const organizationProcedure = <T extends z.ZodType<z.infer<typeof organizationInput>>>(
+  input: T,
+) =>
+  protectedProcedure.input(input).use(async ({ context, next }, validated) => {
     const organization = await context.db.query.organization.findFirst({
-      where: (org, { eq }) => eq(org.slug, input.slug),
+      where: (org, { eq }) => eq(org.slug, validated.slug),
     });
 
     if (!organization) {
@@ -132,22 +133,18 @@ export const requireOrganization = os
 
     return next({ context: { organization, membership } });
   });
-
-// The common case: an org-scoped procedure whose only input is the slug
-export const organizationProcedure = protectedProcedure
-  .input(organizationInput)
-  .use(requireOrganization);
 ```
 
 Handlers get `context.organization` and `context.membership`, and should still scope their queries by `context.organization.id`.
 
-A procedure that needs more than the slug composes the pieces itself:
+Every org-scoped procedure is written the same way, passing its own input schema:
 
 ```typescript
-protectedProcedure.input(createTodoInput).use(requireOrganization).handler(...)
+organizationProcedure(organizationInput).handler(...)  // slug only
+organizationProcedure(createTodoInput).handler(...)    // slug plus the feature's fields
 ```
 
-The middleware declares its input as `{ slug: string }`, so TypeScript refuses to apply it to a procedure whose schema doesn't carry a slug. That is why org-scoped schemas extend `organizationInput` - the schema states the procedure's whole contract, and the guarantee is checked at compile time rather than assumed.
+A factory rather than a builder because oRPC does not merge `.input()` calls - each procedure declares its whole input, so the schema has to carry the slug. Wrapping both steps means the membership check cannot be left off: there is no half-applied form to reach for. That is why org-scoped schemas extend `organizationInput`.
 
 ### 3. Router Composition
 
@@ -223,7 +220,7 @@ All procedures validate inputs with Zod, colocated in `*-schema.ts`:
 
 ```typescript
 // packages/api/src/todo/todo-schema.ts
-import { organizationInput } from "../orpc";
+import { organizationInput } from "../organization/organization-schema";
 
 const titleField = z.string().trim().min(1, "Title is required").max(255, "Title is too long");
 
@@ -271,7 +268,7 @@ Auth cookies are `SameSite=None`, so the browser's own CSRF backstop is off for 
 // packages/api/src/post/post-schema.ts
 import { z } from "zod";
 
-import { organizationInput } from "../orpc";
+import { organizationInput } from "../organization/organization-schema";
 
 export const createPostInput = organizationInput.extend({
   title: z.string().min(1).max(255),
@@ -282,19 +279,16 @@ export const createPostInput = organizationInput.extend({
 
 ```typescript
 // packages/api/src/post/post-router.ts
-import { protectedProcedure, requireOrganization } from "../orpc";
+import { organizationProcedure } from "../orpc";
 import { createPostInput } from "./post-schema";
 
 export const postRouter = {
-  create: protectedProcedure
-    .input(createPostInput)
-    .use(requireOrganization)
-    .handler(async ({ context, input }) => {
-      return context.db.insert(post).values({
-        organizationId: context.organization.id,
-        title: input.title,
-      });
-    }),
+  create: organizationProcedure(createPostInput).handler(async ({ context, input }) => {
+    return context.db.insert(post).values({
+      organizationId: context.organization.id,
+      title: input.title,
+    });
+  }),
 };
 ```
 
@@ -335,7 +329,7 @@ pnpm -F @repo/api test
 
 - **Organize by feature** - One folder per domain, router + schema + test
 - **Validate everything** - Zod at every boundary
-- **Check org access** - Every multi-tenant procedure applies `requireOrganization`, so membership is proven before the handler runs
+- **Check org access** - Every multi-tenant procedure is built with `organizationProcedure`, so membership is proven before the handler runs
 - **Allow-list columns** - Don't return full user rows; see `organization-router.ts`
 
 ## Next Steps

@@ -104,7 +104,7 @@ Add a feature folder in `packages/api/src/` with a router and Zod schema:
 ```typescript
 // packages/api/src/post/post-router.ts
 export const postRouter = {
-  list: organizationProcedure.handler(async ({ context }) => {
+  list: organizationProcedure(organizationInput).handler(async ({ context }) => {
     return context.db.query.post.findMany({
       where: (p, { eq }) => eq(p.organizationId, context.organization.id),
     });
@@ -112,7 +112,7 @@ export const postRouter = {
 };
 ```
 
-`organizationProcedure` (from `../orpc`) supplies the `slug` input and proves membership before the handler runs; procedures needing more input use `protectedProcedure.input(schema).use(requireOrganization)` instead. Register in `packages/api/src/root-router.ts`. See the [API guide](/docs/architecture/api) for the full pattern.
+`organizationProcedure` (from `../orpc`) takes the procedure's input schema and proves membership before the handler runs. Register in `packages/api/src/root-router.ts`. See the [API guide](/docs/architecture/api) for the full pattern.
 
 ### Using Routes in Components
 

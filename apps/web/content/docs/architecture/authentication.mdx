@@ -174,7 +174,7 @@ export const protectedProcedure = publicProcedure.use(({ context, next }) => {
 });
 ```
 
-Organization membership is a layer on top: `requireOrganization` in `packages/api/src/orpc.ts` resolves the organization named by `input.slug` and proves the caller is a member before the handler runs - handlers get `context.organization` and `context.membership`.
+Organization membership is a layer on top: `organizationProcedure(schema)` in `packages/api/src/orpc.ts` resolves the organization named by `input.slug` and proves the caller is a member before the handler runs - handlers get `context.organization` and `context.membership`.
 
 ## Client Usage
 

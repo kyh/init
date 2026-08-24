@@ -2,7 +2,7 @@
 title: "Data Mutations"
 ---
 
-Writes go through oRPC procedures: Zod validates, `requireOrganization` proves org membership, TanStack Query refreshes the cache. The todo list and waitlist form are the two reference implementations.
+Writes go through oRPC procedures: Zod validates, `organizationProcedure` proves org membership, TanStack Query refreshes the cache. The todo list and waitlist form are the two reference implementations.
 
 ## Server Side
 
@@ -10,23 +10,20 @@ Every mutation is a procedure with a Zod input and an ownership check:
 
 ```typescript
 // packages/api/src/todo/todo-router.ts
-create: protectedProcedure
-  .input(createTodoInput)
-  .use(requireOrganization)
-  .handler(async ({ context, input }) => {
-    const [createdTodo] = await context.db
-      .insert(todo)
-      .values({ organizationId: context.organization.id, title: input.title })
-      .returning();
+create: organizationProcedure(createTodoInput).handler(async ({ context, input }) => {
+  const [createdTodo] = await context.db
+    .insert(todo)
+    .values({ organizationId: context.organization.id, title: input.title })
+    .returning();
 
-    return { todo: createdTodo };
-  }),
+  return { todo: createdTodo };
+}),
 ```
 
 Rules the todo router demonstrates:
 
 - **Validate at the boundary** - inputs are parsed by Zod before your code runs; invalid input never reaches the database
-- **Membership before the handler** - `requireOrganization` (`packages/api/src/orpc.ts`) reads the `slug` off the validated input, resolves the org, and proves the caller is a member; the handler just reads `context.organization.id`
+- **Membership before the handler** - `organizationProcedure` (`packages/api/src/orpc.ts`) reads the `slug` off the validated input, resolves the org, and proves the caller is a member; the handler just reads `context.organization.id`
 - **Scope every write** - updates and deletes filter by `organizationId`, not just row id, so members of one org can't touch another's rows
 - **`.returning()` + explicit NOT_FOUND** - if the scoped write matched nothing, throw instead of silently succeeding
 

@@ -1,6 +1,6 @@
 # AGENTS.md
 
-**init** is an agent-first, multi-platform TypeScript starter: one typed stack (tRPC · better-auth · Drizzle · Postgres) shipping to web (Next.js), mobile (Expo), extension (WXT), and desktop (Electron). This is the tool-agnostic guide for coding agents — it's meant to be run, not just read. Claude also reads `CLAUDE.md`; both point back here.
+**init** is an agent-first, multi-platform TypeScript starter: one typed stack (oRPC · better-auth · Drizzle · Postgres) shipping to web (Next.js), mobile (Expo), extension (WXT), and desktop (Electron). This is the tool-agnostic guide for coding agents — it's meant to be run, not just read. Claude also reads `CLAUDE.md`; both point back here.
 
 ## Quickstart (headless)
 
@@ -90,7 +90,7 @@ For the three non-web targets, verify with `pnpm typecheck` and `pnpm build`; a 
 
 ## Rules that matter
 
-- **Mutations go through tRPC or the better-auth client — never Next Server Actions.** All four platforms share one typed surface; each mutation invalidates the specific queries it touches in `onSuccess` (see `CLAUDE.md` → Mutation path).
+- **Mutations go through oRPC or the better-auth client — never Next Server Actions.** All four platforms share one typed surface; each mutation invalidates the specific queries it touches in `onSuccess` (see `CLAUDE.md` → Mutation path).
 - **No `any`, no non-null `!`, no `as` casts.** Kebab-case filenames. Make illegal states unrepresentable.
 - Env degrades gracefully: missing keys (Stripe, Resend) disable a feature, they don't crash boot.
 

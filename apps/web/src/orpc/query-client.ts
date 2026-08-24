@@ -10,11 +10,15 @@ export const createQueryClient = () => {
     defaultOptions: {
       queries: {
         // Inputs can contain non-JSON values, so keys have to hash through the
-        // same serializer the data does. Handing the result to TanStack's own
-        // `hashKey` keeps its key sorting, which the serializer does not do —
-        // without it, one input spelled in two property orders is two cache
-        // entries, and invalidating one misses the other.
-        queryKeyHashFn: (queryKey) => hashKey(serializer.serialize(queryKey)),
+        // same serializer the data does. Two canonicalizations are needed, not
+        // one: `hashKey` sorts object keys but leaves array order alone, and the
+        // serializer emits one meta entry per rich value in traversal order. Sort
+        // the meta too, or `{ from: Date, to: Date }` and `{ to: Date, from: Date }`
+        // hash differently and each gets its own cache entry.
+        queryKeyHashFn: (queryKey) => {
+          const [json, meta] = serializer.serialize(queryKey);
+          return hashKey([json, meta.toSorted((a, b) => hashKey(a).localeCompare(hashKey(b)))]);
+        },
         // With SSR, we usually want to set some default staleTime
         // above 0 to avoid refetching immediately on the client
         staleTime: 30 * 1000,
