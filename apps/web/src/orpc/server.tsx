@@ -1,3 +1,5 @@
+import "server-only";
+
 import { cache } from "react";
 import { headers } from "next/headers";
 import { appRouter, createORPCContext } from "@repo/api";
@@ -14,12 +16,8 @@ import { createQueryClient } from "./query-client";
  * Server Component calls a procedure.
  */
 const createContext = cache(async () => {
-  const heads = new Headers(await headers());
-
-  heads.set("x-orpc-source", "rsc");
-
   return createORPCContext({
-    headers: heads,
+    headers: new Headers(await headers()),
     // Dashboard pages call getSession() to gate the route before they prefetch.
     // Reuse that cached result — resolving it again here would be a second
     // session lookup per render.

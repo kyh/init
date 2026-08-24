@@ -26,7 +26,7 @@ export const example = pgTable("example", (t) => ({
 - **UUID primary keys** - `defaultRandom()`, generated in Postgres
 - **Timestamps with timezone** - `defaultNow()`; routers set `updatedAt` on update (see `todo-router.ts`)
 - **snake_case is automatic** - the client is configured with `casing: "snake_case"`, so write `organizationId` and get `organization_id`
-- **`.enableRLS()` on every table** - no policies, deny by default. Authorization lives in tRPC; the server connection bypasses RLS as table owner. Forget this and the table is readable through PostgREST with the anon key on hosted Supabase.
+- **`.enableRLS()` on every table** - no policies, deny by default. Authorization lives in the oRPC procedures; the server connection bypasses RLS as table owner. Forget this and the table is readable through PostgREST with the anon key on hosted Supabase.
 
 ## Pattern: Organization-Scoped Data
 

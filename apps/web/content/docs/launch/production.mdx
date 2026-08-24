@@ -34,7 +34,7 @@ On a hosted Supabase project, also disable the Data API (Settings → API) - loc
 Honest gaps. Each is a deliberate "add when you need it":
 
 - **Email delivery** - set `RESEND_API_KEY` (and `EMAIL_FROM`) in production. Password reset and organization invite emails send through Resend's REST API (`packages/api/src/email/send-email.ts`); without the key they log to the server console instead of sending
-- **Rate limiting** - better-auth's built-in limiter covers auth routes (in-memory, so per-instance on serverless), but tRPC procedures have none. Add [Vercel WAF rules](https://vercel.com/docs/security/vercel-waf) or a middleware backed by a shared store
+- **Rate limiting** - better-auth's built-in limiter covers auth routes (in-memory, so per-instance on serverless), but oRPC procedures have none. Add [Vercel WAF rules](https://vercel.com/docs/security/vercel-waf) or a middleware backed by a shared store
 - **Billing** - Stripe via `@better-auth/stripe`. Set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and `STRIPE_PRO_PRICE_ID`, then point a Stripe webhook at `/api/auth/stripe/webhook` (events: `checkout.session.completed`, `customer.subscription.created/updated/deleted`). The webhook keeps the `subscription` table in sync; `dashboard/[slug]/billing` handles checkout and the billing portal. Subscriptions are org-scoped — only owners/admins can manage them
 - **Email verification** - verification emails send on signup. Uncomment `requireEmailVerification` in `packages/api/src/auth/auth.ts` to block unverified logins
 - **Background jobs** - no queue. Long work either fits in a request or needs Inngest/Trigger.dev/QStash

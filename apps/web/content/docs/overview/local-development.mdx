@@ -58,7 +58,7 @@ apps/
 └── desktop/      # Electron desktop app
 
 packages/
-├── api/          # tRPC routers + better-auth
+├── api/          # oRPC routers + better-auth
 ├── db/           # Drizzle schema + Supabase config
 └── ui/           # Shared React components
 ```
@@ -93,7 +93,7 @@ export const post = pgTable("post", (t) => ({
 })).enableRLS();
 ```
 
-Always `.enableRLS()` - authorization lives in tRPC, RLS blocks direct PostgREST access.
+Always `.enableRLS()` - authorization lives in oRPC, RLS blocks direct PostgREST access.
 
 ## API Development
 
@@ -149,7 +149,7 @@ apps/web/src/app/
 ```
 apps/mobile/src/
 ├── app/              # Expo Router screens
-└── utils/            # auth, tRPC client, base-url
+└── utils/            # auth, oRPC client, base-url
 ```
 
 ### Adding a Feature
@@ -207,7 +207,7 @@ pnpm lint:fix && pnpm format:fix
 ### Web
 
 - Browser DevTools + React DevTools
-- tRPC logs requests in dev (loggerLink)
+- oRPC logs failed requests in dev (onError interceptor)
 - TanStack Query Devtools ships in the tree
 
 ### Mobile
@@ -260,5 +260,5 @@ Production values live in your deployment platform, plus `.env.production.local`
 ## Next Steps
 
 1. **Explore the architecture** - [Folder structure](/docs/architecture/folder-structure)
-2. **Understand the API** - [tRPC guide](/docs/architecture/api)
+2. **Understand the API** - [oRPC guide](/docs/architecture/api)
 3. **Learn the auth flow** - [better-auth setup](/docs/architecture/authentication)

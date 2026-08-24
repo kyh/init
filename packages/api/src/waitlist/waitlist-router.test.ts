@@ -1,12 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { createRouterClient } from "@orpc/server";
 
-import { createMockChain, createMockContext } from "../test-utils";
+import { createCaller, createMockChain, createMockContext } from "../test-utils";
 import { waitlistRouter } from "./waitlist-router";
-
-const createCaller = (context: ReturnType<typeof createMockContext>) =>
-  createRouterClient(waitlistRouter, { context });
 
 describe("waitlistRouter.join", () => {
   test("inserts waitlist entry with email and source", async () => {
@@ -15,7 +11,7 @@ describe("waitlistRouter.join", () => {
     const chain = createMockChain([created]);
     ctx.db.insert.mock.mockImplementation(() => chain);
 
-    const caller = createCaller(ctx);
+    const caller = createCaller(waitlistRouter, ctx);
     const result = await caller.join({ email: "hello@example.com" });
 
     assert.deepEqual(result.waitlist, created);
@@ -31,7 +27,7 @@ describe("waitlistRouter.join", () => {
     const chain = createMockChain([created]);
     ctx.db.insert.mock.mockImplementation(() => chain);
 
-    const caller = createCaller(ctx);
+    const caller = createCaller(waitlistRouter, ctx);
     const result = await caller.join({ email: "user@example.com" });
 
     assert.strictEqual(result.waitlist?.userId, "user-1");
@@ -53,7 +49,7 @@ describe("waitlistRouter.join", () => {
       const chain = createMockChain([created]);
       ctx.db.insert.mock.mockImplementation(() => chain);
 
-      const caller = createCaller(ctx);
+      const caller = createCaller(waitlistRouter, ctx);
       await caller.join({ email: "a@b.com" });
 
       assert.partialDeepStrictEqual(chain.values.mock.calls[0]?.arguments[0], {
@@ -74,7 +70,7 @@ describe("waitlistRouter.join", () => {
     const chain = createMockChain([created]);
     ctx.db.insert.mock.mockImplementation(() => chain);
 
-    const caller = createCaller(ctx);
+    const caller = createCaller(waitlistRouter, ctx);
     const result = await caller.join({ email: "anon@example.com" });
 
     assert.notStrictEqual(result.waitlist, undefined);

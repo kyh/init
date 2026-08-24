@@ -14,7 +14,7 @@ init/
 │   ├── extension/         # Chrome extension (WXT)
 │   └── desktop/           # Electron desktop app
 ├── packages/
-│   ├── api/               # tRPC router + better-auth
+│   ├── api/               # oRPC router + better-auth
 │   ├── db/                # Drizzle schema + Supabase config
 │   └── ui/                # Shared React components
 ├── scripts/               # bootstrap.ts (provision + trim), seed via packages/api
@@ -69,7 +69,7 @@ Expo + React Native with NativeWind:
 apps/mobile/
 ├── src/
 │   ├── app/               # Expo Router (_layout.tsx, index.tsx)
-│   ├── utils/             # auth (SecureStore), api (tRPC), base-url
+│   ├── utils/             # auth (SecureStore), api (oRPC), base-url
 │   └── styles.css
 ├── app.config.ts
 └── package.json
@@ -106,7 +106,7 @@ apps/desktop/
 
 ### API Package (`packages/api/`)
 
-tRPC router and better-auth config:
+oRPC router and better-auth config:
 
 ```
 packages/api/src/
@@ -179,7 +179,7 @@ No separate docs package - these pages are MDX files in `apps/web/content/docs/`
 ## Key Design Principles
 
 1. **Separation of concerns** - Apps own UX; packages own logic, data, and primitives
-2. **Code sharing** - One tRPC router, one auth config, one schema for every platform
+2. **Code sharing** - One oRPC router, one auth config, one schema for every platform
 3. **Type safety** - Types flow from schema through API to UI, no codegen
 4. **Explicit imports** - `@repo/ui/components/button`, not barrel files
 

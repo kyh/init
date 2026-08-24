@@ -11,13 +11,13 @@ The stack:
 - **Supabase** - Managed Postgres, local dev via the Supabase CLI
 - **Drizzle ORM** - Type-safe queries over postgres.js
 - **drizzle-kit push** - Schema sync, no migration files
-- **RLS deny-by-default** - Authorization lives in tRPC, not the database
+- **RLS deny-by-default** - Authorization lives in oRPC, not the database
 
 ## Architecture
 
 ```mermaid
 graph TB
-    A[tRPC Procedures] --> B[Drizzle ORM]
+    A[oRPC Procedures] --> B[Drizzle ORM]
     B --> C[postgres.js]
     C --> D[Supabase Postgres]
 
@@ -91,7 +91,7 @@ export const todo = pgTable(
 
 ### Row Level Security
 
-Every table calls `.enableRLS()` with no policies - deny by default. The public schema is reachable through PostgREST with the anon key, so this blocks direct access. Authorization lives in tRPC. The server's Drizzle connection is unaffected: the table owner bypasses RLS.
+Every table calls `.enableRLS()` with no policies - deny by default. The public schema is reachable through PostgREST with the anon key, so this blocks direct access. Authorization lives in oRPC. The server's Drizzle connection is unaffected: the table owner bypasses RLS.
 
 If you regenerate the auth schema, re-add `.enableRLS()` to every table.
 
@@ -198,9 +198,9 @@ type NewTodo = InferInsertModel<typeof todo>;
 
 ## Local Supabase
 
-Config lives in `packages/db/supabase/config.toml`. Supabase Auth and the Data API (PostgREST) are disabled — better-auth owns auth, and all queries go through tRPC/Drizzle. Storage is enabled with a public `avatars` bucket; writes go through `/api/account/avatar` with the service-role key, so no storage policies are needed.
+Config lives in `packages/db/supabase/config.toml`. Supabase Auth and the Data API (PostgREST) are disabled — better-auth owns auth, and all queries go through oRPC/Drizzle. Storage is enabled with a public `avatars` bucket; writes go through `/api/account/avatar` with the service-role key, so no storage policies are needed.
 
-Every table enables RLS with no policies, so the Data API serves zero rows to `anon`/`authenticated` — authorization lives in tRPC. Hosted projects should disable the Data API under Settings → API; nothing in the app uses it.
+Every table enables RLS with no policies, so the Data API serves zero rows to `anon`/`authenticated` — authorization lives in oRPC. Hosted projects should disable the Data API under Settings → API; nothing in the app uses it.
 
 ```bash
 pnpm db:start   # supabase start (Postgres on :54322, Studio on :54323)
@@ -211,7 +211,7 @@ For hosted projects, create the `avatars` bucket in the Supabase dashboard.
 ## Best Practices
 
 - **Scope by organization** - Multi-tenant tables reference `organization.id` and get an index on it
-- **Check membership in tRPC** - RLS won't save you; procedures must verify org access
+- **Check membership in oRPC** - RLS won't save you; procedures must verify org access
 - **Use relational queries** - `db.query.x.findMany({ with })` beats N+1s
 - **Let the pooler pool** - Don't tune postgres.js connection counts; Supavisor handles it
 
@@ -237,4 +237,4 @@ pnpm db:reset   # Nuke local, re-push schema
 ## Next Steps
 
 1. **Authentication** - How [auth uses these tables](/docs/architecture/authentication)
-2. **API development** - Build [tRPC procedures](/docs/architecture/api) with Drizzle queries
+2. **API development** - Build [oRPC procedures](/docs/architecture/api) with Drizzle queries

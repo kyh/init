@@ -20,7 +20,7 @@ better-auth handles:
 graph TD
     A[User Login] --> B[better-auth handler]
     B --> C[Session Cookie]
-    C --> D[tRPC Context]
+    C --> D[oRPC Context]
     D --> E[Protected Procedures]
     E --> F[Database Queries]
 ```
@@ -271,12 +271,12 @@ Then re-add `.enableRLS()` to each table (see the note in `packages/db/src/drizz
 
 ## Security Notes
 
-- Validate all inputs with Zod at tRPC boundaries
-- Authorization lives in tRPC procedures, not the database - always check org membership in routers
+- Validate all inputs with Zod at oRPC boundaries
+- Authorization lives in oRPC procedures, not the database - always check org membership in routers
 - Never commit secrets; use different GitHub OAuth apps for dev and prod
 
 ## Next Steps
 
 1. **Database setup** - Learn about [database architecture](/docs/architecture/database)
-2. **API development** - Build [tRPC procedures](/docs/architecture/api)
+2. **API development** - Build [oRPC procedures](/docs/architecture/api)
 3. **Social auth** - Add more OAuth providers

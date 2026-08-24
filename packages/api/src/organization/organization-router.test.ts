@@ -1,15 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { createRouterClient } from "@orpc/server";
 import { invitation } from "@repo/db/drizzle-schema-auth";
 import { and, eq, ne } from "drizzle-orm";
 import { PgDialect } from "drizzle-orm/pg-core";
 
-import { createMockContext, mockUser } from "../test-utils";
+import { createCaller, createMockContext, mockUser } from "../test-utils";
 import { organizationRouter } from "./organization-router";
-
-const createCaller = (context: ReturnType<typeof createMockContext>) =>
-  createRouterClient(organizationRouter, { context });
 
 const ORG = {
   id: "org-1",
@@ -62,7 +58,7 @@ describe("organizationRouter.get", () => {
     );
     ctx.db.query.invitation.findMany.mock.mockImplementation(() => Promise.resolve([]));
 
-    const caller = createCaller(ctx);
+    const caller = createCaller(organizationRouter, ctx);
     const result = await caller.get({ slug: "acme" });
 
     assert.deepEqual(result.organization, ORG);
@@ -83,7 +79,7 @@ describe("organizationRouter.get", () => {
     );
     ctx.db.query.invitation.findMany.mock.mockImplementation(() => Promise.resolve([]));
 
-    const caller = createCaller(ctx);
+    const caller = createCaller(organizationRouter, ctx);
     const result = await caller.get({ slug: "acme" });
 
     assert.deepEqual(result.organizationMetadata, {});
@@ -94,7 +90,7 @@ describe("organizationRouter.get", () => {
     ctx.db.query.member.findMany.mock.mockImplementation(() => Promise.resolve([]));
     ctx.db.query.invitation.findMany.mock.mockImplementation(() => Promise.resolve([]));
 
-    const caller = createCaller(ctx);
+    const caller = createCaller(organizationRouter, ctx);
     await caller.get({ slug: "acme" });
 
     // Compile the where-callback the router handed drizzle: the filter has to
@@ -116,7 +112,7 @@ describe("organizationRouter.get", () => {
     ctx.db.query.member.findMany.mock.mockImplementation(() => Promise.resolve([]));
     ctx.db.query.invitation.findMany.mock.mockImplementation(() => Promise.resolve([]));
 
-    const caller = createCaller(ctx);
+    const caller = createCaller(organizationRouter, ctx);
     await caller.get({ slug: "acme" });
 
     // role/banned/banReason must never reach the client via the member join
@@ -133,7 +129,7 @@ describe("organizationRouter.get", () => {
     const ctx = createMockContext();
     ctx.db.query.organization.findFirst.mock.mockImplementation(() => Promise.resolve(undefined));
 
-    const caller = createCaller(ctx);
+    const caller = createCaller(organizationRouter, ctx);
     await assert.rejects(caller.get({ slug: "nope" }), /Organization not found/);
   });
 
@@ -143,7 +139,7 @@ describe("organizationRouter.get", () => {
     // caller has no membership
     ctx.db.query.member.findFirst.mock.mockImplementation(() => Promise.resolve(undefined));
 
-    const caller = createCaller(ctx);
+    const caller = createCaller(organizationRouter, ctx);
     await assert.rejects(
       caller.get({ slug: "acme" }),
       /You do not have access to this organization/,
@@ -152,7 +148,7 @@ describe("organizationRouter.get", () => {
 
   test("throws UNAUTHORIZED when not logged in", async () => {
     const ctx = createMockContext({ session: null });
-    const caller = createCaller(ctx);
+    const caller = createCaller(organizationRouter, ctx);
     await assert.rejects(caller.get({ slug: "acme" }), /You must be logged in/);
   });
 });

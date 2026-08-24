@@ -22,14 +22,16 @@ import type { AutoTableFeatures } from "@repo/ui/components/table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { authClient } from "@/lib/auth-client";
 import { formatDate } from "@/lib/format";
-import { orpc } from "@/orpc/react";
 import {
   hasPermission,
   ROLES,
   roleSchema,
 } from "@/app/(dashboard)/dashboard/[slug]/_components/role";
 import { TableRowActions } from "@/app/(dashboard)/dashboard/[slug]/_components/table-row-actions";
-import { useOrganization } from "@/app/(dashboard)/dashboard/[slug]/_components/use-organization";
+import {
+  invalidateOrganization,
+  useOrganization,
+} from "@/app/(dashboard)/dashboard/[slug]/_components/use-organization";
 
 type MemberWithUser = RouterOutputs["organization"]["get"]["members"][number];
 
@@ -199,9 +201,7 @@ const useUpdateMemberRole = (slug: string, memberId: string) => {
     },
     onSuccess: () => {
       toast.success("Member role updated successfully");
-      return queryClient.invalidateQueries({
-        queryKey: orpc.organization.get.key({ input: { slug } }),
-      });
+      return invalidateOrganization(queryClient, slug);
     },
     onError: (error) => toast.error(error.message),
   });
@@ -217,9 +217,7 @@ const useRemoveMember = (slug: string, memberId: string) => {
     },
     onSuccess: () => {
       toast.success("Member removed successfully");
-      return queryClient.invalidateQueries({
-        queryKey: orpc.organization.get.key({ input: { slug } }),
-      });
+      return invalidateOrganization(queryClient, slug);
     },
     onError: (error) => toast.error(error.message),
   });

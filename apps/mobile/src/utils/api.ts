@@ -18,14 +18,15 @@ export const queryClient = new QueryClient({
   },
 });
 
+// No SSR on React Native, so the base URL is stable for the process.
+const RPC_URL = `${getBaseUrl()}/api/orpc`;
+
 const link = new RPCLink({
-  url: () => `${getBaseUrl()}/api/orpc`,
-  headers: async () => {
-    const cookies = await authClient.getCookie();
-    return cookies
-      ? { "x-orpc-source": "expo-react", Cookie: cookies }
-      : { "x-orpc-source": "expo-react" };
-  },
+  url: RPC_URL,
+  headers: async () => ({
+    "x-orpc-source": "expo-react",
+    Cookie: (await authClient.getCookie()) || undefined,
+  }),
   interceptors: [
     onError((error) => {
       if (process.env.NODE_ENV === "development") console.error(error);

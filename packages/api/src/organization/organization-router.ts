@@ -1,8 +1,9 @@
 import { authMetadataSchema } from "../auth/auth-schema";
 import { organizationProcedure } from "../orpc";
+import { organizationInput } from "./organization-schema";
 
 export const organizationRouter = {
-  get: organizationProcedure.handler(async ({ context }) => {
+  get: organizationProcedure(organizationInput).handler(async ({ context }) => {
     const { organization, membership: currentUserMember } = context;
 
     // Independent of each other, and organizationProcedure has already proven

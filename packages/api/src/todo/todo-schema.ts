@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { organizationInput } from "../orpc";
+import { organizationInput } from "../organization/organization-schema";
 
 const titleField = z.string().trim().min(1, "Title is required").max(255, "Title is too long");
 const idField = z.uuid();

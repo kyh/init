@@ -2,6 +2,8 @@ import { db } from "@repo/db/drizzle-client";
 import { ORPCError, os } from "@orpc/server";
 import { z } from "zod";
 
+import { organizationInput } from "./organization/organization-schema";
+
 import type { Session } from "./auth/auth";
 import { auth } from "./auth/auth";
 
@@ -62,27 +64,26 @@ export const protectedProcedure = publicProcedure.use(({ context, next }) => {
   });
 });
 
-/** The org slug every organization-scoped procedure is keyed by. */
-export const organizationInput = z.object({
-  slug: z.string().min(1, "Organization slug is required"),
-});
-
 /**
+ * Organization-scoped procedure.
+ *
  * Resolves the organization named by `input.slug` and proves the caller is a
  * member before the handler runs — so a handler cannot read or write another
  * tenant's rows by forgetting a check. Handlers get `context.organization` and
- * `context.membership` and should still scope their queries by
+ * `context.membership`, and should still scope their queries by
  * `context.organization.id`.
  *
- * Declared against a dependent context, so it only composes onto a procedure
- * that has already narrowed the session — and only after an `.input()` whose
- * schema extends `organizationInput`, which the type checker enforces.
+ * A factory rather than a builder because oRPC does not merge `.input()` calls:
+ * each procedure declares its whole input, and the schema must carry the slug.
+ * Wrapping both steps means the membership check cannot be left off — there is
+ * no half-applied form to reach for.
  */
-export const requireOrganization = os
-  .$context<{ db: ORPCContext["db"]; session: NonNullable<ORPCContext["session"]> }>()
-  .middleware(async ({ context, next }, input: z.infer<typeof organizationInput>) => {
+export const organizationProcedure = <T extends z.ZodType<z.infer<typeof organizationInput>>>(
+  input: T,
+) =>
+  protectedProcedure.input(input).use(async ({ context, next }, validated) => {
     const organization = await context.db.query.organization.findFirst({
-      where: (org, { eq }) => eq(org.slug, input.slug),
+      where: (org, { eq }) => eq(org.slug, validated.slug),
     });
 
     if (!organization) {
@@ -104,12 +105,3 @@ export const requireOrganization = os
 
     return next({ context: { organization, membership } });
   });
-
-/**
- * Organization-scoped procedure whose only input is the slug. A procedure that
- * needs more input composes the pieces itself:
- * `protectedProcedure.input(schemaExtendingOrganizationInput).use(requireOrganization)`.
- */
-export const organizationProcedure = protectedProcedure
-  .input(organizationInput)
-  .use(requireOrganization);

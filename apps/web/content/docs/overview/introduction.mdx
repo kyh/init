@@ -16,7 +16,7 @@ When researchers gave Claude Code open-ended build prompts and tracked [what it 
 
 ### 2. Idiomatic implementations
 
-Every feature is built the way its library's own docs say to build it: better-auth plugins for orgs and Stripe billing, Drizzle relational queries, tRPC procedures with parse-at-the-boundary Zod schemas. When an agent extends a feature, the pattern it reaches for is the pattern already there. The [CRUD guide](/docs/build/crud) is literally "copy the todo feature, rename the nouns" - and that works for agents too.
+Every feature is built the way its library's own docs say to build it: better-auth plugins for orgs and Stripe billing, Drizzle relational queries, oRPC procedures with parse-at-the-boundary Zod schemas. When an agent extends a feature, the pattern it reaches for is the pattern already there. The [CRUD guide](/docs/build/crud) is literally "copy the todo feature, rename the nouns" - and that works for agents too.
 
 ### 3. Agent rules and surfaces built in
 
@@ -56,7 +56,7 @@ An optional [OpenWiki](https://github.com/langchain-ai/openwiki) workflow regene
 
 ### Backend
 
-- **tRPC v11** - End-to-end typesafe APIs
+- **oRPC** - End-to-end typesafe APIs
 - **better-auth** - Authentication with organization, admin, and Stripe plugins
 - **Drizzle ORM** - Type-safe database queries
 - **Supabase** - Managed Postgres and file storage

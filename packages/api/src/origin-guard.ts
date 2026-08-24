@@ -12,7 +12,7 @@ const TRUSTED_ORIGINS = new Set(trustedOrigins);
  *
  * Lives at the HTTP boundary rather than in a procedure middleware because
  * oRPC has no query/mutation distinction to branch on — every RPC call is
- * checked, which is strictly safer than tRPC's mutation-only guard was.
+ * checked.
  */
 export const isUntrustedOrigin = (origin: string | null, secFetchSite: string | null) => {
   // Sec-Fetch-Site is set by the browser and cannot be forged from script.

@@ -1,8 +1,8 @@
 import { StandardRPCJsonSerializer } from "@orpc/client/standard";
-import { defaultShouldDehydrateQuery, QueryClient } from "@tanstack/react-query";
+import { defaultShouldDehydrateQuery, hashKey, QueryClient } from "@tanstack/react-query";
 
 // oRPC's own serializer, so dehydrated data round-trips every type the RPC
-// protocol supports (Date, Map, Set, BigInt, URL, RegExp) without superjson.
+// protocol supports (Date, Map, Set, BigInt, URL, RegExp).
 const serializer = new StandardRPCJsonSerializer();
 
 export const createQueryClient = () => {
@@ -10,11 +10,11 @@ export const createQueryClient = () => {
     defaultOptions: {
       queries: {
         // Inputs can contain non-JSON values, so keys have to hash through the
-        // same serializer the data does.
-        queryKeyHashFn: (queryKey) => {
-          const [json, meta] = serializer.serialize(queryKey);
-          return JSON.stringify({ json, meta });
-        },
+        // same serializer the data does. Handing the result to TanStack's own
+        // `hashKey` keeps its key sorting, which the serializer does not do —
+        // without it, one input spelled in two property orders is two cache
+        // entries, and invalidating one misses the other.
+        queryKeyHashFn: (queryKey) => hashKey(serializer.serialize(queryKey)),
         // With SSR, we usually want to set some default staleTime
         // above 0 to avoid refetching immediately on the client
         staleTime: 30 * 1000,

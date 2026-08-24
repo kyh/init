@@ -1,5 +1,7 @@
 import type { Mock } from "node:test";
 import { mock } from "node:test";
+import type { AnyRouter, InferRouterInitialContext } from "@orpc/server";
+import { createRouterClient } from "@orpc/server";
 import type { SQL, Table } from "drizzle-orm";
 import type { Operators } from "drizzle-orm/relations";
 
@@ -99,7 +101,7 @@ export function createMockDb(): MockDb {
 
 export function createMockContext(
   overrides: {
-    session?: ORPCContext["session"] | null;
+    session?: ORPCContext["session"];
     db?: MockDb;
   } = {},
 ): ORPCContext & { db: MockDb } {
@@ -115,5 +117,11 @@ export function createMockContext(
     db: db as ORPCContext["db"] & MockDb,
   };
 }
+
+/** Calls a router in-process against a mock context, running the real middleware chain. */
+export const createCaller = <T extends AnyRouter>(
+  router: T,
+  context: ReturnType<typeof createMockContext> & InferRouterInitialContext<T>,
+) => createRouterClient(router, { context });
 
 export { mockUser, mockSession };
