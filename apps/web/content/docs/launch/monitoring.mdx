@@ -75,7 +75,7 @@ const timingMiddleware = o.middleware(async ({ next, path }) => {
   return result;
 });
 
-export const publicProcedure = t.procedure.use(timingMiddleware);
+export const publicProcedure = o.use(timingMiddleware);
 ```
 
 Vercel's log drains forward these warnings to your log store.

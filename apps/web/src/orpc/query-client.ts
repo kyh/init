@@ -14,10 +14,12 @@ export const createQueryClient = () => {
         // one: `hashKey` sorts object keys but leaves array order alone, and the
         // serializer emits one meta entry per rich value in traversal order. Sort
         // the meta too, or `{ from: Date, to: Date }` and `{ to: Date, from: Date }`
-        // hash differently and each gets its own cache entry.
+        // hash differently and each gets its own cache entry. The default sort is
+        // code-unit order — `localeCompare` would let a server and a browser on
+        // different locales disagree, and hydration would miss the server's key.
         queryKeyHashFn: (queryKey) => {
           const [json, meta] = serializer.serialize(queryKey);
-          return hashKey([json, meta.toSorted((a, b) => hashKey(a).localeCompare(hashKey(b)))]);
+          return hashKey([json, meta.map(hashKey).toSorted()]);
         },
         // With SSR, we usually want to set some default staleTime
         // above 0 to avoid refetching immediately on the client

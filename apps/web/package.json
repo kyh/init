@@ -4,11 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "postinstall": "fumadocs-mdx",
     "build": "pnpm with-env next build --turbopack",
     "clean": "git clean -xdf .cache .next .turbo node_modules",
     "dev": "pnpm with-env next dev --turbopack",
+    "postinstall": "fumadocs-mdx",
     "start": "pnpm with-env next start",
+    "test": "node --import tsx --test \"src/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ../../.env --"
   },
@@ -46,6 +47,7 @@
     "@types/react-dom": "catalog:",
     "postcss": "^8.5.26",
     "tailwindcss": "catalog:",
+    "tsx": "catalog:",
     "typescript": "catalog:"
   }
 }
