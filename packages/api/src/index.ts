@@ -1,7 +1,8 @@
 import type { AppRouter } from "./root-router";
-import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
+import type { InferRouterInputs, InferRouterOutputs } from "@orpc/server";
 import { appRouter } from "./root-router";
-import { createTRPCContext } from "./trpc";
+import { isUntrustedOrigin } from "./origin-guard";
+import { createORPCContext } from "./orpc";
 
 /**
  * Inference helpers for input types
@@ -9,14 +10,14 @@ import { createTRPCContext } from "./trpc";
  * type CreateTodoInput = RouterInputs['todo']['create']
  *      ^? { slug: string; title: string }
  **/
-type RouterInputs = inferRouterInputs<AppRouter>;
+type RouterInputs = InferRouterInputs<AppRouter>;
 
 /**
  * Inference helpers for output types
  * @example
  * type OrganizationOutput = RouterOutputs['organization']['get']
  **/
-type RouterOutputs = inferRouterOutputs<AppRouter>;
+type RouterOutputs = InferRouterOutputs<AppRouter>;
 
-export { createTRPCContext, appRouter };
+export { createORPCContext, appRouter, isUntrustedOrigin };
 export type { AppRouter, RouterInputs, RouterOutputs };

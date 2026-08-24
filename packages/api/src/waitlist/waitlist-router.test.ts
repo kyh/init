@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
+import { createRouterClient } from "@orpc/server";
 
 import { createMockChain, createMockContext } from "../test-utils";
-import { createCallerFactory } from "../trpc";
 import { waitlistRouter } from "./waitlist-router";
 
-const createCaller = createCallerFactory(waitlistRouter);
+const createCaller = (context: ReturnType<typeof createMockContext>) =>
+  createRouterClient(waitlistRouter, { context });
 
 describe("waitlistRouter.join", () => {
   test("inserts waitlist entry with email and source", async () => {

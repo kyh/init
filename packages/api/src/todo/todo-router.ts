@@ -1,70 +1,73 @@
 import { todo } from "@repo/db/drizzle-schema";
-import { TRPCError } from "@trpc/server";
+import { ORPCError } from "@orpc/server";
 import { and, eq } from "drizzle-orm";
 
-import { createTRPCRouter, organizationProcedure } from "../trpc";
+import { organizationProcedure, protectedProcedure, requireOrganization } from "../orpc";
 import { createTodoInput, deleteTodoInput, updateTodoInput } from "./todo-schema";
 
-export const todoRouter = createTRPCRouter({
-  list: organizationProcedure.query(async ({ ctx }) => {
-    const todos = await ctx.db.query.todo.findMany({
-      where: (todoTable, { eq }) => eq(todoTable.organizationId, ctx.organization.id),
+export const todoRouter = {
+  list: organizationProcedure.handler(async ({ context }) => {
+    const todos = await context.db.query.todo.findMany({
+      where: (todoTable, { eq }) => eq(todoTable.organizationId, context.organization.id),
       orderBy: (todoTable, { desc }) => desc(todoTable.createdAt),
     });
 
     return { todos };
   }),
-  create: organizationProcedure.input(createTodoInput).mutation(async ({ ctx, input }) => {
-    const [createdTodo] = await ctx.db
-      .insert(todo)
-      .values({
-        organizationId: ctx.organization.id,
-        title: input.title,
-      })
-      .returning();
+  create: protectedProcedure
+    .input(createTodoInput)
+    .use(requireOrganization)
+    .handler(async ({ context, input }) => {
+      const [createdTodo] = await context.db
+        .insert(todo)
+        .values({
+          organizationId: context.organization.id,
+          title: input.title,
+        })
+        .returning();
 
-    return { todo: createdTodo };
-  }),
-  update: organizationProcedure.input(updateTodoInput).mutation(async ({ ctx, input }) => {
-    // updatedAt is maintained by the column's $onUpdate — see drizzle-schema.ts
-    const updateData: Partial<typeof todo.$inferInsert> = {};
+      return { todo: createdTodo };
+    }),
+  update: protectedProcedure
+    .input(updateTodoInput)
+    .use(requireOrganization)
+    .handler(async ({ context, input }) => {
+      // updatedAt is maintained by the column's $onUpdate — see drizzle-schema.ts
+      const updateData: Partial<typeof todo.$inferInsert> = {};
 
-    if (input.title !== undefined) {
-      updateData.title = input.title;
-    }
+      if (input.title !== undefined) {
+        updateData.title = input.title;
+      }
 
-    if (input.completed !== undefined) {
-      updateData.completed = input.completed;
-    }
+      if (input.completed !== undefined) {
+        updateData.completed = input.completed;
+      }
 
-    const [updatedTodo] = await ctx.db
-      .update(todo)
-      .set(updateData)
-      .where(and(eq(todo.id, input.id), eq(todo.organizationId, ctx.organization.id)))
-      .returning();
+      const [updatedTodo] = await context.db
+        .update(todo)
+        .set(updateData)
+        .where(and(eq(todo.id, input.id), eq(todo.organizationId, context.organization.id)))
+        .returning();
 
-    if (!updatedTodo) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Todo not found",
-      });
-    }
+      if (!updatedTodo) {
+        throw new ORPCError("NOT_FOUND", { message: "Todo not found" });
+      }
 
-    return { todo: updatedTodo };
-  }),
-  delete: organizationProcedure.input(deleteTodoInput).mutation(async ({ ctx, input }) => {
-    const [deletedTodo] = await ctx.db
-      .delete(todo)
-      .where(and(eq(todo.id, input.id), eq(todo.organizationId, ctx.organization.id)))
-      .returning();
+      return { todo: updatedTodo };
+    }),
+  delete: protectedProcedure
+    .input(deleteTodoInput)
+    .use(requireOrganization)
+    .handler(async ({ context, input }) => {
+      const [deletedTodo] = await context.db
+        .delete(todo)
+        .where(and(eq(todo.id, input.id), eq(todo.organizationId, context.organization.id)))
+        .returning();
 
-    if (!deletedTodo) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Todo not found",
-      });
-    }
+      if (!deletedTodo) {
+        throw new ORPCError("NOT_FOUND", { message: "Todo not found" });
+      }
 
-    return { todo: deletedTodo };
-  }),
-});
+      return { todo: deletedTodo };
+    }),
+};

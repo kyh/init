@@ -7,7 +7,7 @@ import { DesktopMenuListener } from "@/components/desktop-menu-listener";
 import { DesktopUpdateBanner } from "@/components/desktop-update-banner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { siteConfig } from "@/lib/site-config";
-import { TRPCReactProvider } from "@/trpc/react";
+import { ORPCReactProvider } from "@/orpc/react";
 
 import "./styles/globals.css";
 
@@ -94,7 +94,7 @@ const RootLayout = (props: LayoutProps) => {
       <body className="bg-background text-foreground font-sans antialiased">
         <ThemeProvider>
           <TooltipProvider>
-            <TRPCReactProvider>{props.children}</TRPCReactProvider>
+            <ORPCReactProvider>{props.children}</ORPCReactProvider>
             <Toaster />
             <GlobalAlertDialog />
             <DesktopMenuListener />

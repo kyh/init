@@ -59,80 +59,88 @@ No migration files, no codegen. Types flow from the schema definition immediatel
 // packages/api/src/post/post-schema.ts
 import { z } from "zod";
 
-export const createPostInput = z.object({
+import { organizationInput } from "../orpc";
+
+export const createPostInput = organizationInput.extend({
   title: z.string().trim().min(1, "Title is required").max(255),
   content: z.string().optional(),
 });
 
-export const deletePostInput = z.object({
+export const deletePostInput = organizationInput.extend({
   id: z.uuid(),
 });
 ```
 
-The organization `slug` and the membership check come from `organizationProcedure` (next step), which merges its own `{ slug }` input with these - so each schema carries only the post's own fields.
+Org-scoped schemas extend `organizationInput`, so the `slug` is part of each procedure's declared contract - and `requireOrganization` (next step) will only compose onto a procedure whose input carries it.
 
 ## 4. Write the Router
 
 ```typescript
 // packages/api/src/post/post-router.ts
 import { post } from "@repo/db/drizzle-schema";
-import { TRPCError } from "@trpc/server";
+import { ORPCError } from "@orpc/server";
 import { and, eq } from "drizzle-orm";
 
-import { createTRPCRouter, organizationProcedure } from "../trpc";
+import { organizationProcedure, protectedProcedure, requireOrganization } from "../orpc";
 import { createPostInput, deletePostInput } from "./post-schema";
 
-export const postRouter = createTRPCRouter({
-  list: organizationProcedure.query(async ({ ctx }) => {
-    const posts = await ctx.db.query.post.findMany({
-      where: (postTable, { eq }) => eq(postTable.organizationId, ctx.organization.id),
+export const postRouter = {
+  list: organizationProcedure.handler(async ({ context }) => {
+    const posts = await context.db.query.post.findMany({
+      where: (postTable, { eq }) => eq(postTable.organizationId, context.organization.id),
       orderBy: (postTable, { desc }) => desc(postTable.createdAt),
     });
 
     return { posts };
   }),
-  create: organizationProcedure.input(createPostInput).mutation(async ({ ctx, input }) => {
-    const [createdPost] = await ctx.db
-      .insert(post)
-      .values({
-        organizationId: ctx.organization.id,
-        title: input.title,
-        content: input.content,
-      })
-      .returning();
+  create: protectedProcedure
+    .input(createPostInput)
+    .use(requireOrganization)
+    .handler(async ({ context, input }) => {
+      const [createdPost] = await context.db
+        .insert(post)
+        .values({
+          organizationId: context.organization.id,
+          title: input.title,
+          content: input.content,
+        })
+        .returning();
 
-    return { post: createdPost };
-  }),
-  delete: organizationProcedure.input(deletePostInput).mutation(async ({ ctx, input }) => {
-    const [deletedPost] = await ctx.db
-      .delete(post)
-      .where(and(eq(post.id, input.id), eq(post.organizationId, ctx.organization.id)))
-      .returning();
+      return { post: createdPost };
+    }),
+  delete: protectedProcedure
+    .input(deletePostInput)
+    .use(requireOrganization)
+    .handler(async ({ context, input }) => {
+      const [deletedPost] = await context.db
+        .delete(post)
+        .where(and(eq(post.id, input.id), eq(post.organizationId, context.organization.id)))
+        .returning();
 
-    if (!deletedPost) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "Post not found" });
-    }
+      if (!deletedPost) {
+        throw new ORPCError("NOT_FOUND", { message: "Post not found" });
+      }
 
-    return { post: deletedPost };
-  }),
-});
+      return { post: deletedPost };
+    }),
+};
 ```
 
-`organizationProcedure` (in `packages/api/src/trpc.ts`) takes the `slug`, resolves the org, and proves membership before any handler runs - `list` needs no `.input()` at all, and handlers read `ctx.organization.id`. Every mutation still filters by `organizationId` in the `where` clause, so a valid member of org A can never touch org B's rows.
+`requireOrganization` (in `packages/api/src/orpc.ts`) resolves the org named by `input.slug` and proves membership before any handler runs, so handlers just read `context.organization.id`. `list` takes nothing but the slug, so it uses `organizationProcedure` - the prebuilt combination of the two. Every mutation still filters by `organizationId` in the `where` clause, so a valid member of org A can never touch org B's rows.
 
 ## 5. Mount the Router
 
 ```typescript
 // packages/api/src/root-router.ts
-export const appRouter = createTRPCRouter({
+export const appRouter = {
   waitlist: waitlistRouter,
   organization: organizationRouter,
   todo: todoRouter,
   post: postRouter, // Add here
-});
+};
 ```
 
-`trpc.post.*` now autocompletes in every app.
+`orpc.post.*` now autocompletes in every app.
 
 ## 6. Build the Page
 
@@ -144,7 +152,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@repo/api/auth/auth";
 
 import { PageHeader } from "@/components/header";
-import { HydrateClient, prefetch, trpc } from "@/trpc/server";
+import { HydrateClient, orpc, prefetch } from "@/orpc/server";
 import { PostList } from "./_components/post-list";
 
 const Page = async (props: { params: Promise<{ slug: string }> }) => {
@@ -155,7 +163,7 @@ const Page = async (props: { params: Promise<{ slug: string }> }) => {
     return redirect(`/auth/login?nextPath=/dashboard/${slug}/posts`);
   }
 
-  prefetch(trpc.post.list.queryOptions({ slug }));
+  prefetch(orpc.post.list.queryOptions({ input: { slug } }));
 
   return (
     <HydrateClient>
@@ -179,21 +187,21 @@ export default Page;
 import { toast } from "@repo/ui/components/sonner";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 
-import { useTRPC } from "@/trpc/react";
+import { orpc } from "@/orpc/react";
 
 export const PostList = ({ slug }: { slug: string }) => {
-  const trpc = useTRPC();
   const queryClient = useQueryClient();
 
   // Resolves instantly from the server prefetch - no loading spinner
-  const { data } = useSuspenseQuery(trpc.post.list.queryOptions({ slug }));
+  const { data } = useSuspenseQuery(orpc.post.list.queryOptions({ input: { slug } }));
 
   // Refetch this org's list after a write - each mutation invalidates only
   // what it touched; there's no global invalidate-everything net behind it
-  const invalidatePosts = () => queryClient.invalidateQueries(trpc.post.list.queryFilter({ slug }));
+  const invalidatePosts = () =>
+    queryClient.invalidateQueries({ queryKey: orpc.post.list.key({ input: { slug } }) });
 
   const createPost = useMutation(
-    trpc.post.create.mutationOptions({
+    orpc.post.create.mutationOptions({
       onError: (error) => toast.error(error.message),
       onSuccess: invalidatePosts,
     }),
@@ -213,18 +221,20 @@ The full reference - inline editing, delete confirmation, per-row pending states
 
 ## 8. Test It
 
-Routers test without a database. `createCallerFactory` plus the mock context from `packages/api/src/test-utils.ts`:
+Routers test without a database. `createRouterClient` plus the mock context from `packages/api/src/test-utils.ts`:
 
 ```typescript
 // packages/api/src/post/post-router.test.ts
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
+import { createRouterClient } from "@orpc/server";
+
 import { createMockContext } from "../test-utils";
-import { createCallerFactory } from "../trpc";
 import { postRouter } from "./post-router";
 
-const createCaller = createCallerFactory(postRouter);
+const createCaller = (context: ReturnType<typeof createMockContext>) =>
+  createRouterClient(postRouter, { context });
 
 test("throws UNAUTHORIZED when user is not a member", async () => {
   const ctx = createMockContext();
@@ -246,14 +256,14 @@ pnpm -F @repo/api test
 
 ## Ship It Everywhere
 
-Nothing else to do. The mobile app (`apps/mobile/src/utils/api.tsx`) consumes the same `AppRouter` type, so `trpc.post.list` works there too. The extension iframes the web app and gets the feature for free.
+Nothing else to do. The mobile app (`apps/mobile/src/utils/api.ts`) consumes the same `AppRouter` type, so `orpc.post.list` works there too. The extension iframes the web app and gets the feature for free.
 
 ## Checklist
 
 - Table has `organizationId` + index + `.enableRLS()`
 - `pnpm db:push` ran
-- Zod schema validates the feature's own fields; `slug` comes from `organizationProcedure`
-- Router uses `organizationProcedure` and filters mutations by `organizationId`
+- Zod schema extends `organizationInput` and validates the feature's own fields
+- Router applies `requireOrganization` and filters mutations by `organizationId`
 - Router mounted in `root-router.ts`
 - Page prefetches; client uses `useSuspenseQuery`
 - Tests cover the unauthorized paths
@@ -262,4 +272,4 @@ Nothing else to do. The mobile app (`apps/mobile/src/utils/api.tsx`) consumes th
 
 1. **Data fetching** - [Queries in depth](/docs/build/queries)
 2. **Data mutations** - [Mutations in depth](/docs/build/mutations)
-3. **API reference** - [tRPC architecture](/docs/architecture/api)
+3. **API reference** - [oRPC architecture](/docs/architecture/api)

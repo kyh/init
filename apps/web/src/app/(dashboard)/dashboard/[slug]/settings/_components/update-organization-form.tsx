@@ -10,7 +10,7 @@ import { z } from "zod";
 
 import { authClient } from "@/lib/auth-client";
 import { useAppForm } from "@/lib/form";
-import { useTRPC } from "@/trpc/react";
+import { orpc } from "@/orpc/react";
 import { useOrganization } from "@/app/(dashboard)/dashboard/[slug]/_components/use-organization";
 
 const updateOrganizationSchema = z.object({
@@ -95,7 +95,6 @@ export const UpdateOrganizationForm = ({ slug }: UpdateOrganizationFormProps) =>
 const useUpdateOrganization = (slug: string, organizationId: string) => {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const trpc = useTRPC();
 
   return useMutation({
     mutationFn: async (data: z.infer<typeof updateOrganizationSchema>) => {
@@ -115,7 +114,9 @@ const useUpdateOrganization = (slug: string, organizationId: string) => {
       toast.success("Organization successfully updated");
       // A rename keeps the slug, so refresh the detail we're viewing; a slug
       // change navigates below to a fresh query key.
-      await queryClient.invalidateQueries(trpc.organization.get.queryFilter({ slug }));
+      await queryClient.invalidateQueries({
+        queryKey: orpc.organization.get.key({ input: { slug } }),
+      });
       router.replace(`/dashboard/${updatedOrganization.slug}/settings`);
     },
     onError: (error) => {

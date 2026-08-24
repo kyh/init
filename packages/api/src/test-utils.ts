@@ -3,7 +3,7 @@ import { mock } from "node:test";
 import type { SQL, Table } from "drizzle-orm";
 import type { Operators } from "drizzle-orm/relations";
 
-import type { TRPCContext } from "./trpc";
+import type { ORPCContext } from "./orpc";
 
 const mockUser = {
   id: "user-1",
@@ -99,26 +99,20 @@ export function createMockDb(): MockDb {
 
 export function createMockContext(
   overrides: {
-    session?: TRPCContext["session"] | null;
+    session?: ORPCContext["session"] | null;
     db?: MockDb;
-    origin?: string | null;
-    secFetchSite?: string | null;
   } = {},
-): TRPCContext & { db: MockDb } {
+): ORPCContext & { db: MockDb } {
   const db = overrides.db ?? createMockDb();
   return {
     session: overrides.session === undefined ? mockSession : overrides.session,
     // SAFETY: the one sanctioned assertion boundary — the chain mock stands in
-    // for the real drizzle type (for TRPCContext) while staying MockDb (for
+    // for the real drizzle type (for ORPCContext) while staying MockDb (for
     // test access). The alternative — PGlite integration tests — is a separate
     // call; mockDeep would break the chain mocks. Any drift still fails loudly
     // at test runtime.
     // oxlint-disable-next-line typescript/consistent-type-assertions -- mock db meets the real context type only here
-    db: db as TRPCContext["db"] & MockDb,
-    // Default to no browser provenance — mutations pass the origin guard unless
-    // a test opts into cross-origin headers.
-    origin: overrides.origin ?? null,
-    secFetchSite: overrides.secFetchSite ?? null,
+    db: db as ORPCContext["db"] & MockDb,
   };
 }
 

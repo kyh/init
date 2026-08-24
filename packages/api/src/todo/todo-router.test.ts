@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
+import { createRouterClient } from "@orpc/server";
 
 import { createMockChain, createMockContext, createMockDb } from "../test-utils";
-import { createCallerFactory } from "../trpc";
 import { todoRouter } from "./todo-router";
 
-const createCaller = createCallerFactory(todoRouter);
+const createCaller = (context: ReturnType<typeof createMockContext>) =>
+  createRouterClient(todoRouter, { context });
 
 const ORG = { id: "org-1", name: "Acme", slug: "acme", createdAt: new Date(), metadata: null };
 const MEMBERSHIP = { id: "mem-1", organizationId: "org-1", userId: "user-1", role: "owner" };

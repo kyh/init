@@ -31,7 +31,7 @@ packages/
 
 ### Mutation path
 
-Mutations go through tRPC or the better-auth client — never Next Server Actions. All four platforms (web, mobile, extension, desktop) then share one typed surface. Each mutation invalidates the specific queries it affects in its `onSuccess` (e.g. `queryClient.invalidateQueries(trpc.todo.list.queryFilter({ slug }))`) — there is no global invalidate-everything cache. Do not introduce Server Actions alongside.
+Mutations go through oRPC or the better-auth client — never Next Server Actions. All four platforms (web, mobile, extension, desktop) then share one typed surface. Each mutation invalidates the specific queries it affects in its `onSuccess` (e.g. `queryClient.invalidateQueries({ queryKey: orpc.todo.list.key({ input: { slug } }) })`) — there is no global invalidate-everything cache. Do not introduce Server Actions alongside.
 
 ### Mobile dependency pins
 

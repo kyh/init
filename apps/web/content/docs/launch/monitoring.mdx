@@ -17,7 +17,7 @@ curl https://your-domain.com/api/health
 
 ### Dev-Time Logging
 
-- The tRPC client's `loggerLink` logs every procedure call in development and errors in production (`apps/web/src/trpc/react.tsx`)
+- The oRPC client's `onError` interceptor logs failed procedure calls in development (`apps/web/src/orpc/react.tsx`)
 - TanStack Query Devtools ship in the provider tree
 
 ## Recommended Additions
@@ -59,17 +59,17 @@ Covers page views and Core Web Vitals with zero config on Vercel.
 
 ### API Timing
 
-Add a tRPC middleware to catch slow procedures:
+Add an oRPC middleware to catch slow procedures:
 
 ```typescript
-// packages/api/src/trpc.ts
-const timingMiddleware = t.middleware(async ({ next, path, type }) => {
+// packages/api/src/orpc.ts
+const timingMiddleware = o.middleware(async ({ next, path }) => {
   const start = Date.now();
   const result = await next();
   const duration = Date.now() - start;
 
   if (duration > 1000) {
-    console.warn(`Slow ${type}: ${path} took ${duration}ms`);
+    console.warn(`Slow procedure: ${path.join(".")} took ${duration}ms`);
   }
 
   return result;

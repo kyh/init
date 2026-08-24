@@ -4,7 +4,7 @@ import { getSession } from "@/lib/auth-server";
 import { Skeleton } from "@repo/ui/components/skeleton";
 
 import { PageHeader } from "@/components/header";
-import { HydrateClient, prefetch, trpc } from "@/trpc/server";
+import { HydrateClient, orpc, prefetch } from "@/orpc/server";
 import { DeleteOrganizationForm } from "./_components/delete-organization-form";
 import { UpdateOrganizationForm } from "./_components/update-organization-form";
 
@@ -33,7 +33,7 @@ const Page = async (props: PageProps) => {
     return redirect(`/auth/login?nextPath=/dashboard/${slug}/settings`);
   }
 
-  prefetch(trpc.organization.get.queryOptions({ slug }));
+  prefetch(orpc.organization.get.queryOptions({ input: { slug } }));
 
   return (
     <HydrateClient>

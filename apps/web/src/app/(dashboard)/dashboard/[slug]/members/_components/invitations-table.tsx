@@ -14,7 +14,7 @@ import type { AutoTableFeatures } from "@repo/ui/components/table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { authClient } from "@/lib/auth-client";
 import { formatDate } from "@/lib/format";
-import { useTRPC } from "@/trpc/react";
+import { orpc } from "@/orpc/react";
 import { hasPermission } from "@/app/(dashboard)/dashboard/[slug]/_components/role";
 import { TableRowActions } from "@/app/(dashboard)/dashboard/[slug]/_components/table-row-actions";
 import { useOrganization } from "@/app/(dashboard)/dashboard/[slug]/_components/use-organization";
@@ -108,7 +108,6 @@ const ActionsDropdown = ({
 
 const useCancelInvitation = (slug: string, invitationId: string) => {
   const queryClient = useQueryClient();
-  const trpc = useTRPC();
   return useMutation({
     mutationFn: async () => {
       await authClient.organization.cancelInvitation({
@@ -117,7 +116,9 @@ const useCancelInvitation = (slug: string, invitationId: string) => {
     },
     onSuccess: () => {
       toast.success("Invitation cancelled successfully");
-      return queryClient.invalidateQueries(trpc.organization.get.queryFilter({ slug }));
+      return queryClient.invalidateQueries({
+        queryKey: orpc.organization.get.key({ input: { slug } }),
+      });
     },
     onError: (error) => toast.error(error.message),
   });

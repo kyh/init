@@ -14,6 +14,9 @@
   },
   "dependencies": {
     "@better-auth/stripe": "catalog:",
+    "@orpc/client": "catalog:",
+    "@orpc/server": "catalog:",
+    "@orpc/tanstack-query": "catalog:",
     "@repo/api": "workspace:*",
     "@repo/ui": "workspace:*",
     "@supabase/supabase-js": "^2.112.3",
@@ -21,9 +24,6 @@
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-query-devtools": "^5.101.4",
     "@tanstack/react-table": "catalog:",
-    "@trpc/client": "catalog:",
-    "@trpc/server": "catalog:",
-    "@trpc/tanstack-react-query": "catalog:",
     "better-auth": "catalog:",
     "drizzle-orm": "catalog:",
     "fumadocs-core": "^16.14.5",
@@ -35,7 +35,6 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "server-only": "^0.0.1",
-    "superjson": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

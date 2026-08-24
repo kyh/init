@@ -2,7 +2,7 @@
 title: "Data Fetching"
 ---
 
-Init fetches data through tRPC + TanStack Query. The core pattern: prefetch on the server, render with suspense on the client. No loading spinners for first paint, no waterfall.
+Init fetches data through oRPC + TanStack Query. The core pattern: prefetch on the server, render with suspense on the client. No loading spinners for first paint, no waterfall.
 
 ## The Pattern
 
@@ -10,12 +10,12 @@ Two halves. The server component kicks off the query:
 
 ```tsx
 // apps/web/src/app/(dashboard)/dashboard/[slug]/(home)/page.tsx
-import { HydrateClient, prefetch, trpc } from "@/trpc/server";
+import { HydrateClient, orpc, prefetch } from "@/orpc/server";
 
 const Page = async (props: PageProps) => {
   const { slug } = await props.params;
 
-  prefetch(trpc.todo.list.queryOptions({ slug }));
+  prefetch(orpc.todo.list.queryOptions({ input: { slug } }));
 
   return (
     <HydrateClient>
@@ -32,25 +32,24 @@ The client component consumes it:
 "use client";
 
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useTRPC } from "@/trpc/react";
+import { orpc } from "@/orpc/react";
 
 export const TodoList = ({ slug }: { slug: string }) => {
-  const trpc = useTRPC();
-  const { data } = useSuspenseQuery(trpc.todo.list.queryOptions({ slug }));
+  const { data } = useSuspenseQuery(orpc.todo.list.queryOptions({ input: { slug } }));
   // data is typed and already there - no isLoading branch
 };
 ```
 
-How it works: `prefetch` starts the query in a server-side query client without awaiting it. `HydrateClient` dehydrates the (possibly still pending) promise into the RSC payload. `useSuspenseQuery` picks it up on the client and streams the result in. See `apps/web/src/trpc/server.tsx`.
+How it works: `prefetch` starts the query in a server-side query client without awaiting it. `HydrateClient` dehydrates the (possibly still pending) promise into the RSC payload. `useSuspenseQuery` picks it up on the client and streams the result in. See `apps/web/src/orpc/server.tsx`.
 
-The key: **query options are shared**. `trpc.todo.list.queryOptions({ slug })` produces the same query key on server and client, so hydration matches up.
+The key: **query options are shared**. `orpc.todo.list.queryOptions({ input: { slug } })` produces the same query key on server and client, so hydration matches up.
 
 ## Direct Server Calls
 
 When data is only needed during server rendering - no client interactivity - skip hydration and call the procedure directly:
 
 ```typescript
-import { caller } from "@/trpc/server";
+import { caller } from "@/orpc/server";
 
 const { todos } = await caller.todo.list({ slug });
 ```
@@ -67,20 +66,20 @@ const { todos } = await caller.todo.list({ slug });
 
 ## Caching
 
-Defaults live in `apps/web/src/trpc/query-client.ts`:
+Defaults live in `apps/web/src/orpc/query-client.ts`:
 
 - **`staleTime: 30_000`** - queries are fresh for 30s, so hydrated data isn't refetched on mount
 - **Targeted invalidation** - each mutation invalidates the queries it changed in its own `onSuccess`; see [Data Mutations](/docs/build/mutations)
-- **SuperJSON transformer** - `Date`, `Map`, `undefined` survive the wire intact
+- **oRPC's RPC serializer** - `Date`, `Map`, `Set`, `BigInt`, `URL` survive the wire intact, and hash consistently into query keys
 
-Transport is `httpBatchStreamLink` (`apps/web/src/trpc/react.tsx`): parallel queries in one render batch into a single `/api/trpc` request, and results stream back as each procedure finishes.
+Transport is `RPCLink` (`apps/web/src/orpc/react.tsx`), one `/api/orpc` request per call. Requests aren't batched: HTTP/2 multiplexes them already, and a batch is only as fast as its slowest procedure.
 
 ## Query State Without Suspense
 
 `useSuspenseQuery` throws to the nearest suspense/error boundary. For queries where you'd rather handle states inline:
 
 ```tsx
-const { data, isLoading, error } = useQuery(trpc.todo.list.queryOptions({ slug }));
+const { data, isLoading, error } = useQuery(orpc.todo.list.queryOptions({ input: { slug } }));
 ```
 
 Prefer suspense for page-level data (it pairs with the server prefetch); use `useQuery` for secondary panels and interaction-driven fetches.
@@ -97,15 +96,15 @@ type Todo = RouterOutputs["todo"]["list"]["todos"][number];
 
 ## Debugging
 
-- **loggerLink** logs every call with input/output in development (`apps/web/src/trpc/react.tsx`)
+- **`onError` interceptor** logs failed calls in development (`apps/web/src/orpc/react.tsx`)
 - **TanStack Query Devtools** render in the provider tree - inspect cache contents, query states, and invalidations live
 
 ## Mobile
 
-Same router, same hooks. `apps/mobile/src/utils/api.tsx` wires the client to `EXPO_PUBLIC_API_URL` (dev builds derive it from Metro). No RSC on mobile, so there's no prefetch step - queries just fetch.
+Same router, same hooks. `apps/mobile/src/utils/api.ts` wires the client to `EXPO_PUBLIC_API_URL` (dev builds derive it from Metro). No RSC on mobile, so there's no prefetch step - queries just fetch.
 
 ## Next Steps
 
 1. **Mutations** - [Writing data](/docs/build/mutations)
 2. **Full walkthrough** - [Build a CRUD feature](/docs/build/crud)
-3. **API internals** - [tRPC architecture](/docs/architecture/api)
+3. **API internals** - [oRPC architecture](/docs/architecture/api)

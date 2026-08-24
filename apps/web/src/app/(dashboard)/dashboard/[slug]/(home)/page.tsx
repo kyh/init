@@ -4,7 +4,7 @@ import { getSession } from "@/lib/auth-server";
 import { Skeleton } from "@repo/ui/components/skeleton";
 
 import { PageHeader } from "@/components/header";
-import { HydrateClient, prefetch, trpc } from "@/trpc/server";
+import { HydrateClient, orpc, prefetch } from "@/orpc/server";
 import { TodoList } from "./_components/todo-list";
 
 type PageProps = {
@@ -30,7 +30,7 @@ const Page = async (props: PageProps) => {
     return redirect(`/auth/login?nextPath=/dashboard/${slug}`);
   }
 
-  prefetch(trpc.todo.list.queryOptions({ slug }));
+  prefetch(orpc.todo.list.queryOptions({ input: { slug } }));
 
   return (
     <HydrateClient>

@@ -1,14 +1,15 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
+import { createRouterClient } from "@orpc/server";
 import { invitation } from "@repo/db/drizzle-schema-auth";
 import { and, eq, ne } from "drizzle-orm";
 import { PgDialect } from "drizzle-orm/pg-core";
 
 import { createMockContext, mockUser } from "../test-utils";
-import { createCallerFactory } from "../trpc";
 import { organizationRouter } from "./organization-router";
 
-const createCaller = createCallerFactory(organizationRouter);
+const createCaller = (context: ReturnType<typeof createMockContext>) =>
+  createRouterClient(organizationRouter, { context });
 
 const ORG = {
   id: "org-1",

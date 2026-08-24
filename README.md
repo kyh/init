@@ -41,7 +41,7 @@ packages/
 - [Chrome Extension (WXT)](https://wxt.dev)
 - [Electron](https://www.electronjs.org)
 - [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+- [oRPC](https://orpc.dev)
 - [Drizzle](https://orm.drizzle.team)
 - [Supabase](https://supabase.com)
 - [better-auth](https://www.better-auth.com)
