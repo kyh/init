@@ -25,7 +25,6 @@ packages/api/src/
 ├── organization/          # Organization procedures
 ├── todo/                  # Example CRUD procedures
 ├── waitlist/              # Waitlist signup
-├── origin-guard.ts        # Cross-origin check for the RPC endpoint
 ├── root-router.ts         # Router composition
 ├── orpc.ts                # oRPC setup, context, procedures
 └── index.ts               # Package exports
@@ -258,7 +257,14 @@ const createTodo = useMutation(
 
 ## Cross-Origin Requests
 
-Auth cookies are `SameSite=None`, so the browser's own CSRF backstop is off for the RPC endpoint. `isUntrustedOrigin` (`packages/api/src/origin-guard.ts`) runs at the HTTP boundary in the route handler and rejects any request whose browser-supplied `Origin` / `Sec-Fetch-Site` isn't same-origin or allow-listed. Non-browser callers send neither header and pass through; session auth still applies.
+Auth cookies are `SameSite=None` (the extension popup iframes the web app), so the browser's own CSRF backstop is off for the RPC endpoint. Two oRPC plugins cover it:
+
+- **`StrictGetMethodPlugin`** — on by default in `RPCHandler`. Only procedures declaring `method: 'GET'` can be reached by a `GET`, so an `<img src>` or a navigation cannot invoke one.
+- **`SimpleCsrfProtectionHandlerPlugin`** — requires an `x-csrf-token` header, which `SimpleCsrfProtectionLinkPlugin` sends on every client. An HTML form cannot set a custom header, and a cross-origin `fetch` that tries to needs a preflight this route never answers.
+
+The second one is load-bearing, not belt-and-braces. `multipart/form-data` is a _simple request_: without it, a form on another origin can POST to a mutation, carry the session cookie, and never trigger a preflight. Both plugins have to stay paired with the route serving no CORS headers — permissive CORS would let the preflight succeed and undo the protection.
+
+Every client that talks HTTP to the endpoint needs `SimpleCsrfProtectionLinkPlugin` on its link. The RSC caller does not: it invokes procedures in-process and never crosses the network.
 
 ## Adding New Routes
 

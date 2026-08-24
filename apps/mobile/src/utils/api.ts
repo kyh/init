@@ -1,5 +1,6 @@
 import { createORPCClient, onError } from "@orpc/client";
 import { RPCLink } from "@orpc/client/fetch";
+import { SimpleCsrfProtectionLinkPlugin } from "@orpc/client/plugins";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import { QueryClient } from "@tanstack/react-query";
 
@@ -23,6 +24,7 @@ const RPC_URL = `${getBaseUrl()}/api/orpc`;
 
 const link = new RPCLink({
   url: RPC_URL,
+  plugins: [new SimpleCsrfProtectionLinkPlugin()],
   headers: async () => ({
     "x-orpc-source": "expo-react",
     Cookie: (await authClient.getCookie()) || undefined,

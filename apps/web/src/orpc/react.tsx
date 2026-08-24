@@ -2,6 +2,7 @@
 
 import { createORPCClient, onError } from "@orpc/client";
 import { RPCLink } from "@orpc/client/fetch";
+import { SimpleCsrfProtectionLinkPlugin } from "@orpc/client/plugins";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -24,6 +25,7 @@ const getQueryClient = () => {
 
 const link = new RPCLink({
   url: () => `${getBaseUrl()}/api/orpc`,
+  plugins: [new SimpleCsrfProtectionLinkPlugin()],
   headers: () => ({ "x-orpc-source": "nextjs-react" }),
   interceptors: [
     onError((error) => {
