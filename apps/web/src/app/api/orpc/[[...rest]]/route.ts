@@ -16,8 +16,17 @@ import { SimpleCsrfProtectionHandlerPlugin } from "@orpc/server/plugins";
 // Adding permissive CORS headers here would let the preflight succeed and undo it.
 
 // Errors that are normal control flow, not server faults: unauthenticated,
-// forbidden, missing row, and rejected input. Logging them would just add noise.
-const EXPECTED_ERROR_CODES = new Set(["UNAUTHORIZED", "FORBIDDEN", "NOT_FOUND", "BAD_REQUEST"]);
+// forbidden, missing row, rejected input, and requests the transport plugins
+// turn away (header-less CSRF probes, GETs on POST-only procedures). Logging
+// them would just add noise.
+const EXPECTED_ERROR_CODES = new Set([
+  "UNAUTHORIZED",
+  "FORBIDDEN",
+  "NOT_FOUND",
+  "BAD_REQUEST",
+  "CSRF_TOKEN_MISMATCH",
+  "METHOD_NOT_SUPPORTED",
+]);
 
 const handler = new RPCHandler(appRouter, {
   plugins: [new SimpleCsrfProtectionHandlerPlugin()],

@@ -102,11 +102,12 @@ export const protectedProcedure = publicProcedure.use(({ context, next }) => {
 Org-scoping is a procedure factory. It takes the procedure's input schema, resolves the organization named by `input.slug`, and proves the caller is a member before the handler runs - so a handler cannot read or write another tenant's rows by forgetting a check:
 
 ```typescript
-// packages/api/src/orpc.ts
+// packages/api/src/organization/organization-schema.ts
 export const organizationInput = z.object({
   slug: z.string().min(1, "Organization slug is required"),
 });
 
+// packages/api/src/orpc.ts
 export const organizationProcedure = <T extends z.ZodType<z.infer<typeof organizationInput>>>(
   input: T,
 ) =>

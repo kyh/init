@@ -5,8 +5,8 @@ import { describe, test } from "node:test";
 import { createQueryClient } from "./query-client";
 
 /**
- * The hash has to satisfy two properties at once, and each was broken once by a
- * fix for the other: inputs that differ only in property order must collide, and
+ * The hash has to satisfy two properties at once, and a fix for either can
+ * break the other: inputs that differ only in property order must collide, and
  * inputs that differ in value or in type must not.
  */
 type ProcedureInput = Record<string, Date | Set<number> | Map<number, string> | number | string>;
@@ -33,9 +33,9 @@ describe("queryKeyHashFn", () => {
   });
 
   test("collides on rich inputs that differ only in property order", () => {
-    // Regression: the serializer emits one meta entry per rich value in
-    // traversal order, and `hashKey` sorts object keys but not arrays — so
-    // these hashed differently until the meta was sorted too.
+    // The serializer emits one meta entry per rich value in traversal order,
+    // and `hashKey` sorts object keys but not arrays — so unsorted meta hashes
+    // these differently.
     const from = new Date("2020-01-01");
     const to = new Date("2021-01-01");
     assert.strictEqual(hash({ from, to }), hash({ to, from }));
@@ -48,8 +48,8 @@ describe("queryKeyHashFn", () => {
   });
 
   test("hashes identically across locales", () => {
-    // Regression: sorting meta with `localeCompare` let a Node server and a
-    // browser on different locales order it differently, so hydration missed
+    // Sorting meta with a locale-sensitive comparator lets a Node server and a
+    // browser on different locales order it differently, so hydration misses
     // the key the server rendered under. Only observable across processes —
     // within one, any consistent comparator looks correct. `ä` vs `z` inverts
     // between en-US and sv-SE.
@@ -80,5 +80,36 @@ describe("queryKeyHashFn", () => {
     const set = new Set([1, 2]);
     const map = new Map([[1, "one"]]);
     assert.strictEqual(hash({ a: set, b: map }), hash({ b: map, a: set }));
+  });
+
+  test("separates rich values whose types swap between properties", () => {
+    // Both inputs encode to the same json ({ a: [], b: [] }); only the paths
+    // inside the meta entries tell them apart. Pins that the sorted meta keeps
+    // whole entries — sorting bare type tags would collide these.
+    assert.notStrictEqual(
+      hash({ a: new Map([[1, "one"]]), b: new Set([1]) }),
+      hash({ a: new Set([1]), b: new Map([[1, "one"]]) }),
+    );
+  });
+});
+
+describe("dehydrate/hydrate", () => {
+  test("round-trips every rich type the RPC protocol supports", () => {
+    const { dehydrate, hydrate } = createQueryClient().getDefaultOptions();
+    assert.ok(dehydrate?.serializeData, "query client must configure dehydrate.serializeData");
+    assert.ok(hydrate?.deserializeData, "query client must configure hydrate.deserializeData");
+
+    const data = {
+      at: new Date("2020-01-01T00:00:00.000Z"),
+      tags: new Set(["a", "b"]),
+      lookup: new Map([[1, "one"]]),
+      big: 123n,
+      url: new URL("https://example.com/path?q=1"),
+      re: /pattern/i,
+    };
+    const revived: typeof data = hydrate.deserializeData(dehydrate.serializeData(data));
+
+    assert.deepStrictEqual(revived, data);
+    assert.strictEqual(revived.url.href, data.url.href);
   });
 });

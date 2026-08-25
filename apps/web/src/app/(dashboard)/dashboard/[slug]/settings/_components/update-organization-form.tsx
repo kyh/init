@@ -12,6 +12,7 @@ import { authClient } from "@/lib/auth-client";
 import { useAppForm } from "@/lib/form";
 import {
   invalidateOrganization,
+  removeOrganization,
   useOrganization,
 } from "@/app/(dashboard)/dashboard/[slug]/_components/use-organization";
 
@@ -114,9 +115,14 @@ const useUpdateOrganization = (slug: string, organizationId: string) => {
     },
     onSuccess: async (updatedOrganization) => {
       toast.success("Organization successfully updated");
-      // A rename keeps the slug, so refresh the detail we're viewing; a slug
-      // change navigates below to a fresh query key.
-      await invalidateOrganization(queryClient, slug);
+      // A name-only update refreshes the detail in place. A slug change kills
+      // the mounted query's key, so drop it rather than refetch it into
+      // NOT_FOUND retries; the new route prefetches the fresh key.
+      if (updatedOrganization.slug === slug) {
+        await invalidateOrganization(queryClient, slug);
+      } else {
+        removeOrganization(queryClient, slug);
+      }
       router.replace(`/dashboard/${updatedOrganization.slug}/settings`);
     },
     onError: (error) => {

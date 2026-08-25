@@ -28,10 +28,10 @@ export const baseUrl =
 
 // Origins allowed to drive authenticated requests. The web app, extension popup
 // iframe, and desktop shell all run same-origin as baseUrl; React Native uses
-// the expo:// scheme. Consumed by better-auth's own Origin checks and by the
-// better-auth's own Origin checks; the RPC endpoint is guarded by oRPC's
-// SimpleCsrfProtection plugin instead.
-export const trustedOrigins = [baseUrl, "expo://"];
+// the expo:// scheme. Consumed by better-auth's own Origin checks; the RPC
+// endpoint is guarded by oRPC's SimpleCsrfProtection plugin instead (see
+// apps/web/src/app/api/orpc/[[...rest]]/route.ts).
+const trustedOrigins = [baseUrl, "expo://"];
 
 // Set (to the local `emulate` server URL) in dev to exercise GitHub OAuth offline;
 // drives the dev-only genericOAuth provider in `plugins` below. Unset in production.

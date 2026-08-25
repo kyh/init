@@ -144,9 +144,9 @@ Server component: check the session, prefetch the query, hydrate.
 ```tsx
 // apps/web/src/app/(dashboard)/dashboard/[slug]/posts/page.tsx
 import { redirect } from "next/navigation";
-import { getSession } from "@repo/api/auth/auth";
 
 import { PageHeader } from "@/components/header";
+import { getSession } from "@/lib/auth-server";
 import { HydrateClient, orpc, prefetch } from "@/orpc/server";
 import { PostList } from "./_components/post-list";
 
