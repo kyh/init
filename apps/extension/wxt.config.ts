@@ -14,14 +14,11 @@ export default defineConfig({
     version: "0.1.0",
     description:
       "Chrome extension for Init - your AI-native starter kit for building, launching, and scaling applications.",
+    // `storage` alone: the popup opens the app in a tab rather than embedding
+    // or scripting it, and `tabs.create` needs no permission. Adding
+    // host_permissions costs a broad install warning and CWS review friction,
+    // so add them only when something here actually reads a page.
     permissions: ["storage"],
-    // Host permissions also exempt these sites from third-party cookie
-    // blocking inside the popup iframe — keep in sync with where the app is
-    // deployed. Forks add their own deploy origin here (Chrome match patterns
-    // can't scope to one project's Vercel preview subdomains, and a wildcard
-    // costs broad install warnings + CWS review friction — use
-    // optional_host_permissions for previews if you need them).
-    host_permissions: ["http://localhost:3000/*", "https://init.kyh.io/*"],
   },
   vite: () => ({
     plugins: [react(), tailwindcss()],

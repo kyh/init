@@ -248,7 +248,7 @@ pnpm -F @repo/api test
 
 ## Ship It Everywhere
 
-Nothing else to do. The mobile app (`apps/mobile/src/utils/api.ts`) consumes the same `AppRouter` type, so `orpc.post.list` works there too. The extension iframes the web app and gets the feature for free.
+Nothing else to do. The mobile app (`apps/mobile/src/utils/api.ts`) consumes the same `AppRouter` type, so `orpc.post.list` works there too. The extension and desktop shells open the web app itself, so they get the feature for free.
 
 ## Checklist
 

@@ -258,14 +258,18 @@ const createTodo = useMutation(
 
 ## Cross-Origin Requests
 
-Auth cookies are `SameSite=None` (the extension popup iframes the web app), so the browser's own CSRF backstop is off for the RPC endpoint. Two oRPC plugins cover it:
+CSRF protection is the session cookie, not a token. `packages/api/src/auth/auth.ts` sets `sameSite: "lax"`, so a request a third-party page originates arrives with no session — a forged `multipart/form-data` POST reaches the router and does nothing. `RPCHandler` refuses `GET` by default (`allowMethods` is `["POST", "PUT", "PATCH", "DELETE"]`), closing the one method a cookie-bearing navigation can produce.
 
-- **`StrictGetMethodPlugin`** — on by default in `RPCHandler`. Only procedures declaring `method: 'GET'` can be reached by a `GET`, so an `<img src>` or a navigation cannot invoke one.
-- **`SimpleCsrfProtectionHandlerPlugin`** — requires an `x-csrf-token` header, which `SimpleCsrfProtectionLinkPlugin` sends on every client. An HTML form cannot set a custom header, and a cross-origin `fetch` that tries to needs a preflight this route never answers.
+That holds because every surface authenticates first-party:
 
-The second one is load-bearing, not belt-and-braces. `multipart/form-data` is a _simple request_: without it, a form on another origin can POST to a mutation, carry the session cookie, and never trigger a preflight. Both plugins have to stay paired with the route serving no CORS headers — permissive CORS would let the preflight succeed and undo the protection.
+| Surface   | How it reaches the app                                                        |
+| --------- | ----------------------------------------------------------------------------- |
+| Web       | Same-origin                                                                   |
+| Desktop   | Top-level navigation to the deployed URL                                      |
+| Extension | Popup opens the app in a tab                                                  |
+| Mobile    | React Native sends the session as a `Cookie` header — SameSite does not apply |
 
-Every client that talks HTTP to the endpoint needs `SimpleCsrfProtectionLinkPlugin` on its link. The RSC caller does not: it invokes procedures in-process and never crosses the network.
+Two things keep it true. Do not set `sameSite: "none"` for a surface that wants to embed the app — that re-opens CSRF for every client at once; make the surface first-party instead. And do not add CORS headers to the RPC route: a simple form POST needs no preflight, so CORS is not CSRF protection, while credentialed CORS would hand a cross-origin page authenticated access.
 
 ## Adding New Routes
 

@@ -26,11 +26,11 @@ export const baseUrl =
       ? `https://${process.env.VERCEL_URL}`
       : "http://localhost:3000";
 
-// Origins allowed to drive authenticated requests. The web app, extension popup
-// iframe, and desktop shell all run same-origin as baseUrl; React Native uses
-// the expo:// scheme. Consumed by better-auth's own Origin checks; the RPC
-// endpoint is guarded by oRPC's SimpleCsrfProtection plugin instead (see
-// apps/web/src/app/api/orpc/[[...rest]]/route.ts).
+// Origins allowed to drive authenticated requests. The web app, the tab the
+// extension popup opens, and the desktop shell all run same-origin as baseUrl;
+// React Native uses the expo:// scheme. Consumed by better-auth's own Origin
+// checks; the RPC endpoint relies on the session cookie's SameSite instead
+// (see `advanced.defaultCookieAttributes` below).
 const trustedOrigins = [baseUrl, "expo://"];
 
 // Set (to the local `emulate` server URL) in dev to exercise GitHub OAuth offline;
@@ -155,10 +155,14 @@ export const auth = betterAuth({
   },
   advanced: {
     defaultCookieAttributes: {
-      // The extension popup iframes the web app; SameSite=Lax cookies are
-      // stripped in that cross-site context. Chrome exempts extensions that
-      // hold host_permissions for the site from third-party cookie blocking.
-      sameSite: "none",
+      // Every surface authenticates first-party, so the session never has to
+      // survive a third-party context: the web app is same-origin, the desktop
+      // shell top-level-navigates to it, the extension popup opens it in a tab,
+      // and React Native attaches the cookie itself. This is also the RPC
+      // endpoint's cross-site defense — a forged cross-site POST arrives with
+      // no session and does nothing. Loosening it to "none" re-opens CSRF for
+      // the whole app, not just the surface that asked for it.
+      sameSite: "lax",
       secure: true,
     },
   },

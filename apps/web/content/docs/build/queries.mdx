@@ -70,7 +70,9 @@ Defaults live in `apps/web/src/orpc/query-client.ts`:
 
 - **`staleTime: 30_000`** - queries are fresh for 30s, so hydrated data isn't refetched on mount
 - **Targeted invalidation** - each mutation invalidates the queries it changed in its own `onSuccess`; see [Data Mutations](/docs/build/mutations)
-- **oRPC's RPC serializer** - `Date`, `Map`, `Set`, `BigInt`, `URL` survive the wire intact, and hash consistently into query keys
+- **oRPC's `RPCSerializer`** - wired into `dehydrate`/`hydrate`, so `Date`, `Map`, `Set`, `BigInt`, `URL` reach the client as themselves instead of as strings
+
+Query keys use TanStack's default hashing, which assumes plain-JSON inputs. Every procedure here takes one (`{ slug }`, an id, an email). Put a `Date` or a `Set` in a query _input_ and you need a `queryKeyHashFn` that runs the key through `RPCSerializer` first — the default encodes a `Set` as `{}` and throws on `BigInt`.
 
 Transport is `RPCLink` (`apps/web/src/orpc/react.tsx`), one `/api/orpc` request per call. Requests aren't batched: HTTP/2 multiplexes them already, and a batch is only as fast as its slowest procedure.
 

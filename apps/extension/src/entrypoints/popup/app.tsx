@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Button } from "@repo/ui/components/button";
+import { Logo } from "@repo/ui/components/logo";
 import { Spinner } from "@repo/ui/components/spinner";
-import { Settings } from "lucide-react";
+import { ExternalLink, Settings } from "lucide-react";
 
 import { apiBaseUrlItem } from "@/lib/storage";
 
@@ -21,37 +22,44 @@ const App = () => {
     return apiBaseUrlItem.watch(setAppUrl);
   }, []);
 
+  const openApp = () => {
+    if (appUrl === null) return;
+    void browser.tabs.create({ url: appUrl });
+    // The popup would otherwise linger over the tab it just opened
+    window.close();
+  };
+
   if (appUrl === null) {
     return (
-      <div className="bg-background flex h-[600px] w-[400px] items-center justify-center">
-        <Spinner className="text-muted-foreground size-6" />
+      <div className="bg-background flex h-[228px] w-[320px] items-center justify-center">
+        <Spinner className="text-muted-foreground size-5" />
       </div>
     );
   }
 
   return (
-    <div className="bg-background flex h-[600px] w-[400px] flex-col">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={openOptions}
-        className="absolute top-2 right-2 z-10 size-8 backdrop-blur-sm"
-        title="Settings"
-      >
-        <Settings className="size-4" />
-      </Button>
+    <div className="bg-background flex h-[228px] w-[320px] flex-col justify-between p-4">
+      <div className="flex items-start justify-between">
+        <Logo className="size-7" />
+        <Button variant="ghost" size="icon-sm" onClick={openOptions} title="Settings">
+          <Settings />
+        </Button>
+      </div>
 
-      {/* Embeds our own app: it needs scripts + same-origin cookies for auth, so the
-          sandbox can't isolate it — but it still blocks top-navigation hijacks */}
-      {/* oxlint-disable iframe-missing-sandbox, react-doctor/iframe-missing-sandbox -- extension parent and web child are cross-origin */}
-      <iframe
-        src={appUrl}
-        className="h-full w-full border-0"
-        title="Init App"
-        allow="clipboard-read; clipboard-write"
-        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-      />
-      {/* oxlint-enable iframe-missing-sandbox, react-doctor/iframe-missing-sandbox */}
+      <div className="space-y-1">
+        <h1 className="font-semibold">Init</h1>
+        <p className="text-muted-foreground text-sm text-pretty">
+          Your AI-native starter kit for building, launching, and scaling applications.
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <Button className="w-full" onClick={openApp}>
+          <ExternalLink />
+          Open Init
+        </Button>
+        <p className="text-muted-foreground truncate text-center text-xs">{appUrl}</p>
+      </div>
     </div>
   );
 };
