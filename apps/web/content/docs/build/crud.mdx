@@ -216,20 +216,17 @@ The full reference - inline editing, delete confirmation, per-row pending states
 
 ## 8. Test It
 
-Routers test without a database. `createRouterClient` plus the mock context from `packages/api/src/test-utils.ts`:
+Routers test without a database. `createCallerFactory` binds the router once per file; the mock context comes from the same helper module:
 
 ```typescript
 // packages/api/src/post/post-router.test.ts
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { createRouterClient } from "@orpc/server";
-
-import { createMockContext } from "../test-utils";
+import { createCallerFactory, createMockContext } from "../test-utils";
 import { postRouter } from "./post-router";
 
-const createCaller = (context: ReturnType<typeof createMockContext>) =>
-  createRouterClient(postRouter, { context });
+const createCaller = createCallerFactory(postRouter);
 
 test("throws UNAUTHORIZED when user is not a member", async () => {
   const ctx = createMockContext();

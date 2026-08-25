@@ -118,10 +118,13 @@ export function createMockContext(
   };
 }
 
-/** Calls a router in-process against a mock context, running the real middleware chain. */
-export const createCaller = <T extends AnyRouter>(
-  router: T,
-  context: ReturnType<typeof createMockContext> & InferRouterInitialContext<T>,
-) => createRouterClient(router, { context });
+/**
+ * Binds a router once per test file. The returned caller invokes procedures
+ * in-process against a mock context, running the real middleware chain.
+ */
+export const createCallerFactory =
+  <T extends AnyRouter>(router: T) =>
+  (context: ReturnType<typeof createMockContext> & InferRouterInitialContext<T>) =>
+    createRouterClient(router, { context });
 
 export { mockUser, mockSession };

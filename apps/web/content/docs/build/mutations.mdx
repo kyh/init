@@ -102,12 +102,18 @@ const deleteTodo = useMutation(
 
 (`.queryKey()` is the full-matching counterpart - use it for `getQueryData` / `setQueryData`, not invalidation.)
 
-The same pattern covers mutations that wrap a better-auth call instead of an oRPC procedure:
+Mutations that wrap a better-auth call instead of an oRPC procedure refresh the cache the same way, with one rule on top: a query with more than one writer exports its own helpers next to the hook, so the key shape has one owner. Inline `.key()` is for a query with a single consumer, like the todo list above. `organization.get` is written by the members table, the invite form, the invitations table, and the settings form, so they all go through its helpers:
 
 ```tsx
-onSuccess: () =>
-  queryClient.invalidateQueries({ queryKey: orpc.organization.get.key({ input: { slug } }) }),
+import {
+  invalidateOrganization,
+  removeOrganization,
+} from "@/app/(dashboard)/dashboard/[slug]/_components/use-organization";
+
+onSuccess: () => invalidateOrganization(queryClient, slug),
 ```
+
+Use `removeOrganization` instead when the write changes the slug: invalidating would refetch the still-mounted query into NOT_FOUND and its retry backoff, while the new route prefetches the fresh key anyway.
 
 If the UI doesn't reflect a write, the mutation is missing an invalidation - add one to its `onSuccess`.
 

@@ -1,8 +1,15 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 
-import { createCaller, createMockChain, createMockContext, createMockDb } from "../test-utils";
+import {
+  createCallerFactory,
+  createMockChain,
+  createMockContext,
+  createMockDb,
+} from "../test-utils";
 import { todoRouter } from "./todo-router";
+
+const createCaller = createCallerFactory(todoRouter);
 
 const ORG = { id: "org-1", name: "Acme", slug: "acme", createdAt: new Date(), metadata: null };
 const MEMBERSHIP = { id: "mem-1", organizationId: "org-1", userId: "user-1", role: "owner" };
@@ -25,7 +32,7 @@ describe("todoRouter.list", () => {
     ];
     ctx.db.query.todo.findMany.mock.mockImplementation(() => Promise.resolve(todos));
 
-    const caller = createCaller(todoRouter, ctx);
+    const caller = createCaller(ctx);
     const result = await caller.list({ slug: "acme" });
 
     assert.deepEqual(result.todos, todos);
@@ -36,7 +43,7 @@ describe("todoRouter.list", () => {
     const ctx = authedContext();
     ctx.db.query.todo.findMany.mock.mockImplementation(() => Promise.resolve([]));
 
-    const caller = createCaller(todoRouter, ctx);
+    const caller = createCaller(ctx);
     const result = await caller.list({ slug: "acme" });
 
     assert.deepEqual(result.todos, []);
@@ -46,7 +53,7 @@ describe("todoRouter.list", () => {
     const ctx = createMockContext();
     ctx.db.query.organization.findFirst.mock.mockImplementation(() => Promise.resolve(undefined));
 
-    const caller = createCaller(todoRouter, ctx);
+    const caller = createCaller(ctx);
     await assert.rejects(caller.list({ slug: "nonexistent" }), /Organization not found/);
   });
 
@@ -55,7 +62,7 @@ describe("todoRouter.list", () => {
     ctx.db.query.organization.findFirst.mock.mockImplementation(() => Promise.resolve(ORG));
     ctx.db.query.member.findFirst.mock.mockImplementation(() => Promise.resolve(undefined));
 
-    const caller = createCaller(todoRouter, ctx);
+    const caller = createCaller(ctx);
     await assert.rejects(
       caller.list({ slug: "acme" }),
       /You do not have access to this organization/,
@@ -64,7 +71,7 @@ describe("todoRouter.list", () => {
 
   test("throws UNAUTHORIZED when not logged in", async () => {
     const ctx = createMockContext({ session: null });
-    const caller = createCaller(todoRouter, ctx);
+    const caller = createCaller(ctx);
     await assert.rejects(caller.list({ slug: "acme" }), /You must be logged in/);
   });
 });
@@ -76,7 +83,7 @@ describe("todoRouter.create", () => {
     const chain = createMockChain([created]);
     ctx.db.insert.mock.mockImplementation(() => chain);
 
-    const caller = createCaller(todoRouter, ctx);
+    const caller = createCaller(ctx);
     const result = await caller.create({ slug: "acme", title: "New todo" });
 
     assert.deepEqual(result.todo, created);
@@ -88,7 +95,7 @@ describe("todoRouter.create", () => {
 
   test("rejects empty title", async () => {
     const ctx = authedContext();
-    const caller = createCaller(todoRouter, ctx);
+    const caller = createCaller(ctx);
     await assert.rejects(caller.create({ slug: "acme", title: "" }));
   });
 });
@@ -100,7 +107,7 @@ describe("todoRouter.update", () => {
     const chain = createMockChain([updated]);
     ctx.db.update.mock.mockImplementation(() => chain);
 
-    const caller = createCaller(todoRouter, ctx);
+    const caller = createCaller(ctx);
     const result = await caller.update({ slug: "acme", id: TODO_ID, title: "Updated" });
 
     assert.deepEqual(result.todo, updated);
@@ -113,7 +120,7 @@ describe("todoRouter.update", () => {
     const chain = createMockChain([updated]);
     ctx.db.update.mock.mockImplementation(() => chain);
 
-    const caller = createCaller(todoRouter, ctx);
+    const caller = createCaller(ctx);
     const result = await caller.update({ slug: "acme", id: TODO_ID, completed: true });
 
     assert.strictEqual(result.todo?.completed, true);
@@ -125,7 +132,7 @@ describe("todoRouter.update", () => {
     const chain = createMockChain();
     ctx.db.update.mock.mockImplementation(() => chain);
 
-    const caller = createCaller(todoRouter, ctx);
+    const caller = createCaller(ctx);
     await assert.rejects(
       caller.update({ slug: "acme", id: TODO_ID, title: "Nope" }),
       /Todo not found/,
@@ -140,7 +147,7 @@ describe("todoRouter.delete", () => {
     const chain = createMockChain([deleted]);
     ctx.db.delete.mock.mockImplementation(() => chain);
 
-    const caller = createCaller(todoRouter, ctx);
+    const caller = createCaller(ctx);
     const result = await caller.delete({ slug: "acme", id: TODO_ID });
 
     assert.deepEqual(result.todo, deleted);
@@ -152,7 +159,7 @@ describe("todoRouter.delete", () => {
     const chain = createMockChain();
     ctx.db.delete.mock.mockImplementation(() => chain);
 
-    const caller = createCaller(todoRouter, ctx);
+    const caller = createCaller(ctx);
     await assert.rejects(caller.delete({ slug: "acme", id: TODO_ID }), /Todo not found/);
   });
 });
