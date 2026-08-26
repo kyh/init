@@ -258,18 +258,22 @@ const createTodo = useMutation(
 
 ## Cross-Origin Requests
 
-CSRF protection is the session cookie, not a token. `packages/api/src/auth/auth.ts` sets `sameSite: "lax"`, so a request a third-party page originates arrives with no session — a forged `multipart/form-data` POST reaches the router and does nothing. `RPCHandler` refuses `GET` by default (`allowMethods` is `["POST", "PUT", "PATCH", "DELETE"]`), closing the one method a cookie-bearing navigation can produce.
+CSRF protection is a cookie attribute plus an origin check, not a token.
 
-That holds because every surface authenticates first-party:
+`packages/api/src/auth/auth.ts` sets `sameSite: "lax"`, so a request a third-party page originates arrives with no session — a forged `multipart/form-data` POST reaches the router and does nothing. `RPCHandler` refuses `GET` by default (`allowMethods` is `["POST", "PUT", "PATCH", "DELETE"]`), closing the one method a cookie-bearing navigation can produce.
 
-| Surface   | How it reaches the app                                                        |
-| --------- | ----------------------------------------------------------------------------- |
-| Web       | Same-origin                                                                   |
-| Desktop   | Top-level navigation to the deployed URL                                      |
-| Extension | Popup opens the app in a tab                                                  |
-| Mobile    | React Native sends the session as a `Cookie` header — SameSite does not apply |
+`SameSite` keys on _site_, not origin, so that covers cross-site only: a sibling subdomain or another port on the same host is same-site, and the browser does attach the session cookie to a form POST served from there. `apps/web/src/app/api/orpc/[[...rest]]/route.ts` closes that with an origin check ahead of `handler.handle` — an `Origin` header that is not the route's own origin gets `403`. An absent `Origin` passes, which is what keeps the non-browser mobile client working; browsers set `Origin` on every POST and page script cannot forge it. `route.test.ts` pins all three cases.
 
-Two things keep it true. Do not set `sameSite: "none"` for a surface that wants to embed the app — that re-opens CSRF for every client at once; make the surface first-party instead. And do not add CORS headers to the RPC route: a simple form POST needs no preflight, so CORS is not CSRF protection, while credentialed CORS would hand a cross-origin page authenticated access.
+Both halves hold because every surface authenticates first-party:
+
+| Surface   | How it reaches the app                                                                                              |
+| --------- | ------------------------------------------------------------------------------------------------------------------- |
+| Web       | Same-origin                                                                                                         |
+| Desktop   | Top-level navigation to the deployed URL                                                                            |
+| Extension | Popup opens the app in a tab                                                                                        |
+| Mobile    | React Native sends the session as a `Cookie` header and no `Origin` — neither SameSite nor the origin check applies |
+
+Two things keep it true. Do not set `sameSite: "none"` for a surface that wants to embed the app — that re-opens cross-site CSRF for every client at once; make the surface first-party instead. And do not add CORS headers to the RPC route: a simple form POST needs no preflight, so CORS is not CSRF protection, while credentialed CORS would hand a cross-origin page authenticated access.
 
 ## Adding New Routes
 
