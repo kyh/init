@@ -4,8 +4,7 @@ import { invitation } from "@repo/db/drizzle-schema-auth";
 import { and, eq, ne } from "drizzle-orm";
 import { PgDialect } from "drizzle-orm/pg-core";
 
-import { createMockContext, mockUser } from "../test-utils";
-import { createCallerFactory } from "../trpc";
+import { createCallerFactory, createMockContext, mockUser } from "../test-utils";
 import { organizationRouter } from "./organization-router";
 
 const createCaller = createCallerFactory(organizationRouter);

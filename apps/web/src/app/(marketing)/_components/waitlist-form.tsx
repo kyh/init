@@ -7,11 +7,10 @@ import { cn } from "@repo/ui/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 
 import { useAppForm } from "@/lib/form";
-import { useTRPC } from "@/trpc/react";
+import { orpc } from "@/orpc/react";
 
 export const WaitlistForm = () => {
-  const trpc = useTRPC();
-  const joinWaitlist = useMutation(trpc.waitlist.join.mutationOptions());
+  const joinWaitlist = useMutation(orpc.waitlist.join.mutationOptions());
 
   const form = useAppForm({
     defaultValues: {

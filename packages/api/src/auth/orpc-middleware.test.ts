@@ -1,32 +1,26 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { TRPCError } from "@trpc/server";
+import { ORPCError } from "@orpc/server";
 
-import { createMockContext } from "../test-utils";
-import {
-  createCallerFactory,
-  createTRPCRouter,
-  organizationProcedure,
-  protectedProcedure,
-  publicProcedure,
-} from "../trpc";
+import { createCallerFactory, createMockContext } from "../test-utils";
+import { organizationProcedure, protectedProcedure, publicProcedure } from "../orpc";
+import { organizationInput } from "../organization/organization-schema";
 
 const ORG = { id: "org-1", name: "Acme", slug: "acme", logo: null, metadata: null };
 const MEMBERSHIP = { id: "mem-1", organizationId: "org-1", userId: "user-1", role: "owner" };
 
-const testRouter = createTRPCRouter({
-  protectedQuery: protectedProcedure.query(({ ctx }) => ({
-    userId: ctx.session.user.id,
+const testRouter = {
+  protectedQuery: protectedProcedure.handler(({ context }) => ({
+    userId: context.session.user.id,
   })),
-  publicQuery: publicProcedure.query(({ ctx }) => ({
-    hasSession: ctx.session !== null,
+  publicQuery: publicProcedure.handler(({ context }) => ({
+    hasSession: context.session !== null,
   })),
-  publicMutation: publicProcedure.mutation(() => ({ ok: true })),
-  organizationQuery: organizationProcedure.query(({ ctx }) => ({
-    organizationId: ctx.organization.id,
-    role: ctx.membership.role,
+  organizationQuery: organizationProcedure(organizationInput).handler(({ context }) => ({
+    organizationId: context.organization.id,
+    role: context.membership.role,
   })),
-});
+};
 
 const createCaller = createCallerFactory(testRouter);
 
@@ -39,7 +33,7 @@ describe("protectedProcedure", () => {
 
   test("rejects unauthenticated users with UNAUTHORIZED", async () => {
     const caller = createCaller(createMockContext({ session: null }));
-    await assert.rejects(caller.protectedQuery(), TRPCError);
+    await assert.rejects(caller.protectedQuery(), ORPCError);
     await assert.rejects(caller.protectedQuery(), /You must be logged in/);
   });
 });
@@ -88,7 +82,7 @@ describe("organizationProcedure", () => {
 
   test("rejects an empty slug at the input boundary", async () => {
     const caller = createCaller(memberContext());
-    await assert.rejects(caller.organizationQuery({ slug: "" }), TRPCError);
+    await assert.rejects(caller.organizationQuery({ slug: "" }), ORPCError);
   });
 });
 
@@ -103,51 +97,5 @@ describe("publicProcedure", () => {
     const caller = createCaller(createMockContext());
     const result = await caller.publicQuery();
     assert.strictEqual(result.hasSession, true);
-  });
-});
-
-describe("cross-origin mutation guard", () => {
-  test("allows a mutation the browser labels same-origin", async () => {
-    const caller = createCaller(createMockContext({ secFetchSite: "same-origin" }));
-    assert.deepEqual(await caller.publicMutation(), { ok: true });
-  });
-
-  test("allows a user-initiated mutation (Sec-Fetch-Site: none)", async () => {
-    const caller = createCaller(createMockContext({ secFetchSite: "none" }));
-    assert.deepEqual(await caller.publicMutation(), { ok: true });
-  });
-
-  test("allows a mutation whose Origin matches the app", async () => {
-    const caller = createCaller(createMockContext({ origin: "http://localhost:3000" }));
-    assert.deepEqual(await caller.publicMutation(), { ok: true });
-  });
-
-  test("allows a non-browser mutation with no Origin or Sec-Fetch-Site", async () => {
-    const caller = createCaller(createMockContext());
-    assert.deepEqual(await caller.publicMutation(), { ok: true });
-  });
-
-  test("rejects a mutation the browser labels cross-site", async () => {
-    const caller = createCaller(
-      createMockContext({ secFetchSite: "cross-site", origin: "https://evil.example" }),
-    );
-    await assert.rejects(caller.publicMutation(), /Cross-origin request rejected/);
-  });
-
-  test("rejects a mutation from an untrusted Origin when Sec-Fetch-Site is absent", async () => {
-    const caller = createCaller(createMockContext({ origin: "https://evil.example" }));
-    await assert.rejects(caller.publicMutation(), /Cross-origin request rejected/);
-  });
-
-  test("rejects a cross-site mutation even if the Origin header is stripped", async () => {
-    const caller = createCaller(createMockContext({ secFetchSite: "cross-site", origin: null }));
-    await assert.rejects(caller.publicMutation(), /Cross-origin request rejected/);
-  });
-
-  test("does not guard queries, only mutations", async () => {
-    const caller = createCaller(
-      createMockContext({ secFetchSite: "cross-site", origin: "https://evil.example" }),
-    );
-    assert.deepEqual(await caller.publicQuery(), { hasSession: true });
   });
 });

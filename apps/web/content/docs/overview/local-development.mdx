@@ -58,7 +58,7 @@ apps/
 └── desktop/      # Electron desktop app
 
 packages/
-├── api/          # tRPC routers + better-auth
+├── api/          # oRPC routers + better-auth
 ├── db/           # Drizzle schema + Supabase config
 └── ui/           # Shared React components
 ```
@@ -93,7 +93,7 @@ export const post = pgTable("post", (t) => ({
 })).enableRLS();
 ```
 
-Always `.enableRLS()` - authorization lives in tRPC, RLS blocks direct PostgREST access.
+Always `.enableRLS()` - authorization lives in oRPC, RLS blocks direct PostgREST access.
 
 ## API Development
 
@@ -103,25 +103,24 @@ Add a feature folder in `packages/api/src/` with a router and Zod schema:
 
 ```typescript
 // packages/api/src/post/post-router.ts
-export const postRouter = createTRPCRouter({
-  list: organizationProcedure.query(async ({ ctx }) => {
-    return ctx.db.query.post.findMany({
-      where: (p, { eq }) => eq(p.organizationId, ctx.organization.id),
+export const postRouter = {
+  list: organizationProcedure(organizationInput).handler(async ({ context }) => {
+    return context.db.query.post.findMany({
+      where: (p, { eq }) => eq(p.organizationId, context.organization.id),
     });
   }),
-});
+};
 ```
 
-`organizationProcedure` (from `../trpc`) supplies the `slug` input and proves membership before the handler runs. Register in `packages/api/src/root-router.ts`. See the [API guide](/docs/architecture/api) for the full pattern.
+`organizationProcedure` (from `../orpc`) takes the procedure's input schema and proves membership before the handler runs. Register in `packages/api/src/root-router.ts`. See the [API guide](/docs/architecture/api) for the full pattern.
 
 ### Using Routes in Components
 
 ```typescript
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useTRPC } from "@/trpc/react";
+import { orpc } from "@/orpc/react";
 
-const trpc = useTRPC();
-const { data } = useSuspenseQuery(trpc.todo.list.queryOptions({ slug }));
+const { data } = useSuspenseQuery(orpc.todo.list.queryOptions({ input: { slug } }));
 ```
 
 ### Testing Routes
@@ -142,7 +141,7 @@ apps/web/src/app/
 ├── (dashboard)/      # Protected org dashboard
 ├── (marketing)/      # Public landing page
 ├── (docs)/           # These docs
-└── api/              # Route handlers (auth, trpc, account, search, health)
+└── api/              # Route handlers (auth, orpc, account, search, health)
 ```
 
 ### Mobile App (Expo)
@@ -150,7 +149,7 @@ apps/web/src/app/
 ```
 apps/mobile/src/
 ├── app/              # Expo Router screens
-└── utils/            # auth, tRPC client, base-url
+└── utils/            # auth, oRPC client, base-url
 ```
 
 ### Adding a Feature
@@ -208,7 +207,7 @@ pnpm lint:fix && pnpm format:fix
 ### Web
 
 - Browser DevTools + React DevTools
-- tRPC logs requests in dev (loggerLink)
+- oRPC logs failed requests in dev (onError interceptor)
 - TanStack Query Devtools ships in the tree
 
 ### Mobile
@@ -261,5 +260,5 @@ Production values live in your deployment platform, plus `.env.production.local`
 ## Next Steps
 
 1. **Explore the architecture** - [Folder structure](/docs/architecture/folder-structure)
-2. **Understand the API** - [tRPC guide](/docs/architecture/api)
+2. **Understand the API** - [oRPC guide](/docs/architecture/api)
 3. **Learn the auth flow** - [better-auth setup](/docs/architecture/authentication)

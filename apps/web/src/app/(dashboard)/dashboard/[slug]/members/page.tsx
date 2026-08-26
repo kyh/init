@@ -4,7 +4,7 @@ import { getSession } from "@/lib/auth-server";
 import { Skeleton } from "@repo/ui/components/skeleton";
 
 import { PageHeader } from "@/components/header";
-import { HydrateClient, prefetch, trpc } from "@/trpc/server";
+import { HydrateClient, orpc, prefetch } from "@/orpc/server";
 import { InvitationsTable } from "./_components/invitations-table";
 import { InviteMembersDialog } from "./_components/invite-members-form";
 import { MembersTable } from "./_components/members-table";
@@ -41,7 +41,7 @@ const Page = async (props: PageProps) => {
     return redirect(`/auth/login?nextPath=/dashboard/${slug}/members`);
   }
 
-  prefetch(trpc.organization.get.queryOptions({ slug }));
+  prefetch(orpc.organization.get.queryOptions({ input: { slug } }));
 
   return (
     <HydrateClient>

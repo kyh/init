@@ -18,9 +18,11 @@ import { z } from "zod";
 
 import { authClient } from "@/lib/auth-client";
 import { useAppForm } from "@/lib/form";
-import { useTRPC } from "@/trpc/react";
 import { ROLES, roleSchema } from "@/app/(dashboard)/dashboard/[slug]/_components/role";
-import { useOrganization } from "@/app/(dashboard)/dashboard/[slug]/_components/use-organization";
+import {
+  invalidateOrganization,
+  useOrganization,
+} from "@/app/(dashboard)/dashboard/[slug]/_components/use-organization";
 
 /**
  * The maximum number of invites that can be sent at once.
@@ -195,7 +197,6 @@ const createEmptyInviteModel = (): InviteModel => ({
 
 const useInviteMembers = (slug: string, organizationId: string) => {
   const queryClient = useQueryClient();
-  const trpc = useTRPC();
   return useMutation({
     mutationFn: async (data: z.infer<typeof inviteMembersSchema>) => {
       await Promise.all(
@@ -210,7 +211,7 @@ const useInviteMembers = (slug: string, organizationId: string) => {
     },
     onSuccess: () => {
       toast.success("Invitations sent successfully");
-      return queryClient.invalidateQueries(trpc.organization.get.queryFilter({ slug }));
+      return invalidateOrganization(queryClient, slug);
     },
     onError: (error) => toast.error(error.message),
   });

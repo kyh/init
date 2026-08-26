@@ -1,8 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 
-import { createMockChain, createMockContext } from "../test-utils";
-import { createCallerFactory } from "../trpc";
+import { createCallerFactory, createMockChain, createMockContext } from "../test-utils";
 import { waitlistRouter } from "./waitlist-router";
 
 const createCaller = createCallerFactory(waitlistRouter);

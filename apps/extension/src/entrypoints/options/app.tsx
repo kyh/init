@@ -128,9 +128,9 @@ const App = () => {
         <div className="mt-12 rounded-lg border p-4">
           <h2 className="font-semibold">How it works</h2>
           <p className="text-muted-foreground mt-1 text-sm">
-            The extension popup displays your Init application in an iframe. Make sure your
-            application is running at the configured URL. Authentication and all features work the
-            same as in the browser.
+            The extension popup opens your Init application in a new tab. Make sure your application
+            is running at the configured URL — it runs as a normal first-party site, so your
+            existing session carries over.
           </p>
         </div>
       </div>

@@ -3,7 +3,7 @@
 project_id = "init"
 
 # Data API (PostgREST) is off — the app talks to Postgres through
-# tRPC/Drizzle only. Storage and auth are separate services, unaffected.
+# the API layer/Drizzle only. Storage and auth are separate services, unaffected.
 # Hosted projects: disable it under Settings → API.
 [api]
 enabled = false

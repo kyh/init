@@ -30,7 +30,7 @@ When you need funnels, retention, and feature usage:
 pnpm -F @repo/web add posthog-js
 ```
 
-Initialize in a client provider (next to `TRPCReactProvider` in `apps/web/src/app/layout.tsx`), then identify against the entities Init already has - user and organization:
+Initialize in a client provider (next to `ORPCReactProvider` in `apps/web/src/app/layout.tsx`), then identify against the entities Init already has - user and organization:
 
 ```typescript
 import posthog from "posthog-js";
@@ -57,15 +57,13 @@ Instrument the loops Init ships, not everything:
 
 ## Server-Side Events
 
-For events you can't trust the client to report, a tRPC middleware sees every procedure call:
+For events you can't trust the client to report, an oRPC middleware sees every procedure call:
 
 ```typescript
-// packages/api/src/trpc.ts
-const analyticsMiddleware = t.middleware(async ({ next, path, type, ctx }) => {
+// packages/api/src/orpc.ts
+const analyticsMiddleware = o.middleware(async ({ next, path, context }) => {
   const result = await next();
-  if (type === "mutation" && result.ok) {
-    // capture(ctx.session?.user.id, path)
-  }
+  // capture(context.session?.user.id, path.join("."))
   return result;
 });
 ```
