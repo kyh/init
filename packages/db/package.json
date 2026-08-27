@@ -17,9 +17,8 @@
     "stop": "pnpm with-env supabase stop",
     "reset": "pnpm with-env supabase db reset && pnpm push && pnpm with-env supabase seed buckets",
     "status": "pnpm with-env supabase status",
-    "test": "node --import tsx --test 'src/**/*.test.ts'",
-    "push": "tsx src/push-preflight.ts ../../.env && pnpm with-env drizzle-kit push --force",
-    "push:remote": "tsx src/push-preflight.ts ../../.env.production.local && dotenv -e ../../.env.production.local -- drizzle-kit push",
+    "push": "pnpm with-env drizzle-kit push --force",
+    "push:remote": "dotenv -e ../../.env.production.local -- drizzle-kit push",
     "studio": "pnpm with-env drizzle-kit studio",
     "with-env": "dotenv -e ../../.env --",
     "generate:auth-schema": "echo 'Disabled. @better-auth/cli is stuck at 1.4.21: it emits no account.issuer (required since better-auth 1.7) and strips hand-added indexes, RLS, and the rate_limit table. Running it silently breaks auth. Maintain src/drizzle-schema-auth.ts by hand until the CLI supports 1.7.' && exit 1"

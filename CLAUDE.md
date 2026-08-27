@@ -58,7 +58,6 @@ pnpm db:stop          # Stop Supabase
 pnpm db:push          # Push Drizzle schema
 pnpm db:reset         # Reset, push, and re-seed schema
 pnpm db:seed          # Seed dev user (dev@init.local / password) + sample data
-pnpm db:push-remote   # Push to the DB in .env.production.local (refuses a DB holding tables this schema doesn't define)
 
 # Agents
 pnpm emulate          # Local GitHub OAuth emulator (offline auth tests)
