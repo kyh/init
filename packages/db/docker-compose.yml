@@ -10,7 +10,7 @@ name: ${COMPOSE_PROJECT_NAME:-init}
 
 services:
   postgres:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     restart: unless-stopped
     # 54322, not 5432, so a Postgres already installed on the host doesn't clash
     ports:
@@ -20,7 +20,11 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      # Postgres 18 moved PGDATA to /var/lib/postgresql/<major>/docker and
+      # declares the volume one level up, so mount the parent. Mounting
+      # .../data — correct through 17 — would silently leave the data in the
+      # container layer, where `docker compose down` throws it away.
+      - postgres-data:/var/lib/postgresql
     healthcheck:
       # -h 127.0.0.1 forces a TCP check. Without it pg_isready uses the Unix
       # socket, which the throwaway server that runs during first-boot initdb

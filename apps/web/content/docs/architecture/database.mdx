@@ -8,7 +8,7 @@ Init uses Postgres with Drizzle ORM for type-safe queries - a Docker container l
 
 The stack:
 
-- **Postgres** - `postgres:17-alpine` via Docker Compose locally, Vercel Postgres in production
+- **Postgres** - `postgres:18-alpine` via Docker Compose locally, Vercel Postgres in production
 - **Drizzle ORM** - Type-safe queries over postgres.js
 - **drizzle-kit push** - Schema sync, no migration files
 - **RLS deny-by-default** - Authorization lives in oRPC, not the database
