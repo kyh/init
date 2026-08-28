@@ -1,6 +1,7 @@
 import { execSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import fs from "node:fs";
+import { createServer } from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -289,7 +290,33 @@ function composeProjectName() {
   return /^[a-z]/.test(slug) ? slug : `app-${slug}`;
 }
 
-function createEnv() {
+// COMPOSE_PROJECT_NAME keeps two clones off each other's data, but they'd
+// still both try to publish Postgres on the same host port and the second one
+// would fail to start. Give each project its own port so they can run at once.
+const isPortFree = (port: number) =>
+  new Promise<boolean>((resolve) => {
+    const server = createServer();
+    server.once("error", () => resolve(false));
+    server.once("listening", () => server.close(() => resolve(true)));
+    // No host: bind every interface, matching what Docker does, so a port
+    // another project already published is correctly seen as taken
+    server.listen(port);
+  });
+
+async function findFreePort(start = 54322, range = 50) {
+  for (let port = start; port < start + range; port++) {
+    if (await isPortFree(port)) return port;
+  }
+  throw new Error(`No free port for local Postgres in ${start}-${start + range - 1}`);
+}
+
+/** The port a previous run wrote, for logging. */
+function envPort() {
+  if (!fileExists(".env")) return "54322";
+  return readText(".env").match(/^POSTGRES_PORT="?(\d+)"?/m)?.[1] ?? "54322";
+}
+
+async function createEnv() {
   const envPath = ".env";
 
   if (fileExists(envPath)) {
@@ -298,9 +325,11 @@ function createEnv() {
   }
 
   const projectName = composeProjectName();
+  const port = await findFreePort();
 
   const env = [
-    `POSTGRES_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"`,
+    `POSTGRES_URL="postgresql://postgres:postgres@127.0.0.1:${port}/postgres"`,
+    `POSTGRES_PORT="${port}"`,
     `COMPOSE_PROJECT_NAME="${projectName}"`,
     `BETTER_AUTH_SECRET="${randomBytes(32).toString("base64")}"`,
     "",
@@ -314,7 +343,7 @@ function createEnv() {
   ].join("\n");
 
   writeText(envPath, env);
-  console.log(`  ✓ .env created (Compose project "${projectName}")`);
+  console.log(`  ✓ .env created (Compose project "${projectName}", Postgres on ${port})`);
 }
 
 function startPostgres() {
@@ -322,7 +351,7 @@ function startPostgres() {
   // `--wait` blocks on the container's healthcheck, so the schema push below
   // never races the database's first boot
   exec("pnpm db:start", { stdio: "inherit" });
-  console.log("  ✓ Postgres ready on port 54322");
+  console.log(`  ✓ Postgres ready on port ${envPort()}`);
 }
 
 function pushSchema() {
@@ -413,7 +442,7 @@ async function main() {
   // .env first: the local connection string is a constant, and `pnpm db:start`
   // reads COMPOSE_PROJECT_NAME from it
   console.log("\nConfiguring environment...");
-  createEnv();
+  await createEnv();
   startPostgres();
 
   // ── Step 4: Push database schema ──

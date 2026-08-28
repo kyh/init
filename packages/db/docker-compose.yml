@@ -12,9 +12,12 @@ services:
   postgres:
     image: postgres:18-alpine
     restart: unless-stopped
-    # 54322, not 5432, so a Postgres already installed on the host doesn't clash
+    # 54322 by default, not 5432, so a Postgres already installed on the host
+    # doesn't clash. `pnpm bootstrap` overrides it with the first free port
+    # from 54322 up and records that in .env, so several projects cloned from
+    # this template can run their databases at the same time.
     ports:
-      - "54322:5432"
+      - "${POSTGRES_PORT:-54322}:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres

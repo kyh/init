@@ -202,13 +202,13 @@ type NewTodo = InferInsertModel<typeof todo>;
 One container, defined in `packages/db/docker-compose.yml`:
 
 ```bash
-pnpm db:start    # docker compose up -d --wait (Postgres on :54322)
+pnpm db:start    # docker compose up -d --wait (Postgres on :54322 by default)
 pnpm db:stop     # Stop the container, keep the data
 pnpm db:reset    # Drop the volume, recreate, re-push the schema
 pnpm -F db studio  # Drizzle Studio, to browse data
 ```
 
-Port 54322 rather than 5432, so a Postgres already installed on the host doesn't clash. `--wait` blocks on the container's healthcheck, which checks over TCP - the throwaway server that runs during first-boot `initdb` answers on the Unix socket, so a socket check would return before the real server is listening.
+Port 54322 rather than 5432, so a Postgres already installed on the host doesn't clash — and `POSTGRES_PORT` overrides it, which is how two projects run at once. `--wait` blocks on the container's healthcheck, which checks over TCP - the throwaway server that runs during first-boot `initdb` answers on the Unix socket, so a socket check would return before the real server is listening.
 
 `COMPOSE_PROJECT_NAME` in `.env` namespaces the Docker volume. Compose otherwise derives the project name from the compose file's directory - `db` for every repo cloned from this template - and they would all share one database. `pnpm bootstrap` sets it from the repo folder name.
 

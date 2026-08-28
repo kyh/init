@@ -67,7 +67,7 @@ Fill in as needed:
 Start local Postgres and push the schema:
 
 ```bash
-pnpm db:start   # Postgres on :54322
+pnpm db:start   # Postgres on :54322 (or whatever port .env sets)
 pnpm db:push    # drizzle-kit push
 ```
 
@@ -137,7 +137,7 @@ init/
 
 ## Troubleshooting
 
-**Port already in use** - Free ports 3000 and 54322.
+**Port already in use** - Free port 3000. For Postgres, `pnpm bootstrap` picks a free port from 54322 up and records it as `POSTGRES_PORT`, so a second project on the same machine gets its own.
 
 **pnpm install fails**
 
