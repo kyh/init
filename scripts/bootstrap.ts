@@ -14,9 +14,11 @@ const YES = process.argv.includes("--yes") || !process.stdin.isTTY;
 
 // ── Helpers ──────────────────────────────────────────────
 
+type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
+
 const fileExists = (p: string) => fs.existsSync(path.resolve(ROOT_DIR, p));
 const readJson = (p: string) => JSON.parse(fs.readFileSync(path.resolve(ROOT_DIR, p), "utf8"));
-const writeJson = (p: string, data: unknown) => {
+const writeJson = (p: string, data: JsonValue) => {
   if (DRY_RUN) return console.log(`  [dry-run] write ${p}`);
   fs.writeFileSync(path.resolve(ROOT_DIR, p), JSON.stringify(data, null, 2) + "\n");
 };

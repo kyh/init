@@ -3,6 +3,7 @@ import path from "node:path";
 import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from "electron";
 import type { MenuItemConstructorOptions } from "electron";
 import electronUpdater from "electron-updater";
+import { z } from "zod";
 
 import { IPC_CHANNELS, isHttpUrl, toErrorMessage } from "../types";
 import type { UpdateState } from "../types";
@@ -160,8 +161,9 @@ function registerIpcHandlers(): void {
     return result.filePaths[0] ?? null;
   });
 
-  ipcMain.handle(IPC_CHANNELS.CONFIRM, async (_event, message: unknown) => {
-    if (typeof message !== "string") return false;
+  ipcMain.handle(IPC_CHANNELS.CONFIRM, async (_event, ...args: unknown[]) => {
+    const message = z.string().safeParse(args[0]);
+    if (!message.success) return false;
     const owner = BrowserWindow.getFocusedWindow() ?? mainWindow;
     const options = {
       type: "question" as const,
@@ -169,7 +171,7 @@ function registerIpcHandlers(): void {
       defaultId: 1,
       cancelId: 0,
       noLink: true,
-      message: message.trim(),
+      message: message.data.trim(),
     };
     const result = owner
       ? await dialog.showMessageBox(owner, options)
@@ -177,12 +179,12 @@ function registerIpcHandlers(): void {
     return result.response === 1;
   });
 
-  ipcMain.handle(IPC_CHANNELS.OPEN_EXTERNAL, async (_event, rawUrl: unknown) => {
-    if (typeof rawUrl !== "string" || rawUrl.length === 0) return false;
-    if (!isHttpUrl(rawUrl)) return false;
+  ipcMain.handle(IPC_CHANNELS.OPEN_EXTERNAL, async (_event, ...args: unknown[]) => {
+    const rawUrl = z.string().safeParse(args[0]);
+    if (!rawUrl.success || !isHttpUrl(rawUrl.data)) return false;
 
     try {
-      await shell.openExternal(rawUrl);
+      await shell.openExternal(rawUrl.data);
       return true;
     } catch {
       return false;

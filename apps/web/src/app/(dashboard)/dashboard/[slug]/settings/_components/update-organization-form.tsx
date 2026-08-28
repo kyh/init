@@ -10,8 +10,11 @@ import { z } from "zod";
 
 import { authClient } from "@/lib/auth-client";
 import { useAppForm } from "@/lib/form";
-import { useTRPC } from "@/trpc/react";
-import { useOrganization } from "@/app/(dashboard)/dashboard/[slug]/_components/use-organization";
+import {
+  invalidateOrganization,
+  removeOrganization,
+  useOrganization,
+} from "@/app/(dashboard)/dashboard/[slug]/_components/use-organization";
 
 const updateOrganizationSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -95,7 +98,6 @@ export const UpdateOrganizationForm = ({ slug }: UpdateOrganizationFormProps) =>
 const useUpdateOrganization = (slug: string, organizationId: string) => {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const trpc = useTRPC();
 
   return useMutation({
     mutationFn: async (data: z.infer<typeof updateOrganizationSchema>) => {
@@ -113,9 +115,14 @@ const useUpdateOrganization = (slug: string, organizationId: string) => {
     },
     onSuccess: async (updatedOrganization) => {
       toast.success("Organization successfully updated");
-      // A rename keeps the slug, so refresh the detail we're viewing; a slug
-      // change navigates below to a fresh query key.
-      await queryClient.invalidateQueries(trpc.organization.get.queryFilter({ slug }));
+      // A name-only update refreshes the detail in place. A slug change kills
+      // the mounted query's key, so drop it rather than refetch it into
+      // NOT_FOUND retries; the new route prefetches the fresh key.
+      if (updatedOrganization.slug === slug) {
+        await invalidateOrganization(queryClient, slug);
+      } else {
+        removeOrganization(queryClient, slug);
+      }
       router.replace(`/dashboard/${updatedOrganization.slug}/settings`);
     },
     onError: (error) => {

@@ -1,8 +1,9 @@
+import { createORPCClient, onError } from "@orpc/client";
+import { RPCLink } from "@orpc/client/fetch";
+import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import { QueryClient } from "@tanstack/react-query";
-import { createTRPCClient, httpBatchLink, loggerLink } from "@trpc/client";
-import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
-import superjson from "superjson";
 
+import type { RouterClient } from "@orpc/server";
 import type { AppRouter } from "@repo/api";
 import { authClient } from "./auth";
 import { getBaseUrl } from "./base-url";
@@ -17,35 +18,27 @@ export const queryClient = new QueryClient({
   },
 });
 
-/**
- * Typesafe tRPC query/mutation options for TanStack Query.
- */
-export const trpc = createTRPCOptionsProxy<AppRouter>({
-  client: createTRPCClient({
-    links: [
-      loggerLink({
-        enabled: (opts) =>
-          process.env.NODE_ENV === "development" ||
-          (opts.direction === "down" && opts.result instanceof Error),
-        colorMode: "ansi",
-      }),
-      httpBatchLink({
-        transformer: superjson,
-        url: `${getBaseUrl()}/api/trpc`,
-        headers() {
-          const headers = new Map<string, string>();
-          headers.set("x-trpc-source", "expo-react");
-
-          const cookies = authClient.getCookie();
-          if (cookies) {
-            headers.set("Cookie", cookies);
-          }
-          return headers;
-        },
-      }),
-    ],
+const link = new RPCLink({
+  // No SSR on React Native, so the origin is stable for the process.
+  origin: getBaseUrl(),
+  url: "/api/orpc",
+  headers: async () => ({
+    "x-orpc-source": "expo-react",
+    // React Native has no cookie jar, so the session rides an explicit header.
+    Cookie: (await authClient.getCookie()) || undefined,
   }),
-  queryClient,
+  interceptors: [
+    onError((error) => {
+      if (process.env.NODE_ENV === "development") console.error(error);
+    }),
+  ],
 });
+
+const client: RouterClient<AppRouter> = createORPCClient(link);
+
+/**
+ * Typesafe oRPC query/mutation options for TanStack Query.
+ */
+export const orpc = createTanstackQueryUtils(client);
 
 export { type RouterInputs, type RouterOutputs } from "@repo/api";

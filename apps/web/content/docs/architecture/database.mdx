@@ -2,22 +2,22 @@
 title: "Database"
 ---
 
-Init uses Postgres with Drizzle ORM for type-safe queries - a Docker container locally, Neon in production. This guide covers the setup, schema, and development workflow.
+Init uses Postgres with Drizzle ORM for type-safe queries - a Docker container locally, Vercel Postgres in production. This guide covers the setup, schema, and development workflow.
 
 ## Overview
 
 The stack:
 
-- **Postgres** - `postgres:17-alpine` via Docker Compose locally, Neon in production
+- **Postgres** - `postgres:17-alpine` via Docker Compose locally, Vercel Postgres in production
 - **Drizzle ORM** - Type-safe queries over postgres.js
 - **drizzle-kit push** - Schema sync, no migration files
-- **RLS deny-by-default** - Authorization lives in tRPC, not the database
+- **RLS deny-by-default** - Authorization lives in oRPC, not the database
 
 ## Architecture
 
 ```mermaid
 graph TB
-    A[tRPC Procedures] --> B[Drizzle ORM]
+    A[oRPC Procedures] --> B[Drizzle ORM]
     B --> C[postgres.js]
     C --> D[(Postgres)]
 
@@ -39,9 +39,9 @@ import * as schemaAuth from "./drizzle-schema-auth";
 
 const client = postgres(
   process.env.POSTGRES_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres",
-  // POSTGRES_URL points at a transaction-mode pooler in production (Neon's
-  // `-pooler` endpoint, backed by PgBouncer), which does not support
-  // server-side prepared statements
+  // POSTGRES_URL points at a transaction-mode pooler in production (Vercel
+  // Postgres's pooled endpoint, `-pooler` in the hostname), which does not
+  // support server-side prepared statements
   { prepare: false },
 );
 
@@ -92,7 +92,7 @@ export const todo = pgTable(
 
 ### Row Level Security
 
-Every table calls `.enableRLS()` with no policies - deny by default. Nothing in this stack exposes Postgres to untrusted clients, so it's defense in depth rather than the primary control: it means a connection made with a non-owner role reads nothing by default. Authorization lives in tRPC. The server's Drizzle connection is unaffected: the table owner bypasses RLS.
+Every table calls `.enableRLS()` with no policies - deny by default. Nothing in this stack exposes Postgres to untrusted clients, so it's defense in depth rather than the primary control: it means a connection made with a non-owner role reads nothing by default. Authorization lives in oRPC. The server's Drizzle connection is unaffected: the table owner bypasses RLS.
 
 If you regenerate the auth schema, re-add `.enableRLS()` to every table.
 
@@ -215,7 +215,7 @@ Port 54322 rather than 5432, so a Postgres already installed on the host doesn't
 ## Best Practices
 
 - **Scope by organization** - Multi-tenant tables reference `organization.id` and get an index on it
-- **Check membership in tRPC** - RLS won't save you; procedures must verify org access
+- **Check membership in oRPC** - RLS won't save you; procedures must verify org access
 - **Use relational queries** - `db.query.x.findMany({ with })` beats N+1s
 - **Let the pooler pool** - Don't tune postgres.js connection counts; the pooler handles it
 
@@ -236,9 +236,9 @@ pnpm db:reset   # Nuke local, re-push schema
 
 **Prepared statement errors in production**
 
-`POSTGRES_URL` points at a transaction-mode pooler (Neon's `-pooler` endpoint) - the client must keep `prepare: false`.
+`POSTGRES_URL` points at a transaction-mode pooler (`-pooler` in the hostname) - the client must keep `prepare: false`.
 
 ## Next Steps
 
 1. **Authentication** - How [auth uses these tables](/docs/architecture/authentication)
-2. **API development** - Build [tRPC procedures](/docs/architecture/api) with Drizzle queries
+2. **API development** - Build [oRPC procedures](/docs/architecture/api) with Drizzle queries

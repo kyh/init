@@ -1,10 +1,10 @@
-import { describe, expect, it } from "vitest";
+import assert from "node:assert/strict";
+import { describe, test } from "node:test";
 import { invitation } from "@repo/db/drizzle-schema-auth";
 import { and, eq, ne } from "drizzle-orm";
 import { PgDialect } from "drizzle-orm/pg-core";
 
-import { createMockContext, mockUser } from "../test-utils";
-import { createCallerFactory } from "../trpc";
+import { createCallerFactory, createMockContext, mockUser } from "../test-utils";
 import { organizationRouter } from "./organization-router";
 
 const createCaller = createCallerFactory(organizationRouter);
@@ -43,96 +43,114 @@ const OTHER_USER = {
 /** organizationProcedure resolves the org, then the caller's membership. */
 const authedContext = () => {
   const ctx = createMockContext();
-  ctx.db.query.organization.findFirst.mockResolvedValue(ORG);
-  ctx.db.query.member.findFirst.mockResolvedValue(MEMBER_OWNER);
+  ctx.db.query.organization.findFirst.mock.mockImplementation(() => Promise.resolve(ORG));
+  ctx.db.query.member.findFirst.mock.mockImplementation(() => Promise.resolve(MEMBER_OWNER));
   return ctx;
 };
 
 describe("organizationRouter.get", () => {
-  it("returns org with members, invitations, and metadata", async () => {
+  test("returns org with members, invitations, and metadata", async () => {
     const ctx = authedContext();
     // drizzle embeds the related user via `with`, so rows arrive pre-joined
-    ctx.db.query.member.findMany.mockResolvedValue([
-      { ...MEMBER_OWNER, user: mockUser },
-      { ...MEMBER_OTHER, user: OTHER_USER },
-    ]);
-    ctx.db.query.invitation.findMany.mockResolvedValue([]);
+    ctx.db.query.member.findMany.mock.mockImplementation(() =>
+      Promise.resolve([
+        { ...MEMBER_OWNER, user: mockUser },
+        { ...MEMBER_OTHER, user: OTHER_USER },
+      ]),
+    );
+    ctx.db.query.invitation.findMany.mock.mockImplementation(() => Promise.resolve([]));
 
     const caller = createCaller(ctx);
     const result = await caller.get({ slug: "acme" });
 
-    expect(result.organization).toEqual(ORG);
-    expect(result.organizationMetadata).toEqual({ personal: false });
-    expect(result.currentUserMember).toEqual(MEMBER_OWNER);
-    expect(result.members).toHaveLength(2);
-    expect(result.members[0]?.user).toEqual(mockUser);
-    expect(result.members[1]?.user).toEqual(OTHER_USER);
+    assert.deepEqual(result.organization, ORG);
+    assert.deepEqual(result.organizationMetadata, { personal: false });
+    assert.deepEqual(result.currentUserMember, MEMBER_OWNER);
+    assert.strictEqual(result.members.length, 2);
+    assert.deepEqual(result.members[0]?.user, mockUser);
+    assert.deepEqual(result.members[1]?.user, OTHER_USER);
   });
 
-  it("parses metadata defaulting to empty object when null", async () => {
+  test("parses metadata defaulting to empty object when null", async () => {
     const ctx = authedContext();
-    ctx.db.query.organization.findFirst.mockResolvedValue({ ...ORG, metadata: null });
-    ctx.db.query.member.findMany.mockResolvedValue([{ ...MEMBER_OWNER, user: mockUser }]);
-    ctx.db.query.invitation.findMany.mockResolvedValue([]);
+    ctx.db.query.organization.findFirst.mock.mockImplementation(() =>
+      Promise.resolve({ ...ORG, metadata: null }),
+    );
+    ctx.db.query.member.findMany.mock.mockImplementation(() =>
+      Promise.resolve([{ ...MEMBER_OWNER, user: mockUser }]),
+    );
+    ctx.db.query.invitation.findMany.mock.mockImplementation(() => Promise.resolve([]));
 
     const caller = createCaller(ctx);
     const result = await caller.get({ slug: "acme" });
 
-    expect(result.organizationMetadata).toEqual({});
+    assert.deepEqual(result.organizationMetadata, {});
   });
 
-  it("excludes canceled invitations in SQL rather than in JS", async () => {
+  test("excludes canceled invitations in SQL rather than in JS", async () => {
     const ctx = authedContext();
-    ctx.db.query.member.findMany.mockResolvedValue([]);
-    ctx.db.query.invitation.findMany.mockResolvedValue([]);
+    ctx.db.query.member.findMany.mock.mockImplementation(() => Promise.resolve([]));
+    ctx.db.query.invitation.findMany.mock.mockImplementation(() => Promise.resolve([]));
 
     const caller = createCaller(ctx);
     await caller.get({ slug: "acme" });
 
     // Compile the where-callback the router handed drizzle: the filter has to
     // reach Postgres, or a canceled invitation is fetched and then dropped.
-    const [args] = ctx.db.query.invitation.findMany.mock.calls[0] ?? [];
-    const { sql, params } = new PgDialect().sqlToQuery(args.where(invitation, { and, eq, ne }));
+    const config = ctx.db.query.invitation.findMany.mock.calls[0]?.arguments[0];
+    const condition = config?.where?.(invitation, { and, eq, ne });
+    assert.ok(condition);
+    const { sql, params } = new PgDialect().sqlToQuery(condition);
 
-    expect(sql).toBe('("invitation"."organization_id" = $1 and "invitation"."status" <> $2)');
-    expect(params).toEqual(["org-1", "canceled"]);
+    assert.strictEqual(
+      sql,
+      '("invitation"."organization_id" = $1 and "invitation"."status" <> $2)',
+    );
+    assert.deepEqual(params, ["org-1", "canceled"]);
   });
 
-  it("requests only non-admin user columns for members", async () => {
+  test("requests only non-admin user columns for members", async () => {
     const ctx = authedContext();
-    ctx.db.query.member.findMany.mockResolvedValue([]);
-    ctx.db.query.invitation.findMany.mockResolvedValue([]);
+    ctx.db.query.member.findMany.mock.mockImplementation(() => Promise.resolve([]));
+    ctx.db.query.invitation.findMany.mock.mockImplementation(() => Promise.resolve([]));
 
     const caller = createCaller(ctx);
     await caller.get({ slug: "acme" });
 
     // role/banned/banReason must never reach the client via the member join
-    const [args] = ctx.db.query.member.findMany.mock.calls[0] ?? [];
-    expect(args.with.user.columns).toEqual({ id: true, name: true, email: true, image: true });
+    const config = ctx.db.query.member.findMany.mock.calls[0]?.arguments[0];
+    assert.deepEqual(config?.with?.user?.columns, {
+      id: true,
+      name: true,
+      email: true,
+      image: true,
+    });
   });
 
-  it("throws NOT_FOUND when organization does not exist", async () => {
+  test("throws NOT_FOUND when organization does not exist", async () => {
     const ctx = createMockContext();
-    ctx.db.query.organization.findFirst.mockResolvedValue(undefined);
+    ctx.db.query.organization.findFirst.mock.mockImplementation(() => Promise.resolve(undefined));
 
     const caller = createCaller(ctx);
-    await expect(caller.get({ slug: "nope" })).rejects.toThrow("Organization not found");
+    await assert.rejects(caller.get({ slug: "nope" }), /Organization not found/);
   });
 
-  it("throws UNAUTHORIZED when user is not a member", async () => {
+  test("throws UNAUTHORIZED when user is not a member", async () => {
     const ctx = createMockContext();
-    ctx.db.query.organization.findFirst.mockResolvedValue(ORG);
-    ctx.db.query.member.findFirst.mockResolvedValue(undefined); // caller has no membership
+    ctx.db.query.organization.findFirst.mock.mockImplementation(() => Promise.resolve(ORG));
+    // caller has no membership
+    ctx.db.query.member.findFirst.mock.mockImplementation(() => Promise.resolve(undefined));
 
     const caller = createCaller(ctx);
-    await expect(caller.get({ slug: "acme" })).rejects.toThrow(
-      "You do not have access to this organization",
+    await assert.rejects(
+      caller.get({ slug: "acme" }),
+      /You do not have access to this organization/,
     );
   });
 
-  it("throws UNAUTHORIZED when not logged in", async () => {
+  test("throws UNAUTHORIZED when not logged in", async () => {
     const ctx = createMockContext({ session: null });
     const caller = createCaller(ctx);
-    await expect(caller.get({ slug: "acme" })).rejects.toThrow("You must be logged in");
+    await assert.rejects(caller.get({ slug: "acme" }), /You must be logged in/);
   });
 });

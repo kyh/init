@@ -20,7 +20,7 @@ better-auth handles:
 graph TD
     A[User Login] --> B[better-auth handler]
     B --> C[Session Cookie]
-    C --> D[tRPC Context]
+    C --> D[oRPC Context]
     D --> E[Protected Procedures]
     E --> F[Database Queries]
 ```
@@ -138,13 +138,13 @@ export default async function DashboardPage() {
 }
 ```
 
-## tRPC Integration
+## oRPC Integration
 
-The tRPC context resolves the session from request headers:
+The oRPC context resolves the session from request headers:
 
 ```typescript
-// packages/api/src/trpc.ts
-export const createTRPCContext = async (opts: { headers: Headers }) => {
+// packages/api/src/orpc.ts
+export const createORPCContext = async (opts: { headers: Headers }) => {
   const session = await auth.api.getSession({
     headers: opts.headers,
   });
@@ -159,23 +159,22 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
 `protectedProcedure` guarantees a logged-in user:
 
 ```typescript
-export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
-  if (!ctx.session?.user) {
-    throw new TRPCError({
-      code: "UNAUTHORIZED",
+export const protectedProcedure = publicProcedure.use(({ context, next }) => {
+  if (!context.session?.user) {
+    throw new ORPCError("UNAUTHORIZED", {
       message: "You must be logged in to access this resource",
     });
   }
   return next({
-    ctx: {
+    context: {
       // infers the `session` as non-nullable
-      session: { ...ctx.session, user: ctx.session.user },
+      session: { ...context.session, user: context.session.user },
     },
   });
 });
 ```
 
-Organization membership is a layer on top: `organizationProcedure` in `packages/api/src/trpc.ts` takes an organization `slug`, resolves it, and proves the caller is a member before the handler runs - handlers get `ctx.organization` and `ctx.membership`.
+Organization membership is a layer on top: `organizationProcedure(schema)` in `packages/api/src/orpc.ts` resolves the organization named by `input.slug` and proves the caller is a member before the handler runs - handlers get `context.organization` and `context.membership`.
 
 ## Client Usage
 
@@ -272,12 +271,12 @@ Then re-add `.enableRLS()` to each table (see the note in `packages/db/src/drizz
 
 ## Security Notes
 
-- Validate all inputs with Zod at tRPC boundaries
-- Authorization lives in tRPC procedures, not the database - always check org membership in routers
+- Validate all inputs with Zod at oRPC boundaries
+- Authorization lives in oRPC procedures, not the database - always check org membership in routers
 - Never commit secrets; use different GitHub OAuth apps for dev and prod
 
 ## Next Steps
 
 1. **Database setup** - Learn about [database architecture](/docs/architecture/database)
-2. **API development** - Build [tRPC procedures](/docs/architecture/api)
+2. **API development** - Build [oRPC procedures](/docs/architecture/api)
 3. **Social auth** - Add more OAuth providers

@@ -28,7 +28,7 @@ export function DesktopUpdateBanner() {
 
   useEffect(() => {
     const { desktopBridge } = window;
-    if (typeof desktopBridge === "undefined") return;
+    if (!desktopBridge) return;
 
     const unsubscribe = desktopBridge.onUpdateState(setUpdateState);
     void desktopBridge.checkForUpdates().then(setUpdateState);

@@ -17,6 +17,8 @@ import {
 //      oauth tokens, password hashes) are world-readable.
 //   2. The `index(...)` callbacks — every foreign key and every column
 //      better-auth filters on is indexed here, not by the generator.
+//   3. `account.issuer` and its unique index — the CLI is pinned well behind the
+//      runtime and still emits the pre-1.7 account shape, which drops both.
 
 export const user = pgTable(
   "user",
@@ -67,6 +69,7 @@ export const account = pgTable(
   "account",
   {
     id: text("id").primaryKey(),
+    issuer: text("issuer").notNull(),
     accountId: text("account_id").notNull(),
     providerId: text("provider_id").notNull(),
     userId: text("user_id")
@@ -84,7 +87,12 @@ export const account = pgTable(
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
   },
-  (table) => [index("account_userId_idx").on(table.userId)],
+  // better-auth 1.7 scopes account identity by (issuer, accountId) — the unique
+  // index is what stops two identities from the same issuer colliding on link.
+  (table) => [
+    index("account_userId_idx").on(table.userId),
+    uniqueIndex("account_issuer_accountId_uidx").on(table.issuer, table.accountId),
+  ],
 ).enableRLS();
 
 export const verification = pgTable(

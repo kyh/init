@@ -2,17 +2,17 @@
 title: "API"
 ---
 
-Init uses tRPC v11 for end-to-end typesafe APIs shared by the Next.js web app and Expo mobile app. This guide covers how the API is structured and how to extend it.
+Init uses oRPC for end-to-end typesafe APIs shared by the Next.js web app and Expo mobile app. This guide covers how the API is structured and how to extend it.
 
-## What is tRPC?
+## What is oRPC?
 
-tRPC gives you typesafe APIs without code generation. Types flow from database to UI - autocompletion, inline errors, zero runtime schema drift.
+oRPC gives you typesafe APIs without code generation. Types flow from database to UI - autocompletion, inline errors, zero runtime schema drift.
 
 ### Key Benefits
 
 - **End-to-end type safety** - Types flow from database to UI
 - **No code generation** - TypeScript inference handles everything
-- **Excellent DX** - Autocompletion and inline errors
+- **Rich serialization built in** - `Date`, `Map`, `Set`, `BigInt`, `URL`, and `File` cross the wire without a transformer
 - **Framework agnostic** - Works with React, React Native, and more
 
 ## API Structure
@@ -26,20 +26,20 @@ packages/api/src/
 ├── todo/                  # Example CRUD procedures
 ├── waitlist/              # Waitlist signup
 ├── root-router.ts         # Router composition
-├── trpc.ts                # tRPC setup, context, procedures
+├── orpc.ts                # oRPC setup, context, procedures
 └── index.ts               # Package exports
 ```
 
-Each feature folder holds a `*-router.ts` (procedures), `*-schema.ts` (Zod inputs), and `*.test.ts` (Vitest).
+Each feature folder holds a `*-router.ts` (procedures), `*-schema.ts` (Zod inputs), and `*.test.ts` (node:test).
 
 ## Core Components
 
-### 1. Context (`trpc.ts`)
+### 1. Context (`orpc.ts`)
 
 The context resolves the better-auth session and exposes the database:
 
 ```typescript
-export const createTRPCContext = async (opts: { headers: Headers }) => {
+export const createORPCContext = async (opts: { headers: Headers }) => {
   const session = await auth.api.getSession({
     headers: opts.headers,
   });
@@ -49,29 +49,33 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
     db,
   };
 };
+
+const o = os.$context<ORPCContext>();
 ```
 
 ### 2. Procedures
+
+oRPC has no `.query` / `.mutation` split - every procedure ends in `.handler()`, and handlers receive `context` rather than `ctx`.
 
 #### Public Procedures
 
 Available to everyone:
 
 ```typescript
-export const publicProcedure = t.procedure;
+export const publicProcedure = o;
 
 // packages/api/src/waitlist/waitlist-router.ts
-export const waitlistRouter = createTRPCRouter({
-  join: publicProcedure.input(joinWaitlistInput).mutation(async ({ ctx, input }) => {
-    const [created] = await ctx.db
+export const waitlistRouter = {
+  join: publicProcedure.input(joinWaitlistInput).handler(async ({ context, input }) => {
+    const [created] = await context.db
       .insert(waitlist)
-      .values({ ...input, userId: ctx.session?.user.id })
+      .values({ ...input, userId: context.session?.user.id })
       .onConflictDoNothing({ target: waitlist.email })
       .returning();
 
     return { waitlist: created ?? null };
   }),
-});
+};
 ```
 
 #### Protected Procedures
@@ -79,16 +83,15 @@ export const waitlistRouter = createTRPCRouter({
 Require a session:
 
 ```typescript
-export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
-  if (!ctx.session?.user) {
-    throw new TRPCError({
-      code: "UNAUTHORIZED",
+export const protectedProcedure = publicProcedure.use(({ context, next }) => {
+  if (!context.session?.user) {
+    throw new ORPCError("UNAUTHORIZED", {
       message: "You must be logged in to access this resource",
     });
   }
   return next({
-    ctx: {
-      session: { ...ctx.session, user: ctx.session.user },
+    context: {
+      session: { ...context.session, user: context.session.user },
     },
   });
 });
@@ -96,86 +99,106 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
 
 #### Organization Access
 
-Org-scoping is its own procedure, built on `protectedProcedure`. `organizationProcedure` takes an organization `slug`, resolves it, and proves the caller is a member before the handler runs - so a handler cannot read or write another tenant's rows by forgetting a check:
+Org-scoping is a procedure factory. It takes the procedure's input schema, resolves the organization named by `input.slug`, and proves the caller is a member before the handler runs - so a handler cannot read or write another tenant's rows by forgetting a check:
 
 ```typescript
-// packages/api/src/trpc.ts
-export const organizationProcedure = protectedProcedure
-  .input(z.object({ slug: z.string().min(1, "Organization slug is required") }))
-  .use(async ({ ctx, input, next }) => {
-    const organization = await ctx.db.query.organization.findFirst({
-      where: (org, { eq }) => eq(org.slug, input.slug),
+// packages/api/src/organization/organization-schema.ts
+export const organizationInput = z.object({
+  slug: z.string().min(1, "Organization slug is required"),
+});
+
+// packages/api/src/orpc.ts
+export const organizationProcedure = <T extends z.ZodType<z.infer<typeof organizationInput>>>(
+  input: T,
+) =>
+  protectedProcedure.input(input).use(async ({ context, next }, validated) => {
+    const organization = await context.db.query.organization.findFirst({
+      where: (org, { eq }) => eq(org.slug, validated.slug),
     });
 
     if (!organization) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Organization not found",
-      });
+      throw new ORPCError("NOT_FOUND", { message: "Organization not found" });
     }
 
-    const membership = await ctx.db.query.member.findFirst({
+    const membership = await context.db.query.member.findFirst({
       where: (member, { and, eq }) =>
-        and(eq(member.organizationId, organization.id), eq(member.userId, ctx.session.user.id)),
+        and(eq(member.organizationId, organization.id), eq(member.userId, context.session.user.id)),
     });
 
     if (!membership) {
-      throw new TRPCError({
-        code: "UNAUTHORIZED",
+      throw new ORPCError("UNAUTHORIZED", {
         message: "You do not have access to this organization",
       });
     }
 
-    return next({ ctx: { organization, membership } });
+    return next({ context: { organization, membership } });
   });
 ```
 
-Handlers get `ctx.organization` and `ctx.membership`, and should still scope their queries by `ctx.organization.id`. The `slug` input merges with whatever `.input()` the procedure adds, so feature schemas carry only their own fields.
+Handlers get `context.organization` and `context.membership`, and should still scope their queries by `context.organization.id`.
+
+Every org-scoped procedure is written the same way, passing its own input schema:
+
+```typescript
+organizationProcedure(organizationInput).handler(...)  // slug only
+organizationProcedure(createTodoInput).handler(...)    // slug plus the feature's fields
+```
+
+A factory rather than a builder because oRPC does not merge `.input()` calls - each procedure declares its whole input, so the schema has to carry the slug. Wrapping both steps means the membership check cannot be left off: there is no half-applied form to reach for. That is why org-scoped schemas extend `organizationInput`.
 
 ### 3. Router Composition
 
+Routers are plain objects - there is no router factory to wrap them in:
+
 ```typescript
 // packages/api/src/root-router.ts
-export const appRouter = createTRPCRouter({
+export const appRouter = {
   waitlist: waitlistRouter,
   organization: organizationRouter,
   todo: todoRouter,
-});
+};
 
 export type AppRouter = typeof appRouter;
 ```
 
 ## Client Usage
 
-Init uses the TanStack React Query integration (`@trpc/tanstack-react-query`).
+Init uses the TanStack Query integration (`@orpc/tanstack-query`). `orpc` is a plain module export, not a React hook - there is no provider to thread through.
 
 ### Queries and Mutations
 
 ```typescript
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
-import { useTRPC } from "@/trpc/react";
+import { orpc } from "@/orpc/react";
 
-const trpc = useTRPC();
-
-// Query
-const { data } = useSuspenseQuery(trpc.todo.list.queryOptions({ slug }));
+// Query - the procedure input goes under an `input` key
+const { data } = useSuspenseQuery(orpc.todo.list.queryOptions({ input: { slug } }));
 
 // Mutation
-const createTodo = useMutation(trpc.todo.create.mutationOptions());
+const createTodo = useMutation(orpc.todo.create.mutationOptions());
 ```
 
 ### Server Components
 
-`apps/web/src/trpc/server.tsx` exposes a server-side caller and prefetch helpers:
+`apps/web/src/orpc/server.tsx` exposes a server-side caller and prefetch helpers. The caller runs procedures in-process, so SSR never asks the server to fetch from itself:
 
 ```typescript
-import { caller, HydrateClient, prefetch, trpc } from "@/trpc/server";
+import { caller, HydrateClient, orpc, prefetch } from "@/orpc/server";
 
 // Direct call in a server component or route handler
 const { todos } = await caller.todo.list({ slug });
 
 // Prefetch for client components
-prefetch(trpc.todo.list.queryOptions({ slug }));
+prefetch(orpc.todo.list.queryOptions({ input: { slug } }));
+```
+
+### Cache Keys
+
+`.key()` builds a partial-matching key for invalidation; `.queryKey()` builds a full-matching one for reading and writing cache entries directly:
+
+```typescript
+queryClient.invalidateQueries({ queryKey: orpc.todo.list.key({ input: { slug } }) });
+queryClient.setQueryData(orpc.todo.list.queryKey({ input: { slug } }), next);
 ```
 
 ### Type Helpers
@@ -189,7 +212,7 @@ type CreateTodoInput = RouterInputs["todo"]["create"];
 
 ### Cross-Platform
 
-The same router serves web and mobile. Web hits `/api/trpc` (see `apps/web/src/app/api/trpc/[trpc]/route.ts`); mobile points its client at the deployed URL (`apps/mobile/src/utils/api.tsx`).
+The same router serves web and mobile. Web hits `/api/orpc` (see `apps/web/src/app/api/orpc/[[...rest]]/route.ts`); mobile points its client at the deployed URL (`apps/mobile/src/utils/api.ts`).
 
 ## Input Validation
 
@@ -197,29 +220,30 @@ All procedures validate inputs with Zod, colocated in `*-schema.ts`:
 
 ```typescript
 // packages/api/src/todo/todo-schema.ts
+import { organizationInput } from "../organization/organization-schema";
+
 const titleField = z.string().trim().min(1, "Title is required").max(255, "Title is too long");
 
-export const createTodoInput = z.object({
+export const createTodoInput = organizationInput.extend({
   title: titleField,
 });
 ```
 
-Org-scoped schemas don't declare `slug` - `organizationProcedure` merges its own `{ slug }` input with them.
+Org-scoped schemas extend `organizationInput` so the slug is part of the declared contract.
 
-Validation errors flatten into `zodError` via the error formatter in `trpc.ts`.
+Rejected input reaches the client as a `BAD_REQUEST` error carrying the schema's issues.
 
 ## Error Handling
 
 ```typescript
 // Throw in procedures
-throw new TRPCError({
-  code: "NOT_FOUND",
+throw new ORPCError("NOT_FOUND", {
   message: "Todo not found",
 });
 
 // Handle in clients
 const createTodo = useMutation(
-  trpc.todo.create.mutationOptions({
+  orpc.todo.create.mutationOptions({
     onError: (error) => toast.error(error.message),
   }),
 );
@@ -232,6 +256,25 @@ const createTodo = useMutation(
 - `NOT_FOUND` - Resource doesn't exist
 - `BAD_REQUEST` - Invalid input
 
+## Cross-Origin Requests
+
+CSRF protection is a cookie attribute plus an origin check, not a token.
+
+`packages/api/src/auth/auth.ts` sets `sameSite: "lax"`, so a request a third-party page originates arrives with no session — a forged `multipart/form-data` POST reaches the router and does nothing. `RPCHandler` refuses `GET` by default (`allowMethods` is `["POST", "PUT", "PATCH", "DELETE"]`), closing the one method a cookie-bearing navigation can produce.
+
+`SameSite` keys on _site_, not origin, so that covers cross-site only: a sibling subdomain or another port on the same host is same-site, and the browser does attach the session cookie to a form POST served from there. `apps/web/src/app/api/orpc/[[...rest]]/route.ts` closes that with an origin check ahead of `handler.handle` — an `Origin` header that is not the route's own origin gets `403`. An absent `Origin` passes, which is what keeps the non-browser mobile client working; browsers set `Origin` on every POST and page script cannot forge it. `route.test.ts` pins all three cases.
+
+Both halves hold because every surface authenticates first-party:
+
+| Surface   | How it reaches the app                                                                                              |
+| --------- | ------------------------------------------------------------------------------------------------------------------- |
+| Web       | Same-origin                                                                                                         |
+| Desktop   | Top-level navigation to the deployed URL                                                                            |
+| Extension | Popup opens the app in a tab                                                                                        |
+| Mobile    | React Native sends the session as a `Cookie` header and no `Origin` — neither SameSite nor the origin check applies |
+
+Two things keep it true. Do not set `sameSite: "none"` for a surface that wants to embed the app — that re-opens cross-site CSRF for every client at once; make the surface first-party instead. And do not add CORS headers to the RPC route: a simple form POST needs no preflight, so CORS is not CSRF protection, while credentialed CORS would hand a cross-origin page authenticated access.
+
 ## Adding New Routes
 
 ### 1. Create Schema
@@ -240,9 +283,9 @@ const createTodo = useMutation(
 // packages/api/src/post/post-schema.ts
 import { z } from "zod";
 
-// `slug` + the membership check come from `organizationProcedure` -
-// only the post's own fields here
-export const createPostInput = z.object({
+import { organizationInput } from "../organization/organization-schema";
+
+export const createPostInput = organizationInput.extend({
   title: z.string().min(1).max(255),
 });
 ```
@@ -251,40 +294,50 @@ export const createPostInput = z.object({
 
 ```typescript
 // packages/api/src/post/post-router.ts
-import { createTRPCRouter, organizationProcedure } from "../trpc";
+import { organizationProcedure } from "../orpc";
 import { createPostInput } from "./post-schema";
 
-export const postRouter = createTRPCRouter({
-  create: organizationProcedure.input(createPostInput).mutation(async ({ ctx, input }) => {
-    return ctx.db.insert(post).values({
-      organizationId: ctx.organization.id,
+export const postRouter = {
+  create: organizationProcedure(createPostInput).handler(async ({ context, input }) => {
+    return context.db.insert(post).values({
+      organizationId: context.organization.id,
       title: input.title,
     });
   }),
-});
+};
 ```
 
 ### 3. Add to Root Router
 
 ```typescript
 // packages/api/src/root-router.ts
-export const appRouter = createTRPCRouter({
+export const appRouter = {
   waitlist: waitlistRouter,
   organization: organizationRouter,
   todo: todoRouter,
   post: postRouter, // Add here
-});
+};
 ```
 
 ### 4. Use in Client
 
 ```typescript
-const { data } = useSuspenseQuery(trpc.post.list.queryOptions({ slug }));
+const { data } = useSuspenseQuery(orpc.post.list.queryOptions({ input: { slug } }));
 ```
 
 ## Testing
 
-Routers ship with Vitest tests next to the code (`todo-router.test.ts`). Shared helpers live in `packages/api/src/test-utils.ts`.
+Routers ship with node:test tests next to the code (`todo-router.test.ts`). Shared helpers live in `packages/api/src/test-utils.ts`. `createCallerFactory` binds the router once per file and runs the real middleware chain against a mock context:
+
+```typescript
+import { createCallerFactory, createMockContext } from "../test-utils";
+import { todoRouter } from "./todo-router";
+
+const createCaller = createCallerFactory(todoRouter);
+
+const caller = createCaller(createMockContext());
+const { todos } = await caller.list({ slug: "acme" });
+```
 
 ```bash
 pnpm -F @repo/api test
@@ -294,7 +347,7 @@ pnpm -F @repo/api test
 
 - **Organize by feature** - One folder per domain, router + schema + test
 - **Validate everything** - Zod at every boundary
-- **Check org access** - Every multi-tenant procedure builds on `organizationProcedure`, so membership is proven before the handler runs
+- **Check org access** - Every multi-tenant procedure is built with `organizationProcedure`, so membership is proven before the handler runs
 - **Allow-list columns** - Don't return full user rows; see `organization-router.ts`
 
 ## Next Steps

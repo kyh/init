@@ -1,6 +1,6 @@
-# Local Postgres for development. Production runs on Neon (or any Postgres) —
-# the app's only connection input is POSTGRES_URL, so nothing here is required
-# beyond `pnpm dev`.
+# Local Postgres for development. Production runs on Vercel Postgres (or any
+# other Postgres) — the app's only connection input is POSTGRES_URL, so
+# nothing here is required beyond `pnpm dev`.
 #
 # The project name namespaces the volume. Every repo cloned from this template
 # has a `db` directory, and Compose would otherwise derive the same project

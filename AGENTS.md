@@ -1,6 +1,6 @@
 # AGENTS.md
 
-**init** is an agent-first, multi-platform TypeScript starter: one typed stack (tRPC · better-auth · Drizzle · Postgres) shipping to web (Next.js), mobile (Expo), extension (WXT), and desktop (Electron). This is the tool-agnostic guide for coding agents — it's meant to be run, not just read. Claude also reads `CLAUDE.md`; both point back here.
+**init** is an agent-first, multi-platform TypeScript starter: one typed stack (oRPC · better-auth · Drizzle · Postgres) shipping to web (Next.js), mobile (Expo), extension (WXT), and desktop (Electron). This is the tool-agnostic guide for coding agents — it's meant to be run, not just read. Claude also reads `CLAUDE.md`; both point back here.
 
 ## Quickstart (headless)
 
@@ -25,7 +25,7 @@ pnpm install && pnpm bootstrap --yes                             # any clone: in
 
 A clone has everything except `node_modules` and `.env` (bootstrap writes `.env`), and it **needs Docker** for local Postgres — the data + auth layer. Without Docker, `pnpm verify` and `pnpm build` still work, but authed/data flows can't run. The committed `.codex` / `.superset` cloud-runner descriptors install deps on clone; a cloud sandbox with Docker runs the full stack, without it stays static-only.
 
-A sandbox without Docker can instead point `POSTGRES_URL` at a hosted Postgres. Neon's database branching is the cheap way to do that safely: each agent or preview deployment gets an isolated copy-on-write branch of production data (Vercel's Neon integration creates one per preview deployment).
+A sandbox without Docker can instead point `POSTGRES_URL` at a hosted Postgres. Vercel Postgres branching is the cheap way to do that safely: each agent or preview deployment gets an isolated copy-on-write branch of production data, and Vercel creates one per preview deployment automatically.
 
 Headless auth (no browser) — exchange the seeded login (below) for a session cookie and hand it to agent-browser or curl:
 
@@ -77,7 +77,7 @@ pnpm dev:web
 
 With the var set, the shipped "Continue with GitHub" button routes through a dev-only `genericOAuth` provider aimed at the emulator — same button, no diverging prod path (unset ⇒ the real provider; see `packages/api/src/auth/auth.ts`). Open `/auth/login`, click the button, and the emulator's user-picker (octocat) completes sign-in.
 
-(Pure HTTP: `POST /api/auth/sign-in/oauth2 {"providerId":"github"}` returns the authorize URL directly — the same flow the button triggers.)
+(Pure HTTP: `POST /api/auth/sign-in/social {"provider":"github"}` returns the authorize URL directly — the same flow the button triggers.)
 
 ## Platform matrix
 
@@ -92,7 +92,7 @@ For the three non-web targets, verify with `pnpm typecheck` and `pnpm build`; a 
 
 ## Rules that matter
 
-- **Mutations go through tRPC or the better-auth client — never Next Server Actions.** All four platforms share one typed surface; each mutation invalidates the specific queries it touches in `onSuccess` (see `CLAUDE.md` → Mutation path).
+- **Mutations go through oRPC or the better-auth client — never Next Server Actions.** All four platforms share one typed surface; each mutation invalidates the specific queries it touches in `onSuccess` (see `CLAUDE.md` → Mutation path).
 - **No `any`, no non-null `!`, no `as` casts.** Kebab-case filenames. Make illegal states unrepresentable.
 - Env degrades gracefully: missing keys (Stripe, Resend) disable a feature, they don't crash boot.
 

@@ -1,101 +1,102 @@
+import assert from "node:assert/strict";
+import { describe, test } from "node:test";
 import { APIError } from "better-auth/api";
-import { describe, expect, it } from "vitest";
 
 import { isSlugCollision, slugify, zJsonString } from "./utils";
 
 describe("slugify", () => {
-  it("lowercases and replaces spaces with hyphens", () => {
-    expect(slugify("Hello World")).toBe("hello-world");
+  test("lowercases and replaces spaces with hyphens", () => {
+    assert.strictEqual(slugify("Hello World"), "hello-world");
   });
 
-  it("trims leading and trailing whitespace", () => {
-    expect(slugify("  hello  ")).toBe("hello");
+  test("trims leading and trailing whitespace", () => {
+    assert.strictEqual(slugify("  hello  "), "hello");
   });
 
-  it("removes special characters", () => {
-    expect(slugify("hello@world!")).toBe("helloworld");
+  test("removes special characters", () => {
+    assert.strictEqual(slugify("hello@world!"), "helloworld");
   });
 
-  it("collapses multiple hyphens into one", () => {
-    expect(slugify("hello---world")).toBe("hello-world");
+  test("collapses multiple hyphens into one", () => {
+    assert.strictEqual(slugify("hello---world"), "hello-world");
   });
 
-  it("handles mixed spaces, hyphens, and special chars", () => {
-    expect(slugify("  My Cool -- Project!  ")).toBe("my-cool-project");
+  test("handles mixed spaces, hyphens, and special chars", () => {
+    assert.strictEqual(slugify("  My Cool -- Project!  "), "my-cool-project");
   });
 
-  it("returns empty string for empty input", () => {
-    expect(slugify("")).toBe("");
+  test("returns empty string for empty input", () => {
+    assert.strictEqual(slugify(""), "");
   });
 
-  it("keeps the base letter when stripping diacritics", () => {
-    expect(slugify("café latte")).toBe("cafe-latte");
-    expect(slugify("José Müller")).toBe("jose-muller");
+  test("keeps the base letter when stripping diacritics", () => {
+    assert.strictEqual(slugify("café latte"), "cafe-latte");
+    assert.strictEqual(slugify("José Müller"), "jose-muller");
   });
 
-  it("returns empty string for scripts with no ascii base", () => {
-    expect(slugify("李明")).toBe("");
-    expect(slugify("Иван")).toBe("");
+  test("returns empty string for scripts with no ascii base", () => {
+    assert.strictEqual(slugify("李明"), "");
+    assert.strictEqual(slugify("Иван"), "");
   });
 
-  it("does not leave leading or trailing hyphens", () => {
-    expect(slugify("!hello!")).toBe("hello");
-    expect(slugify("-hello-")).toBe("hello");
+  test("does not leave leading or trailing hyphens", () => {
+    assert.strictEqual(slugify("!hello!"), "hello");
+    assert.strictEqual(slugify("-hello-"), "hello");
   });
 
-  it("preserves numbers", () => {
-    expect(slugify("Project 123")).toBe("project-123");
+  test("preserves numbers", () => {
+    assert.strictEqual(slugify("Project 123"), "project-123");
   });
 });
 
 describe("zJsonString", () => {
-  it("parses valid JSON string", () => {
+  test("parses valid JSON string", () => {
     const result = zJsonString.parse('{"key": "value"}');
-    expect(result).toEqual({ key: "value" });
+    assert.deepEqual(result, { key: "value" });
   });
 
-  it("parses JSON arrays", () => {
+  test("parses JSON arrays", () => {
     const result = zJsonString.parse("[1, 2, 3]");
-    expect(result).toEqual([1, 2, 3]);
+    assert.deepEqual(result, [1, 2, 3]);
   });
 
-  it("parses JSON primitives", () => {
-    expect(zJsonString.parse('"hello"')).toBe("hello");
-    expect(zJsonString.parse("42")).toBe(42);
-    expect(zJsonString.parse("true")).toBe(true);
-    expect(zJsonString.parse("null")).toBe(null);
+  test("parses JSON primitives", () => {
+    assert.strictEqual(zJsonString.parse('"hello"'), "hello");
+    assert.strictEqual(zJsonString.parse("42"), 42);
+    assert.strictEqual(zJsonString.parse("true"), true);
+    assert.strictEqual(zJsonString.parse("null"), null);
   });
 
-  it("rejects invalid JSON", () => {
+  test("rejects invalid JSON", () => {
     const result = zJsonString.safeParse("{invalid}");
-    expect(result.success).toBe(false);
+    assert.strictEqual(result.success, false);
   });
 
-  it("rejects non-string input", () => {
+  test("rejects non-string input", () => {
     const result = zJsonString.safeParse(123);
-    expect(result.success).toBe(false);
+    assert.strictEqual(result.success, false);
   });
 });
 
 describe("isSlugCollision", () => {
-  it("matches a better-auth slug-taken APIError", () => {
+  test("matches a better-auth slug-taken APIError", () => {
     const error = new APIError("BAD_REQUEST", { message: "Organization slug already taken" });
-    expect(isSlugCollision(error)).toBe(true);
+    assert.strictEqual(isSlugCollision(error), true);
   });
 
-  it("matches a Postgres unique violation (23505)", () => {
-    expect(isSlugCollision({ code: "23505" })).toBe(true);
+  test("matches a Postgres unique violation (23505)", () => {
+    assert.strictEqual(isSlugCollision({ code: "23505" }), true);
   });
 
-  it("does not match an unrelated APIError", () => {
+  test("does not match an unrelated APIError", () => {
     const error = new APIError("BAD_REQUEST", { message: "You are not a member" });
-    expect(isSlugCollision(error)).toBe(false);
+    assert.strictEqual(isSlugCollision(error), false);
   });
 
-  it("does not match a generic error or non-object", () => {
-    expect(isSlugCollision(new Error("network down"))).toBe(false);
-    expect(isSlugCollision({ code: "08006" })).toBe(false);
-    expect(isSlugCollision(null)).toBe(false);
-    expect(isSlugCollision(undefined)).toBe(false);
+  test("does not match a generic error or non-object", () => {
+    assert.strictEqual(isSlugCollision(new Error("network down")), false);
+    assert.strictEqual(isSlugCollision({ code: "08006" }), false);
+    assert.strictEqual(isSlugCollision(null), false);
+    assert.strictEqual(isSlugCollision(undefined), false);
   });
 });

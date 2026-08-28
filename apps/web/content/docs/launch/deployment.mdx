@@ -2,7 +2,7 @@
 title: "Deployment"
 ---
 
-Ship Init to production. The web app targets Vercel; the database targets Neon. Mobile, extension, and desktop each have their own pipeline.
+Ship Init to production. The web app targets Vercel; the database targets Vercel Postgres. Mobile, extension, and desktop each have their own pipeline.
 
 ## Web App (Vercel)
 
@@ -26,7 +26,7 @@ vercel   # from apps/web
 Set in the Vercel dashboard (same keys as `.env.example`):
 
 ```
-# Database — Neon's pooled connection string (hostname contains -pooler)
+# Database — the pooled connection string (hostname contains -pooler)
 POSTGRES_URL=postgresql://...
 
 # Auth
@@ -38,7 +38,7 @@ GITHUB_CLIENT_SECRET=...
 BLOB_READ_WRITE_TOKEN=...
 ```
 
-The auth base URL derives from Vercel's built-in `VERCEL_ENV` / `VERCEL_PROJECT_PRODUCTION_URL` / `VERCEL_URL` - nothing to set. Adding the Neon integration to the Vercel project populates `POSTGRES_URL`, and creating a Blob store under Storage populates `BLOB_READ_WRITE_TOKEN`.
+The auth base URL derives from Vercel's built-in `VERCEL_ENV` / `VERCEL_PROJECT_PRODUCTION_URL` / `VERCEL_URL` - nothing to set. Creating the database under the project's Storage tab populates `POSTGRES_URL`, and creating a Blob store there populates `BLOB_READ_WRITE_TOKEN`.
 
 ### 3. Preview Deployments
 
@@ -51,9 +51,9 @@ The `oAuthProxy` plugin in `packages/api/src/auth/auth.ts` routes OAuth callback
 3. SSL is automatic
 4. Update your GitHub OAuth app's callback URL
 
-## Database (Neon)
+## Database (Vercel Postgres)
 
-1. **Create a production project** at [neon.tech](https://neon.tech), or add the Neon integration from the Vercel dashboard
+1. **Create the database** from the Vercel dashboard under Storage, which wires `POSTGRES_URL` into the project
 2. **Push the schema**:
 
    ```bash
@@ -63,16 +63,16 @@ The `oAuthProxy` plugin in `packages/api/src/auth/auth.ts` routes OAuth callback
 
    `drizzle-kit push` needs a direct connection, so the config strips `-pooler` from the hostname automatically.
 
-Any Postgres works - Neon is the default because of branching (below), not because anything in the code depends on it.
+Any Postgres works - [Vercel Postgres](https://vercel.com/docs/postgres) is the default because of branching (below), not because anything in the code depends on it.
 
-RLS is already on for every table with no policies - deny by default. Nothing exposes Postgres directly, so this is belt-and-braces; authorization lives in tRPC, and the server connection bypasses RLS as table owner.
+RLS is already on for every table with no policies - deny by default. Nothing exposes Postgres directly, so this is belt-and-braces; authorization lives in the oRPC procedures, and the server connection bypasses RLS as table owner.
 
 ### Branching
 
-Neon branches are copy-on-write, so a branch is a full database with production's data at a fraction of the storage. Two uses:
+Branches are copy-on-write, so a branch is a full database with production's data at a fraction of the storage. Two uses:
 
 - **Preview deployments** - the Vercel integration creates a branch per preview automatically, so PRs run against real-shaped data without touching production
-- **Agents and experiments** - `neonctl branches create --name agent/<task>` gives an isolated database to migrate against or destroy freely
+- **Agents and experiments** - a branch created from the database's dashboard gives an isolated database to migrate against or destroy freely
 
 Delete a branch when you're done; nothing else in the stack needs to know it existed.
 
@@ -141,13 +141,13 @@ vercel rollback [deployment-url]   # Roll back the web app
 pg_dump $POSTGRES_URL > backup_$(date +%Y%m%d_%H%M%S).sql
 ```
 
-Neon also keeps point-in-time restore over a retention window, and a branch taken before a migration is itself a cheap rollback target.
+Vercel Postgres also keeps point-in-time restore over a retention window, and a branch taken before a migration is itself a cheap rollback target.
 
 ## Production Checklist
 
 - `BETTER_AUTH_SECRET` set and unique per environment
 - Separate GitHub OAuth apps for dev and prod (callback: `https://your-domain.com/api/auth/callback/github`)
-- `POSTGRES_URL` uses Neon's pooled endpoint (`-pooler` in the hostname) - the client is configured for it
+- `POSTGRES_URL` uses the pooled endpoint (`-pooler` in the hostname) - the client is configured for it
 - `BLOB_READ_WRITE_TOKEN` set, with a Blob store created in the Vercel project
 - Uptime monitor on `/api/health`
 

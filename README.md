@@ -4,7 +4,7 @@ The AI-native boilerplate to build, launch, and scale your next project 🚀
 
 One TypeScript codebase that ships to web, mobile, browser extension, and desktop — built to supercharge your dev workflow, and your coding agents':
 
-1. **A stack AI already knows** — Tailwind, shadcn/ui, Drizzle, Postgres, Vitest, pnpm, Stripe: the tools [Claude Code picks on its own](https://amplifying.ai/research/claude-code-picks), so agents complete them correctly instead of hallucinating APIs
+1. **A stack AI already knows** — Tailwind, shadcn/ui, Drizzle, Postgres, Vitest, pnpm, Stripe: the tools [Claude Code picks on its own](https://amplifying.ai/research/claude-code-picks), so agents complete them correctly instead of hallucinating APIs (we use Node's built-in test runner in place of Vitest)
 2. **Idiomatic implementations** — auth, orgs, and billing built the way each library's docs say to; agents extend patterns that match their training
 3. **Agent rules and surfaces built in** — `CLAUDE.md` conventions, `llms.txt`, markdown content negotiation on every docs page, an API catalog, and an `@claude` GitHub action
 4. **Self-updating documentation** — a scheduled [OpenWiki](https://github.com/langchain-ai/openwiki) workflow regenerates the agent wiki + `AGENTS.md` from the code and opens the diff as a PR
@@ -29,7 +29,7 @@ apps/
   extension/   # WXT Chrome extension
   desktop/     # Electron desktop app
 packages/
-  api/         # tRPC router + better-auth
+  api/         # oRPC router + better-auth
   db/          # Drizzle schema + local Postgres compose
   ui/          # Shared React components
 ```
@@ -41,9 +41,9 @@ packages/
 - [Chrome Extension (WXT)](https://wxt.dev)
 - [Electron](https://www.electronjs.org)
 - [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+- [oRPC](https://orpc.dev)
 - [Drizzle](https://orm.drizzle.team)
-- [Neon](https://neon.tech)
+- [Vercel Postgres](https://vercel.com/docs/postgres)
 - [better-auth](https://www.better-auth.com)
 
 ## Scripts

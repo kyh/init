@@ -3,13 +3,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { skipToken, useQuery } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 
-import { authClient, signInWithGithub } from "@/utils/auth";
-import { trpc } from "@/utils/api";
+import { authClient } from "@/utils/auth";
+import { orpc } from "@/utils/api";
 
 /**
- * Exercises the end-to-end typed tRPC path from React Native: cookie propagation
- * and superjson batching against the Next route, proving the wiring the template
- * ships actually resolves. todo.list is organization-scoped, so this resolves the
+ * Exercises the end-to-end typed RPC path from React Native: cookie propagation
+ * against the Next route, proving the wiring the template ships actually
+ * resolves. todo.list is organization-scoped, so this resolves the
  * first membership's slug — mirroring the web dashboard's fallback — and gates the
  * query with skipToken until one exists.
  */
@@ -17,7 +17,7 @@ function Todos() {
   const { data: organizations } = authClient.useListOrganizations();
   const slug = organizations?.[0]?.slug;
 
-  const todos = useQuery(trpc.todo.list.queryOptions(slug ? { slug } : skipToken));
+  const todos = useQuery(orpc.todo.list.queryOptions({ input: slug ? { slug } : skipToken }));
 
   if (!slug || todos.isPending) {
     return <ActivityIndicator className="pt-4" />;
@@ -51,7 +51,11 @@ function MobileAuth() {
         {session?.user.name ? `Hello, ${session.user.name}` : "Not logged in"}
       </Text>
       <Pressable
-        onPress={() => (session ? authClient.signOut() : signInWithGithub({ callbackURL: "/" }))}
+        onPress={() =>
+          session
+            ? authClient.signOut()
+            : authClient.signIn.social({ provider: "github", callbackURL: "/" })
+        }
         className="bg-primary flex items-center rounded-sm p-2"
       >
         <Text>{session ? "Sign Out" : "Sign In With Github"}</Text>

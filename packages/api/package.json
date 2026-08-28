@@ -13,25 +13,24 @@
   "scripts": {
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "seed": "dotenv -e ../../.env -- tsx src/seed.ts",
-    "test": "vitest run",
+    "test": "node --import tsx --test 'src/**/*.test.ts'",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@better-auth/expo": "catalog:",
     "@better-auth/stripe": "catalog:",
+    "@orpc/server": "catalog:",
     "@repo/db": "workspace:*",
-    "@trpc/server": "catalog:",
     "better-auth": "catalog:",
     "drizzle-orm": "catalog:",
     "stripe": "^22.5.0",
-    "superjson": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@kyh/tsconfig": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
-    "typescript": "catalog:",
-    "vitest": "catalog:"
+    "tsx": "catalog:",
+    "typescript": "catalog:"
   }
 }

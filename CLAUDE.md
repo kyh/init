@@ -10,10 +10,10 @@
 - **Build**: Turborepo, Vite, Next.js Turbopack
 - **Language**: TypeScript 5.x, React 19
 - **Styling**: Tailwind CSS 4.x, Base UI, shadcn/ui (base-vega registry)
-- **Backend**: tRPC, better-auth, Drizzle ORM
+- **Backend**: oRPC, better-auth, Drizzle ORM
 - **Billing**: Stripe via @better-auth/stripe
 - **Email**: Resend REST API (console fallback in dev)
-- **Database**: Postgres — Docker Compose locally, Neon in production (auth is better-auth)
+- **Database**: Postgres — Docker Compose locally, Vercel Postgres in production (auth is better-auth)
 - **Storage**: Vercel Blob (avatars only; no local emulator, so that route 501s offline)
 
 ## Monorepo Structure
@@ -25,14 +25,14 @@ apps/
   extension/   # Chrome extension (wxt)
   desktop/     # Desktop app (Electron)
 packages/
-  api/         # tRPC router + better-auth
+  api/         # oRPC router + better-auth
   db/          # Drizzle schema + client, local Postgres compose file
   ui/          # Shared React components (shadcn-style)
 ```
 
 ### Mutation path
 
-Mutations go through tRPC or the better-auth client — never Next Server Actions. All four platforms (web, mobile, extension, desktop) then share one typed surface. Each mutation invalidates the specific queries it affects in its `onSuccess` (e.g. `queryClient.invalidateQueries(trpc.todo.list.queryFilter({ slug }))`) — there is no global invalidate-everything cache. Do not introduce Server Actions alongside.
+Mutations go through oRPC or the better-auth client — never Next Server Actions. All four platforms (web, mobile, extension, desktop) then share one typed surface. Each mutation invalidates the specific queries it affects in its `onSuccess` (e.g. `queryClient.invalidateQueries({ queryKey: orpc.todo.list.key({ input: { slug } }) })`) — there is no global invalidate-everything cache. Do not introduce Server Actions alongside.
 
 ### Mobile dependency pins
 
@@ -49,7 +49,7 @@ pnpm typecheck        # Type check all packages
 pnpm lint             # Lint all packages (oxlint)
 pnpm format           # Check formatting (oxfmt)
 pnpm format:fix       # Format all packages (oxfmt)
-pnpm test             # Run tests (vitest)
+pnpm test             # Run tests (node:test — do not add vitest or jest)
 pnpm verify           # typecheck · lint · format · test (CI gate)
 pnpm build            # Build all packages
 

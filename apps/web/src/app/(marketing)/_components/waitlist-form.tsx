@@ -1,17 +1,16 @@
 "use client";
 
-import { joinWaitlistInput } from "@repo/api/waitlist/waitlist-schema";
+import { joinWaitlistInput, waitlistEmail } from "@repo/api/waitlist/waitlist-schema";
 import { Button } from "@repo/ui/components/button";
 import { toast } from "@repo/ui/components/sonner";
 import { cn } from "@repo/ui/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 
 import { useAppForm } from "@/lib/form";
-import { useTRPC } from "@/trpc/react";
+import { orpc } from "@/orpc/react";
 
 export const WaitlistForm = () => {
-  const trpc = useTRPC();
-  const joinWaitlist = useMutation(trpc.waitlist.join.mutationOptions());
+  const joinWaitlist = useMutation(orpc.waitlist.join.mutationOptions());
 
   const form = useAppForm({
     defaultValues: {
@@ -43,7 +42,7 @@ export const WaitlistForm = () => {
       <form.AppField
         name="email"
         validators={{
-          onBlur: joinWaitlistInput.shape.email,
+          onBlur: waitlistEmail,
         }}
       >
         {(field) => (

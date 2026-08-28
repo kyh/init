@@ -71,7 +71,7 @@ pnpm db:start   # Postgres on :54322
 pnpm db:push    # drizzle-kit push
 ```
 
-Using a hosted database instead? Create one on [Neon](https://neon.tech) (or any Postgres host), point `POSTGRES_URL` at it, and run `pnpm db:push`.
+Using a hosted database instead? Create one on [Vercel Postgres](https://vercel.com/docs/postgres) (or any Postgres host), point `POSTGRES_URL` at it, and run `pnpm db:push`.
 
 ### 5. Trim the Starter (Optional)
 
@@ -102,7 +102,7 @@ init/
 │   ├── extension/     # Chrome extension (WXT)
 │   └── desktop/       # Electron desktop app
 ├── packages/
-│   ├── api/           # tRPC router + better-auth
+│   ├── api/           # oRPC router + better-auth
 │   ├── db/            # Drizzle schema + local Postgres compose
 │   └── ui/            # Shared UI components
 └── package.json       # Root workspace scripts
@@ -128,7 +128,7 @@ init/
 - `pnpm lint` / `pnpm lint:fix` - oxlint
 - `pnpm format` / `pnpm format:fix` - oxfmt
 - `pnpm typecheck` - TypeScript
-- `pnpm test` - Vitest
+- `pnpm test` - node:test
 - `pnpm verify` - typecheck · lint · format · test (the CI gate)
 
 ### Build

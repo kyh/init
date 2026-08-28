@@ -4,9 +4,10 @@ if (!process.env.POSTGRES_URL) {
   throw new Error("Missing POSTGRES_URL");
 }
 
-// Neon's pooled endpoint (`-pooler` in the hostname) fronts Postgres with
-// PgBouncer in transaction mode, which drizzle-kit's DDL can't run through.
-// Strip it for a direct connection; a no-op for local Postgres.
+// Vercel Postgres serves a pooled endpoint — `-pooler` in the hostname, the
+// convention it inherits from Neon underneath — fronted by PgBouncer in
+// transaction mode, which drizzle-kit's DDL can't run through. Strip it for a
+// direct connection; a no-op for local Postgres.
 const nonPoolingUrl = process.env.POSTGRES_URL.replace("-pooler.", ".");
 
 export default {

@@ -12,7 +12,7 @@ import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-q
 import { PencilIcon, Trash2Icon } from "lucide-react";
 
 import type { RouterOutputs } from "@repo/api";
-import { useTRPC } from "@/trpc/react";
+import { orpc } from "@/orpc/react";
 
 type TodoListProps = {
   slug: string;
@@ -25,23 +25,23 @@ const onError = (error: { message: string }) => {
 };
 
 export const TodoList = ({ slug }: TodoListProps) => {
-  const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const { data } = useSuspenseQuery(trpc.todo.list.queryOptions({ slug }));
+  const { data } = useSuspenseQuery(orpc.todo.list.queryOptions({ input: { slug } }));
   const todos = data.todos;
 
   // Refetch this org's list after a write. Each mutation refreshes only what it
   // touched — there's no global invalidate-everything net behind it.
-  const invalidateTodos = () => queryClient.invalidateQueries(trpc.todo.list.queryFilter({ slug }));
+  const invalidateTodos = () =>
+    queryClient.invalidateQueries({ queryKey: orpc.todo.list.key({ input: { slug } }) });
 
   const createTodo = useMutation(
-    trpc.todo.create.mutationOptions({ onError, onSuccess: invalidateTodos }),
+    orpc.todo.create.mutationOptions({ onError, onSuccess: invalidateTodos }),
   );
   const updateTodo = useMutation(
-    trpc.todo.update.mutationOptions({ onError, onSuccess: invalidateTodos }),
+    orpc.todo.update.mutationOptions({ onError, onSuccess: invalidateTodos }),
   );
   const deleteTodo = useMutation(
-    trpc.todo.delete.mutationOptions({ onError, onSuccess: invalidateTodos }),
+    orpc.todo.delete.mutationOptions({ onError, onSuccess: invalidateTodos }),
   );
 
   const [editingId, setEditingId] = useState<string | null>(null);

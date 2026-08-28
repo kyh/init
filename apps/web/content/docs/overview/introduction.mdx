@@ -12,11 +12,11 @@ Four things make Init AI-native - all concrete, none of them a chat widget:
 
 ### 1. A stack AI already knows
 
-When researchers gave Claude Code open-ended build prompts and tracked [what it picks on its own](https://amplifying.ai/research/claude-code-picks), the winners were Tailwind, shadcn/ui, Drizzle, Postgres, Vitest, pnpm, Stripe, and GitHub Actions - Init's stack, almost verbatim. That's not fashion - it's leverage. These tools dominate what agents know best, so they complete them correctly on the first try instead of hallucinating APIs.
+When researchers gave Claude Code open-ended build prompts and tracked [what it picks on its own](https://amplifying.ai/research/claude-code-picks), the winners were Tailwind, shadcn/ui, Drizzle, Postgres, Vitest, pnpm, Stripe, and GitHub Actions - Init's stack, almost verbatim (the exception: tests run on Node's built-in runner, not Vitest). That's not fashion - it's leverage. These tools dominate what agents know best, so they complete them correctly on the first try instead of hallucinating APIs.
 
 ### 2. Idiomatic implementations
 
-Every feature is built the way its library's own docs say to build it: better-auth plugins for orgs and Stripe billing, Drizzle relational queries, tRPC procedures with parse-at-the-boundary Zod schemas. When an agent extends a feature, the pattern it reaches for is the pattern already there. The [CRUD guide](/docs/build/crud) is literally "copy the todo feature, rename the nouns" - and that works for agents too.
+Every feature is built the way its library's own docs say to build it: better-auth plugins for orgs and Stripe billing, Drizzle relational queries, oRPC procedures with parse-at-the-boundary Zod schemas. When an agent extends a feature, the pattern it reaches for is the pattern already there. The [CRUD guide](/docs/build/crud) is literally "copy the todo feature, rename the nouns" - and that works for agents too.
 
 ### 3. Agent rules and surfaces built in
 
@@ -56,10 +56,10 @@ An optional [OpenWiki](https://github.com/langchain-ai/openwiki) workflow regene
 
 ### Backend
 
-- **tRPC v11** - End-to-end typesafe APIs
+- **oRPC** - End-to-end typesafe APIs
 - **better-auth** - Authentication with organization, admin, and Stripe plugins
 - **Drizzle ORM** - Type-safe database queries
-- **Neon** - Managed Postgres with database branching
+- **Vercel Postgres** - Managed Postgres with database branching
 - **Vercel Blob** - File storage for avatar uploads
 
 ### Infrastructure
@@ -67,7 +67,7 @@ An optional [OpenWiki](https://github.com/langchain-ai/openwiki) workflow regene
 - **Turborepo** - High-performance monorepo builds
 - **pnpm** - Workspaces with version catalogs
 - **oxlint & oxfmt** - Fast linting and formatting
-- **Vitest** - API tests
+- **node:test** - API tests (Node's built-in runner; no vitest or jest)
 
 ## Who is Init For?
 

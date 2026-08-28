@@ -25,16 +25,16 @@ Init ships with the author's defaults baked in. Change these before launch:
 Two layers, know both:
 
 1. **RLS deny-by-default** - every table calls `.enableRLS()` with no policies, so any connection that isn't the table owner gets nothing
-2. **tRPC procedures** - the real authorization. `protectedProcedure` requires a session; `organizationProcedure` (in `packages/api/src/trpc.ts`) resolves the org and proves membership before any org-scoped handler runs
+2. **oRPC procedures** - the real authorization. `protectedProcedure` requires a session; `organizationProcedure(schema)` (in `packages/api/src/orpc.ts`) resolves the org and proves membership before any org-scoped handler runs
 
-Nothing in this stack puts Postgres on the network, so tRPC is the only way in and RLS is the backstop rather than the gate. Keep it that way: if you ever enable a hosted data API (Neon offers one opt-in) or hand out a lower-privileged role, deny-by-default is what stops a forgotten table from being world-readable. If you regenerate the auth schema, re-add `.enableRLS()` to every table.
+Nothing in this stack puts Postgres on the network, so the oRPC procedures are the only way in and RLS is the backstop rather than the gate. Keep it that way: if you ever enable a hosted data API or hand out a lower-privileged role, deny-by-default is what stops a forgotten table from being world-readable. If you regenerate the auth schema, re-add `.enableRLS()` to every table.
 
 ## What Init Doesn't Ship
 
 Honest gaps. Each is a deliberate "add when you need it":
 
 - **Email delivery** - set `RESEND_API_KEY` (and `EMAIL_FROM`) in production. Password reset and organization invite emails send through Resend's REST API (`packages/api/src/email/send-email.ts`); without the key they log to the server console instead of sending
-- **Rate limiting** - better-auth's built-in limiter covers auth routes (in-memory, so per-instance on serverless), but tRPC procedures have none. Add [Vercel WAF rules](https://vercel.com/docs/security/vercel-waf) or a middleware backed by a shared store
+- **Rate limiting** - better-auth's built-in limiter covers auth routes (in-memory, so per-instance on serverless), but oRPC procedures have none. Add [Vercel WAF rules](https://vercel.com/docs/security/vercel-waf) or a middleware backed by a shared store
 - **Billing** - Stripe via `@better-auth/stripe`. Set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and `STRIPE_PRO_PRICE_ID`, then point a Stripe webhook at `/api/auth/stripe/webhook` (events: `checkout.session.completed`, `customer.subscription.created/updated/deleted`). The webhook keeps the `subscription` table in sync; `dashboard/[slug]/billing` handles checkout and the billing portal. Subscriptions are org-scoped — only owners/admins can manage them
 - **Email verification** - verification emails send on signup. Uncomment `requireEmailVerification` in `packages/api/src/auth/auth.ts` to block unverified logins
 - **Background jobs** - no queue. Long work either fits in a request or needs Inngest/Trigger.dev/QStash
@@ -43,7 +43,7 @@ Honest gaps. Each is a deliberate "add when you need it":
 
 - `drizzle-kit push` has no down migrations. Back up before schema changes: `pg_dump $POSTGRES_URL > backup.sql`
 - Prefer add-column → backfill → drop-column over destructive changes on live data
-- `POSTGRES_URL` should be Neon's pooled endpoint (`-pooler` in the hostname); the client already sets `prepare: false` for it, and `drizzle.config.ts` strips `-pooler` so DDL runs on a direct connection
+- `POSTGRES_URL` should be the pooled endpoint (`-pooler` in the hostname); the client already sets `prepare: false` for it, and `drizzle.config.ts` strips `-pooler` so DDL runs on a direct connection
 
 ## CI Gate
 
