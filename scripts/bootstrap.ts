@@ -346,12 +346,40 @@ async function createEnv() {
   console.log(`  ✓ .env created (Compose project "${projectName}", Postgres on ${port})`);
 }
 
-function startPostgres() {
+/** Points .env at a different host port, both the bare port and the URL's. */
+function repointEnvPort(port: number) {
+  const env = readText(".env")
+    .replace(/^POSTGRES_PORT="?\d+"?/m, `POSTGRES_PORT="${port}"`)
+    .replace(/^(POSTGRES_URL="[^"]*:)\d+(\/[^"]*")/m, `$1${port}$2`);
+  writeText(".env", env);
+}
+
+async function startPostgres() {
   console.log("\nStarting Postgres...");
-  // `--wait` blocks on the container's healthcheck, so the schema push below
-  // never races the database's first boot
-  exec("pnpm db:start", { stdio: "inherit" });
-  console.log(`  ✓ Postgres ready on port ${envPort()}`);
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      // `--wait` blocks on the container's healthcheck, so the schema push
+      // below never races the database's first boot
+      exec("pnpm db:start", { stdio: "inherit" });
+      console.log(`  ✓ Postgres ready on port ${envPort()}`);
+      return;
+    } catch (error) {
+      // Picking a free port and publishing it aren't atomic, so another
+      // project can claim it in between — and a port chosen by an earlier
+      // bootstrap may have been taken since. Re-probe the port rather than
+      // parsing Docker's error text: if it really is free, the failure was
+      // something else and belongs to the caller.
+      const port = Number(envPort());
+      if (await isPortFree(port)) throw error;
+
+      const next = await findFreePort(port + 1);
+      console.log(`  ○ port ${port} is taken; moving this project to ${next}`);
+      repointEnvPort(next);
+    }
+  }
+
+  throw new Error("Could not start Postgres: every candidate host port was taken");
 }
 
 function pushSchema() {
@@ -443,7 +471,7 @@ async function main() {
   // reads COMPOSE_PROJECT_NAME from it
   console.log("\nConfiguring environment...");
   await createEnv();
-  startPostgres();
+  await startPostgres();
 
   // ── Step 4: Push database schema ──
   pushSchema();

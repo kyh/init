@@ -32,7 +32,6 @@
   "globalEnv": [
     "BETTER_AUTH_SECRET",
     "POSTGRES_URL",
-    "POSTGRES_PORT",
     "BLOB_READ_WRITE_TOKEN",
     "RESEND_API_KEY",
     "EMAIL_FROM",
