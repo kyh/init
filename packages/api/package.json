@@ -23,7 +23,7 @@
     "@repo/db": "workspace:*",
     "better-auth": "catalog:",
     "drizzle-orm": "catalog:",
-    "stripe": "^22.5.0",
+    "stripe": "^22.6.0",
     "zod": "catalog:"
   },
   "devDependencies": {
