@@ -21,17 +21,17 @@ catalog:
   "@vitejs/plugin-react": ^6.1.1
   better-auth: ^1.7.2
   drizzle-orm: ^0.45.2
-  lucide-react: ^1.35.0
+  lucide-react: ^1.37.0
   next: ^16.3.3
   next-themes: ^0.4.6
   react: ^19.2.8
   react-dom: ^19.2.8
   tailwindcss: ^4.3.3
-  tsx: ^4.23.12
+  tsx: ^4.23.13
   tw-animate-css: ^1.4.0
   typescript: ^7.0.2
   vite: ^8.2.2
-  zod: ^4.5.2
+  zod: ^4.5.4
 
 catalogs:
   # Expo must hold an SDK-blessed React, which may diverge from web's. Pinning it in a
