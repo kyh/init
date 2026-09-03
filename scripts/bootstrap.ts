@@ -1,6 +1,7 @@
 import { execSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import fs from "node:fs";
+import { createServer } from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -266,49 +267,74 @@ function commandExists(cmd: string): boolean {
 
 function checkDocker() {
   if (!commandExists("docker")) {
-    console.log("  ✗ Docker not found. Supabase requires Docker for local development.");
+    console.log("  ✗ Docker not found. Local Postgres runs in a Docker container.");
     console.log("    Install Docker: https://docs.docker.com/get-docker/");
     process.exit(1);
   }
   console.log("  ✓ Docker found");
 }
 
-// ── Supabase + env setup ─────────────────────────────────
+// ── Postgres + env setup ─────────────────────────────────
 
-function startSupabase() {
-  console.log("\nStarting Supabase...");
-  const output = exec("pnpm -F db supabase start", { stdio: "pipe" }).toString();
-
-  const values: Record<string, string> = {};
-  for (const line of output.split("\n")) {
-    const match = line.match(/^\s*(.+?):\s+(.+)$/);
-    if (match) {
-      values[match[1].trim()] = match[2].trim();
-    }
-  }
-  console.log("  ✓ Supabase started");
-  return values;
+// Docker Compose derives its project name from the compose file's directory,
+// which is `db` for every repo cloned from this template — so they'd all share
+// one volume and leak schema between each other. COMPOSE_PROJECT_NAME pins it
+// to this repo's folder instead.
+function composeProjectName() {
+  const slug =
+    path
+      .basename(ROOT_DIR)
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "init";
+  return /^[a-z]/.test(slug) ? slug : `app-${slug}`;
 }
 
-function createEnv(supabaseValues: Record<string, string>) {
+// COMPOSE_PROJECT_NAME keeps two clones off each other's data, but they'd
+// still both try to publish Postgres on the same host port and the second one
+// would fail to start. Give each project its own port so they can run at once.
+const isPortFree = (port: number) =>
+  new Promise<boolean>((resolve) => {
+    const server = createServer();
+    server.once("error", () => resolve(false));
+    server.once("listening", () => server.close(() => resolve(true)));
+    // No host: bind every interface, matching what Docker does, so a port
+    // another project already published is correctly seen as taken
+    server.listen(port);
+  });
+
+async function findFreePort(start = 54322, range = 50) {
+  for (let port = start; port < start + range; port++) {
+    if (await isPortFree(port)) return port;
+  }
+  throw new Error(`No free port for local Postgres in ${start}-${start + range - 1}`);
+}
+
+/** The port a previous run wrote, for logging. */
+function envPort() {
+  if (!fileExists(".env")) return "54322";
+  return readText(".env").match(/^POSTGRES_PORT="?(\d+)"?/m)?.[1] ?? "54322";
+}
+
+async function createEnv() {
   const envPath = ".env";
+
   if (fileExists(envPath)) {
     console.log("  ✓ .env already exists, skipping");
     return;
   }
 
-  // With the Data API disabled, `supabase start` doesn't print these — fall
-  // back to the fixed local-dev values (identical for every local instance)
-  const apiUrl = supabaseValues["API URL"] ?? "http://127.0.0.1:54321";
-  const serviceRoleKey =
-    supabaseValues["service_role key"] ??
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU";
+  const projectName = composeProjectName();
+  const port = await findFreePort();
 
   const env = [
-    `NEXT_PUBLIC_SUPABASE_URL="${apiUrl}"`,
-    `SUPABASE_SERVICE_ROLE_KEY="${serviceRoleKey}"`,
-    `POSTGRES_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"`,
+    `POSTGRES_URL="postgresql://postgres:postgres@127.0.0.1:${port}/postgres"`,
+    `POSTGRES_PORT="${port}"`,
+    `COMPOSE_PROJECT_NAME="${projectName}"`,
     `BETTER_AUTH_SECRET="${randomBytes(32).toString("base64")}"`,
+    "",
+    "# Avatar uploads need a Vercel Blob store; unset, that one route 501s",
+    `BLOB_READ_WRITE_TOKEN=""`,
     "",
     "# Uncomment + run 'pnpm emulate' so the GitHub button works offline (see AGENTS.md)",
     `# NEXT_PUBLIC_GITHUB_EMULATOR_URL="http://localhost:4000"`,
@@ -317,31 +343,43 @@ function createEnv(supabaseValues: Record<string, string>) {
   ].join("\n");
 
   writeText(envPath, env);
-  console.log("  ✓ .env created with Supabase credentials");
+  console.log(`  ✓ .env created (Compose project "${projectName}", Postgres on ${port})`);
 }
 
-// Supabase namespaces local Docker volumes by project_id — its own convention is
-// the working-directory name. The template ships "init", so without this every
-// project cloned from it would share one local volume and leak schema between
-// them. Personalize it to this repo's folder before Supabase starts.
-function ensureProjectId() {
-  const configPath = "packages/db/supabase/config.toml";
-  if (!fileExists(configPath)) return;
-  const slug =
-    path
-      .basename(ROOT_DIR)
-      .toLowerCase()
-      .replace(/[^a-z0-9_-]+/g, "-")
-      .replace(/^-+|-+$/g, "") || "init";
-  const projectId = /^[a-z]/.test(slug) ? slug : `app-${slug}`;
-  const config = readText(configPath);
-  const current = config.match(/^project_id\s*=\s*"([^"]*)"/m)?.[1];
-  if (current === projectId) return;
-  writeText(
-    configPath,
-    config.replace(/^project_id\s*=\s*"[^"]*"/m, `project_id = "${projectId}"`),
-  );
-  console.log(`  ✓ Supabase project_id → "${projectId}" (isolates this project's local DB volume)`);
+/** Points .env at a different host port, both the bare port and the URL's. */
+function repointEnvPort(port: number) {
+  const env = readText(".env")
+    .replace(/^POSTGRES_PORT="?\d+"?/m, `POSTGRES_PORT="${port}"`)
+    .replace(/^(POSTGRES_URL="[^"]*:)\d+(\/[^"]*")/m, `$1${port}$2`);
+  writeText(".env", env);
+}
+
+async function startPostgres() {
+  console.log("\nStarting Postgres...");
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      // `--wait` blocks on the container's healthcheck, so the schema push
+      // below never races the database's first boot
+      exec("pnpm db:start", { stdio: "inherit" });
+      console.log(`  ✓ Postgres ready on port ${envPort()}`);
+      return;
+    } catch (error) {
+      // Picking a free port and publishing it aren't atomic, so another
+      // project can claim it in between — and a port chosen by an earlier
+      // bootstrap may have been taken since. Re-probe the port rather than
+      // parsing Docker's error text: if it really is free, the failure was
+      // something else and belongs to the caller.
+      const port = Number(envPort());
+      if (await isPortFree(port)) throw error;
+
+      const next = await findFreePort(port + 1);
+      console.log(`  ○ port ${port} is taken; moving this project to ${next}`);
+      repointEnvPort(next);
+    }
+  }
+
+  throw new Error("Could not start Postgres: every candidate host port was taken");
 }
 
 function pushSchema() {
@@ -357,7 +395,7 @@ function runSeed() {
   } catch (error) {
     console.log(
       `\n  ${DIM}✗ Seeding failed.${RESET} If the local database has a leftover or conflicting ` +
-        "schema (e.g. a Supabase volume shared with another project), run 'pnpm db:reset' to " +
+        "schema (e.g. a Docker volume shared with another project), run 'pnpm db:reset' to " +
         "rebuild it, then re-run 'pnpm bootstrap'.",
     );
     throw error;
@@ -427,12 +465,13 @@ async function main() {
   // ── Step 2: Check dependencies ──
   console.log("\nChecking dependencies...");
   checkDocker();
-  ensureProjectId();
 
-  // ── Step 3: Start Supabase + create .env ──
-  const supabaseValues = startSupabase();
+  // ── Step 3: Create .env, then start Postgres ──
+  // .env first: the local connection string is a constant, and `pnpm db:start`
+  // reads COMPOSE_PROJECT_NAME from it
   console.log("\nConfiguring environment...");
-  createEnv(supabaseValues);
+  await createEnv();
+  await startPostgres();
 
   // ── Step 4: Push database schema ──
   pushSchema();
