@@ -594,9 +594,9 @@ importers:
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
-      cnfast:
-        specifier: ^0.1.0
-        version: 0.1.0
+      cn:
+        specifier: ^0.2.3
+        version: 0.2.3
       lucide-react:
         specifier: 'catalog:'
         version: 1.35.0(react@19.2.8)
@@ -4330,6 +4330,11 @@ packages:
   clsx@2.1.1:
     resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}
     engines: {node: '>=6'}
+
+  cn@0.2.3:
+    resolution: {integrity: sha512-z1S2v7FdtqcoXQzJWqNPBJ3KPG1or9FlefB0x+Eu8322BMmCSSVqzeI7itNj/6YRjyendnlWDJnKQkBhukT3fg==}
+    engines: {node: '>=20'}
+    hasBin: true
 
   cnfast@0.1.0:
     resolution: {integrity: sha512-rH0jBKeLkVrK7NsZ5Ba2l7WdMBmm1k0FMpABeXUU1PgTUxbz3261gEuCSsrYuXo4BwAe3yCcIbQ93YyS52lOGQ==}
@@ -12401,6 +12406,8 @@ snapshots:
   clone@1.0.4: {}
 
   clsx@2.1.1: {}
+
+  cn@0.2.3: {}
 
   cnfast@0.1.0: {}
 
