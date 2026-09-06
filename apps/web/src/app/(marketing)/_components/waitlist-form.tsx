@@ -3,7 +3,7 @@
 import { joinWaitlistInput, waitlistEmail } from "@repo/api/waitlist/waitlist-schema";
 import { Button } from "@repo/ui/components/button";
 import { toast } from "@repo/ui/components/sonner";
-import { cn } from "@repo/ui/lib/utils";
+import { cn } from "cn";
 import { useMutation } from "@tanstack/react-query";
 
 import { useAppForm } from "@/lib/form";

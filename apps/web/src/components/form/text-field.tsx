@@ -8,7 +8,7 @@ import {
   FieldLabel,
 } from "@repo/ui/components/field";
 import { Input } from "@repo/ui/components/input";
-import { cn } from "@repo/ui/lib/utils";
+import { cn } from "cn";
 
 import { useFieldContext } from "@/lib/form-context";
 import { toFieldErrors } from "./field-errors";
