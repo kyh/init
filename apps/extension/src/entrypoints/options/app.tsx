@@ -40,8 +40,10 @@ const App = () => {
     setMessage(null);
 
     try {
-      // new URL() throwing on bad input is the validation
       const url = new URL(apiBaseUrl);
+      if (url.protocol !== "http:" && url.protocol !== "https:") {
+        throw new Error("Use an http:// or https:// application URL");
+      }
       const normalizedUrl = url.origin;
 
       await apiBaseUrlItem.setValue(normalizedUrl);
@@ -82,7 +84,6 @@ const App = () => {
         </div>
 
         <div className="space-y-6">
-          {/* API Base URL */}
           <div className="space-y-2">
             <Label htmlFor="apiBaseUrl">Application URL</Label>
             <Input
@@ -98,7 +99,6 @@ const App = () => {
             </p>
           </div>
 
-          {/* Message */}
           {message && (
             <div
               className={`rounded-md p-3 text-sm ${
@@ -111,7 +111,6 @@ const App = () => {
             </div>
           )}
 
-          {/* Actions */}
           <div className="flex gap-2">
             <Button onClick={handleSave} loading={isSaving}>
               <Save className="size-4" />
@@ -124,7 +123,6 @@ const App = () => {
           </div>
         </div>
 
-        {/* Help section */}
         <div className="mt-12 rounded-lg border p-4">
           <h2 className="font-semibold">How it works</h2>
           <p className="text-muted-foreground mt-1 text-sm">

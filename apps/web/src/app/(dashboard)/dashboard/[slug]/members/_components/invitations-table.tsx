@@ -14,7 +14,7 @@ import type { AutoTableFeatures } from "@repo/ui/components/table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { authClient } from "@/lib/auth-client";
 import { formatDate } from "@/lib/format";
-import { hasPermission } from "@/app/(dashboard)/dashboard/[slug]/_components/role";
+import { hasPermission } from "@repo/api/auth/permissions";
 import { TableRowActions } from "@/app/(dashboard)/dashboard/[slug]/_components/table-row-actions";
 import {
   invalidateOrganization,
@@ -92,7 +92,9 @@ const ActionsDropdown = ({
       description: `You are about to remove ${invitation.email}'s invite. This will revoke their access to the organization.`,
       action: {
         label: "Remove",
-        onClick: cancelInvitation,
+        onClick: async () => {
+          await cancelInvitation();
+        },
       },
     });
   };
@@ -111,11 +113,11 @@ const ActionsDropdown = ({
 const useCancelInvitation = (slug: string, invitationId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async () => {
-      await authClient.organization.cancelInvitation({
+    mutationFn: () =>
+      authClient.organization.cancelInvitation({
         invitationId,
-      });
-    },
+        fetchOptions: { throw: true },
+      }),
     onSuccess: () => {
       toast.success("Invitation cancelled successfully");
       return invalidateOrganization(queryClient, slug);

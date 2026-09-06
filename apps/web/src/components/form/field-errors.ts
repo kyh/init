@@ -1,10 +1,6 @@
 import { z } from "zod";
 
-/**
- * TanStack validators return either a raw string or a `{ message }` object
- * (Zod). FieldError reads `.message`, so normalize both to it. Parsed with a
- * schema rather than cast so a malformed error never slips through typed.
- */
+/** Normalize string and Zod validator errors for FieldError. */
 const fieldError = z.union([
   z.string().transform((message) => ({ message })),
   z.object({ message: z.string() }),

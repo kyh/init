@@ -28,11 +28,6 @@ type TextFieldProps = {
   "id" | "name" | "value" | "onChange" | "onBlur" | "className"
 >;
 
-/**
- * Bound text input. Derives invalid state, wires id/name/value/handlers to the
- * field, and normalizes validator errors — so a form just supplies `label` and
- * whatever native input props it needs (type, placeholder, required, …).
- */
 export function TextField({
   label,
   description,

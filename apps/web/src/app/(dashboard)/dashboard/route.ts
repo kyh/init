@@ -15,8 +15,6 @@ export async function GET() {
     }
   }
 
-  // No active organization — fall back to the first membership. The db query
-  // this replaced had limit(1) with no orderBy, so first-of-list matches.
   const organizations = await listOrganizations();
   const firstSlug = organizations[0]?.slug;
   if (firstSlug) {

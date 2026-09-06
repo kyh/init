@@ -31,9 +31,7 @@ const items = [
 
 export const AppearanceForm = () => {
   const { theme, setTheme } = useTheme();
-  // next-themes resolves the theme only on the client, so gate rendering on
-  // hydration: a controlled value={undefined} during SSR would leave every radio
-  // unchecked, and that unchecked DOM would persist after hydration.
+  // Wait for the client theme before rendering controlled radios.
   const hydrated = useIsHydrated();
 
   if (!hydrated) {

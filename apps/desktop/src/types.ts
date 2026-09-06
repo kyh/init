@@ -1,9 +1,6 @@
 import { z } from "zod";
 
 export const IPC_CHANNELS = {
-  PICK_FOLDER: "desktop:pick-folder",
-  CONFIRM: "desktop:confirm",
-  OPEN_EXTERNAL: "desktop:open-external",
   MENU_ACTION: "desktop:menu-action",
   UPDATE_STATE: "desktop:update-state",
   UPDATE_CHECK: "desktop:update-check",
@@ -11,38 +8,22 @@ export const IPC_CHANNELS = {
   UPDATE_INSTALL: "desktop:update-install",
 } as const;
 
-/** Parses IPC payloads in the sandboxed preload, where the renderer is
- *  untrusted; the values themselves always originate from the main process. */
-export const updateStateSchema = z.object({
-  status: z.enum([
-    "idle",
-    "checking",
-    "available",
-    "not-available",
-    "downloading",
-    "downloaded",
-    "error",
-  ]),
-  version: z.string().nullable(),
-  downloadPercent: z.number().nullable(),
-  message: z.string().nullable(),
-});
+/** Validate main-process events before exposing them to the renderer. */
+export const updateStateSchema = z.discriminatedUnion("status", [
+  z.object({ status: z.enum(["idle", "checking", "not-available"]) }),
+  z.object({ status: z.literal("available"), version: z.string() }),
+  z.object({ status: z.literal("downloading"), downloadPercent: z.number() }),
+  z.object({ status: z.literal("downloaded"), version: z.string() }),
+  z.object({ status: z.literal("error"), message: z.string() }),
+]);
 
 export type UpdateState = z.infer<typeof updateStateSchema>;
 
-export type UpdateResponse = {
-  accepted: boolean;
-  state: UpdateState;
-};
-
 export type DesktopBridge = {
-  pickFolder: () => Promise<string | null>;
-  confirm: (message: string) => Promise<boolean>;
-  openExternal: (url: string) => Promise<boolean>;
   onMenuAction: (listener: (action: string) => void) => () => void;
   checkForUpdates: () => Promise<UpdateState>;
-  downloadUpdate: () => Promise<UpdateResponse>;
-  installUpdate: () => Promise<UpdateResponse>;
+  downloadUpdate: () => Promise<UpdateState>;
+  installUpdate: () => Promise<UpdateState>;
   onUpdateState: (listener: (state: UpdateState) => void) => () => void;
 };
 

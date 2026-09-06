@@ -1,101 +1,84 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { ORPCError } from "@orpc/server";
+import { createRouterClient } from "@orpc/server";
+import { organization } from "@repo/db/drizzle-schema-auth";
 
-import { createCallerFactory, createMockContext } from "../test-utils";
+import {
+  createMockContext,
+  createMemberContext,
+  databaseRows,
+  mockOrganization,
+} from "../test-utils";
 import { organizationProcedure, protectedProcedure, publicProcedure } from "../orpc";
 import { organizationInput } from "../organization/organization-schema";
 
-const ORG = { id: "org-1", name: "Acme", slug: "acme", logo: null, metadata: null };
-const MEMBERSHIP = { id: "mem-1", organizationId: "org-1", userId: "user-1", role: "owner" };
-
 const testRouter = {
-  protectedQuery: protectedProcedure.handler(({ context }) => ({
-    userId: context.session.user.id,
-  })),
-  publicQuery: publicProcedure.handler(({ context }) => ({
-    hasSession: context.session !== null,
-  })),
+  protectedQuery: protectedProcedure.handler(({ context }) => context.session.user.id),
+  publicQuery: publicProcedure.handler(({ context }) => context.session !== null),
   organizationQuery: organizationProcedure(organizationInput).handler(({ context }) => ({
     organizationId: context.organization.id,
     role: context.membership.role,
   })),
 };
 
-const createCaller = createCallerFactory(testRouter);
+describe("procedure authorization", () => {
+  test("allows public access and passes authenticated sessions through", async () => {
+    const caller = createRouterClient(testRouter, { context: createMockContext() });
+    assert.equal(await caller.publicQuery(), true);
+    assert.equal(await caller.protectedQuery(), "user-1");
 
-describe("protectedProcedure", () => {
-  test("provides non-nullable session to handler", async () => {
-    const caller = createCaller(createMockContext());
-    const result = await caller.protectedQuery();
-    assert.strictEqual(result.userId, "user-1");
+    const anonymous = createRouterClient(testRouter, { context: createMockContext(null) });
+    assert.equal(await anonymous.publicQuery(), false);
+    await assert.rejects(anonymous.protectedQuery(), { code: "UNAUTHORIZED" });
   });
 
-  test("rejects unauthenticated users with UNAUTHORIZED", async () => {
-    const caller = createCaller(createMockContext({ session: null }));
-    await assert.rejects(caller.protectedQuery(), ORPCError);
-    await assert.rejects(caller.protectedQuery(), /You must be logged in/);
-  });
-});
-
-describe("organizationProcedure", () => {
-  const memberContext = () => {
-    const ctx = createMockContext();
-    ctx.db.query.organization.findFirst.mock.mockImplementation(() => Promise.resolve(ORG));
-    ctx.db.query.member.findFirst.mock.mockImplementation(() => Promise.resolve(MEMBERSHIP));
-    return ctx;
-  };
-
-  test("provides the resolved organization and membership to the handler", async () => {
-    const caller = createCaller(memberContext());
-    const result = await caller.organizationQuery({ slug: "acme" });
-    assert.deepEqual(result, { organizationId: "org-1", role: "owner" });
-  });
-
-  test("rejects a non-member with UNAUTHORIZED without running the handler", async () => {
-    const ctx = createMockContext();
-    ctx.db.query.organization.findFirst.mock.mockImplementation(() => Promise.resolve(ORG));
-    ctx.db.query.member.findFirst.mock.mockImplementation(() => Promise.resolve(undefined));
-
-    const caller = createCaller(ctx);
-    await assert.rejects(
-      caller.organizationQuery({ slug: "acme" }),
-      /You do not have access to this organization/,
+  test("resolves organization by slug and membership by organization and current user", async () => {
+    const context = createMemberContext();
+    const caller = createRouterClient(testRouter, { context });
+    assert.deepEqual(await caller.organizationQuery({ slug: "acme" }), {
+      organizationId: "org-1",
+      role: "owner",
+    });
+    const organizationQuery = context.query.mock.calls[0];
+    assert.ok(organizationQuery);
+    assert.match(organizationQuery.arguments[0], /where "organization"\."slug" = \$1/);
+    assert.deepEqual(organizationQuery.arguments[1], ["acme", 1]);
+    const membershipQuery = context.query.mock.calls[1];
+    assert.ok(membershipQuery);
+    assert.match(
+      membershipQuery.arguments[0],
+      /where \("member"\."organization_id" = \$1 and "member"\."user_id" = \$2\)/,
     );
+    assert.deepEqual(membershipQuery.arguments[1], ["org-1", "user-1", 1]);
   });
 
-  test("reports a missing organization as NOT_FOUND, distinct from non-membership", async () => {
-    const ctx = createMockContext();
-    ctx.db.query.organization.findFirst.mock.mockImplementation(() => Promise.resolve(undefined));
-
-    const caller = createCaller(ctx);
-    await assert.rejects(caller.organizationQuery({ slug: "nope" }), /Organization not found/);
-    assert.strictEqual(ctx.db.query.member.findFirst.mock.callCount(), 0);
+  test("rejects non-members before running the handler", async () => {
+    const context = createMockContext();
+    context.responses.push(databaseRows(organization, mockOrganization), []);
+    const caller = createRouterClient(testRouter, { context });
+    await assert.rejects(caller.organizationQuery({ slug: "acme" }), { code: "UNAUTHORIZED" });
+    assert.equal(context.query.mock.callCount(), 2);
   });
 
-  test("rejects unauthenticated callers before touching the database", async () => {
-    const ctx = createMockContext({ session: null });
-    const caller = createCaller(ctx);
-    await assert.rejects(caller.organizationQuery({ slug: "acme" }), /You must be logged in/);
-    assert.strictEqual(ctx.db.query.organization.findFirst.mock.callCount(), 0);
+  test("reports a missing organization without querying membership", async () => {
+    const context = createMockContext();
+    context.responses.push([]);
+    const caller = createRouterClient(testRouter, { context });
+    await assert.rejects(caller.organizationQuery({ slug: "missing" }), { code: "NOT_FOUND" });
+    assert.equal(context.query.mock.callCount(), 1);
   });
 
-  test("rejects an empty slug at the input boundary", async () => {
-    const caller = createCaller(memberContext());
-    await assert.rejects(caller.organizationQuery({ slug: "" }), ORPCError);
-  });
-});
-
-describe("publicProcedure", () => {
-  test("allows unauthenticated access", async () => {
-    const caller = createCaller(createMockContext({ session: null }));
-    const result = await caller.publicQuery();
-    assert.strictEqual(result.hasSession, false);
+  test("rejects unauthenticated callers before querying", async () => {
+    const context = createMockContext(null);
+    const caller = createRouterClient(testRouter, { context });
+    await assert.rejects(caller.organizationQuery({ slug: "acme" }), { code: "UNAUTHORIZED" });
+    assert.equal(context.query.mock.callCount(), 0);
   });
 
-  test("passes session through when authenticated", async () => {
-    const caller = createCaller(createMockContext());
-    const result = await caller.publicQuery();
-    assert.strictEqual(result.hasSession, true);
+  test("rejects an empty slug before querying", async () => {
+    const context = createMockContext();
+    const caller = createRouterClient(testRouter, { context });
+    await assert.rejects(caller.organizationQuery({ slug: "" }), { code: "BAD_REQUEST" });
+    assert.equal(context.query.mock.callCount(), 0);
   });
 });

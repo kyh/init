@@ -1,6 +1,3 @@
-/**
- * Application schema
- */
 import { relations } from "drizzle-orm";
 import { index, pgTable } from "drizzle-orm/pg-core";
 

@@ -18,16 +18,12 @@ import { z } from "zod";
 
 import { authClient } from "@/lib/auth-client";
 import { useAppForm } from "@/lib/form";
-import { ROLES, roleSchema } from "@/app/(dashboard)/dashboard/[slug]/_components/role";
+import { ROLES, roleSchema } from "@repo/api/auth/permissions";
 import {
   invalidateOrganization,
   useOrganization,
 } from "@/app/(dashboard)/dashboard/[slug]/_components/use-organization";
 
-/**
- * The maximum number of invites that can be sent at once.
- * Useful to avoid spamming the server with too large payloads
- */
 const MAX_INVITES = 5;
 
 type InviteMembersDialogProps = {
@@ -78,7 +74,7 @@ type InviteMembersFormProps = {
 
 const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormProps) => {
   const { data: organizationData } = useOrganization(slug);
-  const { mutateAsync: inviteMembers, isPending: isInvitingMembers } = useInviteMembers(
+  const { mutate: inviteMembers, isPending: isInvitingMembers } = useInviteMembers(
     slug,
     organizationData.organization.id,
   );
@@ -90,12 +86,13 @@ const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormProps) =>
     validators: {
       onSubmit: inviteMembersSchema,
     },
-    onSubmit: async ({ value, formApi }) => {
-      await inviteMembers(value);
-      formApi.reset({
-        organizationInvitations: [createEmptyInviteModel()],
+    onSubmit: ({ value, formApi }) => {
+      inviteMembers(value, {
+        onSuccess: () => {
+          formApi.reset({ organizationInvitations: [createEmptyInviteModel()] });
+          onInviteSuccess?.();
+        },
       });
-      onInviteSuccess?.();
     },
   });
 
@@ -199,20 +196,24 @@ const useInviteMembers = (slug: string, organizationId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: z.infer<typeof inviteMembersSchema>) => {
-      await Promise.all(
+      const results = await Promise.allSettled(
         data.organizationInvitations.map((invite) =>
           authClient.organization.inviteMember({
             email: invite.email,
             role: invite.role,
             organizationId,
+            fetchOptions: { throw: true },
           }),
         ),
       );
+      const failed = results.find((result) => result.status === "rejected");
+      if (failed) throw failed.reason;
     },
     onSuccess: () => {
       toast.success("Invitations sent successfully");
-      return invalidateOrganization(queryClient, slug);
     },
     onError: (error) => toast.error(error.message),
+    // Some invitations may succeed even when another fails.
+    onSettled: () => invalidateOrganization(queryClient, slug),
   });
 };

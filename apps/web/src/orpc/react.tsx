@@ -23,9 +23,8 @@ const getQueryClient = () => {
 };
 
 const link = new RPCLink({
-  // Resolved per call, not at module load: this module is evaluated during SSR
-  // too, where `window` is absent and the deploy URL comes from the environment.
-  origin: () => getBaseUrl(),
+  // Resolve at call time: this module also runs during SSR.
+  origin: getBaseUrl,
   url: "/api/orpc",
   headers: () => ({ "x-orpc-source": "nextjs-react" }),
   interceptors: [
@@ -37,13 +36,6 @@ const link = new RPCLink({
 
 const client: RouterClient<AppRouter> = createORPCClient(link);
 
-/**
- * Typesafe query/mutation option builders — use with TanStack Query hooks:
- * `useQuery(orpc.todo.list.queryOptions({ input: { slug } }))`.
- *
- * A plain module export rather than a React context: oRPC's utils are built
- * from the client, and the browser only ever has one.
- */
 export const orpc = createTanstackQueryUtils(client);
 
 export const ORPCReactProvider = (props: { children: React.ReactNode }) => {
@@ -57,8 +49,8 @@ export const ORPCReactProvider = (props: { children: React.ReactNode }) => {
   );
 };
 
-const getBaseUrl = () => {
+function getBaseUrl() {
   if (typeof window !== "undefined") return window.location.origin;
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
   return `http://localhost:${process.env.PORT ?? 3000}`;
-};
+}

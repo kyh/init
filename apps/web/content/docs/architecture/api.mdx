@@ -327,15 +327,16 @@ const { data } = useSuspenseQuery(orpc.post.list.queryOptions({ input: { slug } 
 
 ## Testing
 
-Routers ship with node:test tests next to the code (`todo-router.test.ts`). Shared helpers live in `packages/api/src/test-utils.ts`. `createCallerFactory` binds the router once per file and runs the real middleware chain against a mock context:
+Router tests run the real middleware and Drizzle query builders. `test-utils.ts` stubs only Postgres I/O, with queued rows and captured SQL. Tests cover validation, tenant filters, result mapping and missing rows; they do not replace a live database check.
 
 ```typescript
-import { createCallerFactory, createMockContext } from "../test-utils";
+import { createRouterClient } from "@orpc/server";
+import { createMemberContext } from "../test-utils";
 import { todoRouter } from "./todo-router";
 
-const createCaller = createCallerFactory(todoRouter);
-
-const caller = createCaller(createMockContext());
+const context = createMemberContext();
+context.responses.push([]);
+const caller = createRouterClient(todoRouter, { context });
 const { todos } = await caller.list({ slug: "acme" });
 ```
 

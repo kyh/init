@@ -15,8 +15,6 @@ export const authClient = createAuthClient({
       storagePrefix: "expo",
       storage: SecureStore,
     }),
-    // Exposes useListOrganizations() — todo procedures are organization-scoped,
-    // so a screen needs an org slug before it can query.
     organizationClient({ ac, roles }),
   ],
 });

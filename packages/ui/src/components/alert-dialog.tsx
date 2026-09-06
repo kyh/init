@@ -179,20 +179,19 @@ export type AlertState = {
 type Listener = () => void;
 
 const initialAlertState: AlertState = { open: false, title: "" };
-const initialListeners: Listener[] = [];
+const listeners = new Set<Listener>();
 
 const alertDialogStore = {
   state: initialAlertState,
-  listeners: initialListeners,
   subscribe: (listener: Listener) => {
-    alertDialogStore.listeners.push(listener);
+    listeners.add(listener);
     return () => {
-      alertDialogStore.listeners = alertDialogStore.listeners.filter((l) => l !== listener);
+      listeners.delete(listener);
     };
   },
   getSnapshot: () => alertDialogStore.state,
   emitChange: () => {
-    alertDialogStore.listeners.forEach((listener) => listener());
+    listeners.forEach((listener) => listener());
   },
 };
 
@@ -207,41 +206,34 @@ export const alertDialog = {
   },
 };
 
-const runAndClose = async (
-  onClick: (() => void | Promise<void>) | undefined,
-  setPending: (value: boolean) => void,
-) => {
-  setPending(true);
-  try {
-    await onClick?.();
-  } finally {
-    setPending(false);
-    alertDialog.close();
-  }
-};
-
 export const GlobalAlertDialog = () => {
-  const [pendingAction, setPendingAction] = React.useState(false);
-  const [pendingCancel, setPendingCancel] = React.useState(false);
+  const [pending, setPending] = React.useState<"action" | "cancel" | null>(null);
   const alertState = React.useSyncExternalStore(
     alertDialogStore.subscribe,
     alertDialogStore.getSnapshot,
     alertDialogStore.getSnapshot,
   );
 
-  const onOpenChange = (open: boolean) => {
-    if (pendingAction || pendingCancel) return;
-    if (!open) {
-      void runAndClose(alertState.cancel?.onClick, setPendingCancel);
+  const run = async (action: "action" | "cancel") => {
+    if (pending) return;
+    setPending(action);
+    try {
+      await alertState[action]?.onClick?.();
+      alertDialog.close();
+    } catch {
+      // Actions report their own errors; leave the dialog open for retry.
+    } finally {
+      setPending(null);
     }
   };
 
-  const onConfirm = () => {
-    void runAndClose(alertState.action?.onClick, setPendingAction);
-  };
-
   return (
-    <AlertDialog open={alertState.open} onOpenChange={onOpenChange}>
+    <AlertDialog
+      open={alertState.open}
+      onOpenChange={(open) => {
+        if (!open) void run("cancel");
+      }}
+    >
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{alertState.title}</AlertDialogTitle>
@@ -251,12 +243,21 @@ export const GlobalAlertDialog = () => {
         )}
         <AlertDialogFooter>
           {!alertState.action?.hidden && (
-            <Button onClick={onConfirm} loading={pendingAction}>
+            <Button
+              onClick={() => void run("action")}
+              loading={pending === "action"}
+              disabled={pending !== null}
+            >
               {alertState.action?.label ?? "Confirm"}
             </Button>
           )}
           {!alertState.cancel?.hidden && (
-            <Button variant="secondary" onClick={() => onOpenChange(false)} loading={pendingCancel}>
+            <Button
+              variant="secondary"
+              onClick={() => void run("cancel")}
+              loading={pending === "cancel"}
+              disabled={pending !== null}
+            >
               {alertState.cancel?.label ?? "Close"}
             </Button>
           )}

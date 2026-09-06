@@ -3,7 +3,6 @@ import path from "node:path";
 import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from "electron";
 import type { MenuItemConstructorOptions } from "electron";
 import electronUpdater from "electron-updater";
-import { z } from "zod";
 
 import { IPC_CHANNELS, isHttpUrl, toErrorMessage } from "../types";
 import type { UpdateState } from "../types";
@@ -14,58 +13,36 @@ declare const __PACKAGED_WEBAPP_URL__: string;
 const WEBAPP_DEV_URL = "http://localhost:3000";
 const isDevelopment = !app.isPackaged;
 
-function getWebAppUrl(): string {
-  if (isDevelopment) return WEBAPP_DEV_URL;
-  return __PACKAGED_WEBAPP_URL__;
-}
+const webAppUrl = isDevelopment ? WEBAPP_DEV_URL : __PACKAGED_WEBAPP_URL__;
 
-/**
- * Origins allowed to render inside the main window, which carries the
- * desktopBridge preload. The web app itself, plus the identity providers
- * configured in packages/api/src/auth/auth.ts — better-auth's social sign-in
- * navigates the window to them and back, so denying them breaks login. Keep
- * in sync when adding a provider.
- */
+/** OAuth must navigate inside the window. Keep these origins aligned with configured auth providers. */
 const OAUTH_ORIGINS = new Set(["https://github.com"]);
 
 function isAllowedInWindow(url: string): boolean {
   try {
     const { origin } = new URL(url);
-    return origin === new URL(getWebAppUrl()).origin || OAUTH_ORIGINS.has(origin);
+    return origin === new URL(webAppUrl).origin || OAUTH_ORIGINS.has(origin);
   } catch {
     return false;
   }
 }
-/** Delay before first update check so the app finishes loading first. */
+
 const STARTUP_UPDATE_DELAY_MS = 15_000;
 const APP_DISPLAY_NAME = isDevelopment ? "Init (Dev)" : "Init";
 
 let mainWindow: BrowserWindow | null = null;
 let isQuitting = false;
 
-// ---------------------------------------------------------------------------
-// Auto-updater state
-// ---------------------------------------------------------------------------
+let updateState: UpdateState = { status: "idle" };
 
-let updateState: UpdateState = {
-  status: "idle",
-  version: null,
-  downloadPercent: null,
-  message: null,
-};
-
-function setUpdateState(patch: Partial<UpdateState>): void {
-  updateState = { ...updateState, ...patch };
+function setUpdateState(state: UpdateState): void {
+  updateState = state;
   for (const window of BrowserWindow.getAllWindows()) {
     if (!window.isDestroyed()) {
       window.webContents.send(IPC_CHANNELS.UPDATE_STATE, updateState);
     }
   }
 }
-
-// ---------------------------------------------------------------------------
-// App identity
-// ---------------------------------------------------------------------------
 
 function configureAppIdentity(): void {
   app.setName(APP_DISPLAY_NAME);
@@ -74,10 +51,6 @@ function configureAppIdentity(): void {
     applicationVersion: app.getVersion(),
   });
 }
-
-// ---------------------------------------------------------------------------
-// Application menu
-// ---------------------------------------------------------------------------
 
 function ensureWindow(): BrowserWindow {
   const existing =
@@ -143,54 +116,7 @@ function configureApplicationMenu(): void {
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
-// ---------------------------------------------------------------------------
-// IPC handlers
-// ---------------------------------------------------------------------------
-
 function registerIpcHandlers(): void {
-  ipcMain.handle(IPC_CHANNELS.PICK_FOLDER, async () => {
-    const owner = BrowserWindow.getFocusedWindow() ?? mainWindow;
-    const result = owner
-      ? await dialog.showOpenDialog(owner, {
-          properties: ["openDirectory", "createDirectory"],
-        })
-      : await dialog.showOpenDialog({
-          properties: ["openDirectory", "createDirectory"],
-        });
-    if (result.canceled) return null;
-    return result.filePaths[0] ?? null;
-  });
-
-  ipcMain.handle(IPC_CHANNELS.CONFIRM, async (_event, ...args: unknown[]) => {
-    const message = z.string().safeParse(args[0]);
-    if (!message.success) return false;
-    const owner = BrowserWindow.getFocusedWindow() ?? mainWindow;
-    const options = {
-      type: "question" as const,
-      buttons: ["No", "Yes"],
-      defaultId: 1,
-      cancelId: 0,
-      noLink: true,
-      message: message.data.trim(),
-    };
-    const result = owner
-      ? await dialog.showMessageBox(owner, options)
-      : await dialog.showMessageBox(options);
-    return result.response === 1;
-  });
-
-  ipcMain.handle(IPC_CHANNELS.OPEN_EXTERNAL, async (_event, ...args: unknown[]) => {
-    const rawUrl = z.string().safeParse(args[0]);
-    if (!rawUrl.success || !isHttpUrl(rawUrl.data)) return false;
-
-    try {
-      await shell.openExternal(rawUrl.data);
-      return true;
-    } catch {
-      return false;
-    }
-  });
-
   ipcMain.handle(IPC_CHANNELS.UPDATE_CHECK, async () => {
     await checkForUpdates();
     return updateState;
@@ -198,21 +124,21 @@ function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.UPDATE_DOWNLOAD, async () => {
     if (updateState.status !== "available") {
-      return { accepted: false, state: updateState };
+      return updateState;
     }
     try {
       setUpdateState({ status: "downloading", downloadPercent: 0 });
       await autoUpdater.downloadUpdate();
-      return { accepted: true, state: updateState };
+      return updateState;
     } catch (error: unknown) {
       setUpdateState({ status: "error", message: toErrorMessage(error) });
-      return { accepted: false, state: updateState };
+      return updateState;
     }
   });
 
-  ipcMain.handle(IPC_CHANNELS.UPDATE_INSTALL, (_event) => {
+  ipcMain.handle(IPC_CHANNELS.UPDATE_INSTALL, () => {
     if (updateState.status !== "downloaded") {
-      return { accepted: false, state: updateState };
+      return updateState;
     }
     // Defer so the IPC reply reaches the renderer before the process exits.
     setImmediate(() => {
@@ -225,22 +151,15 @@ function registerIpcHandlers(): void {
         setUpdateState({ status: "error", message: toErrorMessage(error) });
       }
     });
-    return { accepted: true, state: updateState };
+    return updateState;
   });
 }
-
-// ---------------------------------------------------------------------------
-// Auto-updater
-// ---------------------------------------------------------------------------
 
 async function checkForUpdates(): Promise<void> {
   if (isDevelopment) return;
 
-  setUpdateState({
-    status: "checking",
-    message: null,
-    downloadPercent: null,
-  });
+  if (["checking", "downloading", "downloaded"].includes(updateState.status)) return;
+  setUpdateState({ status: "checking" });
 
   try {
     await autoUpdater.checkForUpdates();
@@ -274,7 +193,6 @@ function configureAutoUpdater(): void {
     setUpdateState({
       status: "downloaded",
       version: info.version,
-      downloadPercent: 100,
     });
   });
 
@@ -284,10 +202,6 @@ function configureAutoUpdater(): void {
 
   setTimeout(() => void checkForUpdates(), STARTUP_UPDATE_DELAY_MS);
 }
-
-// ---------------------------------------------------------------------------
-// Window creation
-// ---------------------------------------------------------------------------
 
 function createWindow(): BrowserWindow {
   const window = new BrowserWindow({
@@ -301,7 +215,7 @@ function createWindow(): BrowserWindow {
     titleBarStyle: "hiddenInset",
     trafficLightPosition: { x: 16, y: 16 },
     webPreferences: {
-      preload: path.join(__dirname, "../preload/index.mjs"),
+      preload: path.join(import.meta.dirname, "../preload/index.cjs"),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
@@ -316,11 +230,7 @@ function createWindow(): BrowserWindow {
     return { action: "deny" };
   });
 
-  // setWindowOpenHandler only covers *new* windows. Without these, a link,
-  // redirect, or script navigation moves this window to an arbitrary origin
-  // that renders in trusted app chrome (the title is pinned below) and
-  // inherits window.desktopBridge. Anything not on the allow-list is handed
-  // to the system browser instead.
+  // Guard existing-window navigation too: other origins must not inherit desktopBridge.
   const guardNavigation = (event: Electron.Event, url: string) => {
     if (isAllowedInWindow(url)) return;
     event.preventDefault();
@@ -341,7 +251,7 @@ function createWindow(): BrowserWindow {
     window.show();
   });
 
-  void window.loadURL(getWebAppUrl());
+  void window.loadURL(webAppUrl);
 
   if (isDevelopment) {
     window.webContents.on("before-input-event", (_event, input) => {
@@ -360,10 +270,6 @@ function createWindow(): BrowserWindow {
   return window;
 }
 
-// ---------------------------------------------------------------------------
-// App lifecycle
-// ---------------------------------------------------------------------------
-
 app.on("before-quit", () => {
   isQuitting = true;
 });
@@ -378,7 +284,7 @@ app
 
     mainWindow = createWindow();
 
-    app.on("activate", () => {
+    return app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) {
         mainWindow = createWindow();
       } else {
@@ -386,8 +292,6 @@ app
         mainWindow?.focus();
       }
     });
-
-    return undefined;
   })
   .catch((error) => {
     console.error("[desktop] fatal startup error", error);
@@ -395,7 +299,6 @@ app
     app.quit();
   });
 
-// Handle POSIX signals for clean shutdown
 const handleSignal = () => {
   if (isQuitting) return;
   isQuitting = true;

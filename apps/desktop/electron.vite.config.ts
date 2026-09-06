@@ -1,13 +1,10 @@
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
-import { defineConfig, externalizeDepsPlugin } from "electron-vite";
+import { resolve } from "node:path";
+import { defineConfig } from "electron-vite";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
 const packagedWebAppUrl = process.env["WEBAPP_URL"] ?? "https://init.kyh.io/";
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin()],
     define: {
       __PACKAGED_WEBAPP_URL__: JSON.stringify(packagedWebAppUrl),
     },
@@ -15,18 +12,20 @@ export default defineConfig({
       outDir: ".output/app/main",
       rollupOptions: {
         input: {
-          index: resolve(__dirname, "src/main/index.ts"),
+          index: resolve(import.meta.dirname, "src/main/index.ts"),
         },
       },
     },
   },
   preload: {
-    plugins: [externalizeDepsPlugin()],
     build: {
       outDir: ".output/app/preload",
+      // Sandboxed preloads require CommonJS with third-party dependencies bundled.
+      externalizeDeps: false,
       rollupOptions: {
+        output: { format: "cjs", entryFileNames: "[name].cjs" },
         input: {
-          index: resolve(__dirname, "src/preload/index.ts"),
+          index: resolve(import.meta.dirname, "src/preload/index.ts"),
         },
       },
     },
@@ -36,7 +35,7 @@ export default defineConfig({
       outDir: ".output/app/renderer",
       rollupOptions: {
         input: {
-          index: resolve(__dirname, "src/renderer/index.html"),
+          index: resolve(import.meta.dirname, "src/renderer/index.html"),
         },
       },
     },

@@ -2,25 +2,23 @@ import { execSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { z } from "zod";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT_DIR = path.resolve(__dirname, "..");
+const ROOT_DIR = path.resolve(import.meta.dirname, "..");
 const DRY_RUN = process.argv.includes("--dry-run");
-// Non-interactive: keep all apps, skip the checkbox prompt. Explicit via --yes,
-// or implicit when stdin isn't a TTY (piped / CI / coding agent) so the raw-mode
-// prompt can't hang a headless run.
+// Non-TTY runs keep all apps so agents never enter the raw-mode prompt.
 const YES = process.argv.includes("--yes") || !process.stdin.isTTY;
 
-// ── Helpers ──────────────────────────────────────────────
-
-type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
-
 const fileExists = (p: string) => fs.existsSync(path.resolve(ROOT_DIR, p));
-const readJson = (p: string) => JSON.parse(fs.readFileSync(path.resolve(ROOT_DIR, p), "utf8"));
-const writeJson = (p: string, data: JsonValue) => {
-  if (DRY_RUN) return console.log(`  [dry-run] write ${p}`);
-  fs.writeFileSync(path.resolve(ROOT_DIR, p), JSON.stringify(data, null, 2) + "\n");
+const packageSchema = z
+  .object({
+    scripts: z.record(z.string(), z.string()).optional(),
+    dependencies: z.record(z.string(), z.string()).optional(),
+  })
+  .catchall(z.json());
+const readPackage = (p: string) => packageSchema.parse(JSON.parse(readText(p)));
+const writeJson = (p: string, data: z.JSONType) => {
+  writeText(p, JSON.stringify(data, null, 2) + "\n");
 };
 const readText = (p: string) => fs.readFileSync(path.resolve(ROOT_DIR, p), "utf8");
 const writeText = (p: string, data: string) => {
@@ -29,11 +27,8 @@ const writeText = (p: string, data: string) => {
 };
 const rmDir = (p: string) => {
   if (DRY_RUN) return console.log(`  [dry-run] rm -rf ${p}`);
-  const full = path.resolve(ROOT_DIR, p);
-  if (fs.existsSync(full)) fs.rmSync(full, { recursive: true, force: true });
+  fs.rmSync(path.resolve(ROOT_DIR, p), { recursive: true, force: true });
 };
-
-// ── Checkbox prompt ──────────────────────────────────────
 
 const CYAN = "\x1b[36m";
 const DIM = "\x1b[2m";
@@ -60,10 +55,9 @@ function checkbox(message: string, items: CheckboxItem[]): Promise<boolean[]> {
 
     const render = () => {
       stdout.write(HIDE_CURSOR);
-      for (let i = 0; i < items.length; i++) {
+      for (const [i, item] of items.entries()) {
         stdout.write(CLEAR_LINE);
         const isActive = i === cursor;
-        const item = items[i];
         const checkbox = item.checked ? `${GREEN}◼${RESET}` : `${DIM}◻${RESET}`;
         const label = isActive ? `${CYAN}${BOLD}${item.label}${RESET}` : item.label;
         const pointer = isActive ? `${CYAN}❯${RESET}` : " ";
@@ -81,6 +75,7 @@ function checkbox(message: string, items: CheckboxItem[]): Promise<boolean[]> {
     const onKey = (key: string) => {
       // ctrl+c
       if (key === "\x03") {
+        stdin.setRawMode(false);
         stdout.write(SHOW_CURSOR);
         process.exit(0);
       }
@@ -101,7 +96,8 @@ function checkbox(message: string, items: CheckboxItem[]): Promise<boolean[]> {
 
       // Space – toggle
       if (key === " ") {
-        items[cursor].checked = !items[cursor].checked;
+        const item = items[cursor];
+        if (item) item.checked = !item.checked;
         render();
         return;
       }
@@ -130,13 +126,11 @@ function checkbox(message: string, items: CheckboxItem[]): Promise<boolean[]> {
   });
 }
 
-// ── App definitions ──────────────────────────────────────
-
 interface App {
   name: string;
   dir: string;
   devScript: string;
-  remove: () => void;
+  cleanup?: () => void;
 }
 
 const apps: App[] = [
@@ -144,54 +138,39 @@ const apps: App[] = [
     name: "Web (Next.js)",
     dir: "apps/web",
     devScript: "dev:web",
-    remove: removeWeb,
   },
   {
     name: "Mobile (Expo/React Native)",
     dir: "apps/mobile",
     devScript: "dev:mobile",
-    remove: removeMobile,
+    cleanup: removeMobile,
   },
   {
     name: "Extension (Chrome/WXT)",
     dir: "apps/extension",
     devScript: "dev:extension",
-    remove: removeExtension,
+    cleanup: removeExtension,
   },
   {
     name: "Desktop (Electron)",
     dir: "apps/desktop",
     devScript: "dev:desktop",
-    remove: removeDesktop,
+    cleanup: removeDesktop,
   },
 ];
 
-// ── Removal functions ────────────────────────────────────
-
-function removeWeb() {
-  rmDir("apps/web");
-
-  const pkg = readJson("package.json");
-  delete pkg.scripts["dev:web"];
-  writeJson("package.json", pkg);
-}
-
 function removeMobile() {
-  rmDir("apps/mobile");
-
-  const pkg = readJson("package.json");
-  delete pkg.scripts["dev:mobile"];
-  delete pkg.pnpm?.overrides?.["@expo/dom-webview"];
-  writeJson("package.json", pkg);
-
   if (fileExists("pnpm-workspace.yaml")) {
     let ws = readText("pnpm-workspace.yaml");
-    ws = ws.replace(/\s*"@better-auth\/expo":[^\n]*\n/g, "\n");
+    ws = ws.replace(/^  "@better-auth\/expo":[^\n]*\n/gm, "");
+    ws = ws.replace(/^  "@expo\/dom-webview":[^\n]*\n/gm, "");
+    ws = ws.replace(/^  expo:\n(?:    [^\n]*\n)+/m, "");
+    ws = ws.replace(/^catalogs:\n(?:[ \t]*#[^\n]*\n|\n)*(?=\S|$)/m, "");
     writeText("pnpm-workspace.yaml", ws);
   }
 
   if (fileExists("packages/api/package.json")) {
-    const apiPkg = readJson("packages/api/package.json");
+    const apiPkg = readPackage("packages/api/package.json");
     delete apiPkg.dependencies?.["@better-auth/expo"];
     writeJson("packages/api/package.json", apiPkg);
   }
@@ -201,7 +180,7 @@ function removeMobile() {
     let auth = readText(authPath);
     auth = auth.replace(/import \{ expo \} from "@better-auth\/expo";\n/, "");
     auth = auth.replace(/\s*expo\(\),\n/, "\n");
-    auth = auth.replace(/\s*trustedOrigins: \["expo:\/\/"\],\n/, "\n");
+    auth = auth.replace(/, "expo:\/\/"/, "");
     writeText(authPath, auth);
   }
 
@@ -212,19 +191,16 @@ function removeMobile() {
   }
 
   if (fileExists(".vscode/extensions.json")) {
-    const ext = readJson(".vscode/extensions.json");
-    ext.recommendations = ext.recommendations.filter((r: string) => r !== "expo.vscode-expo-tools");
+    const ext = z
+      .object({ recommendations: z.array(z.string()) })
+      .catchall(z.json())
+      .parse(JSON.parse(readText(".vscode/extensions.json")));
+    ext.recommendations = ext.recommendations.filter((r) => r !== "expo.vscode-expo-tools");
     writeJson(".vscode/extensions.json", ext);
   }
 }
 
 function removeExtension() {
-  rmDir("apps/extension");
-
-  const pkg = readJson("package.json");
-  delete pkg.scripts["dev:extension"];
-  writeJson("package.json", pkg);
-
   if (fileExists(".gitignore")) {
     let gi = readText(".gitignore");
     gi = gi.replace(/\n# wxt\n\.wxt\/\n/, "\n");
@@ -233,19 +209,14 @@ function removeExtension() {
 }
 
 function removeDesktop() {
-  rmDir("apps/desktop");
-
-  const pkg = readJson("package.json");
-  delete pkg.scripts["dev:desktop"];
-  if (pkg.pnpm?.onlyBuiltDependencies) {
-    pkg.pnpm.onlyBuiltDependencies = pkg.pnpm.onlyBuiltDependencies.filter(
-      (d: string) => d !== "electron" && d !== "electron-winstaller",
+  if (fileExists("pnpm-workspace.yaml")) {
+    const workspace = readText("pnpm-workspace.yaml").replace(
+      /^  electron(?:-winstaller)?: true\n/gm,
+      "",
     );
+    writeText("pnpm-workspace.yaml", workspace);
   }
-  writeJson("package.json", pkg);
 }
-
-// ── Dependency checks ────────────────────────────────────
 
 function exec(cmd: string, opts?: { stdio?: "inherit" | "ignore" | "pipe" }): Buffer {
   if (DRY_RUN) {
@@ -273,17 +244,15 @@ function checkDocker() {
   console.log("  ✓ Docker found");
 }
 
-// ── Supabase + env setup ─────────────────────────────────
-
 function startSupabase() {
   console.log("\nStarting Supabase...");
   const output = exec("pnpm -F db supabase start", { stdio: "pipe" }).toString();
 
   const values: Record<string, string> = {};
   for (const line of output.split("\n")) {
-    const match = line.match(/^\s*(.+?):\s+(.+)$/);
-    if (match) {
-      values[match[1].trim()] = match[2].trim();
+    const [, key, value] = line.match(/^\s*(.+?):\s+(.+)$/) ?? [];
+    if (key && value) {
+      values[key.trim()] = value.trim();
     }
   }
   console.log("  ✓ Supabase started");
@@ -320,10 +289,7 @@ function createEnv(supabaseValues: Record<string, string>) {
   console.log("  ✓ .env created with Supabase credentials");
 }
 
-// Supabase namespaces local Docker volumes by project_id — its own convention is
-// the working-directory name. The template ships "init", so without this every
-// project cloned from it would share one local volume and leak schema between
-// them. Personalize it to this repo's folder before Supabase starts.
+// Namespace Supabase volumes per checkout folder to isolate cloned projects.
 function ensureProjectId() {
   const configPath = "packages/db/supabase/config.toml";
   if (!fileExists(configPath)) return;
@@ -365,9 +331,6 @@ function runSeed() {
   console.log("  ✓ Seeded dev user + sample data");
 }
 
-// Agents drive the web app end-to-end with agent-browser and exercise the OAuth
-// button offline with emulate. Neither is a repo dependency: agent-browser is a
-// global CLI (detected here, never auto-installed) and emulate runs via npx.
 function checkAgentTooling() {
   console.log("\nAgent tooling...");
   if (commandExists("agent-browser")) {
@@ -383,12 +346,9 @@ function checkAgentTooling() {
   }
 }
 
-// ── Main ─────────────────────────────────────────────────
-
 async function main() {
   console.log("\n  Welcome to init setup!\n");
 
-  // ── Step 1: Select apps ──
   const available = apps.filter((app) => fileExists(app.dir));
 
   if (available.length === 0) {
@@ -417,30 +377,29 @@ async function main() {
   } else {
     for (const app of toRemove) {
       console.log(`  Removing ${app.name}...`);
-      app.remove();
+      rmDir(app.dir);
+      const pkg = readPackage("package.json");
+      delete pkg.scripts?.[app.devScript];
+      writeJson("package.json", pkg);
+      app.cleanup?.();
     }
 
     console.log("\nReinstalling dependencies...");
     exec("pnpm install", { stdio: "inherit" });
   }
 
-  // ── Step 2: Check dependencies ──
   console.log("\nChecking dependencies...");
   checkDocker();
   ensureProjectId();
 
-  // ── Step 3: Start Supabase + create .env ──
   const supabaseValues = startSupabase();
   console.log("\nConfiguring environment...");
   createEnv(supabaseValues);
 
-  // ── Step 4: Push database schema ──
   pushSchema();
 
-  // ── Step 5: Seed dev data ──
   runSeed();
 
-  // ── Step 6: Agent tooling ──
   checkAgentTooling();
 
   console.log(`\n  ${GREEN}Setup complete!${RESET}\n`);

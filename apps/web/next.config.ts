@@ -3,7 +3,6 @@ import { createMDX } from "fumadocs-mdx/next";
 
 type ImageConfig = NonNullable<NextConfig["images"]>;
 type RemotePatterns = NonNullable<ImageConfig["remotePatterns"]>;
-type LocalPatterns = NonNullable<ImageConfig["localPatterns"]>;
 
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -35,24 +34,16 @@ const getRemotePatterns = (): RemotePatterns => {
   return remotePatterns;
 };
 
-const getLocalPatterns = (): LocalPatterns => [
-  {
-    pathname: "/assets/**",
-  },
-];
-
-const transpilePackages = ["@repo/api", "@repo/db", "@repo/ui"];
-
 const withMDX = createMDX();
 
 const config: NextConfig = {
   /** next dev rewrites AGENTS.md/CLAUDE.md when it detects an agent; we own those files */
   agentRules: false,
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
-  transpilePackages,
+  transpilePackages: ["@repo/api", "@repo/db", "@repo/ui"],
   images: {
     remotePatterns: getRemotePatterns(),
-    localPatterns: getLocalPatterns(),
+    localPatterns: [{ pathname: "/assets/**" }],
   },
   /** We already do linting and typechecking as separate tasks in CI */
   typescript: { ignoreBuildErrors: true },

@@ -4,14 +4,14 @@ The AI-native boilerplate to build, launch, and scale your next project 🚀
 
 One TypeScript codebase that ships to web, mobile, browser extension, and desktop — built to supercharge your dev workflow, and your coding agents':
 
-1. **A stack AI already knows** — Tailwind, shadcn/ui, Drizzle, Postgres, Vitest, pnpm, Stripe: the tools [Claude Code picks on its own](https://amplifying.ai/research/claude-code-picks), so agents complete them correctly instead of hallucinating APIs (we use Node's built-in test runner in place of Vitest)
+1. **A stack AI already knows** — Tailwind, shadcn/ui, Drizzle, Postgres, pnpm, Stripe: the tools [Claude Code picks on its own](https://amplifying.ai/research/claude-code-picks), so agents complete them correctly instead of hallucinating APIs (we use Node's built-in test runner in place of Vitest)
 2. **Idiomatic implementations** — auth, orgs, and billing built the way each library's docs say to; agents extend patterns that match their training
 3. **Agent rules and surfaces built in** — `CLAUDE.md` conventions, `llms.txt`, markdown content negotiation on every docs page, an API catalog, and an `@claude` GitHub action
 4. **Self-updating documentation** — a scheduled [OpenWiki](https://github.com/langchain-ai/openwiki) workflow regenerates the agent wiki + `AGENTS.md` from the code and opens the diff as a PR
 
 ## Getting Started
 
-**Prerequisites**: [Node.js 24+](https://nodejs.org), [pnpm 10+](https://pnpm.io), [Docker](https://docs.docker.com/get-docker/)
+**Prerequisites**: [Node.js 24](https://nodejs.org), [pnpm 12](https://pnpm.io), [Docker](https://docs.docker.com/get-docker/)
 
 ```sh
 pnpm install

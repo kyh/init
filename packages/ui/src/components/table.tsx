@@ -96,13 +96,7 @@ function TableCaption({ className, ...props }: React.ComponentProps<"caption">) 
 
 export { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption };
 
-/**
- * The feature set every AutoTable is built on. Features are opt-in, and
- * AutoTable's markup reads `row.getVisibleCells()` and `row.getIsSelected()`,
- * which column visibility and row selection provide. Build tables with
- * `useTable({ features: autoTableFeatures, ... })` so the instance carries the
- * APIs AutoTable renders with.
- */
+/** Build AutoTable instances with these features: rendering uses visible cells and selection state. */
 export const autoTableFeatures = tableFeatures({
   columnVisibilityFeature,
   rowSelectionFeature,

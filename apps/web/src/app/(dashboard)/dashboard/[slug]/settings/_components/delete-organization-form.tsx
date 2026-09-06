@@ -20,7 +20,7 @@ import { z } from "zod";
 import type { RouterOutputs } from "@repo/api";
 import { authClient } from "@/lib/auth-client";
 import { useAppForm } from "@/lib/form";
-import { hasPermission } from "@/app/(dashboard)/dashboard/[slug]/_components/role";
+import { hasPermission } from "@repo/api/auth/permissions";
 import { useOrganization } from "@/app/(dashboard)/dashboard/[slug]/_components/use-organization";
 
 type Organization = RouterOutputs["organization"]["get"]["organization"];
@@ -51,7 +51,7 @@ type DeleteProps = {
 };
 
 const Delete = ({ organization }: DeleteProps) => {
-  const { mutateAsync: deleteOrganization, isPending } = useDeleteOrganization(organization.id);
+  const { mutate: deleteOrganization, isPending } = useDeleteOrganization(organization.id);
 
   const form = useAppForm({
     defaultValues: {
@@ -64,9 +64,7 @@ const Delete = ({ organization }: DeleteProps) => {
         }),
       }),
     },
-    onSubmit: async () => {
-      await deleteOrganization();
-    },
+    onSubmit: () => deleteOrganization(),
   });
 
   return (
@@ -121,7 +119,6 @@ const Delete = ({ organization }: DeleteProps) => {
                       required
                       type="text"
                       autoComplete="off"
-                      pattern={organization.name}
                     />
                   )}
                 </form.AppField>
@@ -145,7 +142,7 @@ type LeaveProps = {
 };
 
 const Leave = ({ organization }: LeaveProps) => {
-  const { mutateAsync: leaveOrganization, isPending } = useLeaveOrganization(organization.id);
+  const { mutate: leaveOrganization, isPending } = useLeaveOrganization(organization.id);
 
   const form = useAppForm({
     defaultValues: {
@@ -158,9 +155,7 @@ const Leave = ({ organization }: LeaveProps) => {
         }),
       }),
     },
-    onSubmit: async () => {
-      await leaveOrganization();
-    },
+    onSubmit: () => leaveOrganization(),
   });
 
   return (
@@ -225,11 +220,11 @@ const useDeleteOrganization = (organizationId: string) => {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: async () => {
-      await authClient.organization.delete({
+    mutationFn: () =>
+      authClient.organization.delete({
         organizationId,
-      });
-    },
+        fetchOptions: { throw: true },
+      }),
     onSuccess: () => {
       toast.success("Organization successfully deleted");
       router.replace("/dashboard");
@@ -244,11 +239,11 @@ const useLeaveOrganization = (organizationId: string) => {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: async () => {
-      await authClient.organization.leave({
+    mutationFn: () =>
+      authClient.organization.leave({
         organizationId,
-      });
-    },
+        fetchOptions: { throw: true },
+      }),
     onSuccess: () => {
       toast.success("Organization successfully left");
       router.replace("/dashboard");

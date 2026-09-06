@@ -22,11 +22,7 @@ type SelectFieldProps = {
   itemClassName?: string;
 };
 
-/**
- * Bound select. `<Select>` has no native onBlur, so the change handler marks the
- * field touched itself — matching how it's wired by hand today. Options come from
- * the field's own value set, so a change is always valid.
- */
+/** Select has no native blur event; changing its value also marks the field touched. */
 export function SelectField({
   label,
   options,

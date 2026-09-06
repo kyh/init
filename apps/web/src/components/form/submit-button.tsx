@@ -4,11 +4,7 @@ import { Button } from "@repo/ui/components/button";
 
 import { useFormContext } from "@/lib/form-context";
 
-/**
- * Submit button bound to the form's `isSubmitting`. Requires the form body to be
- * wrapped in `<form.AppForm>`. Any Button prop passes through, so callers keep
- * control of label, icons, and layout.
- */
+/** Requires a surrounding <form.AppForm>. */
 export function SubmitButton({
   children,
   ...props

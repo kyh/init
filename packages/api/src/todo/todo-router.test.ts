@@ -1,165 +1,116 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
+import { createRouterClient } from "@orpc/server";
+import { todo } from "@repo/db/drizzle-schema";
 
-import {
-  createCallerFactory,
-  createMockChain,
-  createMockContext,
-  createMockDb,
-} from "../test-utils";
+import { createMemberContext, databaseRows } from "../test-utils";
 import { todoRouter } from "./todo-router";
 
-const createCaller = createCallerFactory(todoRouter);
+const TODO = {
+  id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+  organizationId: "org-1",
+  title: "First",
+  description: null,
+  completed: false,
+  createdAt: new Date("2024-01-01"),
+  updatedAt: new Date("2024-01-01"),
+} satisfies typeof todo.$inferSelect;
 
-const ORG = { id: "org-1", name: "Acme", slug: "acme", createdAt: new Date(), metadata: null };
-const MEMBERSHIP = { id: "mem-1", organizationId: "org-1", userId: "user-1", role: "owner" };
-const TODO_ID = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11";
+describe("todoRouter", () => {
+  test("lists only the resolved organization's todos, newest first", async () => {
+    const context = createMemberContext();
+    context.responses.push(databaseRows(todo, TODO));
+    const caller = createRouterClient(todoRouter, { context });
 
-function authedContext(dbOverrides?: Partial<ReturnType<typeof createMockDb>>) {
-  const ctx = createMockContext();
-  ctx.db.query.organization.findFirst.mock.mockImplementation(() => Promise.resolve(ORG));
-  ctx.db.query.member.findFirst.mock.mockImplementation(() => Promise.resolve(MEMBERSHIP));
-  if (dbOverrides) Object.assign(ctx.db, dbOverrides);
-  return ctx;
-}
-
-describe("todoRouter.list", () => {
-  test("returns todos for an organization the user belongs to", async () => {
-    const ctx = authedContext();
-    const todos = [
-      { id: "t1", title: "First", completed: false, organizationId: "org-1" },
-      { id: "t2", title: "Second", completed: true, organizationId: "org-1" },
-    ];
-    ctx.db.query.todo.findMany.mock.mockImplementation(() => Promise.resolve(todos));
-
-    const caller = createCaller(ctx);
-    const result = await caller.list({ slug: "acme" });
-
-    assert.deepEqual(result.todos, todos);
-    assert.strictEqual(ctx.db.query.todo.findMany.mock.callCount(), 1);
-  });
-
-  test("returns empty array when org has no todos", async () => {
-    const ctx = authedContext();
-    ctx.db.query.todo.findMany.mock.mockImplementation(() => Promise.resolve([]));
-
-    const caller = createCaller(ctx);
-    const result = await caller.list({ slug: "acme" });
-
-    assert.deepEqual(result.todos, []);
-  });
-
-  test("throws NOT_FOUND when organization does not exist", async () => {
-    const ctx = createMockContext();
-    ctx.db.query.organization.findFirst.mock.mockImplementation(() => Promise.resolve(undefined));
-
-    const caller = createCaller(ctx);
-    await assert.rejects(caller.list({ slug: "nonexistent" }), /Organization not found/);
-  });
-
-  test("throws UNAUTHORIZED when user is not a member", async () => {
-    const ctx = createMockContext();
-    ctx.db.query.organization.findFirst.mock.mockImplementation(() => Promise.resolve(ORG));
-    ctx.db.query.member.findFirst.mock.mockImplementation(() => Promise.resolve(undefined));
-
-    const caller = createCaller(ctx);
-    await assert.rejects(
-      caller.list({ slug: "acme" }),
-      /You do not have access to this organization/,
+    assert.deepEqual(await caller.list({ slug: "acme" }), { todos: [TODO] });
+    const query = context.query.mock.calls[2];
+    assert.ok(query);
+    assert.match(
+      query.arguments[0],
+      /where "todo"\."organization_id" = \$1 order by "todo"\."created_at" desc/,
     );
+    assert.deepEqual(query.arguments[1], ["org-1"]);
   });
 
-  test("throws UNAUTHORIZED when not logged in", async () => {
-    const ctx = createMockContext({ session: null });
-    const caller = createCaller(ctx);
-    await assert.rejects(caller.list({ slug: "acme" }), /You must be logged in/);
-  });
-});
+  test("creates a trimmed todo in the resolved organization", async () => {
+    const context = createMemberContext();
+    context.responses.push(databaseRows(todo, TODO));
+    const caller = createRouterClient(todoRouter, { context });
 
-describe("todoRouter.create", () => {
-  test("inserts a todo and returns it", async () => {
-    const ctx = authedContext();
-    const created = { id: TODO_ID, title: "New todo", completed: false, organizationId: "org-1" };
-    const chain = createMockChain([created]);
-    ctx.db.insert.mock.mockImplementation(() => chain);
-
-    const caller = createCaller(ctx);
-    const result = await caller.create({ slug: "acme", title: "New todo" });
-
-    assert.deepEqual(result.todo, created);
-    assert.strictEqual(ctx.db.insert.mock.callCount(), 1);
-    assert.deepEqual(chain.values.mock.calls[0]?.arguments, [
-      { organizationId: "org-1", title: "New todo" },
-    ]);
+    assert.deepEqual(await caller.create({ slug: "acme", title: " First " }), { todo: TODO });
+    assert.deepEqual(context.query.mock.calls[2]?.arguments[1], ["org-1", "First"]);
   });
 
-  test("rejects empty title", async () => {
-    const ctx = authedContext();
-    const caller = createCaller(ctx);
-    await assert.rejects(caller.create({ slug: "acme", title: "" }));
-  });
-});
+  test("rejects a blank title before querying", async () => {
+    const context = createMemberContext();
+    const caller = createRouterClient(todoRouter, { context });
 
-describe("todoRouter.update", () => {
-  test("updates title", async () => {
-    const ctx = authedContext();
-    const updated = { id: TODO_ID, title: "Updated", completed: false, organizationId: "org-1" };
-    const chain = createMockChain([updated]);
-    ctx.db.update.mock.mockImplementation(() => chain);
-
-    const caller = createCaller(ctx);
-    const result = await caller.update({ slug: "acme", id: TODO_ID, title: "Updated" });
-
-    assert.deepEqual(result.todo, updated);
-    assert.partialDeepStrictEqual(chain.set.mock.calls[0]?.arguments[0], { title: "Updated" });
+    await assert.rejects(caller.create({ slug: "acme", title: "  " }), { code: "BAD_REQUEST" });
+    assert.equal(context.query.mock.callCount(), 0);
   });
 
-  test("updates completed status", async () => {
-    const ctx = authedContext();
-    const updated = { id: TODO_ID, title: "Task", completed: true, organizationId: "org-1" };
-    const chain = createMockChain([updated]);
-    ctx.db.update.mock.mockImplementation(() => chain);
+  test("updates a title without overwriting completed, scoped by todo and organization", async () => {
+    const context = createMemberContext();
+    context.responses.push(databaseRows(todo, { ...TODO, title: "Updated" }));
+    const caller = createRouterClient(todoRouter, { context });
 
-    const caller = createCaller(ctx);
-    const result = await caller.update({ slug: "acme", id: TODO_ID, completed: true });
-
-    assert.strictEqual(result.todo?.completed, true);
-    assert.partialDeepStrictEqual(chain.set.mock.calls[0]?.arguments[0], { completed: true });
-  });
-
-  test("throws NOT_FOUND when todo does not exist", async () => {
-    const ctx = authedContext();
-    const chain = createMockChain();
-    ctx.db.update.mock.mockImplementation(() => chain);
-
-    const caller = createCaller(ctx);
-    await assert.rejects(
-      caller.update({ slug: "acme", id: TODO_ID, title: "Nope" }),
-      /Todo not found/,
+    const result = await caller.update({ slug: "acme", id: TODO.id, title: "Updated" });
+    assert.equal(result.todo.title, "Updated");
+    const query = context.query.mock.calls[2];
+    assert.ok(query);
+    assert.match(
+      query.arguments[0],
+      /set "title" = \$1, "updated_at" = \$2 where \("todo"\."id" = \$3 and "todo"\."organization_id" = \$4\)/,
     );
-  });
-});
-
-describe("todoRouter.delete", () => {
-  test("deletes a todo and returns it", async () => {
-    const ctx = authedContext();
-    const deleted = { id: TODO_ID, title: "Gone", completed: false, organizationId: "org-1" };
-    const chain = createMockChain([deleted]);
-    ctx.db.delete.mock.mockImplementation(() => chain);
-
-    const caller = createCaller(ctx);
-    const result = await caller.delete({ slug: "acme", id: TODO_ID });
-
-    assert.deepEqual(result.todo, deleted);
-    assert.strictEqual(ctx.db.delete.mock.callCount(), 1);
+    assert.equal(query.arguments[1][0], "Updated");
+    assert.deepEqual(query.arguments[1].slice(2), [TODO.id, "org-1"]);
   });
 
-  test("throws NOT_FOUND when todo does not exist", async () => {
-    const ctx = authedContext();
-    const chain = createMockChain();
-    ctx.db.delete.mock.mockImplementation(() => chain);
+  test("updates completed without overwriting the title", async () => {
+    const context = createMemberContext();
+    context.responses.push(databaseRows(todo, { ...TODO, completed: true }));
+    const caller = createRouterClient(todoRouter, { context });
 
-    const caller = createCaller(ctx);
-    await assert.rejects(caller.delete({ slug: "acme", id: TODO_ID }), /Todo not found/);
+    const result = await caller.update({ slug: "acme", id: TODO.id, completed: true });
+    assert.equal(result.todo.completed, true);
+    const query = context.query.mock.calls[2];
+    assert.ok(query);
+    assert.match(query.arguments[0], /set "completed" = \$1, "updated_at" = \$2/);
+    assert.equal(query.arguments[1][0], true);
+  });
+
+  test("rejects an empty update before querying", async () => {
+    const context = createMemberContext();
+    const caller = createRouterClient(todoRouter, { context });
+
+    await assert.rejects(caller.update({ slug: "acme", id: TODO.id }), { code: "BAD_REQUEST" });
+    assert.equal(context.query.mock.callCount(), 0);
+  });
+
+  test("deletes only a todo in the resolved organization", async () => {
+    const context = createMemberContext();
+    context.responses.push(databaseRows(todo, TODO));
+    const caller = createRouterClient(todoRouter, { context });
+
+    assert.deepEqual(await caller.delete({ slug: "acme", id: TODO.id }), { todo: TODO });
+    const query = context.query.mock.calls[2];
+    assert.ok(query);
+    assert.match(
+      query.arguments[0],
+      /where \("todo"\."id" = \$1 and "todo"\."organization_id" = \$2\)/,
+    );
+    assert.deepEqual(query.arguments[1], [TODO.id, "org-1"]);
+  });
+
+  test("reports NOT_FOUND when update or delete matches no tenant-owned todo", async () => {
+    const operations: Array<"update" | "delete"> = ["update", "delete"];
+    for (const operation of operations) {
+      const context = createMemberContext();
+      context.responses.push([]);
+      const caller = createRouterClient(todoRouter, { context });
+      await assert.rejects(caller[operation]({ slug: "acme", id: TODO.id, title: "Missing" }), {
+        code: "NOT_FOUND",
+      });
+    }
   });
 });
