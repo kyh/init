@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { buttonVariants } from "@repo/ui/components/button";
-import { cn } from "@repo/ui/lib/utils";
+import { cn } from "cn";
 
 import { authClient } from "@/lib/auth-client";
 

@@ -85,7 +85,6 @@ packages/ui/
   src/
     components/   # primitives + custom shared components (flat)
     hooks/
-    lib/utils.ts  # cn()
     styles/globals.css
   components.json # style: base-vega
   postcss.config.mjs
@@ -94,6 +93,7 @@ packages/ui/
 Apps import via explicit paths:
 
 - `@repo/ui/components/<name>` — shared components
-- `@repo/ui/lib/utils` — cn
 - `@repo/ui/globals.css` — base stylesheet
 - `@repo/ui/postcss.config` — shared postcss
+
+`cn` is imported straight from the `cn` package; `@repo/ui` does not re-export it.

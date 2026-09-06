@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { cn } from "@repo/ui/lib/utils";
+import { cn } from "cn";
 
 import { useIsHydrated } from "@/lib/use-is-hydrated";
 

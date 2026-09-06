@@ -29,7 +29,7 @@ import {
 import { FieldGroup } from "@repo/ui/components/field";
 import { Logo } from "@repo/ui/components/logo";
 import { toast } from "@repo/ui/components/sonner";
-import { cn } from "@repo/ui/lib/utils";
+import { cn } from "cn";
 import {
   CheckIcon,
   CheckSquareIcon,
