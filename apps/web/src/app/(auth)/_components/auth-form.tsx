@@ -13,9 +13,6 @@ import { useAppForm } from "@/lib/form";
 
 type AuthFormProps = {
   type: "login" | "register";
-  // Resolved server-side (see next-path.ts) and passed in, so the form has no
-  // useSearchParams hook and renders in a single pass — no Suspense boundary,
-  // no hydration gap where the GitHub button flickers out of the DOM.
   nextPath: string;
 } & React.HTMLAttributes<HTMLDivElement>;
 
@@ -163,6 +160,7 @@ export const AuthForm = ({ className, type, nextPath, ...props }: AuthFormProps)
 };
 
 export const RequestPasswordResetForm = () => {
+  const [sent, setSent] = useState(false);
   const form = useAppForm({
     defaultValues: {
       email: "",
@@ -178,6 +176,7 @@ export const RequestPasswordResetForm = () => {
         redirectTo: "/auth/password-update",
         fetchOptions: {
           onSuccess: () => {
+            setSent(true);
             toast.success("Password reset email sent successfully!");
           },
           onError: (ctx) => {
@@ -188,7 +187,7 @@ export const RequestPasswordResetForm = () => {
     },
   });
 
-  if (form.state.isSubmitSuccessful) {
+  if (sent) {
     return (
       <div className="space-y-4 text-center">
         <div className="rounded-md bg-green-50 p-4 dark:bg-green-900/20">

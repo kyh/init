@@ -12,11 +12,10 @@ import Stripe from "stripe";
 
 import { sendEmail } from "../email/send-email";
 import { env } from "../env";
-import { ac, roles, roleSchema } from "./permissions";
+import { ac, roles, hasPermission } from "./permissions";
 import { FALLBACK_ORGANIZATION_SLUG, isSlugCollision, slugify } from "./utils";
 
-// No network call until first use, so the env placeholder key keeps local dev
-// working without Stripe configured (checkout/portal will fail, list won't)
+// The placeholder constructs offline; checkout requires a configured key.
 const stripeClient = new Stripe(env.STRIPE_SECRET_KEY);
 
 export const baseUrl =
@@ -24,17 +23,12 @@ export const baseUrl =
     ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
     : process.env.VERCEL_ENV === "preview"
       ? `https://${process.env.VERCEL_URL}`
-      : "http://localhost:3000";
+      : `http://localhost:${process.env.PORT ?? 3000}`;
 
-// Origins allowed to drive authenticated requests. The web app, the tab the
-// extension popup opens, and the desktop shell all run same-origin as baseUrl;
-// React Native uses the expo:// scheme. Consumed by better-auth's own Origin
-// checks; the RPC endpoint runs its own origin check on top of the session
-// cookie's SameSite (see apps/web/src/app/api/orpc/[[...rest]]/route.ts).
+// Web, desktop and extension are same-origin; React Native uses expo://.
 const trustedOrigins = [baseUrl, "expo://"];
 
-// Set (to the local `emulate` server URL) in dev to exercise GitHub OAuth offline;
-// drives the dev-only genericOAuth provider in `plugins` below. Unset in production.
+// Local GitHub OAuth emulator; leave unset in production.
 const emulatorUrl = process.env.NEXT_PUBLIC_GITHUB_EMULATOR_URL;
 
 export const auth = betterAuth({
@@ -75,26 +69,16 @@ export const auth = betterAuth({
             priceId: env.STRIPE_PRO_PRICE_ID,
           },
         ],
-        // Subscriptions are org-scoped (referenceId = organization id);
-        // only roles with the "billing" permission may manage the org's
-        // billing (owner/admin today — see packages/api/src/auth/permissions.ts)
         authorizeReference: async ({ user, referenceId }) => {
           const membership = await db.query.member.findFirst({
             where: (member, { and, eq }) =>
               and(eq(member.organizationId, referenceId), eq(member.userId, user.id)),
           });
-          const role = roleSchema.safeParse(membership?.role);
-          return role.success && roles[role.data].authorize({ billing: ["manage"] }).success;
+          return hasPermission(membership?.role, { billing: ["manage"] });
         },
       },
     }),
-    // Dev-only: route GitHub OAuth to the local `emulate` server so the shipped
-    // "Continue with GitHub" button works offline (agents and tests included);
-    // production uses the real socialProviders.github below. The built-in github
-    // provider has hardcoded endpoints, so the emulated flow rides on genericOAuth,
-    // which registers as a social provider shadowing the built-in one — clients keep
-    // calling signIn.social either way. Creds are local fixtures matching
-    // emulate.config.yaml, not secrets.
+    // The built-in GitHub provider hardcodes endpoints; genericOAuth supplies local emulator URLs.
     ...(emulatorUrl
       ? [
           genericOAuth({
@@ -115,8 +99,6 @@ export const auth = betterAuth({
   ],
   emailAndPassword: {
     enabled: true,
-    // Uncomment to block email/password login until the address is verified
-    // requireEmailVerification: true,
     sendResetPassword: async ({ user, url }) => {
       await sendEmail({
         to: user.email,
@@ -143,10 +125,7 @@ export const auth = betterAuth({
     },
   },
   trustedOrigins,
-  // Persist rate-limit counters in Postgres. The default in-memory store keeps
-  // per-instance counters, so on serverless (Vercel) the effective limit
-  // multiplies across cold-started instances and resets on every deploy. 10
-  // requests/60s per IP throttles credential-stuffing against the auth routes.
+  // Database counters survive serverless instance churn.
   rateLimit: {
     enabled: true,
     storage: "database",
@@ -155,15 +134,7 @@ export const auth = betterAuth({
   },
   advanced: {
     defaultCookieAttributes: {
-      // Every surface authenticates first-party, so the session never has to
-      // survive a third-party context: the web app is same-origin, the desktop
-      // shell top-level-navigates to it, the extension popup opens it in a tab,
-      // and React Native attaches the cookie itself. This is also the RPC
-      // endpoint's cross-*site* defense — a forged cross-site POST arrives with
-      // no session and does nothing. It stops there: SameSite keys on site, so
-      // a same-site cross-origin POST still gets the cookie, and the origin
-      // check on the RPC route covers that. Loosening this to "none" re-opens
-      // CSRF for the whole app, not just the surface that asked for it.
+      // RPC relies on SameSite plus its Origin check for CSRF protection.
       sameSite: "lax",
       secure: true,
     },
@@ -171,16 +142,12 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
-        after: async (user) => {
-          await createDefaultOrganization(user);
-        },
+        after: (user) => createDefaultOrganization(user),
       },
     },
     session: {
       create: {
-        before: async (session) => {
-          return await setActiveOrganization(session);
-        },
+        before: (session) => setActiveOrganization(session),
       },
     },
   },
@@ -189,7 +156,6 @@ export const auth = betterAuth({
 export type Auth = typeof auth;
 export type Session = Auth["$Infer"]["Session"];
 
-/** Appends an incrementing suffix to the base slug until no organization claims it. */
 const generateAvailableSlug = async (baseSlug: string, attempt = 0): Promise<string> => {
   const slug = attempt === 0 ? baseSlug : `${baseSlug}-${attempt}`;
   const org = await db.query.organization.findFirst({
@@ -203,16 +169,9 @@ const generateAvailableSlug = async (baseSlug: string, attempt = 0): Promise<str
 
 const MAX_SLUG_ATTEMPTS = 3;
 
-/**
- * Creates the personal org, retrying on a slug collision. generateAvailableSlug
- * checks availability then inserts, so two concurrent signups can compute the
- * same slug and one loses the unique constraint — a fresh slug on retry clears
- * it. Bounded so a genuinely stuck slug can't loop forever.
- */
+/** Availability checks race with concurrent signups; retry unique-constraint failures. */
 const createPersonalOrganization = async (user: User) => {
-  // A name in a script with no ASCII base ("李明") slugifies to "", which would
-  // create an organization at the unroutable /dashboard/. Signup has no user to
-  // prompt, so fall back to a generic base and let them rename it later.
+  // Names without an ASCII base need a routable fallback.
   const baseSlug = slugify(user.name) || FALLBACK_ORGANIZATION_SLUG;
 
   for (let attempt = 1; ; attempt++) {
@@ -237,10 +196,7 @@ const createPersonalOrganization = async (user: User) => {
   }
 };
 
-/**
- * Creates the personal organization every new user gets. If creation fails the
- * user is deleted — the app assumes every user belongs to at least one org.
- */
+/** Roll back signup if personal-organization creation fails: every user needs a membership. */
 const createDefaultOrganization = async (user: User) => {
   try {
     const createdOrganization = await createPersonalOrganization(user);
@@ -254,13 +210,11 @@ const createDefaultOrganization = async (user: User) => {
         .where(and(eq(sessionSchema.userId, user.id), isNull(sessionSchema.activeOrganizationId)));
     }
   } catch (err) {
-    // Roll back the signup — see the doc comment above
     await db.delete(userSchema).where(eq(userSchema.id, user.id));
     throw err;
   }
 };
 
-/** Defaults the session's active organization to the user's first membership. */
 const setActiveOrganization = async (session: { userId: string }) => {
   const firstOrg = await db.query.member.findFirst({
     where: (member, { eq }) => eq(member.userId, session.userId),

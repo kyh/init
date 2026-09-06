@@ -1,7 +1,3 @@
-/**
- * Liveness endpoint. Referenced as the `status` relation in the API catalog
- * (/.well-known/api-catalog) so agents can probe service health.
- */
 export const dynamic = "force-dynamic";
 
 export const GET = () =>

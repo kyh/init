@@ -17,12 +17,7 @@ import type { DesktopUpdateState } from "@/lib/desktop-bridge";
 
 const FLOATING_CLASS = "fixed right-4 bottom-4 z-50 w-full max-w-sm";
 
-/**
- * Surfaces the Electron auto-updater's state and drives it via the desktop
- * bridge — main/index.ts sets `autoDownload: false`, so nothing downloads
- * or installs unless this UI asks for it. Inert outside the desktop shell,
- * and renders nothing for statuses that need no user action.
- */
+/** Updates download and install only on user action. Inert outside Electron. */
 export function DesktopUpdateBanner() {
   const [updateState, setUpdateState] = useState<DesktopUpdateState | null>(null);
 
@@ -38,11 +33,11 @@ export function DesktopUpdateBanner() {
   if (!updateState) return null;
 
   const handleDownload = () => {
-    void window.desktopBridge?.downloadUpdate().then((response) => setUpdateState(response.state));
+    void window.desktopBridge?.downloadUpdate().then(setUpdateState);
   };
 
   const handleInstall = () => {
-    void window.desktopBridge?.installUpdate().then((response) => setUpdateState(response.state));
+    void window.desktopBridge?.installUpdate().then(setUpdateState);
   };
 
   const handleRetry = () => {
@@ -63,11 +58,7 @@ export function DesktopUpdateBanner() {
               <DownloadIcon className="text-muted-foreground size-4" />
               <CardTitle>Update available</CardTitle>
             </div>
-            <CardDescription>
-              {updateState.version
-                ? `Version ${updateState.version} is ready to download.`
-                : "A new version is ready to download."}
-            </CardDescription>
+            <CardDescription>Version {updateState.version} is ready to download.</CardDescription>
           </CardHeader>
           <CardFooter className="justify-end">
             <Button size="sm" onClick={handleDownload}>
@@ -85,10 +76,10 @@ export function DesktopUpdateBanner() {
               <Loader2Icon className="text-muted-foreground size-4 animate-spin" />
               <CardTitle>Downloading update…</CardTitle>
             </div>
-            <CardDescription>{updateState.downloadPercent ?? 0}% complete</CardDescription>
+            <CardDescription>{updateState.downloadPercent}% complete</CardDescription>
           </CardHeader>
           <CardContent>
-            <Progress value={updateState.downloadPercent ?? 0} />
+            <Progress value={updateState.downloadPercent} />
           </CardContent>
         </Card>
       );
@@ -119,7 +110,7 @@ export function DesktopUpdateBanner() {
               <TriangleAlertIcon className="text-destructive size-4" />
               <CardTitle>Update failed</CardTitle>
             </div>
-            <CardDescription>{updateState.message ?? "Something went wrong."}</CardDescription>
+            <CardDescription>{updateState.message}</CardDescription>
           </CardHeader>
           <CardFooter className="justify-end">
             <Button size="sm" variant="outline" onClick={handleRetry}>

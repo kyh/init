@@ -1,17 +1,14 @@
 import { RPCSerializer } from "@orpc/client";
 import { defaultShouldDehydrateQuery, QueryClient } from "@tanstack/react-query";
 
-// oRPC's own serializer, so dehydrated data round-trips every type the RPC
-// protocol supports (Date, Map, Set, BigInt, URL, RegExp) — plain JSON would
-// hand the client a string where the server had a Date.
+// Preserve RPC types such as Date across server-to-client hydration.
 const serializer = new RPCSerializer();
 
-export const createQueryClient = () => {
-  const queryClient = new QueryClient({
+export const createQueryClient = () =>
+  new QueryClient({
     defaultOptions: {
       queries: {
-        // With SSR, we usually want to set some default staleTime
-        // above 0 to avoid refetching immediately on the client
+        // Avoid an immediate client refetch after hydration.
         staleTime: 30 * 1000,
       },
       dehydrate: {
@@ -20,20 +17,11 @@ export const createQueryClient = () => {
         serializeData: (data) => serializer.serialize(data, { useFormDataForBlobFields: false }),
         shouldDehydrateQuery: (query) =>
           defaultShouldDehydrateQuery(query) || query.state.status === "pending",
-        shouldRedactErrors: () => {
-          // We should not catch Next.js server errors
-          // as that's how Next.js detects dynamic pages
-          // so we cannot redact them.
-          // Next.js also automatically redacts errors for us
-          // with better digests.
-          return false;
-        },
+        // Next.js handles redaction and uses server errors to detect dynamic routes.
+        shouldRedactErrors: () => false,
       },
       hydrate: {
         deserializeData: (data) => serializer.deserialize(data),
       },
     },
   });
-
-  return queryClient;
-};

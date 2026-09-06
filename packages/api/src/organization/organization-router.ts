@@ -6,13 +6,11 @@ export const organizationRouter = {
   get: organizationProcedure(organizationInput).handler(async ({ context }) => {
     const { organization, membership: currentUserMember } = context;
 
-    // Independent of each other, and organizationProcedure has already proven
-    // membership — so overlap them rather than paying two round trips.
     const [members, invitations] = await Promise.all([
       context.db.query.member.findMany({
         where: (member, { eq }) => eq(member.organizationId, organization.id),
         with: {
-          // Allow-list only — full rows include admin-only fields (role, banned, banReason)
+          // Exclude admin-only user fields from the member response.
           user: { columns: { id: true, name: true, email: true, image: true } },
         },
       }),

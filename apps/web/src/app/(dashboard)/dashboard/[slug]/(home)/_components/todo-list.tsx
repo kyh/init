@@ -29,8 +29,6 @@ export const TodoList = ({ slug }: TodoListProps) => {
   const { data } = useSuspenseQuery(orpc.todo.list.queryOptions({ input: { slug } }));
   const todos = data.todos;
 
-  // Refetch this org's list after a write. Each mutation refreshes only what it
-  // touched — there's no global invalidate-everything net behind it.
   const invalidateTodos = () =>
     queryClient.invalidateQueries({ queryKey: orpc.todo.list.key({ input: { slug } }) });
 
@@ -44,11 +42,10 @@ export const TodoList = ({ slug }: TodoListProps) => {
     orpc.todo.delete.mutationOptions({ onError, onSuccess: invalidateTodos }),
   );
 
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<Pick<Todo, "id" | "title"> | null>(null);
   const [newTitle, setNewTitle] = useState("");
-  const [editingTitle, setEditingTitle] = useState("");
 
-  const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
+  const handleCreate = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const trimmed = newTitle.trim();
     if (!trimmed) {
@@ -56,53 +53,35 @@ export const TodoList = ({ slug }: TodoListProps) => {
       return;
     }
 
-    try {
-      await createTodo.mutateAsync({ slug, title: trimmed });
-      toast.success("Todo created");
-      setNewTitle("");
-    } catch {
-      // Error handled in onError
-    }
+    createTodo.mutate(
+      { slug, title: trimmed },
+      {
+        onSuccess: () => {
+          toast.success("Todo created");
+          setNewTitle("");
+        },
+      },
+    );
   };
 
-  const startEditing = (todo: Todo) => {
-    setEditingId(todo.id);
-    setEditingTitle(todo.title);
-  };
+  const handleSaveEdit = () => {
+    if (!editing) return;
 
-  const cancelEditing = () => {
-    setEditingId(null);
-    setEditingTitle("");
-  };
-
-  const handleSaveEdit = async () => {
-    if (!editingId) return;
-
-    const trimmed = editingTitle.trim();
+    const trimmed = editing.title.trim();
     if (!trimmed) {
       toast.error("Title is required");
       return;
     }
 
-    try {
-      await updateTodo.mutateAsync({ slug, id: editingId, title: trimmed });
-      toast.success("Todo updated");
-      cancelEditing();
-    } catch {
-      // Error handled in onError
-    }
-  };
-
-  const handleToggle = async (todo: Todo) => {
-    try {
-      await updateTodo.mutateAsync({
-        slug,
-        id: todo.id,
-        completed: !todo.completed,
-      });
-    } catch {
-      // Error handled in onError
-    }
+    updateTodo.mutate(
+      { slug, id: editing.id, title: trimmed },
+      {
+        onSuccess: () => {
+          toast.success("Todo updated");
+          setEditing(null);
+        },
+      },
+    );
   };
 
   const handleDelete = (todo: Todo) => {
@@ -111,12 +90,8 @@ export const TodoList = ({ slug }: TodoListProps) => {
       action: {
         label: "Delete",
         onClick: async () => {
-          try {
-            await deleteTodo.mutateAsync({ slug, id: todo.id });
-            toast.success("Todo deleted");
-          } catch {
-            // Error handled in onError
-          }
+          await deleteTodo.mutateAsync({ slug, id: todo.id });
+          toast.success("Todo deleted");
         },
       },
       cancel: {
@@ -146,7 +121,7 @@ export const TodoList = ({ slug }: TodoListProps) => {
       ) : (
         <ul className="space-y-3">
           {todos.map((todo) => {
-            const isEditing = editingId === todo.id;
+            const isEditing = editing?.id === todo.id;
             const isDeleting = deleteTodo.isPending && deleteTodo.variables.id === todo.id;
 
             return (
@@ -155,7 +130,9 @@ export const TodoList = ({ slug }: TodoListProps) => {
                   <div className="flex items-start gap-3">
                     <Checkbox
                       checked={todo.completed}
-                      onCheckedChange={() => handleToggle(todo)}
+                      onCheckedChange={(completed) =>
+                        updateTodo.mutate({ slug, id: todo.id, completed })
+                      }
                       aria-label={
                         todo.completed ? "Mark todo as incomplete" : "Mark todo as complete"
                       }
@@ -164,8 +141,10 @@ export const TodoList = ({ slug }: TodoListProps) => {
                     {isEditing ? (
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                         <Input
-                          value={editingTitle}
-                          onChange={(event) => setEditingTitle(event.target.value)}
+                          value={editing.title}
+                          onChange={(event) =>
+                            setEditing({ id: todo.id, title: event.target.value })
+                          }
                           aria-label="Edit todo title"
                           disabled={updateTodo.isPending}
                         />
@@ -182,7 +161,7 @@ export const TodoList = ({ slug }: TodoListProps) => {
                             type="button"
                             size="sm"
                             variant="outline"
-                            onClick={cancelEditing}
+                            onClick={() => setEditing(null)}
                             disabled={updateTodo.isPending}
                           >
                             Cancel
@@ -211,7 +190,7 @@ export const TodoList = ({ slug }: TodoListProps) => {
                         type="button"
                         size="icon"
                         variant="ghost"
-                        onClick={() => startEditing(todo)}
+                        onClick={() => setEditing({ id: todo.id, title: todo.title })}
                         disabled={updateTodo.isPending || createTodo.isPending}
                         aria-label={`Edit ${todo.title}`}
                       >

@@ -28,11 +28,7 @@ function run(command: string, args: string[]): void {
   });
 }
 
-function cleanOutputs(): void {
-  rmSync(outputDir, { force: true, recursive: true });
-}
-
-cleanOutputs();
+rmSync(outputDir, { force: true, recursive: true });
 
 run("pnpm", ["build"]);
 run("electron-builder", ["--mac", "dir"]);

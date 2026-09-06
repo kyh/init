@@ -7,9 +7,7 @@ import { queryClient } from "@/utils/api";
 
 import "../styles.css";
 
-// React Navigation needs a concrete color string — it can't resolve a CSS
-// var(). These mirror the --background token in styles.css (light:
-// hsl(0 0% 100%), dark: hsl(240 10% 3.9%)); keep in sync if that token moves.
+// React Navigation needs concrete colors; keep aligned with styles.css background tokens.
 const BACKGROUND_LIGHT = "#ffffff";
 const BACKGROUND_DARK = "#09090b";
 

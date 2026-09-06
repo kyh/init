@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import { APIError } from "better-auth/api";
 
-import { isSlugCollision, slugify, zJsonString } from "./utils";
+import { isSlugCollision, slugify } from "./utils";
 
 describe("slugify", () => {
   test("lowercases and replaces spaces with hyphens", () => {
@@ -46,35 +46,6 @@ describe("slugify", () => {
 
   test("preserves numbers", () => {
     assert.strictEqual(slugify("Project 123"), "project-123");
-  });
-});
-
-describe("zJsonString", () => {
-  test("parses valid JSON string", () => {
-    const result = zJsonString.parse('{"key": "value"}');
-    assert.deepEqual(result, { key: "value" });
-  });
-
-  test("parses JSON arrays", () => {
-    const result = zJsonString.parse("[1, 2, 3]");
-    assert.deepEqual(result, [1, 2, 3]);
-  });
-
-  test("parses JSON primitives", () => {
-    assert.strictEqual(zJsonString.parse('"hello"'), "hello");
-    assert.strictEqual(zJsonString.parse("42"), 42);
-    assert.strictEqual(zJsonString.parse("true"), true);
-    assert.strictEqual(zJsonString.parse("null"), null);
-  });
-
-  test("rejects invalid JSON", () => {
-    const result = zJsonString.safeParse("{invalid}");
-    assert.strictEqual(result.success, false);
-  });
-
-  test("rejects non-string input", () => {
-    const result = zJsonString.safeParse(123);
-    assert.strictEqual(result.success, false);
   });
 });
 

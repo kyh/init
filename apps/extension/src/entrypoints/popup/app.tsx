@@ -11,8 +11,6 @@ const openOptions = () => {
 };
 
 const App = () => {
-  // The item's fallback means getValue never resolves null, so null is exactly
-  // "first read still in flight" — no separate loading flag can disagree with it.
   const [appUrl, setAppUrl] = useState<string | null>(null);
 
   useEffect(() => {

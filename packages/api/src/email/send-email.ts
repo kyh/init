@@ -6,11 +6,6 @@ type SendEmailInput = {
   text: string;
 };
 
-/**
- * Sends transactional email through Resend's REST API (no SDK dependency).
- * Without RESEND_API_KEY the email is logged to the server console instead —
- * dev-friendly, and never a silent drop.
- */
 export const sendEmail = async ({ to, subject, text }: SendEmailInput) => {
   const apiKey = env.RESEND_API_KEY;
   const from = env.EMAIL_FROM;

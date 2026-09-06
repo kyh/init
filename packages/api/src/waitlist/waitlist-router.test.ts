@@ -1,80 +1,47 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
+import { createRouterClient } from "@orpc/server";
+import { waitlist } from "@repo/db/drizzle-schema";
 
-import { createCallerFactory, createMockChain, createMockContext } from "../test-utils";
+import { createMockContext, databaseRows } from "../test-utils";
 import { waitlistRouter } from "./waitlist-router";
 
-const createCaller = createCallerFactory(waitlistRouter);
-
 describe("waitlistRouter.join", () => {
-  test("inserts waitlist entry with email and source", async () => {
-    const ctx = createMockContext({ session: null });
-    const created = { id: "wl-1", email: "hello@example.com", source: "", userId: undefined };
-    const chain = createMockChain([created]);
-    ctx.db.insert.mock.mockImplementation(() => chain);
+  test("accepts anonymous signup and ignores duplicate email conflicts", async () => {
+    const context = createMockContext(null);
+    const entry = { id: "wl-1", email: "hello@example.com", source: "", userId: null };
+    context.responses.push(databaseRows(waitlist, entry), []);
+    const caller = createRouterClient(waitlistRouter, { context });
 
-    const caller = createCaller(ctx);
-    const result = await caller.join({ email: "hello@example.com" });
-
-    assert.deepEqual(result.waitlist, created);
-    assert.partialDeepStrictEqual(chain.values.mock.calls[0]?.arguments[0], {
-      email: "hello@example.com",
-      source: "",
-    });
+    assert.deepEqual(await caller.join({ email: entry.email }), { waitlist: entry });
+    assert.deepEqual(await caller.join({ email: entry.email }), { waitlist: null });
+    const query = context.query.mock.calls[0];
+    assert.ok(query);
+    assert.match(query.arguments[0], /on conflict \("email"\) do nothing/);
+    assert.deepEqual(query.arguments[1], [
+      process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "",
+      entry.email,
+    ]);
   });
 
-  test("attaches userId when user is authenticated", async () => {
-    const ctx = createMockContext();
-    const created = { id: "wl-2", email: "user@example.com", source: "", userId: "user-1" };
-    const chain = createMockChain([created]);
-    ctx.db.insert.mock.mockImplementation(() => chain);
+  test("attaches the current user to authenticated signups", async () => {
+    const context = createMockContext();
+    const entry = { id: "wl-2", email: "user@example.com", source: "", userId: "user-1" };
+    context.responses.push(databaseRows(waitlist, entry));
+    const caller = createRouterClient(waitlistRouter, { context });
 
-    const caller = createCaller(ctx);
-    const result = await caller.join({ email: "user@example.com" });
-
-    assert.strictEqual(result.waitlist?.userId, "user-1");
-    assert.partialDeepStrictEqual(chain.values.mock.calls[0]?.arguments[0], { userId: "user-1" });
+    assert.deepEqual(await caller.join({ email: entry.email }), { waitlist: entry });
+    assert.deepEqual(context.query.mock.calls[0]?.arguments[1], [
+      "user-1",
+      process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "",
+      entry.email,
+    ]);
   });
 
-  test("uses VERCEL_PROJECT_PRODUCTION_URL as source when set", async () => {
-    const original = process.env.VERCEL_PROJECT_PRODUCTION_URL;
-    process.env.VERCEL_PROJECT_PRODUCTION_URL = "myapp.vercel.app";
-
-    try {
-      const ctx = createMockContext({ session: null });
-      const created = {
-        id: "wl-3",
-        email: "a@b.com",
-        source: "myapp.vercel.app",
-        userId: undefined,
-      };
-      const chain = createMockChain([created]);
-      ctx.db.insert.mock.mockImplementation(() => chain);
-
-      const caller = createCaller(ctx);
-      await caller.join({ email: "a@b.com" });
-
-      assert.partialDeepStrictEqual(chain.values.mock.calls[0]?.arguments[0], {
-        source: "myapp.vercel.app",
-      });
-    } finally {
-      if (original === undefined) {
-        delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
-      } else {
-        process.env.VERCEL_PROJECT_PRODUCTION_URL = original;
-      }
-    }
-  });
-
-  test("works without authentication (public route)", async () => {
-    const ctx = createMockContext({ session: null });
-    const created = { id: "wl-4", email: "anon@example.com", source: "", userId: undefined };
-    const chain = createMockChain([created]);
-    ctx.db.insert.mock.mockImplementation(() => chain);
-
-    const caller = createCaller(ctx);
-    const result = await caller.join({ email: "anon@example.com" });
-
-    assert.notStrictEqual(result.waitlist, undefined);
+  test("rejects an invalid email before querying", async () => {
+    const context = createMockContext(null);
+    const caller = createRouterClient(waitlistRouter, { context });
+    await assert.rejects(caller.join({ email: "invalid" }), { code: "BAD_REQUEST" });
+    assert.equal(context.query.mock.callCount(), 0);
   });
 });

@@ -21,7 +21,7 @@
     "lint:fix": "oxlint --fix",
     "format": "oxfmt --check",
     "format:fix": "oxfmt --write",
-    "typecheck": "turbo run typecheck",
+    "typecheck": "tsc --noEmit && turbo run typecheck",
     "test": "turbo run test",
     "verify": "pnpm typecheck && pnpm lint && pnpm format && pnpm test",
     "bootstrap": "tsx scripts/bootstrap.ts",
@@ -29,12 +29,14 @@
   },
   "devDependencies": {
     "@kyh/oxlint": "^0.2.0",
+    "@types/node": "catalog:",
     "dotenv-cli": "^11.0.0",
     "oxfmt": "^0.65.0",
     "oxlint": "^1.80.0",
     "tsx": "catalog:",
     "turbo": "^2.10.12",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "zod": "catalog:"
   },
   "engines": {
     "node": "24.x"

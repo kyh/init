@@ -4,11 +4,13 @@
 
 **init** - pnpm monorepo with Turborepo. Multi-platform starter: Next.js web, Expo mobile, Chrome extension, Electron desktop.
 
+Desktop uses Vite 7: electron-vite 5 does not support the workspace's Vite 8.
+
 ## Tech Stack
 
-- **Package Manager**: pnpm 10.x with workspace catalogs
+- **Package Manager**: pnpm 12.x with workspace catalogs
 - **Build**: Turborepo, Vite, Next.js Turbopack
-- **Language**: TypeScript 5.x, React 19
+- **Language**: TypeScript (workspace catalog), React 19
 - **Styling**: Tailwind CSS 4.x, Base UI, shadcn/ui (base-vega registry)
 - **Backend**: oRPC, better-auth, Drizzle ORM
 - **Billing**: Stripe via @better-auth/stripe
@@ -31,7 +33,7 @@ packages/
 
 ### Mutation path
 
-Mutations go through oRPC or the better-auth client — never Next Server Actions. All four platforms (web, mobile, extension, desktop) then share one typed surface. Each mutation invalidates the specific queries it affects in its `onSuccess` (e.g. `queryClient.invalidateQueries({ queryKey: orpc.todo.list.key({ input: { slug } }) })`) — there is no global invalidate-everything cache. Do not introduce Server Actions alongside.
+Mutations go through oRPC or the better-auth client — never Next Server Actions. All four platforms (web, mobile, extension, desktop) then share one typed surface. Each mutation invalidates the specific queries it affects in its `onSuccess` (e.g. `queryClient.invalidateQueries({ queryKey: orpc.todo.list.key({ input: { slug } }) })`) — there is no global invalidate-everything cache. When wrapping better-auth in a TanStack mutation, set `fetchOptions: { throw: true }` so returned errors cannot trigger `onSuccess`.
 
 ### Mobile dependency pins
 

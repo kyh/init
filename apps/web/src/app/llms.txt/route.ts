@@ -1,11 +1,7 @@
 import { siteConfig } from "@/lib/site-config";
 import { source } from "@/lib/source";
 
-/**
- * llms.txt — a flat, agent-friendly index of the documentation. Each entry is a
- * canonical URL; append `Accept: text/markdown` (or see /md) to fetch the
- * markdown body of any page. See https://llmstxt.org.
- */
+/** Canonical documentation index. Request text/markdown for page content. */
 export const GET = () => {
   const links = source
     .getPages()

@@ -18,8 +18,7 @@ import {
 
 const updateOrganizationSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  // Validate what submit actually sends: the field is slugified on the way out,
-  // so a non-empty entry can still reduce to "" and yield an unroutable URL.
+  // Validate the normalized slug, which can be empty for non-ASCII input.
   slug: z
     .string()
     .min(1, "Slug is required")
@@ -33,7 +32,7 @@ type UpdateOrganizationFormProps = {
 export const UpdateOrganizationForm = ({ slug }: UpdateOrganizationFormProps) => {
   const { data: organizationData } = useOrganization(slug);
 
-  const { mutateAsync: updateOrganization, isPending } = useUpdateOrganization(
+  const { mutate: updateOrganization, isPending } = useUpdateOrganization(
     slug,
     organizationData.organization.id,
   );
@@ -46,9 +45,7 @@ export const UpdateOrganizationForm = ({ slug }: UpdateOrganizationFormProps) =>
     validators: {
       onSubmit: updateOrganizationSchema,
     },
-    onSubmit: async ({ value }) => {
-      await updateOrganization(value);
-    },
+    onSubmit: ({ value }) => updateOrganization(value),
   });
 
   return (
@@ -100,24 +97,18 @@ const useUpdateOrganization = (slug: string, organizationId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: z.infer<typeof updateOrganizationSchema>) => {
-      const { data: updatedOrganization } = await authClient.organization.update({
+    mutationFn: (data: z.infer<typeof updateOrganizationSchema>) => {
+      return authClient.organization.update({
         organizationId,
+        fetchOptions: { throw: true },
         data: {
           name: data.name,
           slug: slugify(data.slug),
         },
       });
-
-      if (!updatedOrganization) throw new Error("Organization not found");
-
-      return updatedOrganization;
     },
     onSuccess: async (updatedOrganization) => {
       toast.success("Organization successfully updated");
-      // A name-only update refreshes the detail in place. A slug change kills
-      // the mounted query's key, so drop it rather than refetch it into
-      // NOT_FOUND retries; the new route prefetches the fresh key.
       if (updatedOrganization.slug === slug) {
         await invalidateOrganization(queryClient, slug);
       } else {

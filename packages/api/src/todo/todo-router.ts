@@ -27,20 +27,9 @@ export const todoRouter = {
     return { todo: createdTodo };
   }),
   update: organizationProcedure(updateTodoInput).handler(async ({ context, input }) => {
-    // updatedAt is maintained by the column's $onUpdate — see drizzle-schema.ts
-    const updateData: Partial<typeof todo.$inferInsert> = {};
-
-    if (input.title !== undefined) {
-      updateData.title = input.title;
-    }
-
-    if (input.completed !== undefined) {
-      updateData.completed = input.completed;
-    }
-
     const [updatedTodo] = await context.db
       .update(todo)
-      .set(updateData)
+      .set({ title: input.title, completed: input.completed })
       .where(and(eq(todo.id, input.id), eq(todo.organizationId, context.organization.id)))
       .returning();
 

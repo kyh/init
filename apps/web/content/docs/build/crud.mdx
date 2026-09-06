@@ -216,27 +216,22 @@ The full reference - inline editing, delete confirmation, per-row pending states
 
 ## 8. Test It
 
-Routers test without a database. `createCallerFactory` binds the router once per file; the mock context comes from the same helper module:
+Run the real router and middleware with a stubbed Postgres connection:
 
 ```typescript
 // packages/api/src/post/post-router.test.ts
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { createRouterClient } from "@orpc/server";
 
-import { createCallerFactory, createMockContext } from "../test-utils";
+import { createMockContext } from "../test-utils";
 import { postRouter } from "./post-router";
 
-const createCaller = createCallerFactory(postRouter);
-
-test("throws UNAUTHORIZED when user is not a member", async () => {
-  const ctx = createMockContext();
-  ctx.db.query.organization.findFirst.mock.mockImplementation(() =>
-    Promise.resolve({ id: "org-1", slug: "acme" }),
-  );
-  ctx.db.query.member.findFirst.mock.mockImplementation(() => Promise.resolve(undefined));
-
-  const caller = createCaller(ctx);
-  await assert.rejects(caller.list({ slug: "acme" }));
+test("rejects unauthenticated callers before querying", async () => {
+  const context = createMockContext(null);
+  const caller = createRouterClient(postRouter, { context });
+  await assert.rejects(caller.list({ slug: "acme" }), { code: "UNAUTHORIZED" });
+  assert.equal(context.query.mock.callCount(), 0);
 });
 ```
 
@@ -244,7 +239,7 @@ test("throws UNAUTHORIZED when user is not a member", async () => {
 pnpm -F @repo/api test
 ```
 
-`packages/api/src/todo/todo-router.test.ts` covers the full matrix: happy paths, missing org, non-member, not-found rows.
+`todo-router.test.ts` checks tenant-scoped SQL, updates and missing rows. `auth/orpc-middleware.test.ts` covers missing organizations and non-members. Keep a live UI check for database constraints and persistence.
 
 ## Ship It Everywhere
 

@@ -11,10 +11,6 @@ const buttonClassName = cn(
   "ml-4 w-24 rounded-full px-5",
 );
 
-/**
- * Client leaf of the marketing header — the only part that needs the session.
- * Keeping it a leaf lets the rest of the header render as a server component.
- */
 export const AuthButton = () => {
   const { data, isPending } = authClient.useActiveOrganization();
 

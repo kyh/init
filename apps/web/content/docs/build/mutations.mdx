@@ -54,7 +54,7 @@ const createTodo = useMutation(
   orpc.todo.create.mutationOptions({ onError, onSuccess: invalidateTodos }),
 );
 
-await createTodo.mutateAsync({ slug, title: trimmed });
+createTodo.mutate({ slug, title: trimmed });
 ```
 
 ### The raw client (manual control)
@@ -73,14 +73,30 @@ import type { RouterInputs } from "@repo/api";
 type CreateTodoInput = RouterInputs["todo"]["create"];
 ```
 
+## Better Auth Mutations
+
+Better-auth returns `{ data, error }` by default. TanStack Query treats a resolved promise as success, so its mutation functions must request throwing errors:
+
+```tsx
+const removeMember = useMutation({
+  mutationFn: (memberId: string) =>
+    authClient.organization.removeMember({
+      memberIdOrEmail: memberId,
+      fetchOptions: { throw: true },
+    }),
+  onSuccess: () => invalidateOrganization(queryClient, slug),
+  onError: (error) => toast.error(error.message),
+});
+```
+
+Use `mutate` for event handlers. Use `mutateAsync` only when a caller awaits completion and handles rejection. The shared confirmation dialog awaits actions, keeps failures open for retry, and leaves error reporting to each mutation.
+
 ## Cache Invalidation
 
 Each mutation invalidates the queries it changed, in its own `onSuccess`. The todo list refetches its org's list after every write:
 
 ```tsx
 // _components/todo-list.tsx
-// Refetch this org's list after a write. Each mutation refreshes only what it
-// touched — there's no global invalidate-everything net behind it.
 const invalidateTodos = () =>
   queryClient.invalidateQueries({ queryKey: orpc.todo.list.key({ input: { slug } }) });
 
@@ -148,7 +164,12 @@ toast.promise(joinWaitlist.mutateAsync({ email }), {
 // Confirm destructive actions (todo-list.tsx)
 alertDialog.open(`Delete "${todo.title}"?`, {
   description: "This action cannot be undone.",
-  action: { label: "Delete", onClick: async () => deleteTodo.mutateAsync({ slug, id: todo.id }) },
+  action: {
+    label: "Delete",
+    onClick: async () => {
+      await deleteTodo.mutateAsync({ slug, id: todo.id });
+    },
+  },
   cancel: { label: "Cancel" },
 });
 ```
@@ -163,7 +184,7 @@ Reuse the server's Zod schema on the client - one source of truth, errors before
 // waitlist-form.tsx
 import { joinWaitlistInput } from "@repo/api/waitlist/waitlist-schema";
 
-const form = useForm({
+const form = useAppForm({
   validators: { onSubmit: joinWaitlistInput },
   // ...
 });

@@ -22,11 +22,7 @@ import type { AutoTableFeatures } from "@repo/ui/components/table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { authClient } from "@/lib/auth-client";
 import { formatDate } from "@/lib/format";
-import {
-  hasPermission,
-  ROLES,
-  roleSchema,
-} from "@/app/(dashboard)/dashboard/[slug]/_components/role";
+import { hasPermission, ROLES, roleSchema } from "@repo/api/auth/permissions";
 import { TableRowActions } from "@/app/(dashboard)/dashboard/[slug]/_components/table-row-actions";
 import {
   invalidateOrganization,
@@ -125,9 +121,6 @@ const ActionsDropdown = ({
   canManageMembers: boolean;
 }) => {
   const isMemberSelf = member.userId === userId;
-  // Only the owner role can delete the organization (see permissions.ts) —
-  // used here as an "is this member the owner" check, since better-auth's
-  // access control models permissions, not role identity.
   const isMemberOwner = hasPermission(member.role, { organization: ["delete"] });
   const displayName = getDisplayName(member);
 
@@ -137,7 +130,9 @@ const ActionsDropdown = ({
       description: `You are about to change ${displayName}'s role to ${newRole}. This may affect their permissions.`,
       action: {
         label: "Change",
-        onClick: () => updateMemberRole(newRole),
+        onClick: async () => {
+          await updateMemberRole(newRole);
+        },
       },
     });
   };
@@ -148,7 +143,9 @@ const ActionsDropdown = ({
       description: `You are about to remove ${displayName} from the organization. They will lose access to this organization.`,
       action: {
         label: "Remove",
-        onClick: removeMember,
+        onClick: async () => {
+          await removeMember();
+        },
       },
     });
   };
@@ -193,12 +190,12 @@ const getDisplayName = (member: MemberWithUser) => {
 const useUpdateMemberRole = (slug: string, memberId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (newRole: string) => {
-      await authClient.organization.updateMemberRole({
+    mutationFn: (newRole: string) =>
+      authClient.organization.updateMemberRole({
         memberId,
         role: roleSchema.parse(newRole),
-      });
-    },
+        fetchOptions: { throw: true },
+      }),
     onSuccess: () => {
       toast.success("Member role updated successfully");
       return invalidateOrganization(queryClient, slug);
@@ -210,11 +207,11 @@ const useUpdateMemberRole = (slug: string, memberId: string) => {
 const useRemoveMember = (slug: string, memberId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async () => {
-      await authClient.organization.removeMember({
+    mutationFn: () =>
+      authClient.organization.removeMember({
         memberIdOrEmail: memberId,
-      });
-    },
+        fetchOptions: { throw: true },
+      }),
     onSuccess: () => {
       toast.success("Member removed successfully");
       return invalidateOrganization(queryClient, slug);

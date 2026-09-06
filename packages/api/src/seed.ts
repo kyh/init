@@ -1,14 +1,4 @@
-/**
- * Local dev seed. Idempotent: safe to run repeatedly (setup runs it, so does
- * `pnpm db:reset`). Gives an agent a known login and data to verify against
- * instead of an empty schema.
- *
- *   Login: dev@init.local / password
- *
- * The user is created through `auth.api.signUpEmail` rather than a raw insert so
- * the `databaseHooks.user.create.after` hook fires and provisions the personal
- * organization every todo hangs off of (see ./auth/auth.ts).
- */
+/** Idempotent local seed. Use auth signup so the personal-organization hook runs. */
 import { db } from "@repo/db/drizzle-client";
 import { todo } from "@repo/db/drizzle-schema";
 

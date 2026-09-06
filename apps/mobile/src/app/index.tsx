@@ -6,13 +6,6 @@ import { Stack } from "expo-router";
 import { authClient } from "@/utils/auth";
 import { orpc } from "@/utils/api";
 
-/**
- * Exercises the end-to-end typed RPC path from React Native: cookie propagation
- * against the Next route, proving the wiring the template ships actually
- * resolves. todo.list is organization-scoped, so this resolves the
- * first membership's slug — mirroring the web dashboard's fallback — and gates the
- * query with skipToken until one exists.
- */
 function Todos() {
   const { data: organizations } = authClient.useListOrganizations();
   const slug = organizations?.[0]?.slug;
