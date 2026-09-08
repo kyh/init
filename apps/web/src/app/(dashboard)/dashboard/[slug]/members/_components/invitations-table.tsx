@@ -23,57 +23,20 @@ import {
 
 type Invitation = RouterOutputs["organization"]["get"]["invitations"][number];
 
-type InvitationsTableProps = {
-  slug: string;
-};
-
-export const InvitationsTable = ({ slug }: InvitationsTableProps) => {
-  const { data: organizationData } = useOrganization(slug);
-  const canManageInvitations = hasPermission(organizationData.currentUserMember.role, {
-    invitation: ["cancel"],
+const useCancelInvitation = (slug: string, invitationId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      authClient.organization.cancelInvitation({
+        fetchOptions: { throw: true },
+        invitationId,
+      }),
+    onError: (error) => toast.error(error.message),
+    onSuccess: () => {
+      toast.success("Invitation cancelled successfully");
+      return invalidateOrganization(queryClient, slug);
+    },
   });
-
-  const columns = useMemo(() => {
-    const columnDefs: ColumnDef<AutoTableFeatures, Invitation>[] = [
-      {
-        header: "Email",
-        cell: ({ row }) => row.original.email,
-      },
-      {
-        header: "Role",
-        cell: ({ row }) => <Badge className="capitalize">{row.original.role ?? "member"}</Badge>,
-      },
-      {
-        header: "Expires at",
-        cell: ({ row }) => formatDate(row.original.expiresAt),
-      },
-      {
-        header: "",
-        id: "actions",
-        cell: ({ row }) => (
-          <ActionsDropdown
-            slug={slug}
-            invitation={row.original}
-            canManageInvitations={canManageInvitations}
-          />
-        ),
-      },
-    ];
-
-    return columnDefs;
-  }, [slug, canManageInvitations]);
-
-  const table = useTable({
-    features: autoTableFeatures,
-    data: organizationData.invitations,
-    columns,
-  });
-
-  return (
-    <div className="rounded-md border">
-      <AutoTable table={table} />
-    </div>
-  );
 };
 
 const ActionsDropdown = ({
@@ -89,13 +52,13 @@ const ActionsDropdown = ({
 
   const handleRemoveInvitation = () => {
     alertDialog.open(`Remove ${invitation.email}'s invite?`, {
-      description: `You are about to remove ${invitation.email}'s invite. This will revoke their access to the organization.`,
       action: {
         label: "Remove",
         onClick: async () => {
           await cancelInvitation();
         },
       },
+      description: `You are about to remove ${invitation.email}'s invite. This will revoke their access to the organization.`,
     });
   };
 
@@ -110,18 +73,59 @@ const ActionsDropdown = ({
   );
 };
 
-const useCancelInvitation = (slug: string, invitationId: string) => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: () =>
-      authClient.organization.cancelInvitation({
-        invitationId,
-        fetchOptions: { throw: true },
-      }),
-    onSuccess: () => {
-      toast.success("Invitation cancelled successfully");
-      return invalidateOrganization(queryClient, slug);
-    },
-    onError: (error) => toast.error(error.message),
+const createColumns = (
+  slug: string,
+  canManageInvitations: boolean,
+): ColumnDef<AutoTableFeatures, Invitation>[] => [
+  {
+    cell: ({ row }) => row.original.email,
+    header: "Email",
+  },
+  {
+    cell: ({ row }) => <Badge className="capitalize">{row.original.role ?? "member"}</Badge>,
+    header: "Role",
+  },
+  {
+    cell: ({ row }) => formatDate(row.original.expiresAt),
+    header: "Expires at",
+  },
+  {
+    cell: ({ row }) => (
+      <ActionsDropdown
+        slug={slug}
+        invitation={row.original}
+        canManageInvitations={canManageInvitations}
+      />
+    ),
+    header: "",
+    id: "actions",
+  },
+];
+
+interface InvitationsTableProps {
+  slug: string;
+}
+
+export const InvitationsTable = ({ slug }: InvitationsTableProps) => {
+  const { data: organizationData } = useOrganization(slug);
+  const canManageInvitations = hasPermission(organizationData.currentUserMember.role, {
+    invitation: ["cancel"],
   });
+
+  const columns = useMemo(
+    () => createColumns(slug, canManageInvitations),
+    [slug, canManageInvitations],
+  );
+
+  const table = useTable({
+    columns,
+    data: organizationData.invitations,
+    features: autoTableFeatures,
+  });
+
+  return (
+    <div className="rounded-md border">
+      <AutoTable table={table} />
+    </div>
+  );
 };

@@ -12,45 +12,12 @@ import { ORPCReactProvider } from "@/orpc/react";
 import "./styles/globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteConfig.url),
-  title: {
-    default: siteConfig.name,
-    template: `%s | ${siteConfig.name}`,
-  },
   description: siteConfig.description,
-  openGraph: {
-    locale: "en-US",
-    type: "website",
-    url: siteConfig.url,
-    title: siteConfig.name,
-    description: siteConfig.description,
-    siteName: siteConfig.name,
-    images: [
-      {
-        url: siteConfig.ogImage,
-        width: 1200,
-        height: 630,
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: siteConfig.name,
-    description: siteConfig.description,
-    images: [
-      {
-        url: siteConfig.ogImage,
-        width: 1200,
-        height: 630,
-      },
-    ],
-    creator: siteConfig.twitter,
-  },
   icons: [
     {
       rel: "icon",
-      type: "image/png",
       sizes: "96x96",
+      type: "image/png",
       url: "/favicon/favicon-96x96.png",
     },
     {
@@ -72,38 +39,69 @@ export const metadata: Metadata = {
       url: "/favicon/site.webmanifest",
     },
   ],
+  metadataBase: new URL(siteConfig.url),
+  openGraph: {
+    description: siteConfig.description,
+    images: [
+      {
+        height: 630,
+        url: siteConfig.ogImage,
+        width: 1200,
+      },
+    ],
+    locale: "en-US",
+    siteName: siteConfig.name,
+    title: siteConfig.name,
+    type: "website",
+    url: siteConfig.url,
+  },
   other: {
     "apple-mobile-web-app-title": siteConfig.shortName,
+  },
+  title: {
+    default: siteConfig.name,
+    template: `%s | ${siteConfig.name}`,
+  },
+  twitter: {
+    card: "summary_large_image",
+    creator: siteConfig.twitter,
+    description: siteConfig.description,
+    images: [
+      {
+        height: 630,
+        url: siteConfig.ogImage,
+        width: 1200,
+      },
+    ],
+    title: siteConfig.name,
   },
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "white" },
-    { media: "(prefers-color-scheme: dark)", color: "black" },
+    { color: "white", media: "(prefers-color-scheme: light)" },
+    { color: "black", media: "(prefers-color-scheme: dark)" },
   ],
 };
 
-type LayoutProps = {
+interface LayoutProps {
   children: React.ReactNode;
-};
+}
 
-const RootLayout = (props: LayoutProps) => {
-  return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="bg-background text-foreground font-sans antialiased">
-        <ThemeProvider>
-          <TooltipProvider>
-            <ORPCReactProvider>{props.children}</ORPCReactProvider>
-            <Toaster />
-            <GlobalAlertDialog />
-            <DesktopMenuListener />
-            <DesktopUpdateBanner />
-          </TooltipProvider>
-        </ThemeProvider>
-      </body>
-    </html>
-  );
-};
+const RootLayout = (props: LayoutProps) => (
+  <html lang="en" suppressHydrationWarning>
+    <body className="bg-background text-foreground font-sans antialiased">
+      <ThemeProvider>
+        <TooltipProvider>
+          <ORPCReactProvider>{props.children}</ORPCReactProvider>
+          <Toaster />
+          <GlobalAlertDialog />
+          <DesktopMenuListener />
+          <DesktopUpdateBanner />
+        </TooltipProvider>
+      </ThemeProvider>
+    </body>
+  </html>
+);
 
 export default RootLayout;

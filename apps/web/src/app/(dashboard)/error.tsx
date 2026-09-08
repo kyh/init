@@ -3,10 +3,10 @@
 import { useEffect } from "react";
 import { Button } from "@repo/ui/components/button";
 
-type ErrorBoundaryProps = {
+interface ErrorBoundaryProps {
   error: Error & { digest?: string };
   reset: () => void;
-};
+}
 
 // Sits inside the dashboard layout, so the sidebar survives a failed page query
 // and only the content area shows the boundary.

@@ -6,14 +6,14 @@ import { docs } from "../../.source/server";
 
 export const source = loader({
   baseUrl: "/docs",
-  source: docs.toFumadocsSource(),
   plugins: [lucideIconsPlugin()],
+  source: docs.toFumadocsSource(),
 });
 
-export async function getLLMText(page: InferPageType<typeof source>) {
+export const getLLMText = async (page: InferPageType<typeof source>) => {
   const processed = await page.data.getText("processed");
 
   return `# ${page.data.title}
 
 ${processed}`;
-}
+};

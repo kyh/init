@@ -6,7 +6,7 @@ import { Stack } from "expo-router";
 import { authClient } from "@/utils/auth";
 import { orpc } from "@/utils/api";
 
-function Todos() {
+const Todos = () => {
   const { data: organizations } = authClient.useListOrganizations();
   const slug = organizations?.[0]?.slug;
 
@@ -33,9 +33,9 @@ function Todos() {
       )}
     </View>
   );
-}
+};
 
-function MobileAuth() {
+const MobileAuth = () => {
   const { data: session } = authClient.useSession();
 
   return (
@@ -47,7 +47,7 @@ function MobileAuth() {
         onPress={() =>
           session
             ? authClient.signOut()
-            : authClient.signIn.social({ provider: "github", callbackURL: "/" })
+            : authClient.signIn.social({ callbackURL: "/", provider: "github" })
         }
         className="bg-primary flex items-center rounded-sm p-2"
       >
@@ -57,18 +57,18 @@ function MobileAuth() {
       {session ? <Todos /> : null}
     </>
   );
-}
+};
 
-export default function Index() {
-  return (
-    <SafeAreaView className="bg-background">
-      <Stack.Screen options={{ title: "Home Page" }} />
-      <View className="bg-background h-full w-full p-4">
-        <Text className="text-foreground pb-2 text-center text-5xl font-bold">
-          <Text className="text-primary">Init</Text>
-        </Text>
-        <MobileAuth />
-      </View>
-    </SafeAreaView>
-  );
-}
+const Index = () => (
+  <SafeAreaView className="bg-background">
+    <Stack.Screen options={{ title: "Home Page" }} />
+    <View className="bg-background h-full w-full p-4">
+      <Text className="text-foreground pb-2 text-center text-5xl font-bold">
+        <Text className="text-primary">Init</Text>
+      </Text>
+      <MobileAuth />
+    </View>
+  </SafeAreaView>
+);
+
+export default Index;

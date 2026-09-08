@@ -7,10 +7,6 @@ const serializer = new RPCSerializer();
 export const createQueryClient = () =>
   new QueryClient({
     defaultOptions: {
-      queries: {
-        // Avoid an immediate client refetch after hydration.
-        staleTime: 30 * 1000,
-      },
       dehydrate: {
         // FormData cannot ride the hydration payload into the browser, so keep
         // blobs inline in the JSON.
@@ -22,6 +18,10 @@ export const createQueryClient = () =>
       },
       hydrate: {
         deserializeData: (data) => serializer.deserialize(data),
+      },
+      queries: {
+        // Avoid an immediate client refetch after hydration.
+        staleTime: 30 * 1000,
       },
     },
   });

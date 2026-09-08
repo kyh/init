@@ -3,12 +3,14 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-export function DesktopMenuListener() {
+export const DesktopMenuListener = () => {
   const router = useRouter();
 
   useEffect(() => {
     const { desktopBridge } = window;
-    if (!desktopBridge) return;
+    if (!desktopBridge) {
+      return;
+    }
 
     return desktopBridge.onMenuAction((action) => {
       if (action === "open-settings") {
@@ -18,4 +20,4 @@ export function DesktopMenuListener() {
   }, [router]);
 
   return null;
-}
+};

@@ -6,7 +6,7 @@ const fieldError = z.union([
   z.object({ message: z.string() }),
 ]);
 
-export const toFieldErrors = (errors: readonly unknown[]): Array<{ message?: string }> =>
+export const toFieldErrors = (errors: readonly unknown[]): { message?: string }[] =>
   errors.map((error) => {
     const parsed = fieldError.safeParse(error);
     return parsed.success ? parsed.data : {};

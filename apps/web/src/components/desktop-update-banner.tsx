@@ -17,42 +17,60 @@ import type { DesktopUpdateState } from "@/lib/desktop-bridge";
 
 const FLOATING_CLASS = "fixed right-4 bottom-4 z-50 w-full max-w-sm";
 
+const UpdateCard = ({ children }: { children: React.ReactNode }) => (
+  // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- Card renders a div; `output` is a form-result element, not a notification surface
+  <Card size="sm" role="status" className={FLOATING_CLASS}>
+    {children}
+  </Card>
+);
+
 /** Updates download and install only on user action. Inert outside Electron. */
-export function DesktopUpdateBanner() {
+export const DesktopUpdateBanner = () => {
   const [updateState, setUpdateState] = useState<DesktopUpdateState | null>(null);
 
   useEffect(() => {
     const { desktopBridge } = window;
-    if (!desktopBridge) return;
+    if (!desktopBridge) {
+      return;
+    }
 
     const unsubscribe = desktopBridge.onUpdateState(setUpdateState);
-    void desktopBridge.checkForUpdates().then(setUpdateState);
+    const check = async () => {
+      setUpdateState(await desktopBridge.checkForUpdates());
+    };
+    void check();
     return unsubscribe;
   }, []);
 
-  if (!updateState) return null;
+  if (!updateState) {
+    return null;
+  }
 
-  const handleDownload = () => {
-    void window.desktopBridge?.downloadUpdate().then(setUpdateState);
+  const handleDownload = async () => {
+    const { desktopBridge } = window;
+    if (desktopBridge) {
+      setUpdateState(await desktopBridge.downloadUpdate());
+    }
   };
 
-  const handleInstall = () => {
-    void window.desktopBridge?.installUpdate().then(setUpdateState);
+  const handleInstall = async () => {
+    const { desktopBridge } = window;
+    if (desktopBridge) {
+      setUpdateState(await desktopBridge.installUpdate());
+    }
   };
 
-  const handleRetry = () => {
-    void window.desktopBridge?.checkForUpdates().then(setUpdateState);
+  const handleRetry = async () => {
+    const { desktopBridge } = window;
+    if (desktopBridge) {
+      setUpdateState(await desktopBridge.checkForUpdates());
+    }
   };
 
   switch (updateState.status) {
-    case "idle":
-    case "checking":
-    case "not-available":
-      return null;
-
-    case "available":
+    case "available": {
       return (
-        <Card size="sm" role="status" className={FLOATING_CLASS}>
+        <UpdateCard>
           <CardHeader>
             <div className="flex items-center gap-2">
               <DownloadIcon className="text-muted-foreground size-4" />
@@ -65,12 +83,13 @@ export function DesktopUpdateBanner() {
               Download
             </Button>
           </CardFooter>
-        </Card>
+        </UpdateCard>
       );
+    }
 
-    case "downloading":
+    case "downloading": {
       return (
-        <Card size="sm" role="status" className={FLOATING_CLASS}>
+        <UpdateCard>
           <CardHeader>
             <div className="flex items-center gap-2">
               <Loader2Icon className="text-muted-foreground size-4 animate-spin" />
@@ -81,12 +100,13 @@ export function DesktopUpdateBanner() {
           <CardContent>
             <Progress value={updateState.downloadPercent} />
           </CardContent>
-        </Card>
+        </UpdateCard>
       );
+    }
 
-    case "downloaded":
+    case "downloaded": {
       return (
-        <Card size="sm" role="status" className={FLOATING_CLASS}>
+        <UpdateCard>
           <CardHeader>
             <div className="flex items-center gap-2">
               <RotateCwIcon className="text-muted-foreground size-4" />
@@ -99,12 +119,13 @@ export function DesktopUpdateBanner() {
               Restart
             </Button>
           </CardFooter>
-        </Card>
+        </UpdateCard>
       );
+    }
 
-    case "error":
+    case "error": {
       return (
-        <Card size="sm" role="status" className={FLOATING_CLASS}>
+        <UpdateCard>
           <CardHeader>
             <div className="flex items-center gap-2">
               <TriangleAlertIcon className="text-destructive size-4" />
@@ -117,7 +138,12 @@ export function DesktopUpdateBanner() {
               Retry
             </Button>
           </CardFooter>
-        </Card>
+        </UpdateCard>
       );
+    }
+
+    default: {
+      return null;
+    }
   }
-}
+};

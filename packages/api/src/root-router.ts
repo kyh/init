@@ -3,9 +3,9 @@ import { todoRouter } from "./todo/todo-router";
 import { waitlistRouter } from "./waitlist/waitlist-router";
 
 export const appRouter = {
-  waitlist: waitlistRouter,
   organization: organizationRouter,
   todo: todoRouter,
+  waitlist: waitlistRouter,
 };
 
 export type AppRouter = typeof appRouter;

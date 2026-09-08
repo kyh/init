@@ -18,18 +18,21 @@ export const queryClient = new QueryClient({
 });
 
 const link = new RPCLink({
-  origin: getBaseUrl(),
-  url: "/api/orpc",
   headers: async () => ({
-    "x-orpc-source": "expo-react",
     // React Native has no cookie jar, so the session rides an explicit header.
     Cookie: (await authClient.getCookie()) || undefined,
+    "x-orpc-source": "expo-react",
   }),
   interceptors: [
+    // oxlint-disable-next-line promise/prefer-await-to-callbacks -- oRPC's interceptor hook takes the error as its argument
     onError((error) => {
-      if (process.env.NODE_ENV === "development") console.error(error);
+      if (process.env.NODE_ENV === "development") {
+        console.error(error);
+      }
     }),
   ],
+  origin: getBaseUrl(),
+  url: "/api/orpc",
 });
 
 const client: RouterClient<AppRouter> = createORPCClient(link);

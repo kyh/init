@@ -7,10 +7,18 @@ import type { DesktopBridge, UpdateState } from "../types";
 const menuActionSchema = z.string();
 
 contextBridge.exposeInMainWorld("desktopBridge", {
+  checkForUpdates: async () =>
+    updateStateSchema.parse(await ipcRenderer.invoke(IPC_CHANNELS.UPDATE_CHECK)),
+  downloadUpdate: async () =>
+    updateStateSchema.parse(await ipcRenderer.invoke(IPC_CHANNELS.UPDATE_DOWNLOAD)),
+  installUpdate: async () =>
+    updateStateSchema.parse(await ipcRenderer.invoke(IPC_CHANNELS.UPDATE_INSTALL)),
   onMenuAction: (listener: (action: string) => void) => {
     const wrappedListener = (_event: Electron.IpcRendererEvent, ...args: unknown[]) => {
       const action = menuActionSchema.safeParse(args[0]);
-      if (!action.success) return;
+      if (!action.success) {
+        return;
+      }
       listener(action.data);
     };
 
@@ -19,16 +27,12 @@ contextBridge.exposeInMainWorld("desktopBridge", {
       ipcRenderer.removeListener(IPC_CHANNELS.MENU_ACTION, wrappedListener);
     };
   },
-  checkForUpdates: async () =>
-    updateStateSchema.parse(await ipcRenderer.invoke(IPC_CHANNELS.UPDATE_CHECK)),
-  downloadUpdate: async () =>
-    updateStateSchema.parse(await ipcRenderer.invoke(IPC_CHANNELS.UPDATE_DOWNLOAD)),
-  installUpdate: async () =>
-    updateStateSchema.parse(await ipcRenderer.invoke(IPC_CHANNELS.UPDATE_INSTALL)),
   onUpdateState: (listener: (state: UpdateState) => void) => {
     const wrappedListener = (_event: Electron.IpcRendererEvent, ...args: unknown[]) => {
       const state = updateStateSchema.safeParse(args[0]);
-      if (!state.success) return;
+      if (!state.success) {
+        return;
+      }
       listener(state.data);
     };
 

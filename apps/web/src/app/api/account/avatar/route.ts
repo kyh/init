@@ -11,13 +11,13 @@ const MAX_AVATAR_BYTES = 1024 * 1024;
 // SVG is deliberately excluded: it can carry <script>, and these land on a
 // public bucket URL — a scripted SVG served as image/svg+xml would be stored XSS.
 const IMAGE_SIGNATURES = [
-  { extension: "jpg", contentType: "image/jpeg", magic: [0xff, 0xd8, 0xff] },
+  { contentType: "image/jpeg", extension: "jpg", magic: [0xff, 0xd8, 0xff] },
   {
-    extension: "png",
     contentType: "image/png",
+    extension: "png",
     magic: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a],
   },
-  { extension: "gif", contentType: "image/gif", magic: [0x47, 0x49, 0x46, 0x38] },
+  { contentType: "image/gif", extension: "gif", magic: [0x47, 0x49, 0x46, 0x38] },
 ] as const;
 
 const startsWith = (bytes: Uint8Array, magic: readonly number[]) =>
@@ -27,14 +27,14 @@ const startsWith = (bytes: Uint8Array, magic: readonly number[]) =>
 const sniffImageType = (bytes: Uint8Array) => {
   const match = IMAGE_SIGNATURES.find((signature) => startsWith(bytes, signature.magic));
   if (match) {
-    return { extension: match.extension, contentType: match.contentType };
+    return { contentType: match.contentType, extension: match.extension };
   }
   // WebP: "RIFF" <4-byte size> "WEBP"
   if (
     startsWith(bytes, [0x52, 0x49, 0x46, 0x46]) &&
     startsWith(bytes.subarray(8), [0x57, 0x45, 0x42, 0x50])
   ) {
-    return { extension: "webp", contentType: "image/webp" };
+    return { contentType: "image/webp", extension: "webp" };
   }
   return null;
 };
@@ -48,7 +48,7 @@ const removeExistingAvatars = async (client: SupabaseClient, userId: string) => 
   }
 };
 
-export async function POST(request: Request) {
+export const POST = async (request: Request) => {
   const session = await getSession();
   if (!session) {
     return new Response("Unauthorized", { status: 401 });
@@ -77,9 +77,9 @@ export async function POST(request: Request) {
 
   const path = `${userId}/avatar.${imageType.extension}`;
   const { error } = await client.storage.from("avatars").upload(path, bytes, {
-    upsert: true,
     cacheControl: "3600",
     contentType: imageType.contentType,
+    upsert: true,
   });
   if (error) {
     console.error("Avatar upload failed:", error);
@@ -89,9 +89,9 @@ export async function POST(request: Request) {
   const { data } = client.storage.from("avatars").getPublicUrl(path);
   // The path is stable across uploads, so bust caches with a version param
   return Response.json({ url: `${data.publicUrl}?v=${Date.now()}` });
-}
+};
 
-export async function DELETE() {
+export const DELETE = async () => {
   const session = await getSession();
   if (!session) {
     return new Response("Unauthorized", { status: 401 });
@@ -101,4 +101,4 @@ export async function DELETE() {
   await removeExistingAvatars(client, session.user.id);
 
   return new Response(null, { status: 204 });
-}
+};

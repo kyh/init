@@ -25,30 +25,47 @@ import { useOrganization } from "@/app/(dashboard)/dashboard/[slug]/_components/
 
 type Organization = RouterOutputs["organization"]["get"]["organization"];
 
-type DeleteOrganizationFormProps = {
-  slug: string;
-};
+const useDeleteOrganization = (organizationId: string) => {
+  const router = useRouter();
 
-export const DeleteOrganizationForm = ({ slug }: DeleteOrganizationFormProps) => {
-  const { data: organizationData } = useOrganization(slug);
-  const canDeleteOrganization = hasPermission(organizationData.currentUserMember.role, {
-    organization: ["delete"],
+  return useMutation({
+    mutationFn: () =>
+      authClient.organization.delete({
+        fetchOptions: { throw: true },
+        organizationId,
+      }),
+    onError: (error) => {
+      toast.error(error.message);
+    },
+    onSuccess: () => {
+      toast.success("Organization successfully deleted");
+      router.replace("/dashboard");
+    },
   });
-
-  if (organizationData.organizationMetadata.personal) {
-    return null;
-  }
-
-  if (canDeleteOrganization) {
-    return <Delete organization={organizationData.organization} />;
-  }
-
-  return <Leave organization={organizationData.organization} />;
 };
 
-type DeleteProps = {
+const useLeaveOrganization = (organizationId: string) => {
+  const router = useRouter();
+
+  return useMutation({
+    mutationFn: () =>
+      authClient.organization.leave({
+        fetchOptions: { throw: true },
+        organizationId,
+      }),
+    onError: (error) => {
+      toast.error(error.message);
+    },
+    onSuccess: () => {
+      toast.success("Organization successfully left");
+      router.replace("/dashboard");
+    },
+  });
+};
+
+interface DeleteProps {
   organization: Organization;
-};
+}
 
 const Delete = ({ organization }: DeleteProps) => {
   const { mutate: deleteOrganization, isPending } = useDeleteOrganization(organization.id);
@@ -57,6 +74,7 @@ const Delete = ({ organization }: DeleteProps) => {
     defaultValues: {
       name: "",
     },
+    onSubmit: () => deleteOrganization(),
     validators: {
       onSubmit: z.object({
         name: z.string().refine((value) => value === organization.name, {
@@ -64,7 +82,6 @@ const Delete = ({ organization }: DeleteProps) => {
         }),
       }),
     },
-    onSubmit: () => deleteOrganization(),
   });
 
   return (
@@ -137,9 +154,9 @@ const Delete = ({ organization }: DeleteProps) => {
   );
 };
 
-type LeaveProps = {
+interface LeaveProps {
   organization: Organization;
-};
+}
 
 const Leave = ({ organization }: LeaveProps) => {
   const { mutate: leaveOrganization, isPending } = useLeaveOrganization(organization.id);
@@ -148,6 +165,7 @@ const Leave = ({ organization }: LeaveProps) => {
     defaultValues: {
       confirmation: "",
     },
+    onSubmit: () => leaveOrganization(),
     validators: {
       onSubmit: z.object({
         confirmation: z.string().refine((value) => value === "LEAVE", {
@@ -155,7 +173,6 @@ const Leave = ({ organization }: LeaveProps) => {
         }),
       }),
     },
-    onSubmit: () => leaveOrganization(),
   });
 
   return (
@@ -216,40 +233,23 @@ const Leave = ({ organization }: LeaveProps) => {
   );
 };
 
-const useDeleteOrganization = (organizationId: string) => {
-  const router = useRouter();
+interface DeleteOrganizationFormProps {
+  slug: string;
+}
 
-  return useMutation({
-    mutationFn: () =>
-      authClient.organization.delete({
-        organizationId,
-        fetchOptions: { throw: true },
-      }),
-    onSuccess: () => {
-      toast.success("Organization successfully deleted");
-      router.replace("/dashboard");
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
+export const DeleteOrganizationForm = ({ slug }: DeleteOrganizationFormProps) => {
+  const { data: organizationData } = useOrganization(slug);
+  const canDeleteOrganization = hasPermission(organizationData.currentUserMember.role, {
+    organization: ["delete"],
   });
-};
 
-const useLeaveOrganization = (organizationId: string) => {
-  const router = useRouter();
+  if (organizationData.organizationMetadata.personal) {
+    return null;
+  }
 
-  return useMutation({
-    mutationFn: () =>
-      authClient.organization.leave({
-        organizationId,
-        fetchOptions: { throw: true },
-      }),
-    onSuccess: () => {
-      toast.success("Organization successfully left");
-      router.replace("/dashboard");
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
+  if (canDeleteOrganization) {
+    return <Delete organization={organizationData.organization} />;
+  }
+
+  return <Leave organization={organizationData.organization} />;
 };

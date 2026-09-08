@@ -7,6 +7,14 @@ import { Save, ExternalLink } from "lucide-react";
 
 import { apiBaseUrlItem } from "@/lib/storage";
 
+const parseAppUrl = (value: string): string => {
+  const url = new URL(value);
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    throw new Error("Use an http:// or https:// application URL");
+  }
+  return url.origin;
+};
+
 const App = () => {
   const [apiBaseUrl, setApiBaseUrl] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -24,12 +32,11 @@ const App = () => {
         setApiBaseUrl(savedApiBaseUrl);
       } catch {
         setMessage({
-          type: "error",
           text: "Failed to load settings",
+          type: "error",
         });
-      } finally {
-        setIsLoading(false);
       }
+      setIsLoading(false);
     };
 
     void loadSettings();
@@ -40,27 +47,21 @@ const App = () => {
     setMessage(null);
 
     try {
-      const url = new URL(apiBaseUrl);
-      if (url.protocol !== "http:" && url.protocol !== "https:") {
-        throw new Error("Use an http:// or https:// application URL");
-      }
-      const normalizedUrl = url.origin;
-
+      const normalizedUrl = parseAppUrl(apiBaseUrl);
       await apiBaseUrlItem.setValue(normalizedUrl);
 
       setApiBaseUrl(normalizedUrl);
       setMessage({
-        type: "success",
         text: "Settings saved successfully",
+        type: "success",
       });
     } catch (error) {
       setMessage({
-        type: "error",
         text: error instanceof Error ? error.message : "Failed to save settings",
+        type: "error",
       });
-    } finally {
-      setIsSaving(false);
     }
+    setIsSaving(false);
   };
 
   const openWebApp = () => {

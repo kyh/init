@@ -12,44 +12,49 @@ const YES = process.argv.includes("--yes") || !process.stdin.isTTY;
 const fileExists = (p: string) => fs.existsSync(path.resolve(ROOT_DIR, p));
 const packageSchema = z
   .object({
-    scripts: z.record(z.string(), z.string()).optional(),
     dependencies: z.record(z.string(), z.string()).optional(),
+    scripts: z.record(z.string(), z.string()).optional(),
   })
   .catchall(z.json());
-const readPackage = (p: string) => packageSchema.parse(JSON.parse(readText(p)));
-const writeJson = (p: string, data: z.JSONType) => {
-  writeText(p, JSON.stringify(data, null, 2) + "\n");
-};
-const readText = (p: string) => fs.readFileSync(path.resolve(ROOT_DIR, p), "utf8");
+const readText = (p: string) => fs.readFileSync(path.resolve(ROOT_DIR, p), "utf-8");
 const writeText = (p: string, data: string) => {
-  if (DRY_RUN) return console.log(`  [dry-run] write ${p}`);
+  if (DRY_RUN) {
+    return console.log(`  [dry-run] write ${p}`);
+  }
   fs.writeFileSync(path.resolve(ROOT_DIR, p), data);
 };
+const readPackage = (p: string) => packageSchema.parse(JSON.parse(readText(p)));
+const writeJson = (p: string, data: z.JSONType) => {
+  writeText(p, `${JSON.stringify(data, null, 2)}\n`);
+};
 const rmDir = (p: string) => {
-  if (DRY_RUN) return console.log(`  [dry-run] rm -rf ${p}`);
-  fs.rmSync(path.resolve(ROOT_DIR, p), { recursive: true, force: true });
+  if (DRY_RUN) {
+    return console.log(`  [dry-run] rm -rf ${p}`);
+  }
+  fs.rmSync(path.resolve(ROOT_DIR, p), { force: true, recursive: true });
 };
 
-const CYAN = "\x1b[36m";
-const DIM = "\x1b[2m";
-const BOLD = "\x1b[1m";
-const RESET = "\x1b[0m";
-const GREEN = "\x1b[32m";
-const CLEAR_LINE = "\x1b[2K\r";
-const HIDE_CURSOR = "\x1b[?25l";
-const SHOW_CURSOR = "\x1b[?25h";
+const CYAN = "\u001B[36m";
+const DIM = "\u001B[2m";
+const BOLD = "\u001B[1m";
+const RESET = "\u001B[0m";
+const GREEN = "\u001B[32m";
+const CLEAR_LINE = "\u001B[2K\r";
+const HIDE_CURSOR = "\u001B[?25l";
+const SHOW_CURSOR = "\u001B[?25h";
 
 interface CheckboxItem {
   label: string;
   checked: boolean;
 }
 
-function checkbox(message: string, items: CheckboxItem[]): Promise<boolean[]> {
-  return new Promise((resolve) => {
+const checkbox = (message: string, items: CheckboxItem[]): Promise<boolean[]> =>
+  // oxlint-disable-next-line promise/avoid-new -- adapts raw stdin key events into a promise
+  new Promise((resolve) => {
     const { stdin, stdout } = process;
     stdin.setRawMode(true);
     stdin.resume();
-    stdin.setEncoding("utf8");
+    stdin.setEncoding("utf-8");
 
     let cursor = 0;
 
@@ -58,14 +63,14 @@ function checkbox(message: string, items: CheckboxItem[]): Promise<boolean[]> {
       for (const [i, item] of items.entries()) {
         stdout.write(CLEAR_LINE);
         const isActive = i === cursor;
-        const checkbox = item.checked ? `${GREEN}◼${RESET}` : `${DIM}◻${RESET}`;
+        const mark = item.checked ? `${GREEN}◼${RESET}` : `${DIM}◻${RESET}`;
         const label = isActive ? `${CYAN}${BOLD}${item.label}${RESET}` : item.label;
         const pointer = isActive ? `${CYAN}❯${RESET}` : " ";
-        stdout.write(`  ${pointer} ${checkbox} ${label}\n`);
+        stdout.write(`  ${pointer} ${mark} ${label}\n`);
       }
       stdout.write(`${DIM}  ↑/↓ navigate · space toggle · enter confirm${RESET}`);
       // Move cursor back up to top of list
-      stdout.write(`\x1b[${items.length}A\r`);
+      stdout.write(`\u001B[${items.length}A\r`);
     };
 
     stdout.write(`\n${CYAN}?${RESET} ${BOLD}${message}${RESET}\n`);
@@ -74,21 +79,21 @@ function checkbox(message: string, items: CheckboxItem[]): Promise<boolean[]> {
 
     const onKey = (key: string) => {
       // ctrl+c
-      if (key === "\x03") {
+      if (key === "\u0003") {
         stdin.setRawMode(false);
         stdout.write(SHOW_CURSOR);
         process.exit(0);
       }
 
       // Up arrow or k
-      if (key === "\x1b[A" || key === "k") {
+      if (key === "\u001B[A" || key === "k") {
         cursor = (cursor - 1 + items.length) % items.length;
         render();
         return;
       }
 
       // Down arrow or j
-      if (key === "\x1b[B" || key === "j") {
+      if (key === "\u001B[B" || key === "j") {
         cursor = (cursor + 1) % items.length;
         render();
         return;
@@ -97,7 +102,9 @@ function checkbox(message: string, items: CheckboxItem[]): Promise<boolean[]> {
       // Space – toggle
       if (key === " ") {
         const item = items[cursor];
-        if (item) item.checked = !item.checked;
+        if (item) {
+          item.checked = !item.checked;
+        }
         render();
         return;
       }
@@ -105,7 +112,9 @@ function checkbox(message: string, items: CheckboxItem[]): Promise<boolean[]> {
       // a – toggle all
       if (key === "a") {
         const allChecked = items.every((i) => i.checked);
-        for (const item of items) item.checked = !allChecked;
+        for (const item of items) {
+          item.checked = !allChecked;
+        }
         render();
         return;
       }
@@ -116,7 +125,7 @@ function checkbox(message: string, items: CheckboxItem[]): Promise<boolean[]> {
         stdin.setRawMode(false);
         stdin.pause();
         // Move below rendered list and clear
-        stdout.write(`\x1b[${items.length + 1}B\r\n`);
+        stdout.write(`\u001B[${items.length + 1}B\r\n`);
         stdout.write(SHOW_CURSOR);
         resolve(items.map((i) => i.checked));
       }
@@ -124,7 +133,6 @@ function checkbox(message: string, items: CheckboxItem[]): Promise<boolean[]> {
 
     stdin.on("data", onKey);
   });
-}
 
 interface App {
   name: string;
@@ -133,39 +141,13 @@ interface App {
   cleanup?: () => void;
 }
 
-const apps: App[] = [
-  {
-    name: "Web (Next.js)",
-    dir: "apps/web",
-    devScript: "dev:web",
-  },
-  {
-    name: "Mobile (Expo/React Native)",
-    dir: "apps/mobile",
-    devScript: "dev:mobile",
-    cleanup: removeMobile,
-  },
-  {
-    name: "Extension (Chrome/WXT)",
-    dir: "apps/extension",
-    devScript: "dev:extension",
-    cleanup: removeExtension,
-  },
-  {
-    name: "Desktop (Electron)",
-    dir: "apps/desktop",
-    devScript: "dev:desktop",
-    cleanup: removeDesktop,
-  },
-];
-
-function removeMobile() {
+const removeMobile = () => {
   if (fileExists("pnpm-workspace.yaml")) {
     let ws = readText("pnpm-workspace.yaml");
-    ws = ws.replace(/^  "@better-auth\/expo":[^\n]*\n/gm, "");
-    ws = ws.replace(/^  "@expo\/dom-webview":[^\n]*\n/gm, "");
-    ws = ws.replace(/^  expo:\n(?:    [^\n]*\n)+/m, "");
-    ws = ws.replace(/^catalogs:\n(?:[ \t]*#[^\n]*\n|\n)*(?=\S|$)/m, "");
+    ws = ws.replaceAll(/^ {2}"@better-auth\/expo":[^\n]*\n/gmu, "");
+    ws = ws.replaceAll(/^ {2}"@expo\/dom-webview":[^\n]*\n/gmu, "");
+    ws = ws.replace(/^ {2}expo:\n(?:    [^\n]*\n)+/mu, "");
+    ws = ws.replace(/^catalogs:\n(?:[ \t]*#[^\n]*\n|\n)*(?=\S|$)/mu, "");
     writeText("pnpm-workspace.yaml", ws);
   }
 
@@ -178,15 +160,15 @@ function removeMobile() {
   const authPath = "packages/api/src/auth/auth.ts";
   if (fileExists(authPath)) {
     let auth = readText(authPath);
-    auth = auth.replace(/import \{ expo \} from "@better-auth\/expo";\n/, "");
-    auth = auth.replace(/\s*expo\(\),\n/, "\n");
-    auth = auth.replace(/, "expo:\/\/"/, "");
+    auth = auth.replace(/import \{ expo \} from "@better-auth\/expo";\n/u, "");
+    auth = auth.replace(/\s*expo\(\),\n/u, "\n");
+    auth = auth.replace(/, "expo:\/\/"/u, "");
     writeText(authPath, auth);
   }
 
   if (fileExists(".gitignore")) {
     let gi = readText(".gitignore");
-    gi = gi.replace(/\n# expo\n\.expo\/\nexpo-env\.d\.ts\napps\/mobile\/\.gitignore\n/, "\n");
+    gi = gi.replace(/\n# expo\n\.expo\/\nexpo-env\.d\.ts\napps\/mobile\/\.gitignore\n/u, "\n");
     writeText(".gitignore", gi);
   }
 
@@ -198,68 +180,94 @@ function removeMobile() {
     ext.recommendations = ext.recommendations.filter((r) => r !== "expo.vscode-expo-tools");
     writeJson(".vscode/extensions.json", ext);
   }
-}
+};
 
-function removeExtension() {
+const removeExtension = () => {
   if (fileExists(".gitignore")) {
     let gi = readText(".gitignore");
-    gi = gi.replace(/\n# wxt\n\.wxt\/\n/, "\n");
+    gi = gi.replace(/\n# wxt\n\.wxt\/\n/u, "\n");
     writeText(".gitignore", gi);
   }
-}
+};
 
-function removeDesktop() {
+const removeDesktop = () => {
   if (fileExists("pnpm-workspace.yaml")) {
-    const workspace = readText("pnpm-workspace.yaml").replace(
-      /^  electron(?:-winstaller)?: true\n/gm,
+    const workspace = readText("pnpm-workspace.yaml").replaceAll(
+      /^ {2}electron(?:-winstaller)?: true\n/gmu,
       "",
     );
     writeText("pnpm-workspace.yaml", workspace);
   }
-}
+};
 
-function exec(cmd: string, opts?: { stdio?: "inherit" | "ignore" | "pipe" }): Buffer {
+const apps: App[] = [
+  {
+    devScript: "dev:web",
+    dir: "apps/web",
+    name: "Web (Next.js)",
+  },
+  {
+    cleanup: removeMobile,
+    devScript: "dev:mobile",
+    dir: "apps/mobile",
+    name: "Mobile (Expo/React Native)",
+  },
+  {
+    cleanup: removeExtension,
+    devScript: "dev:extension",
+    dir: "apps/extension",
+    name: "Extension (Chrome/WXT)",
+  },
+  {
+    cleanup: removeDesktop,
+    devScript: "dev:desktop",
+    dir: "apps/desktop",
+    name: "Desktop (Electron)",
+  },
+];
+
+const exec = (cmd: string, opts?: { stdio?: "inherit" | "ignore" | "pipe" }): Buffer => {
   if (DRY_RUN) {
     console.log(`  [dry-run] exec: ${cmd}`);
     return Buffer.from("");
   }
   return execSync(cmd, { cwd: ROOT_DIR, ...opts });
-}
+};
 
-function commandExists(cmd: string): boolean {
+const commandExists = (cmd: string): boolean => {
   try {
     execSync(`command -v ${cmd}`, { cwd: ROOT_DIR, stdio: "ignore" });
     return true;
   } catch {
     return false;
   }
-}
+};
 
-function checkDocker() {
+const checkDocker = () => {
   if (!commandExists("docker")) {
     console.log("  ✗ Docker not found. Supabase requires Docker for local development.");
     console.log("    Install Docker: https://docs.docker.com/get-docker/");
     process.exit(1);
   }
   console.log("  ✓ Docker found");
-}
+};
 
-function startSupabase() {
+const startSupabase = () => {
   console.log("\nStarting Supabase...");
   const output = exec("pnpm -F db supabase start", { stdio: "pipe" }).toString();
 
   const values: Record<string, string> = {};
   for (const line of output.split("\n")) {
-    const [, key, value] = line.match(/^\s*(.+?):\s+(.+)$/) ?? [];
+    const { key, value } = line.match(/^\s*(?<key>.+?):\s+(?<value>.+)$/u)?.groups ?? {};
     if (key && value) {
       values[key.trim()] = value.trim();
     }
   }
   console.log("  ✓ Supabase started");
   return values;
-}
+};
 
-function createEnv(supabaseValues: Record<string, string>) {
+const createEnv = (supabaseValues: Record<string, string>) => {
   const envPath = ".env";
   if (fileExists(envPath)) {
     console.log("  ✓ .env already exists, skipping");
@@ -287,36 +295,40 @@ function createEnv(supabaseValues: Record<string, string>) {
 
   writeText(envPath, env);
   console.log("  ✓ .env created with Supabase credentials");
-}
+};
 
 // Namespace Supabase volumes per checkout folder to isolate cloned projects.
-function ensureProjectId() {
+const ensureProjectId = () => {
   const configPath = "packages/db/supabase/config.toml";
-  if (!fileExists(configPath)) return;
+  if (!fileExists(configPath)) {
+    return;
+  }
   const slug =
     path
       .basename(ROOT_DIR)
       .toLowerCase()
-      .replace(/[^a-z0-9_-]+/g, "-")
-      .replace(/^-+|-+$/g, "") || "init";
-  const projectId = /^[a-z]/.test(slug) ? slug : `app-${slug}`;
+      .replaceAll(/[^a-z0-9_-]+/gu, "-")
+      .replaceAll(/^-+|-+$/gu, "") || "init";
+  const projectId = /^[a-z]/u.test(slug) ? slug : `app-${slug}`;
   const config = readText(configPath);
-  const current = config.match(/^project_id\s*=\s*"([^"]*)"/m)?.[1];
-  if (current === projectId) return;
+  const current = config.match(/^project_id\s*=\s*"(?<id>[^"]*)"/mu)?.groups?.id;
+  if (current === projectId) {
+    return;
+  }
   writeText(
     configPath,
-    config.replace(/^project_id\s*=\s*"[^"]*"/m, `project_id = "${projectId}"`),
+    config.replace(/^project_id\s*=\s*"[^"]*"/mu, `project_id = "${projectId}"`),
   );
   console.log(`  ✓ Supabase project_id → "${projectId}" (isolates this project's local DB volume)`);
-}
+};
 
-function pushSchema() {
+const pushSchema = () => {
   console.log("\nPushing database schema...");
   exec("pnpm db:push", { stdio: "inherit" });
   console.log("  ✓ Schema pushed");
-}
+};
 
-function runSeed() {
+const runSeed = () => {
   console.log("\nSeeding database...");
   try {
     exec("pnpm db:seed", { stdio: "inherit" });
@@ -329,9 +341,9 @@ function runSeed() {
     throw error;
   }
   console.log("  ✓ Seeded dev user + sample data");
-}
+};
 
-function checkAgentTooling() {
+const checkAgentTooling = () => {
   console.log("\nAgent tooling...");
   if (commandExists("agent-browser")) {
     console.log("  ✓ agent-browser found");
@@ -344,9 +356,9 @@ function checkAgentTooling() {
   if (fileExists("emulate.config.yaml")) {
     console.log("  ✓ emulate.config.yaml present (run 'pnpm emulate' for offline GitHub OAuth)");
   }
-}
+};
 
-async function main() {
+const main = async () => {
   console.log("\n  Welcome to init setup!\n");
 
   const available = apps.filter((app) => fileExists(app.dir));
@@ -361,7 +373,7 @@ async function main() {
       ? available.map(() => true)
       : await checkbox(
           "Which apps do you want to include?",
-          available.map((app) => ({ label: app.name, checked: true })),
+          available.map((app) => ({ checked: true, label: app.name })),
         );
 
   const toKeep = available.filter((_, i) => selected[i]);
@@ -407,9 +419,11 @@ async function main() {
   console.log(`  Verify: ${CYAN}pnpm verify${RESET}    (typecheck · lint · format · test)`);
   console.log(`  Login:  ${CYAN}dev@init.local${RESET} / ${CYAN}password${RESET}  (seeded)`);
   console.log(`  Agents: read ${CYAN}AGENTS.md${RESET}\n`);
-}
+};
 
-main().catch((err) => {
-  console.error(err);
+try {
+  await main();
+} catch (error: unknown) {
+  console.error(error);
   process.exit(1);
-});
+}

@@ -7,13 +7,13 @@ export type DesktopUpdateState =
   | { status: "downloaded"; version: string }
   | { status: "error"; message: string };
 
-export type DesktopBridge = {
+export interface DesktopBridge {
   onMenuAction: (listener: (action: string) => void) => () => void;
   checkForUpdates: () => Promise<DesktopUpdateState>;
   downloadUpdate: () => Promise<DesktopUpdateState>;
   installUpdate: () => Promise<DesktopUpdateState>;
   onUpdateState: (listener: (state: DesktopUpdateState) => void) => () => void;
-};
+}
 
 declare global {
   interface Window {

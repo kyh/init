@@ -9,7 +9,8 @@ export const metadata: Metadata = {
 };
 
 const Page = async ({ searchParams }: { searchParams: Promise<{ nextPath?: string }> }) => {
-  const nextPath = safeNextPath((await searchParams).nextPath);
+  const { nextPath: requestedPath } = await searchParams;
+  const nextPath = safeNextPath(requestedPath);
 
   return (
     <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">

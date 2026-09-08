@@ -28,7 +28,7 @@ type TextFieldProps = {
   "id" | "name" | "value" | "onChange" | "onBlur" | "className"
 >;
 
-export function TextField({
+export const TextField = ({
   label,
   description,
   labelClassName,
@@ -37,7 +37,7 @@ export function TextField({
   inputClassName,
   errorClassName,
   ...inputProps
-}: TextFieldProps) {
+}: TextFieldProps) => {
   const field = useFieldContext<string>();
   const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
 
@@ -75,4 +75,4 @@ export function TextField({
       ) : null}
     </Field>
   );
-}
+};

@@ -12,9 +12,9 @@ const client = postgres(
 );
 
 export const db = drizzle({
+  casing: "snake_case",
   client,
   schema: { ...schemaAuth, ...schema },
-  casing: "snake_case",
 });
 
 export type Db = typeof db;
