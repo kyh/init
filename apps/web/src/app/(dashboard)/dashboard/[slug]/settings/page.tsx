@@ -8,11 +8,11 @@ import { HydrateClient, orpc, prefetch } from "@/orpc/server";
 import { DeleteOrganizationForm } from "./_components/delete-organization-form";
 import { UpdateOrganizationForm } from "./_components/update-organization-form";
 
-type PageProps = {
+interface PageProps {
   params: Promise<{
     slug: string;
   }>;
-};
+}
 
 const FormSkeleton = () => (
   <div className="space-y-4">
@@ -26,7 +26,7 @@ const FormSkeleton = () => (
 
 const Page = async (props: PageProps) => {
   const params = await props.params;
-  const slug = params.slug;
+  const { slug } = params;
 
   const session = await getSession();
   if (!session) {
@@ -46,7 +46,7 @@ const Page = async (props: PageProps) => {
                 Organization Information
               </h2>
               <p className="text-muted-foreground mt-1 text-sm leading-6">
-                Update your organization's information
+                Update your organization&apos;s information
               </p>
             </div>
             <div className="md:col-span-2">

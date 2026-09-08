@@ -7,11 +7,11 @@ import { PageHeader } from "@/components/header";
 import { HydrateClient, orpc, prefetch } from "@/orpc/server";
 import { TodoList } from "./_components/todo-list";
 
-type PageProps = {
+interface PageProps {
   params: Promise<{
     slug: string;
   }>;
-};
+}
 
 const TodoListSkeleton = () => (
   <div className="space-y-3">

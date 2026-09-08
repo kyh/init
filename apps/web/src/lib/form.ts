@@ -9,13 +9,13 @@ import { TextField } from "@/components/form/text-field";
 
 /** Bound fields own labels, validation state and errors. See TanStack Form composition. */
 export const { useAppForm } = createFormHook({
-  fieldContext,
-  formContext,
   fieldComponents: {
-    TextField,
     SelectField,
+    TextField,
   },
+  fieldContext,
   formComponents: {
     SubmitButton,
   },
+  formContext,
 });

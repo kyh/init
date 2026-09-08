@@ -4,26 +4,19 @@ import { useState } from "react";
 
 import { useIsHydrated } from "@/lib/use-is-hydrated";
 
-type MeteorsProps = {
+interface MeteorsProps {
   top?: number;
   number?: number;
-};
-
-export const Meteors = ({ top = -5, number = 20 }: MeteorsProps) => {
-  const hydrated = useIsHydrated();
-
-  // Positions are random and read window.innerWidth, so the server can't
-  // produce them; the key regenerates the field when the props change.
-  return hydrated ? <MeteorField key={`${top}-${number}`} top={top} number={number} /> : null;
-};
+}
 
 const MeteorField = ({ top, number }: Required<MeteorsProps>) => {
+  // oxlint-disable-next-line react/hook-use-state -- the random field is generated once; regeneration goes through the key
   const [meteorStyles] = useState<React.CSSProperties[]>(() =>
     Array.from({ length: number }, () => ({
+      animationDelay: `${Math.random() * 1 + 0.2}s`,
+      animationDuration: `${Math.floor(Math.random() * 8 + 2)}s`,
+      left: `${Math.floor(Math.random() * window.innerWidth)}px`,
       top,
-      left: Math.floor(Math.random() * window.innerWidth) + "px",
-      animationDelay: Math.random() * 1 + 0.2 + "s",
-      animationDuration: Math.floor(Math.random() * 8 + 2) + "s",
     })),
   );
 
@@ -40,4 +33,12 @@ const MeteorField = ({ top, number }: Required<MeteorsProps>) => {
       ))}
     </div>
   );
+};
+
+export const Meteors = ({ top = -5, number = 20 }: MeteorsProps) => {
+  const hydrated = useIsHydrated();
+
+  // Positions are random and read window.innerWidth, so the server can't
+  // produce them; the key regenerates the field when the props change.
+  return hydrated ? <MeteorField key={`${top}-${number}`} top={top} number={number} /> : null;
 };

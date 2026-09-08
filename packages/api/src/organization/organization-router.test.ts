@@ -10,7 +10,7 @@ describe("organizationRouter.get", () => {
   test("returns organization metadata, members and invitations without exposing admin fields", async () => {
     const context = createMockContext();
     const org = { ...mockOrganization, metadata: '{"personal": false}' };
-    const user = { id: "user-1", name: "Test User", email: "test@example.com", image: null };
+    const user = { email: "test@example.com", id: "user-1", image: null, name: "Test User" };
     const [membership] = databaseRows(member, mockMembership);
     assert.ok(membership);
     context.responses.push(
@@ -22,30 +22,30 @@ describe("organizationRouter.get", () => {
     const caller = createRouterClient(organizationRouter, { context });
 
     assert.deepEqual(await caller.get({ slug: "acme" }), {
+      currentUserMember: mockMembership,
+      invitations: [],
+      members: [{ ...mockMembership, user }],
       organization: org,
       organizationMetadata: { personal: false },
-      currentUserMember: mockMembership,
-      members: [{ ...mockMembership, user }],
-      invitations: [],
     });
 
-    const membersQuery = context.query.mock.calls[2];
+    const membersQuery = context.query.mock.calls.at(2);
     assert.ok(membersQuery);
     assert.match(
       membersQuery.arguments[0],
-      /json_build_array\("member_user"\."id", "member_user"\."name", "member_user"\."email", "member_user"\."image"\)/,
+      /json_build_array\("member_user"\."email", "member_user"\."id", "member_user"\."image", "member_user"\."name"\)/u,
     );
     assert.doesNotMatch(
       membersQuery.arguments[0],
-      /ban_reason|stripe_customer_id|"member_user"\."role"/,
+      /ban_reason|stripe_customer_id|"member_user"\."role"/u,
     );
     assert.deepEqual(membersQuery.arguments[1], [1, "org-1"]);
 
-    const invitationsQuery = context.query.mock.calls[3];
+    const invitationsQuery = context.query.mock.calls.at(3);
     assert.ok(invitationsQuery);
     assert.match(
       invitationsQuery.arguments[0],
-      /where \("invitation"\."organization_id" = \$1 and "invitation"\."status" <> \$2\)/,
+      /where \("invitation"\."organization_id" = \$1 and "invitation"\."status" <> \$2\)/u,
     );
     assert.deepEqual(invitationsQuery.arguments[1], ["org-1", "canceled"]);
   });
@@ -59,6 +59,7 @@ describe("organizationRouter.get", () => {
       [],
     );
     const caller = createRouterClient(organizationRouter, { context });
-    assert.deepEqual((await caller.get({ slug: "acme" })).organizationMetadata, {});
+    const { organizationMetadata } = await caller.get({ slug: "acme" });
+    assert.deepEqual(organizationMetadata, {});
   });
 });

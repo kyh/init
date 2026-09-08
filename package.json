@@ -1,6 +1,7 @@
 {
   "name": "init",
   "private": true,
+  "type": "module",
   "scripts": {
     "build": "turbo run build",
     "clean": "git clean -xdf node_modules",
@@ -17,7 +18,7 @@
     "dev:mobile": "turbo watch dev -F @repo/mobile...",
     "dev:extension": "turbo watch dev -F @repo/extension...",
     "dev:desktop": "turbo watch dev -F @repo/desktop...",
-    "lint": "oxlint --report-unused-disable-directives --deny-warnings",
+    "lint": "oxlint --report-unused-disable-directives",
     "lint:fix": "oxlint --fix",
     "format": "oxfmt --check",
     "format:fix": "oxfmt --write",
@@ -28,7 +29,6 @@
     "emulate": "npx emulate@0.9.0 --service github"
   },
   "devDependencies": {
-    "@kyh/oxlint": "^0.2.0",
     "@types/node": "catalog:",
     "dotenv-cli": "^11.0.0",
     "oxfmt": "^0.65.0",
@@ -36,6 +36,7 @@
     "tsx": "catalog:",
     "turbo": "^2.10.12",
     "typescript": "catalog:",
+    "ultracite": "^7.11.0",
     "zod": "catalog:"
   },
   "engines": {

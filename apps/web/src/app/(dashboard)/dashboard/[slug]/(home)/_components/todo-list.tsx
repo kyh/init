@@ -14,9 +14,9 @@ import { PencilIcon, Trash2Icon } from "lucide-react";
 import type { RouterOutputs } from "@repo/api";
 import { orpc } from "@/orpc/react";
 
-type TodoListProps = {
+interface TodoListProps {
   slug: string;
-};
+}
 
 type Todo = RouterOutputs["todo"]["list"]["todos"][number];
 
@@ -27,7 +27,7 @@ const onError = (error: { message: string }) => {
 export const TodoList = ({ slug }: TodoListProps) => {
   const queryClient = useQueryClient();
   const { data } = useSuspenseQuery(orpc.todo.list.queryOptions({ input: { slug } }));
-  const todos = data.todos;
+  const { todos } = data;
 
   const invalidateTodos = () =>
     queryClient.invalidateQueries({ queryKey: orpc.todo.list.key({ input: { slug } }) });
@@ -65,7 +65,9 @@ export const TodoList = ({ slug }: TodoListProps) => {
   };
 
   const handleSaveEdit = () => {
-    if (!editing) return;
+    if (!editing) {
+      return;
+    }
 
     const trimmed = editing.title.trim();
     if (!trimmed) {
@@ -74,7 +76,7 @@ export const TodoList = ({ slug }: TodoListProps) => {
     }
 
     updateTodo.mutate(
-      { slug, id: editing.id, title: trimmed },
+      { id: editing.id, slug, title: trimmed },
       {
         onSuccess: () => {
           toast.success("Todo updated");
@@ -86,17 +88,17 @@ export const TodoList = ({ slug }: TodoListProps) => {
 
   const handleDelete = (todo: Todo) => {
     alertDialog.open(`Delete "${todo.title}"?`, {
-      description: "This action cannot be undone.",
       action: {
         label: "Delete",
         onClick: async () => {
-          await deleteTodo.mutateAsync({ slug, id: todo.id });
+          await deleteTodo.mutateAsync({ id: todo.id, slug });
           toast.success("Todo deleted");
         },
       },
       cancel: {
         label: "Cancel",
       },
+      description: "This action cannot be undone.",
     });
   };
 
@@ -116,7 +118,7 @@ export const TodoList = ({ slug }: TodoListProps) => {
       </form>
       {todos.length === 0 ? (
         <p className="text-muted-foreground text-sm">
-          You haven't created any todos yet. Add your first one above.
+          You haven&apos;t created any todos yet. Add your first one above.
         </p>
       ) : (
         <ul className="space-y-3">
@@ -131,7 +133,7 @@ export const TodoList = ({ slug }: TodoListProps) => {
                     <Checkbox
                       checked={todo.completed}
                       onCheckedChange={(completed) =>
-                        updateTodo.mutate({ slug, id: todo.id, completed })
+                        updateTodo.mutate({ completed, id: todo.id, slug })
                       }
                       aria-label={
                         todo.completed ? "Mark todo as incomplete" : "Mark todo as complete"

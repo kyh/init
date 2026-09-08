@@ -9,32 +9,32 @@ import { waitlistRouter } from "./waitlist-router";
 describe("waitlistRouter.join", () => {
   test("accepts anonymous signup and ignores duplicate email conflicts", async () => {
     const context = createMockContext(null);
-    const entry = { id: "wl-1", email: "hello@example.com", source: "", userId: null };
+    const entry = { email: "hello@example.com", id: "wl-1", source: "", userId: null };
     context.responses.push(databaseRows(waitlist, entry), []);
     const caller = createRouterClient(waitlistRouter, { context });
 
     assert.deepEqual(await caller.join({ email: entry.email }), { waitlist: entry });
     assert.deepEqual(await caller.join({ email: entry.email }), { waitlist: null });
-    const query = context.query.mock.calls[0];
+    const [query] = context.query.mock.calls;
     assert.ok(query);
-    assert.match(query.arguments[0], /on conflict \("email"\) do nothing/);
+    assert.match(query.arguments[0], /on conflict \("email"\) do nothing/u);
     assert.deepEqual(query.arguments[1], [
-      process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "",
       entry.email,
+      process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "",
     ]);
   });
 
   test("attaches the current user to authenticated signups", async () => {
     const context = createMockContext();
-    const entry = { id: "wl-2", email: "user@example.com", source: "", userId: "user-1" };
+    const entry = { email: "user@example.com", id: "wl-2", source: "", userId: "user-1" };
     context.responses.push(databaseRows(waitlist, entry));
     const caller = createRouterClient(waitlistRouter, { context });
 
     assert.deepEqual(await caller.join({ email: entry.email }), { waitlist: entry });
     assert.deepEqual(context.query.mock.calls[0]?.arguments[1], [
-      "user-1",
-      process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "",
       entry.email,
+      process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "",
+      "user-1",
     ]);
   });
 

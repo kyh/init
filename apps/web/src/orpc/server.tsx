@@ -11,13 +11,13 @@ import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import type { FetchQueryOptions, QueryKey } from "@tanstack/react-query";
 import { createQueryClient } from "./query-client";
 
-const createContext = cache(async () => {
-  return createORPCContext({
+const createContext = cache(async () =>
+  createORPCContext({
     headers: new Headers(await headers()),
     // Reuse the dashboard’s cached session lookup.
     session: await getSession(),
-  });
-});
+  }),
+);
 
 const getQueryClient = cache(createQueryClient);
 

@@ -10,9 +10,9 @@ export const metadata: Metadata = {
   },
 };
 
-type LayoutProps = {
+interface LayoutProps {
   children: React.ReactNode;
-};
+}
 
 const Layout = async (props: LayoutProps) => {
   const session = await getSession();

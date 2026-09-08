@@ -6,9 +6,12 @@ import { RPCHandler } from "@orpc/server/fetch";
 // Browser clients are same-origin. Leave CORS disabled; RPC also refuses GET by default.
 const handler = new RPCHandler(appRouter, {
   clientInterceptors: [
+    // oxlint-disable-next-line promise/prefer-await-to-callbacks -- oRPC's interceptor hook takes the error as its argument
     onError((error) => {
       // Only unexpected failures need server logging.
-      if (error instanceof ORPCError) return;
+      if (error instanceof ORPCError) {
+        return;
+      }
       console.error(">>> oRPC Error", error);
     }),
   ],
@@ -27,8 +30,8 @@ const handleRequest = async (req: NextRequest) => {
   }
 
   const { response } = await handler.handle(req, {
-    prefix: "/api/orpc",
     context: await createORPCContext({ headers: req.headers }),
+    prefix: "/api/orpc",
   });
 
   return response ?? new Response("Not found", { status: 404 });

@@ -3,10 +3,10 @@
 import { useEffect } from "react";
 import { Button } from "@repo/ui/components/button";
 
-type ErrorBoundaryProps = {
+interface ErrorBoundaryProps {
   error: Error & { digest?: string };
   reset: () => void;
-};
+}
 
 const ErrorBoundary = ({ error, reset }: ErrorBoundaryProps) => {
   useEffect(() => {

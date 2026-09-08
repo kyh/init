@@ -7,7 +7,7 @@ import { cn } from "cn";
 import { authClient } from "@/lib/auth-client";
 
 const buttonClassName = cn(
-  buttonVariants({ variant: "secondary", size: "sm" }),
+  buttonVariants({ size: "sm", variant: "secondary" }),
   "ml-4 w-24 rounded-full px-5",
 );
 

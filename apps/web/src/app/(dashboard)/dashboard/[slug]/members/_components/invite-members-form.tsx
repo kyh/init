@@ -26,51 +26,57 @@ import {
 
 const MAX_INVITES = 5;
 
-type InviteMembersDialogProps = {
-  slug: string;
-};
-
-export const InviteMembersDialog = ({ slug }: InviteMembersDialogProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger render={<Button size="sm" />}>
-        <PlusIcon className="mr-1 size-4" />
-        <span>Invite Members</span>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Invite Members to your Organization</DialogTitle>
-          <DialogDescription>
-            Invite members to your organization by entering their email and role.
-          </DialogDescription>
-        </DialogHeader>
-        <InviteMembersForm
-          slug={slug}
-          onInviteSuccess={() => {
-            setIsOpen(false);
-          }}
-        />
-      </DialogContent>
-    </Dialog>
-  );
-};
-
 const inviteMembersSchema = z.object({
   organizationInvitations: z.array(
     z.object({
-      key: z.string(),
       email: z.email("Invalid email address"),
+      key: z.string(),
       role: roleSchema,
     }),
   ),
 });
 
-type InviteMembersFormProps = {
+// `key` is client-only (React list identity); the mutation maps email/role explicitly
+type InviteModel = z.infer<typeof inviteMembersSchema>["organizationInvitations"][number];
+
+const createEmptyInviteModel = (): InviteModel => ({
+  email: "",
+  key: crypto.randomUUID(),
+  role: "member",
+});
+
+const useInviteMembers = (slug: string, organizationId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: z.infer<typeof inviteMembersSchema>) => {
+      const results = await Promise.allSettled(
+        data.organizationInvitations.map((invite) =>
+          authClient.organization.inviteMember({
+            email: invite.email,
+            fetchOptions: { throw: true },
+            organizationId,
+            role: invite.role,
+          }),
+        ),
+      );
+      const failed = results.find((result) => result.status === "rejected");
+      if (failed) {
+        throw failed.reason;
+      }
+    },
+    onError: (error) => toast.error(error.message),
+    // Some invitations may succeed even when another fails.
+    onSettled: () => invalidateOrganization(queryClient, slug),
+    onSuccess: () => {
+      toast.success("Invitations sent successfully");
+    },
+  });
+};
+
+interface InviteMembersFormProps {
   slug: string;
   onInviteSuccess?: () => void;
-};
+}
 
 const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormProps) => {
   const { data: organizationData } = useOrganization(slug);
@@ -83,9 +89,6 @@ const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormProps) =>
     defaultValues: {
       organizationInvitations: [createEmptyInviteModel()],
     },
-    validators: {
-      onSubmit: inviteMembersSchema,
-    },
     onSubmit: ({ value, formApi }) => {
       inviteMembers(value, {
         onSuccess: () => {
@@ -93,6 +96,9 @@ const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormProps) =>
           onInviteSuccess?.();
         },
       });
+    },
+    validators: {
+      onSubmit: inviteMembersSchema,
     },
   });
 
@@ -135,7 +141,7 @@ const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormProps) =>
                         label="Role"
                         labelClassName={index === 0 ? undefined : "sr-only"}
                         className="w-4/12"
-                        options={ROLES.map((role) => ({ value: role, label: role }))}
+                        options={ROLES.map((role) => ({ label: role, value: role }))}
                         itemClassName="text-sm capitalize"
                       />
                     )}
@@ -183,37 +189,33 @@ const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormProps) =>
   );
 };
 
-// `key` is client-only (React list identity); the mutation maps email/role explicitly
-type InviteModel = z.infer<typeof inviteMembersSchema>["organizationInvitations"][number];
+interface InviteMembersDialogProps {
+  slug: string;
+}
 
-const createEmptyInviteModel = (): InviteModel => ({
-  key: crypto.randomUUID(),
-  email: "",
-  role: "member",
-});
+export const InviteMembersDialog = ({ slug }: InviteMembersDialogProps) => {
+  const [isOpen, setIsOpen] = useState(false);
 
-const useInviteMembers = (slug: string, organizationId: string) => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (data: z.infer<typeof inviteMembersSchema>) => {
-      const results = await Promise.allSettled(
-        data.organizationInvitations.map((invite) =>
-          authClient.organization.inviteMember({
-            email: invite.email,
-            role: invite.role,
-            organizationId,
-            fetchOptions: { throw: true },
-          }),
-        ),
-      );
-      const failed = results.find((result) => result.status === "rejected");
-      if (failed) throw failed.reason;
-    },
-    onSuccess: () => {
-      toast.success("Invitations sent successfully");
-    },
-    onError: (error) => toast.error(error.message),
-    // Some invitations may succeed even when another fails.
-    onSettled: () => invalidateOrganization(queryClient, slug),
-  });
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger render={<Button size="sm" />}>
+        <PlusIcon className="mr-1 size-4" />
+        <span>Invite Members</span>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Invite Members to your Organization</DialogTitle>
+          <DialogDescription>
+            Invite members to your organization by entering their email and role.
+          </DialogDescription>
+        </DialogHeader>
+        <InviteMembersForm
+          slug={slug}
+          onInviteSuccess={() => {
+            setIsOpen(false);
+          }}
+        />
+      </DialogContent>
+    </Dialog>
+  );
 };

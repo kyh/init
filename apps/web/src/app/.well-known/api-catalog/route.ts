@@ -16,8 +16,8 @@ export const GET = () => {
         "service-doc": [
           {
             href: `${siteConfig.url}/docs/architecture/api`,
-            type: "text/html",
             title: "API documentation",
+            type: "text/html",
           },
         ],
         status: [{ href: `${siteConfig.url}/api/health` }],
