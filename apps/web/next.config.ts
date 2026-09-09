@@ -64,8 +64,6 @@ const config: NextConfig = {
   },
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
   transpilePackages: ["@repo/api", "@repo/db", "@repo/ui"],
-  /** We already do linting and typechecking as separate tasks in CI */
-  typescript: { ignoreBuildErrors: true },
 };
 
 export default withMDX(config);
