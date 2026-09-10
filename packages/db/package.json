@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     "./drizzle-client": "./src/drizzle-client.ts",
+    "./drizzle-relations": "./src/drizzle-relations.ts",
     "./drizzle-schema": "./src/drizzle-schema.ts",
     "./drizzle-schema-auth": "./src/drizzle-schema-auth.ts"
   },
@@ -31,7 +32,7 @@
   "devDependencies": {
     "@kyh/tsconfig": "catalog:",
     "@types/node": "catalog:",
-    "drizzle-kit": "^0.31.10",
+    "drizzle-kit": "1.0.0-rc.4",
     "supabase": "^2.116.0",
     "typescript": "catalog:"
   }

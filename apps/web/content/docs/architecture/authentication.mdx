@@ -267,7 +267,7 @@ Auth tables are generated. After changing plugins, regenerate:
 cd packages/db && pnpm generate:auth-schema
 ```
 
-Then re-add `.enableRLS()` to each table (see the note in `packages/db/src/drizzle-schema-auth.ts`) and run `pnpm db:push`.
+Then declare each table through `pgTable.withRLS` again (see the note in `packages/db/src/drizzle-schema-auth.ts`) and run `pnpm db:push`.
 
 ## Security Notes
 

@@ -1,8 +1,7 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
-import * as schema from "./drizzle-schema";
-import * as schemaAuth from "./drizzle-schema-auth";
+import { relations } from "./drizzle-relations";
 
 const client = postgres(
   process.env.POSTGRES_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres",
@@ -11,10 +10,6 @@ const client = postgres(
   { prepare: false },
 );
 
-export const db = drizzle({
-  casing: "snake_case",
-  client,
-  schema: { ...schemaAuth, ...schema },
-});
+export const db = drizzle({ client, relations });
 
 export type Db = typeof db;

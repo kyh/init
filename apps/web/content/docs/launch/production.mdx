@@ -24,10 +24,10 @@ Init ships with the author's defaults baked in. Change these before launch:
 
 Two layers, know both:
 
-1. **RLS deny-by-default** - every table calls `.enableRLS()` with no policies, so the anon key gets nothing through PostgREST
+1. **RLS deny-by-default** - every table is declared through `pgTable.withRLS` with no policies, so the anon key gets nothing through PostgREST
 2. **oRPC procedures** - the real authorization. `protectedProcedure` requires a session; `organizationProcedure(schema)` (in `packages/api/src/orpc.ts`) resolves the org and proves membership before any org-scoped handler runs
 
-On a hosted Supabase project, also disable the Data API (Settings → API) - local dev already has it off in `packages/db/supabase/config.toml`. And if you regenerate the auth schema, re-add `.enableRLS()` to every table.
+On a hosted Supabase project, also disable the Data API (Settings → API) - local dev already has it off in `packages/db/supabase/config.toml`. And if you regenerate the auth schema, declare every table through `pgTable.withRLS` again.
 
 ## What Init Doesn't Ship
 

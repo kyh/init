@@ -38,9 +38,7 @@ const emulatorUrl = process.env.NEXT_PUBLIC_GITHUB_EMULATOR_URL;
 
 const generateAvailableSlug = async (baseSlug: string, attempt = 0): Promise<string> => {
   const slug = attempt === 0 ? baseSlug : `${baseSlug}-${attempt}`;
-  const org = await db.query.organization.findFirst({
-    where: (organizationTable) => eq(organizationTable.slug, slug),
-  });
+  const org = await db.query.organization.findFirst({ where: { slug } });
   if (org) {
     return generateAvailableSlug(baseSlug, attempt + 1);
   }
@@ -97,9 +95,7 @@ const createDefaultOrganization = async (user: User) => {
 };
 
 const setActiveOrganization = async (session: { userId: string }) => {
-  const firstOrg = await db.query.member.findFirst({
-    where: (member) => eq(member.userId, session.userId),
-  });
+  const firstOrg = await db.query.member.findFirst({ where: { userId: session.userId } });
 
   return {
     data: {
@@ -182,8 +178,7 @@ export const auth = betterAuth({
       subscription: {
         authorizeReference: async ({ user, referenceId }) => {
           const membership = await db.query.member.findFirst({
-            where: (member) =>
-              and(eq(member.organizationId, referenceId), eq(member.userId, user.id)),
+            where: { organizationId: referenceId, userId: user.id },
           });
           return hasPermission(membership?.role, { billing: ["manage"] });
         },

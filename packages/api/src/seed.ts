@@ -9,9 +9,7 @@ const DEV_PASSWORD = "password";
 const DEV_NAME = "Dev User";
 
 const seed = async () => {
-  const existing = await db.query.user.findFirst({
-    where: (user, { eq }) => eq(user.email, DEV_EMAIL),
-  });
+  const existing = await db.query.user.findFirst({ where: { email: DEV_EMAIL } });
 
   let userId: string;
   if (existing) {
@@ -25,17 +23,13 @@ const seed = async () => {
     console.log(`  ✓ created ${DEV_EMAIL} (password: ${DEV_PASSWORD})`);
   }
 
-  const membership = await db.query.member.findFirst({
-    where: (member, { eq }) => eq(member.userId, userId),
-  });
+  const membership = await db.query.member.findFirst({ where: { userId } });
   if (!membership) {
     throw new Error("dev user has no organization — the signup hook did not run");
   }
   const { organizationId } = membership;
 
-  const existingTodo = await db.query.todo.findFirst({
-    where: (todoTable, { eq }) => eq(todoTable.organizationId, organizationId),
-  });
+  const existingTodo = await db.query.todo.findFirst({ where: { organizationId } });
   if (existingTodo) {
     console.log("  ✓ sample todos already present");
     return;

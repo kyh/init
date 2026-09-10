@@ -32,8 +32,8 @@ export const todoRouter = {
   }),
   list: organizationProcedure(organizationInput).handler(async ({ context }) => {
     const todos = await context.db.query.todo.findMany({
-      orderBy: (todoTable, { desc }) => desc(todoTable.createdAt),
-      where: (todoTable) => eq(todoTable.organizationId, context.organization.id),
+      orderBy: { createdAt: "desc" },
+      where: { organizationId: context.organization.id },
     });
 
     return { todos };

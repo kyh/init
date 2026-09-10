@@ -16,17 +16,18 @@ One file for your tables, one for better-auth's:
 Every table in this codebase follows the same conventions:
 
 ```typescript
-export const example = pgTable("example", (t) => ({
+export const example = pgTable.withRLS("example", (t) => ({
+  // withRLS, always
   id: t.uuid().notNull().primaryKey().defaultRandom(), // UUID pk, db-generated
   createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
   updatedAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
-})).enableRLS(); // Always
+}));
 ```
 
 - **UUID primary keys** - `defaultRandom()`, generated in Postgres
 - **Timestamps with timezone** - `defaultNow()`; routers set `updatedAt` on update (see `todo-router.ts`)
-- **snake_case is automatic** - the client is configured with `casing: "snake_case"`, so write `organizationId` and get `organization_id`
-- **`.enableRLS()` on every table** - no policies, deny by default. Authorization lives in the oRPC procedures; the server connection bypasses RLS as table owner. Forget this and the table is readable through PostgREST with the anon key on hosted Supabase.
+- **snake_case is automatic** - `pgTable` in `drizzle-schema.ts` is `pgTableCreator((name) => name, "snake_case")`, so write `organizationId` and get `organization_id`
+- **`pgTable.withRLS` for every table** - no policies, deny by default. Authorization lives in the oRPC procedures; the server connection bypasses RLS as table owner. Forget this and the table is readable through PostgREST with the anon key on hosted Supabase.
 
 ## Pattern: Organization-Scoped Data
 
@@ -34,7 +35,7 @@ Most product data belongs to an organization, not a user - Init is multi-tenant 
 
 ```typescript
 // packages/db/src/drizzle-schema.ts
-export const todo = pgTable(
+export const todo = pgTable.withRLS(
   "todo",
   (t) => ({
     id: t.uuid().notNull().primaryKey().defaultRandom(),
@@ -48,7 +49,7 @@ export const todo = pgTable(
     updatedAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
   }),
   (table) => [index("todo_organization_id_idx").on(table.organizationId)],
-).enableRLS();
+);
 ```
 
 Three deliberate choices:
@@ -64,26 +65,26 @@ Note the foreign key is `text`, not `uuid` - better-auth generates text ids for 
 Data that survives account deletion references the user loosely. `waitlist` is the template:
 
 ```typescript
-export const waitlist = pgTable("waitlist", (t) => ({
+export const waitlist = pgTable.withRLS("waitlist", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   userId: t.text().references(() => user.id, { onDelete: "set null" }),
   source: t.text(),
   email: t.text().notNull().unique(),
-})).enableRLS();
+}));
 ```
 
 `set null` instead of `cascade`: the signup record outlives the account. The `unique` constraint on `email` lets the router treat repeat signups as a no-op (`onConflictDoNothing`).
 
 ## Relations
 
-Declare relations next to the table so `db.query.*.findMany({ with })` works:
+Declare relations in `packages/db/src/drizzle-relations.ts`, one `defineRelations` graph over both schema files, so `db.query.*.findMany({ with })` works:
 
 ```typescript
-export const todoRelations = relations(todo, ({ one }) => ({
-  organization: one(organization, {
-    fields: [todo.organizationId],
-    references: [organization.id],
-  }),
+export const relations = defineRelations({ ...schemaAuth, ...schema }, (r) => ({
+  // ...
+  todo: {
+    organization: r.one.organization({ from: r.todo.organizationId, to: r.organization.id }),
+  },
 }));
 ```
 
@@ -118,9 +119,9 @@ On the client, prefer `RouterOutputs` from `@repo/api` - it reflects what the AP
 ## Checklist for a New Table
 
 - UUID pk, `createdAt`/`updatedAt` with timezone
-- `.enableRLS()`
+- `pgTable.withRLS`
 - Scoped: `organizationId` + cascade + index (or `userId` + `set null` if it must survive deletion)
-- Relations declared
+- Relations declared in `drizzle-relations.ts`
 - `pnpm db:push` run
 
 ## Next Steps

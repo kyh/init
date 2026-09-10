@@ -47,7 +47,7 @@ export const organizationProcedure = <T extends z.ZodType<z.infer<typeof organiz
 ) =>
   protectedProcedure.input(input).use(async ({ context, next }, validated) => {
     const organization = await context.db.query.organization.findFirst({
-      where: (org, { eq }) => eq(org.slug, validated.slug),
+      where: { slug: validated.slug },
     });
 
     if (!organization) {
@@ -56,8 +56,7 @@ export const organizationProcedure = <T extends z.ZodType<z.infer<typeof organiz
 
     // Separate lookups distinguish a missing organization from missing membership.
     const membership = await context.db.query.member.findFirst({
-      where: (member, { and, eq }) =>
-        and(eq(member.organizationId, organization.id), eq(member.userId, context.session.user.id)),
+      where: { organizationId: organization.id, userId: context.session.user.id },
     });
 
     if (!membership) {

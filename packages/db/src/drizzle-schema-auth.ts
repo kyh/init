@@ -1,4 +1,3 @@
-import { relations } from "drizzle-orm";
 import {
   pgTable,
   text,
@@ -10,10 +9,12 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
-// Maintained by hand while the auth CLI lags the runtime. Preserve RLS, indexes,
-// account.issuer and rate_limit when regenerating. auth-tables.test.ts checks the contract.
+// Maintained by hand while the auth CLI lags the runtime. Preserve RLS
+// (pgTable.withRLS), indexes, account.issuer and rate_limit when regenerating.
+// auth-tables.test.ts checks the contract; drizzle-relations.ts declares the
+// relations these tables take part in.
 
-export const user = pgTable(
+export const user = pgTable.withRLS(
   "user",
   {
     banExpires: timestamp("ban_expires"),
@@ -35,9 +36,9 @@ export const user = pgTable(
   // @better-auth/stripe looks the user up by Stripe's customer id on the
   // webhook path
   (table) => [index("user_stripeCustomerId_idx").on(table.stripeCustomerId)],
-).enableRLS();
+);
 
-export const session = pgTable(
+export const session = pgTable.withRLS(
   "session",
   {
     activeOrganizationId: text("active_organization_id"),
@@ -56,9 +57,9 @@ export const session = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
   },
   (table) => [index("session_userId_idx").on(table.userId)],
-).enableRLS();
+);
 
-export const account = pgTable(
+export const account = pgTable.withRLS(
   "account",
   {
     accessToken: text("access_token"),
@@ -86,9 +87,9 @@ export const account = pgTable(
     index("account_userId_idx").on(table.userId),
     uniqueIndex("account_issuer_accountId_uidx").on(table.issuer, table.accountId),
   ],
-).enableRLS();
+);
 
-export const verification = pgTable(
+export const verification = pgTable.withRLS(
   "verification",
   {
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -102,9 +103,9 @@ export const verification = pgTable(
     value: text("value").notNull(),
   },
   (table) => [index("verification_identifier_idx").on(table.identifier)],
-).enableRLS();
+);
 
-export const organization = pgTable(
+export const organization = pgTable.withRLS(
   "organization",
   {
     createdAt: timestamp("created_at").notNull(),
@@ -115,9 +116,9 @@ export const organization = pgTable(
     slug: text("slug").notNull().unique(),
   },
   (table) => [uniqueIndex("organization_slug_uidx").on(table.slug)],
-).enableRLS();
+);
 
-export const member = pgTable(
+export const member = pgTable.withRLS(
   "member",
   {
     createdAt: timestamp("created_at").notNull(),
@@ -134,9 +135,9 @@ export const member = pgTable(
     index("member_organizationId_idx").on(table.organizationId),
     index("member_userId_idx").on(table.userId),
   ],
-).enableRLS();
+);
 
-export const invitation = pgTable(
+export const invitation = pgTable.withRLS(
   "invitation",
   {
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -156,9 +157,9 @@ export const invitation = pgTable(
     index("invitation_organizationId_idx").on(table.organizationId),
     index("invitation_email_idx").on(table.email),
   ],
-).enableRLS();
+);
 
-export const subscription = pgTable(
+export const subscription = pgTable.withRLS(
   "subscription",
   {
     billingInterval: text("billing_interval"),
@@ -187,63 +188,15 @@ export const subscription = pgTable(
     index("subscription_stripeSubscriptionId_idx").on(table.stripeSubscriptionId),
     index("subscription_stripeCustomerId_idx").on(table.stripeCustomerId),
   ],
-).enableRLS();
+);
 
 // better-auth's database rate-limit store (rateLimit.storage = "database" in
 // auth.ts). Keyed by IP+path; `key` is unique so the counter upsert is a single
-// indexed lookup. Hand-added — the CLI regen emits this table but strips the
-// .enableRLS() below, so re-add it if you regenerate.
-export const rateLimit = pgTable("rate_limit", {
+// indexed lookup. Hand-added — the CLI regen emits this table through plain
+// pgTable, so declare it through pgTable.withRLS again if you regenerate.
+export const rateLimit = pgTable.withRLS("rate_limit", {
   count: integer("count").notNull(),
   id: text("id").primaryKey(),
   key: text("key").notNull().unique(),
   lastRequest: bigint("last_request", { mode: "number" }).notNull(),
-}).enableRLS();
-
-export const userRelations = relations(user, ({ many }) => ({
-  accounts: many(account),
-  invitations: many(invitation),
-  members: many(member),
-  sessions: many(session),
-}));
-
-export const sessionRelations = relations(session, ({ one }) => ({
-  user: one(user, {
-    fields: [session.userId],
-    references: [user.id],
-  }),
-}));
-
-export const accountRelations = relations(account, ({ one }) => ({
-  user: one(user, {
-    fields: [account.userId],
-    references: [user.id],
-  }),
-}));
-
-export const organizationRelations = relations(organization, ({ many }) => ({
-  invitations: many(invitation),
-  members: many(member),
-}));
-
-export const memberRelations = relations(member, ({ one }) => ({
-  organization: one(organization, {
-    fields: [member.organizationId],
-    references: [organization.id],
-  }),
-  user: one(user, {
-    fields: [member.userId],
-    references: [user.id],
-  }),
-}));
-
-export const invitationRelations = relations(invitation, ({ one }) => ({
-  organization: one(organization, {
-    fields: [invitation.organizationId],
-    references: [organization.id],
-  }),
-  user: one(user, {
-    fields: [invitation.inviterId],
-    references: [user.id],
-  }),
-}));
+});

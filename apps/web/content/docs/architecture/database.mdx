@@ -34,8 +34,7 @@ One server-side client, shared by the API and better-auth:
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
-import * as schema from "./drizzle-schema";
-import * as schemaAuth from "./drizzle-schema-auth";
+import { relations } from "./drizzle-relations";
 
 const client = postgres(
   process.env.POSTGRES_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres",
@@ -44,19 +43,16 @@ const client = postgres(
   { prepare: false },
 );
 
-export const db = drizzle({
-  client,
-  schema: { ...schemaAuth, ...schema },
-  casing: "snake_case",
-});
+export const db = drizzle({ client, relations });
 ```
 
 `POSTGRES_URL` is the only connection env var. It defaults to local Supabase.
 
 ## Schema
 
-Two schema files:
+Two schema files and one relation graph:
 
+- `packages/db/src/drizzle-relations.ts` - `defineRelations` over both schema files; it powers `db.query.*` and is how the better-auth adapter finds its tables
 - `packages/db/src/drizzle-schema.ts` - application tables (`waitlist`, `todo`)
 - `packages/db/src/drizzle-schema-auth.ts` - better-auth generated tables (`user`, `session`, `account`, `verification`, `organization`, `member`, `invitation`)
 
@@ -64,14 +60,17 @@ Two schema files:
 
 ```typescript
 // packages/db/src/drizzle-schema.ts
-export const waitlist = pgTable("waitlist", (t) => ({
+// Unnamed columns take snake_case SQL names from this creator (organizationId -> organization_id)
+const pgTable = pgTableCreator((name) => name, "snake_case");
+
+export const waitlist = pgTable.withRLS("waitlist", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   userId: t.text().references(() => user.id, { onDelete: "set null" }),
   source: t.text(),
   email: t.text().notNull().unique(),
-})).enableRLS();
+}));
 
-export const todo = pgTable(
+export const todo = pgTable.withRLS(
   "todo",
   (t) => ({
     id: t.uuid().notNull().primaryKey().defaultRandom(),
@@ -86,14 +85,14 @@ export const todo = pgTable(
     updatedAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
   }),
   (table) => [index("todo_organization_id_idx").on(table.organizationId)],
-).enableRLS();
+);
 ```
 
 ### Row Level Security
 
-Every table calls `.enableRLS()` with no policies - deny by default. The public schema is reachable through PostgREST with the anon key, so this blocks direct access. Authorization lives in oRPC. The server's Drizzle connection is unaffected: the table owner bypasses RLS.
+Every table is declared through `pgTable.withRLS` with no policies - deny by default. The public schema is reachable through PostgREST with the anon key, so this blocks direct access. Authorization lives in oRPC. The server's Drizzle connection is unaffected: the table owner bypasses RLS.
 
-If you regenerate the auth schema, re-add `.enableRLS()` to every table.
+If you regenerate the auth schema, declare every table through `pgTable.withRLS` again.
 
 ### Auth Tables
 
@@ -116,7 +115,6 @@ export default {
     url: nonPoolingUrl,
   },
   schemaFilter: ["public"],
-  casing: "snake_case",
 } satisfies Config;
 ```
 
@@ -136,7 +134,7 @@ pnpm db:reset         # Reset local database, then push schema
 
 ```typescript
 // 1. Define in packages/db/src/drizzle-schema.ts
-export const post = pgTable("post", (t) => ({
+export const post = pgTable.withRLS("post", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   organizationId: t
     .text()
@@ -144,14 +142,14 @@ export const post = pgTable("post", (t) => ({
     .references(() => organization.id, { onDelete: "cascade" }),
   title: t.text().notNull(),
   createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
-})).enableRLS();
+}));
 
-// 2. Define relations
-export const postRelations = relations(post, ({ one }) => ({
-  organization: one(organization, {
-    fields: [post.organizationId],
-    references: [organization.id],
-  }),
+// 2. Wire it into the relation graph in packages/db/src/drizzle-relations.ts
+export const relations = defineRelations({ ...schemaAuth, ...schema }, (r) => ({
+  // ...
+  post: {
+    organization: r.one.organization({ from: r.post.organizationId, to: r.organization.id }),
+  },
 }));
 ```
 
@@ -167,8 +165,8 @@ Types flow automatically - no codegen step.
 ```typescript
 // Relational query
 const todos = await db.query.todo.findMany({
-  where: (t, { eq }) => eq(t.organizationId, organization.id),
-  orderBy: (t, { desc }) => desc(t.createdAt),
+  where: { organizationId: organization.id },
+  orderBy: { createdAt: "desc" },
 });
 
 // Insert
