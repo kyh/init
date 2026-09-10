@@ -82,7 +82,7 @@ No migration files - `drizzle-kit push` diffs the schema straight against the da
 
 ```typescript
 // packages/db/src/drizzle-schema.ts
-export const post = pgTable("post", (t) => ({
+export const post = pgTable.withRLS("post", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   organizationId: t
     .text()
@@ -90,10 +90,10 @@ export const post = pgTable("post", (t) => ({
     .references(() => organization.id, { onDelete: "cascade" }),
   title: t.text().notNull(),
   createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
-})).enableRLS();
+}));
 ```
 
-Always `.enableRLS()` - authorization lives in oRPC, RLS blocks direct PostgREST access.
+Always `pgTable.withRLS` - authorization lives in oRPC, RLS blocks direct PostgREST access.
 
 ## API Development
 
@@ -106,7 +106,7 @@ Add a feature folder in `packages/api/src/` with a router and Zod schema:
 export const postRouter = {
   list: organizationProcedure(organizationInput).handler(async ({ context }) => {
     return context.db.query.post.findMany({
-      where: (p, { eq }) => eq(p.organizationId, context.organization.id),
+      where: { organizationId: context.organization.id },
     });
   }),
 };

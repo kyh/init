@@ -8,15 +8,14 @@ export const organizationRouter = {
 
     const [members, invitations] = await Promise.all([
       context.db.query.member.findMany({
-        where: (member, { eq }) => eq(member.organizationId, organization.id),
+        where: { organizationId: organization.id },
         with: {
           // Exclude admin-only user fields from the member response.
           user: { columns: { email: true, id: true, image: true, name: true } },
         },
       }),
       context.db.query.invitation.findMany({
-        where: (invitation, { and, eq, ne }) =>
-          and(eq(invitation.organizationId, organization.id), ne(invitation.status, "canceled")),
+        where: { organizationId: organization.id, status: { ne: "canceled" } },
       }),
     ]);
 

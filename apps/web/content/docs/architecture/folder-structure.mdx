@@ -129,6 +129,7 @@ packages/db/
 ├── src/
 │   ├── drizzle-schema.ts       # App tables (waitlist, todo)
 │   ├── drizzle-schema-auth.ts  # better-auth generated tables
+│   ├── drizzle-relations.ts    # defineRelations graph over both schema files
 │   ├── drizzle-client.ts       # postgres.js + Drizzle client
 │   └── index.ts                # Re-exports drizzle-orm operators
 ├── supabase/
@@ -195,6 +196,6 @@ No separate docs package - these pages are MDX files in `apps/web/content/docs/`
 
 ### New Database Tables
 
-1. Define in `packages/db/src/drizzle-schema.ts` with `.enableRLS()`
+1. Define in `packages/db/src/drizzle-schema.ts` with `pgTable.withRLS`
 2. Run `pnpm db:push`
 3. Types flow everywhere automatically
