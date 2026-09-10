@@ -1,10 +1,11 @@
 import type { User } from "better-auth";
+// The default adapter entry reads `db._.fullSchema`, gone in drizzle 1.0; relations-v2 reads `db._.relations`.
+import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { expo } from "@better-auth/expo";
 import { stripe } from "@better-auth/stripe";
 import { db } from "@repo/db/drizzle-client";
 import { session as sessionSchema, user as userSchema } from "@repo/db/drizzle-schema-auth";
 import { betterAuth } from "better-auth";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { admin, genericOAuth, oAuthProxy, organization } from "better-auth/plugins";
 import { and, eq, isNull } from "drizzle-orm";

@@ -17,6 +17,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@better-auth/drizzle-adapter": "catalog:",
     "@better-auth/expo": "catalog:",
     "@better-auth/stripe": "catalog:",
     "@orpc/server": "catalog:",
