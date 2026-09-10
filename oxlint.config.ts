@@ -6,7 +6,14 @@ import react from "ultracite/oxlint/react";
 
 export default defineConfig({
   extends: [core, react, antiSlop],
-  ignorePatterns: [...core.ignorePatterns, ".wxt", ".source", ".claude", ".codex", ".agents"],
+  ignorePatterns: [
+    ...(core.ignorePatterns ?? []),
+    ".wxt",
+    ".source",
+    ".claude",
+    ".codex",
+    ".agents",
+  ],
   overrides: [{ files: ["apps/web/**"], plugins: next.plugins, rules: next.rules }],
   rules: {
     // Sequential awaits in loops are deliberate here (ordered seeds and migrations).
