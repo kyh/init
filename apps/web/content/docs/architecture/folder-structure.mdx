@@ -15,7 +15,7 @@ init/
 │   └── desktop/           # Electron desktop app
 ├── packages/
 │   ├── api/               # oRPC router + better-auth
-│   ├── db/                # Drizzle schema + Supabase config
+│   ├── db/                # Drizzle schema + local Postgres compose
 │   └── ui/                # Shared React components
 ├── scripts/               # bootstrap.ts (provision + trim), seed via packages/api
 ├── package.json           # Root workspace scripts
@@ -131,8 +131,7 @@ packages/db/
 │   ├── drizzle-schema-auth.ts  # better-auth generated tables
 │   ├── drizzle-client.ts       # postgres.js + Drizzle client
 │   └── index.ts                # Re-exports drizzle-orm operators
-├── supabase/
-│   └── config.toml             # Local Supabase (auth + data API off, storage on)
+├── docker-compose.yml          # Local Postgres (postgres:18-alpine, $POSTGRES_PORT)
 ├── drizzle.config.ts
 └── package.json                # db scripts (start, push, reset, studio)
 ```

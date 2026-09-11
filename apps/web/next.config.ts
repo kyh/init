@@ -5,19 +5,16 @@ type ImageConfig = NonNullable<NextConfig["images"]>;
 type RemotePatterns = NonNullable<ImageConfig["remotePatterns"]>;
 
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
 const getRemotePatterns = (): RemotePatterns => {
-  const remotePatterns: RemotePatterns = [];
-
-  if (SUPABASE_URL) {
-    const { hostname } = new URL(SUPABASE_URL);
-
-    remotePatterns.push({
-      hostname,
+  const remotePatterns: RemotePatterns = [
+    // Avatar uploads land on the Vercel Blob store's public CDN host,
+    // <store-id>.public.blob.vercel-storage.com
+    {
+      hostname: "**.public.blob.vercel-storage.com",
       protocol: "https",
-    });
-  }
+    },
+  ];
 
   if (!IS_PRODUCTION) {
     remotePatterns.push(

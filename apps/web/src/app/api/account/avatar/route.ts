@@ -1,7 +1,7 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+import { randomUUID } from "node:crypto";
+import { Files } from "files-sdk";
+import { vercelBlob } from "files-sdk/vercel-blob";
 import { getSession } from "@/lib/auth-server";
-
-import { getSupabaseServerClient } from "@/lib/supabase-server";
 
 // Matches the "1MB max" copy in the profile form
 const MAX_AVATAR_BYTES = 1024 * 1024;
@@ -9,7 +9,7 @@ const MAX_AVATAR_BYTES = 1024 * 1024;
 // Both the stored extension and the Content-Type are derived from the file's
 // magic bytes, never the client-supplied MIME type (which an attacker controls).
 // SVG is deliberately excluded: it can carry <script>, and these land on a
-// public bucket URL — a scripted SVG served as image/svg+xml would be stored XSS.
+// public blob URL — a scripted SVG served as image/svg+xml would be stored XSS.
 const IMAGE_SIGNATURES = [
   { contentType: "image/jpeg", extension: "jpg", magic: [0xff, 0xd8, 0xff] },
   {
@@ -39,12 +39,67 @@ const sniffImageType = (bytes: Uint8Array) => {
   return null;
 };
 
-// Avatars live at `${userId}/avatar.<ext>`; the extension can change between
-// uploads, so clear the folder rather than tracking the previous path
-const removeExistingAvatars = async (client: SupabaseClient, userId: string) => {
-  const { data: files } = await client.storage.from("avatars").list(userId);
-  if (files && files.length > 0) {
-    await client.storage.from("avatars").remove(files.map((file) => `${userId}/${file.name}`));
+// Vercel Blob has no local emulator, so a dev clone without a Blob store gets a
+// pointer instead of the SDK's opaque "No token found" throw.
+const requireBlobToken = () =>
+  process.env.BLOB_READ_WRITE_TOKEN
+    ? null
+    : new Response(
+        "Avatar uploads need BLOB_READ_WRITE_TOKEN. Create a Blob store in the Vercel " +
+          "dashboard (Storage → Create → Blob) and add its token to .env.",
+        { status: 501 },
+      );
+
+// Constructed per request, after `requireBlobToken`: the adapter validates
+// credentials on construction, so a module-scope instance would fail `next
+// build`'s page-data collection wherever the token is absent (CI, a fresh
+// clone).
+//
+// Keys are minted here (UUID) instead of via the provider's random suffix: the
+// returned key then equals the one uploaded, and `url()` can be synthesized
+// from the store id embedded in the token without a round trip.
+const blobFiles = () => new Files({ adapter: vercelBlob({ addRandomSuffix: false }) });
+
+// Avatars live under `avatars/<userId>/`. Each upload gets a fresh key so its
+// CDN URL is unique — the alternative, reusing one path, serves the previous
+// image until the blob cache expires.
+const avatarPrefix = (userId: string) => `avatars/${userId}/`;
+
+// Concurrent uploads each write their own key, so a sweep can see a blob whose
+// own request hasn't returned yet — in either direction, since which upload
+// finishes first says nothing about which swept first. Deleting one strands
+// the URL that request is about to hand the client, so the sweep only touches
+// blobs old enough that no request can still be holding one. Being too
+// generous here just leaves an orphan for the next sweep.
+const SWEEP_GRACE_MS = 5 * 60 * 1000;
+
+/**
+ * Which of the user's avatars to delete. With no `keepKey` — an explicit
+ * removal — that's all of them.
+ *
+ * Otherwise it's every blob outside the grace window, except the one just
+ * uploaded. Replacing an avatar still collects the previous one right away:
+ * it predates the window by definition. What survives is a blob from a
+ * near-simultaneous second upload, which is exactly the one still in flight.
+ */
+const isStale = (item: { key: string; lastModified?: number }, keepKey?: string) => {
+  if (!keepKey) {
+    return true;
+  }
+  const cutoff = Date.now() - SWEEP_GRACE_MS;
+  return item.key !== keepKey && (item.lastModified ?? 0) < cutoff;
+};
+
+/** Deletes the user's avatars, optionally sparing a freshly uploaded one. */
+const removeAvatars = async (files: Files, userId: string, keepKey?: string) => {
+  const stale: string[] = [];
+  for await (const item of files.listAll({ prefix: avatarPrefix(userId) })) {
+    if (isStale(item, keepKey)) {
+      stale.push(item.key);
+    }
+  }
+  if (stale.length > 0) {
+    await files.delete(stale);
   }
 };
 
@@ -52,6 +107,11 @@ export const POST = async (request: Request) => {
   const session = await getSession();
   if (!session) {
     return new Response("Unauthorized", { status: 401 });
+  }
+
+  const missingToken = requireBlobToken();
+  if (missingToken) {
+    return missingToken;
   }
 
   const formData = await request.formData();
@@ -70,25 +130,37 @@ export const POST = async (request: Request) => {
     return new Response("Unsupported image type", { status: 415 });
   }
 
-  const client = getSupabaseServerClient();
   const userId = session.user.id;
+  const key = `${avatarPrefix(userId)}${randomUUID()}.${imageType.extension}`;
+  const files = blobFiles();
 
-  await removeExistingAvatars(client, userId);
-
-  const path = `${userId}/avatar.${imageType.extension}`;
-  const { error } = await client.storage.from("avatars").upload(path, bytes, {
-    cacheControl: "3600",
-    contentType: imageType.contentType,
-    upsert: true,
-  });
-  if (error) {
+  let url: string;
+  try {
+    // Upload the sniffed bytes as a type-less Blob rather than the original
+    // File, so the stored Content-Type can only come from `imageType` — never
+    // from the File's client-supplied `type`
+    const uploaded = await files.upload(key, new Blob([bytes]), {
+      contentType: imageType.contentType,
+    });
+    url = await files.url(uploaded.key);
+  } catch (error) {
     console.error("Avatar upload failed:", error);
     return new Response("Upload failed", { status: 500 });
   }
 
-  const { data } = client.storage.from("avatars").getPublicUrl(path);
-  // The path is stable across uploads, so bust caches with a version param
-  return Response.json({ url: `${data.publicUrl}?v=${Date.now()}` });
+  // Sweep the previous avatars only once the new one is live, so a failed
+  // upload never leaves the user with no image at all. Deliberately outside
+  // the upload's catch and best-effort: the new blob is already served, and
+  // failing here would withhold its URL from the client while potentially
+  // having deleted the old one it still points at. An orphaned blob is the
+  // better failure.
+  try {
+    await removeAvatars(files, userId, key);
+  } catch (error) {
+    console.error("Avatar cleanup failed, leaving orphaned blobs:", error);
+  }
+
+  return Response.json({ url });
 };
 
 export const DELETE = async () => {
@@ -97,8 +169,12 @@ export const DELETE = async () => {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const client = getSupabaseServerClient();
-  await removeExistingAvatars(client, session.user.id);
+  const missingToken = requireBlobToken();
+  if (missingToken) {
+    return missingToken;
+  }
+
+  await removeAvatars(blobFiles(), session.user.id);
 
   return new Response(null, { status: 204 });
 };
