@@ -50,13 +50,15 @@ const requireBlobToken = () =>
         { status: 501 },
       );
 
-// The adapter reads BLOB_READ_WRITE_TOKEN per operation, so constructing it at
-// module scope is safe even when the token arrives later.
+// Constructed per request, after `requireBlobToken`: the adapter validates
+// credentials on construction, so a module-scope instance would fail `next
+// build`'s page-data collection wherever the token is absent (CI, a fresh
+// clone).
 //
 // Keys are minted here (UUID) instead of via the provider's random suffix: the
 // returned key then equals the one uploaded, and `url()` can be synthesized
 // from the store id embedded in the token without a round trip.
-const files = new Files({ adapter: vercelBlob({ addRandomSuffix: false }) });
+const blobFiles = () => new Files({ adapter: vercelBlob({ addRandomSuffix: false }) });
 
 // Avatars live under `avatars/<userId>/`. Each upload gets a fresh key so its
 // CDN URL is unique — the alternative, reusing one path, serves the previous
@@ -89,7 +91,7 @@ const isStale = (item: { key: string; lastModified?: number }, keepKey?: string)
 };
 
 /** Deletes the user's avatars, optionally sparing a freshly uploaded one. */
-const removeAvatars = async (userId: string, keepKey?: string) => {
+const removeAvatars = async (files: Files, userId: string, keepKey?: string) => {
   const stale: string[] = [];
   for await (const item of files.listAll({ prefix: avatarPrefix(userId) })) {
     if (isStale(item, keepKey)) {
@@ -130,6 +132,7 @@ export const POST = async (request: Request) => {
 
   const userId = session.user.id;
   const key = `${avatarPrefix(userId)}${randomUUID()}.${imageType.extension}`;
+  const files = blobFiles();
 
   let url: string;
   try {
@@ -152,7 +155,7 @@ export const POST = async (request: Request) => {
   // having deleted the old one it still points at. An orphaned blob is the
   // better failure.
   try {
-    await removeAvatars(userId, key);
+    await removeAvatars(files, userId, key);
   } catch (error) {
     console.error("Avatar cleanup failed, leaving orphaned blobs:", error);
   }
@@ -171,7 +174,7 @@ export const DELETE = async () => {
     return missingToken;
   }
 
-  await removeAvatars(session.user.id);
+  await removeAvatars(blobFiles(), session.user.id);
 
   return new Response(null, { status: 204 });
 };
