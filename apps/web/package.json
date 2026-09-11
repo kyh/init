@@ -28,6 +28,7 @@
     "better-auth": "catalog:",
     "cn": "catalog:",
     "drizzle-orm": "catalog:",
+    "files-sdk": "^2.4.1",
     "fumadocs-core": "^16.15.4",
     "fumadocs-mdx": "^15.4.0",
     "fumadocs-ui": "^16.15.4",

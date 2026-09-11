@@ -1,4 +1,6 @@
-import { del, list, put } from "@vercel/blob";
+import { randomUUID } from "node:crypto";
+import { Files } from "files-sdk";
+import { vercelBlob } from "files-sdk/vercel-blob";
 import { getSession } from "@/lib/auth-server";
 
 // Matches the "1MB max" copy in the profile form
@@ -48,39 +50,29 @@ const requireBlobToken = () =>
         { status: 501 },
       );
 
-// Avatars live under `avatars/<userId>/`. Each upload gets a randomized
-// pathname so its CDN URL is unique — the alternative, reusing one path, serves
-// the previous image until the blob cache expires.
+// The adapter reads BLOB_READ_WRITE_TOKEN per operation, so constructing it at
+// module scope is safe even when the token arrives later.
+//
+// Keys are minted here (UUID) instead of via the provider's random suffix: the
+// returned key then equals the one uploaded, and `url()` can be synthesized
+// from the store id embedded in the token without a round trip.
+const files = new Files({ adapter: vercelBlob({ addRandomSuffix: false }) });
+
+// Avatars live under `avatars/<userId>/`. Each upload gets a fresh key so its
+// CDN URL is unique — the alternative, reusing one path, serves the previous
+// image until the blob cache expires.
 const avatarPrefix = (userId: string) => `avatars/${userId}/`;
 
-/** Every blob under the user's prefix. `list` pages at 1000; follow the cursor. */
-const listAvatars = async (userId: string) => {
-  const prefix = avatarPrefix(userId);
-  const first = await list({ prefix });
-  const { blobs } = first;
-  let cursor = first.hasMore ? first.cursor : undefined;
-
-  while (cursor) {
-    const page = await list({ cursor, prefix });
-    blobs.push(...page.blobs);
-    cursor = page.hasMore ? page.cursor : undefined;
-  }
-
-  return blobs;
-};
-
-type AvatarBlob = Awaited<ReturnType<typeof listAvatars>>[number];
-
-// Concurrent uploads each write their own randomized pathname, so a sweep can
-// see a blob whose own request hasn't returned yet — in either direction,
-// since which upload finishes first says nothing about which swept first.
-// Deleting one strands the URL that request is about to hand the client, so
-// the sweep only touches blobs old enough that no request can still be holding
-// one. Being too generous here just leaves an orphan for the next sweep.
+// Concurrent uploads each write their own key, so a sweep can see a blob whose
+// own request hasn't returned yet — in either direction, since which upload
+// finishes first says nothing about which swept first. Deleting one strands
+// the URL that request is about to hand the client, so the sweep only touches
+// blobs old enough that no request can still be holding one. Being too
+// generous here just leaves an orphan for the next sweep.
 const SWEEP_GRACE_MS = 5 * 60 * 1000;
 
 /**
- * Which of the user's avatars to delete. With no `keepUrl` — an explicit
+ * Which of the user's avatars to delete. With no `keepKey` — an explicit
  * removal — that's all of them.
  *
  * Otherwise it's every blob outside the grace window, except the one just
@@ -88,19 +80,24 @@ const SWEEP_GRACE_MS = 5 * 60 * 1000;
  * it predates the window by definition. What survives is a blob from a
  * near-simultaneous second upload, which is exactly the one still in flight.
  */
-const staleAvatars = (blobs: AvatarBlob[], keepUrl?: string) => {
-  if (!keepUrl) {
-    return blobs;
+const isStale = (item: { key: string; lastModified?: number }, keepKey?: string) => {
+  if (!keepKey) {
+    return true;
   }
   const cutoff = Date.now() - SWEEP_GRACE_MS;
-  return blobs.filter((blob) => blob.url !== keepUrl && blob.uploadedAt.getTime() < cutoff);
+  return item.key !== keepKey && (item.lastModified ?? 0) < cutoff;
 };
 
 /** Deletes the user's avatars, optionally sparing a freshly uploaded one. */
-const removeAvatars = async (userId: string, keepUrl?: string) => {
-  const stale = staleAvatars(await listAvatars(userId), keepUrl);
+const removeAvatars = async (userId: string, keepKey?: string) => {
+  const stale: string[] = [];
+  for await (const item of files.listAll({ prefix: avatarPrefix(userId) })) {
+    if (isStale(item, keepKey)) {
+      stale.push(item.key);
+    }
+  }
   if (stale.length > 0) {
-    await del(stale.map((blob) => blob.url));
+    await files.delete(stale);
   }
 };
 
@@ -132,17 +129,17 @@ export const POST = async (request: Request) => {
   }
 
   const userId = session.user.id;
+  const key = `${avatarPrefix(userId)}${randomUUID()}.${imageType.extension}`;
 
-  let blob;
+  let url: string;
   try {
     // Upload the sniffed bytes as a type-less Blob rather than the original
     // File, so the stored Content-Type can only come from `imageType` — never
     // from the File's client-supplied `type`
-    blob = await put(`${avatarPrefix(userId)}avatar.${imageType.extension}`, new Blob([bytes]), {
-      access: "public",
-      addRandomSuffix: true,
+    const uploaded = await files.upload(key, new Blob([bytes]), {
       contentType: imageType.contentType,
     });
+    url = await files.url(uploaded.key);
   } catch (error) {
     console.error("Avatar upload failed:", error);
     return new Response("Upload failed", { status: 500 });
@@ -155,12 +152,12 @@ export const POST = async (request: Request) => {
   // having deleted the old one it still points at. An orphaned blob is the
   // better failure.
   try {
-    await removeAvatars(userId, blob.url);
+    await removeAvatars(userId, key);
   } catch (error) {
     console.error("Avatar cleanup failed, leaving orphaned blobs:", error);
   }
 
-  return Response.json({ url: blob.url });
+  return Response.json({ url });
 };
 
 export const DELETE = async () => {
