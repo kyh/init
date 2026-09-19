@@ -1,0 +1,42 @@
+# Local Postgres for development. Production runs on Vercel Postgres (or any
+# other Postgres) — the app's only connection input is POSTGRES_URL, so
+# nothing here is required beyond `pnpm dev`.
+#
+# The project name namespaces the volume. Every repo cloned from this template
+# has a `db` directory, and Compose would otherwise derive the same project
+# name for all of them and share one volume; `pnpm bootstrap` writes
+# COMPOSE_PROJECT_NAME into .env to keep each project isolated.
+name: ${COMPOSE_PROJECT_NAME:-init}
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    # 54322 by default, not 5432, so a Postgres already installed on the host
+    # doesn't clash. `pnpm bootstrap` overrides it with the first free port
+    # from 54322 up and records that in .env, so several projects cloned from
+    # this template can run their databases at the same time.
+    ports:
+      - "${POSTGRES_PORT:-54322}:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      # Postgres 18 moved PGDATA to /var/lib/postgresql/<major>/docker and
+      # declares the volume one level up, so mount the parent. Mounting
+      # .../data — correct through 17 — would silently leave the data in the
+      # container layer, where `docker compose down` throws it away.
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      # -h 127.0.0.1 forces a TCP check. Without it pg_isready uses the Unix
+      # socket, which the throwaway server that runs during first-boot initdb
+      # already answers — so `--wait` would return before the real server is
+      # listening on the port, and the schema push would race it.
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres -h 127.0.0.1"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+volumes:
+  postgres-data:
