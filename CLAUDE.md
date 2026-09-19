@@ -36,6 +36,23 @@ packages/
 
 Mutations go through oRPC or the better-auth client — never Next Server Actions. All four platforms (web, mobile, extension, desktop) then share one typed surface. Each mutation invalidates the specific queries it affects in its `onSuccess` (e.g. `queryClient.invalidateQueries({ queryKey: orpc.todo.list.key({ input: { slug } }) })`) — there is no global invalidate-everything cache. When wrapping better-auth in a TanStack mutation, set `fetchOptions: { throw: true }` so returned errors cannot trigger `onSuccess`.
 
+### Feature flags
+
+Risky or half-finished work ships behind a flag rather than on a long-lived
+branch. Declare it in `packages/api/src/flags/flags.ts` — that registry is the
+only source of flag names, so a typo at a read site is a type error. Read it as
+`context.flags.myFlag` in a procedure, or via the `flag.list` call on any client.
+Enable with `FEATURE_FLAGS="myFlag"`, disable with `myFlag=false`. Set it per
+Vercel environment to land a change dark and turn it on for preview only.
+
+### Request logging
+
+Every oRPC call emits one JSON line carrying a request id, and the same id comes
+back on the response as `x-request-id` — so a failed call is traced to its
+server-side record by grepping for the id, not by matching timestamps. Note that
+oRPC's `next()` _throws_ on a downstream failure, so the middleware logs from a
+catch; see `packages/api/src/observability/logger.ts` and `src/orpc.ts`.
+
 ### Mobile dependency pins
 
 `nativewind` is pinned to the `5.0.0-preview` channel because it's the only Tailwind 4-compatible line; `react-native-css` is exact-pinned to the tested version. Lift both when nativewind 5 stable ships (see the tracking issue).
@@ -52,7 +69,8 @@ pnpm lint             # Lint all packages (oxlint)
 pnpm format           # Check formatting (oxfmt)
 pnpm format:fix       # Format all packages (oxfmt)
 pnpm test             # Run tests (node:test — do not add vitest or jest)
-pnpm verify           # typecheck · lint · format · test (CI gate)
+pnpm verify           # typecheck · lint · format · test (static CI gate)
+pnpm smoke            # Drive a running app end-to-end (runtime CI gate)
 pnpm build            # Build all packages
 
 # Database
@@ -75,7 +93,7 @@ This template is built to be driven end-to-end by a coding agent. `AGENTS.md` is
 
 - **Provision headless**: `pnpm bootstrap --yes` (idempotent; needs Docker for local Postgres). Non-TTY runs auto-keep all apps, so a piped invocation won't hang on the app-picker.
 - **Seeded login**: `dev@init.local` / `password` (via `pnpm db:seed`) — a personal org + sample todos to verify against, no signup step.
-- **Verify**: `pnpm verify` for the static gate; drive the running web app with `agent-browser` for runtime checks. Only web is headless-driveable — mobile/desktop/extension get `typecheck` + `build` only.
+- **Verify**: `pnpm verify` for the static gate, then `pnpm smoke` against a running server for the runtime gate (health → seeded sign-in → todo lifecycle through oRPC → authenticated render; `SMOKE_URL` points it at a deployment). Drive the UI itself with `agent-browser`. Only web is headless-driveable — mobile/desktop/extension get `typecheck` + `build` only.
 - **OAuth offline**: uncomment `NEXT_PUBLIC_GITHUB_EMULATOR_URL` in `.env` + `pnpm emulate`, then `pnpm dev:web` — the shipped "Continue with GitHub" button runs through a local emulator (dev-only `genericOAuth`; real provider untouched in prod).
 - **Fresh clone / scaffold**: `gh repo create <name> --template kyh/init --clone`, then `pnpm install && pnpm bootstrap --yes` (needs Docker). Headless auth: POST `dev@init.local` / `password` to `/api/auth/sign-in/email` for a session cookie. See `AGENTS.md` → Fresh clone.
 

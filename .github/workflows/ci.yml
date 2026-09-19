@@ -36,3 +36,59 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+  # The runtime gate. `ci` proves the code compiles and units behave; this proves
+  # the app actually boots, that auth works, and that a mutation reaches the
+  # database — the breakage a typecheck-only pipeline waves through. Runs in
+  # parallel with `ci` because it needs none of its output.
+  smoke:
+    runs-on: ubuntu-latest
+    env:
+      TURBO_TELEMETRY_DISABLED: 1
+      # Matches the port the web server is started on below, and drives
+      # better-auth's baseUrl (see packages/api/src/auth/auth.ts).
+      PORT: 3000
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/setup@v2
+        with:
+          runtime: node@24
+          cache: true
+
+      # Not `pnpm bootstrap`: its port-claiming exists for developer machines
+      # running other stacks, and a runner is empty, so pinning keeps this job
+      # predictable.
+      - name: Write environment
+        run: |
+          cat > .env <<'EOF'
+          POSTGRES_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          POSTGRES_PORT="54322"
+          COMPOSE_PROJECT_NAME="init-ci"
+          BETTER_AUTH_SECRET="ci-only-secret-never-leaves-this-job"
+          BLOB_READ_WRITE_TOKEN=""
+          PORT=3000
+          EOF
+
+      - name: Start Postgres
+        run: pnpm db:start
+
+      - name: Push schema and seed
+        run: pnpm db:push && pnpm db:seed
+
+      - name: Build web
+        run: pnpm -F @repo/web build
+
+      - name: Start web
+        run: pnpm -F @repo/web start > /tmp/web.log 2>&1 &
+
+      # Polls /api/health until the server answers, then drives sign-in, the todo
+      # lifecycle through oRPC, and the authenticated dashboard render.
+      - name: Smoke test
+        run: pnpm smoke
+
+      # The structured request logs (one JSON line per call, each with its request
+      # id) make a failure readable without a rerun.
+      - name: Server logs
+        if: failure()
+        run: cat /tmp/web.log || true

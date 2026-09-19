@@ -216,6 +216,15 @@ importers:
 
   .:
     devDependencies:
+      '@orpc/client':
+        specifier: 'catalog:'
+        version: 2.0.0-beta.31
+      '@orpc/server':
+        specifier: 'catalog:'
+        version: 2.0.0-beta.31
+      '@repo/api':
+        specifier: workspace:*
+        version: link:packages/api
       '@types/node':
         specifier: 'catalog:'
         version: 26.4.0
@@ -3357,12 +3366,15 @@ packages:
 
   '@standardserver/aws-lambda@0.8.2':
     resolution: {integrity: sha512-7ALbEEgCKdywwwc0uLr1/ZcsqZ/rzCebhV2zZdXVkutfJzxOwwpXFysvA/Jbhnhi3HPBgRxApHuWxx3j5wgRhw==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@standardserver/core@0.8.2':
     resolution: {integrity: sha512-B5kGx4fm3PMaN0QNigeg5gul/bJM+fycuFK68SBwRMGKU55R4SGNv9ijtZbm/ZTbX1ZQ1r4xjOCheL6aO4HrHw==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@standardserver/fastify@0.8.2':
     resolution: {integrity: sha512-jio9nXhdD0k4aC6k9/9n5BL2UvrhLINWmO8Na/ZuhtbDTRkfES4h+rKP2w5CFtbfFw//TcWZNC2m01GMOFRsGQ==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
     peerDependencies:
       fastify: '>=5.6.1'
     peerDependenciesMeta:
@@ -3371,15 +3383,19 @@ packages:
 
   '@standardserver/fetch@0.8.2':
     resolution: {integrity: sha512-FQjsGQNRtnX1eXPFTOjTUp3k0Rwt0r51DIy/YgLTbMoTCBWNROU41HEiqBjOBusa2PKKEo/9oKiAtdySgL708w==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@standardserver/node@0.8.2':
     resolution: {integrity: sha512-35lHa/Pdd+jOC7OhPHXKRp6199Iab0D+Am0BtqYfffByot1AYu0K5S8Ei5JvzoBKOgvLZ9BD73bkZxJugTShmg==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@standardserver/peer@0.8.2':
     resolution: {integrity: sha512-kshztxLxMAkx5952oy1l8jKC2Q1QKjd4GBCCrHb/0B69hCy+x1/j5wcyzZphFc7kRCH8gxHAkC8k19ZZTnuIaA==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@standardserver/shared@0.8.2':
     resolution: {integrity: sha512-6pe5pwnTwC6ALDxsRW4TJxuj8dS09sNj5dl1UkYf56kMSvTw7uRTS5c9iuFCy8e/M1aBP4uOntC8+OqAYMCa9g==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@swc/helpers@0.5.23':
     resolution: {integrity: sha512-5lSsMOTXURePglDfvuAQUqkGek9Hg2kksOYay2m0+XR++b2NWYL/4sWyuvVBIs8oKnJaxkdi9whaL/sqN13afw==}
