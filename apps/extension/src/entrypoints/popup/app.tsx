@@ -14,14 +14,19 @@ const App = () => {
   const [appUrl, setAppUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    void apiBaseUrlItem.getValue().then(setAppUrl);
+    const load = async () => {
+      setAppUrl(await apiBaseUrlItem.getValue());
+    };
+    void load();
 
     // The options page can change the URL while the popup is open
     return apiBaseUrlItem.watch(setAppUrl);
   }, []);
 
   const openApp = () => {
-    if (appUrl === null) return;
+    if (appUrl === null) {
+      return;
+    }
     void browser.tabs.create({ url: appUrl });
     // The popup would otherwise linger over the tab it just opened
     window.close();

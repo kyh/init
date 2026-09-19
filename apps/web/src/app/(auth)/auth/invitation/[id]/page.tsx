@@ -19,7 +19,7 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
   // Throws when the invitation doesn't exist or the session user isn't
   // the invited email
   const invitation = await auth.api
-    .getInvitation({ query: { id }, headers: await headers() })
+    .getInvitation({ headers: await headers(), query: { id } })
     .catch(() => null);
 
   if (!invitation || invitation.status !== "pending") {

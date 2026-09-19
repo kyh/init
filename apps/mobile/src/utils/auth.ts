@@ -12,8 +12,8 @@ export const authClient = createAuthClient({
   plugins: [
     expoClient({
       scheme: "expo",
-      storagePrefix: "expo",
       storage: SecureStore,
+      storagePrefix: "expo",
     }),
     organizationClient({ ac, roles }),
   ],

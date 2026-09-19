@@ -11,21 +11,21 @@ import { useIsHydrated } from "@/lib/use-is-hydrated";
 const items = [
   {
     id: "radio-light",
-    value: "light",
-    label: "Light",
     image: "/assets/ui-light.webp",
+    label: "Light",
+    value: "light",
   },
   {
     id: "radio-dark",
-    value: "dark",
-    label: "Dark",
     image: "/assets/ui-dark.webp",
+    label: "Dark",
+    value: "dark",
   },
   {
     id: "radio-system",
-    value: "system",
-    label: "System",
     image: "/assets/ui-system.webp",
+    label: "System",
+    value: "system",
   },
 ];
 

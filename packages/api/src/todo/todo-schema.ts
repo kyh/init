@@ -10,9 +10,9 @@ export const createTodoInput = organizationInput.extend({
 
 export const updateTodoInput = organizationInput
   .extend({
+    completed: z.boolean().optional(),
     id: z.uuid(),
     title: titleField.optional(),
-    completed: z.boolean().optional(),
   })
   .refine((data) => data.title !== undefined || data.completed !== undefined, {
     message: "Nothing to update",

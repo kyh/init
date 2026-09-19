@@ -82,7 +82,7 @@ Vercel's log drains forward these warnings to your log store.
 
 ### Database Performance
 
-Supabase exposes query stats in the dashboard (Reports → Query Performance), backed by `pg_stat_statements`:
+Query stats come from `pg_stat_statements` - enable it once (`CREATE EXTENSION IF NOT EXISTS pg_stat_statements;`), then read it directly or in your provider's dashboard:
 
 ```sql
 SELECT query, mean_exec_time, calls

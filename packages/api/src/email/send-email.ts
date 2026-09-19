@@ -1,10 +1,10 @@
 import { env } from "../env";
 
-type SendEmailInput = {
+interface SendEmailInput {
   to: string;
   subject: string;
   text: string;
-};
+}
 
 export const sendEmail = async ({ to, subject, text }: SendEmailInput) => {
   const apiKey = env.RESEND_API_KEY;
@@ -18,12 +18,12 @@ export const sendEmail = async ({ to, subject, text }: SendEmailInput) => {
   }
 
   const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
+    body: JSON.stringify({ from, subject, text, to }),
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ from, to, subject, text }),
+    method: "POST",
   });
 
   if (!response.ok) {

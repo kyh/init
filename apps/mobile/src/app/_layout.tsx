@@ -11,7 +11,7 @@ import "../styles.css";
 const BACKGROUND_LIGHT = "#ffffff";
 const BACKGROUND_DARK = "#09090b";
 
-export default function RootLayout() {
+const RootLayout = () => {
   const colorScheme = useColorScheme();
   const backgroundColor = colorScheme === "dark" ? BACKGROUND_DARK : BACKGROUND_LIGHT;
 
@@ -19,10 +19,10 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <Stack
         screenOptions={{
-          headerStyle: {
+          contentStyle: {
             backgroundColor,
           },
-          contentStyle: {
+          headerStyle: {
             backgroundColor,
           },
         }}
@@ -30,4 +30,6 @@ export default function RootLayout() {
       <StatusBar />
     </QueryClientProvider>
   );
-}
+};
+
+export default RootLayout;

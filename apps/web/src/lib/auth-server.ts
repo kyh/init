@@ -7,11 +7,11 @@ export const getSession = cache(async () => auth.api.getSession({ headers: await
 
 // Primitive arguments let React cache deduplicate repeated lookups.
 export const getOrganizationBySlug = cache(async (slug: string) =>
-  auth.api.getFullOrganization({ query: { organizationSlug: slug }, headers: await headers() }),
+  auth.api.getFullOrganization({ headers: await headers(), query: { organizationSlug: slug } }),
 );
 
 export const getOrganizationById = cache(async (id: string) =>
-  auth.api.getFullOrganization({ query: { organizationId: id }, headers: await headers() }),
+  auth.api.getFullOrganization({ headers: await headers(), query: { organizationId: id } }),
 );
 
 export const listOrganizations = cache(async () =>

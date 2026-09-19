@@ -7,10 +7,10 @@ import { toast } from "@repo/ui/components/sonner";
 
 import { authClient } from "@/lib/auth-client";
 
-type InvitationActionsProps = {
+interface InvitationActionsProps {
   invitationId: string;
   organizationSlug: string | null | undefined;
-};
+}
 
 export const InvitationActions = ({ invitationId, organizationSlug }: InvitationActionsProps) => {
   const router = useRouter();
@@ -19,34 +19,34 @@ export const InvitationActions = ({ invitationId, organizationSlug }: Invitation
   const handleAccept = async () => {
     setPending("accept");
     await authClient.organization.acceptInvitation({
-      invitationId,
       fetchOptions: {
-        onSuccess: () => {
-          toast.success("Invitation accepted");
-          router.replace(organizationSlug ? `/dashboard/${organizationSlug}` : "/dashboard");
-        },
         onError: (ctx) => {
           toast.error(ctx.error.message);
           setPending(null);
         },
+        onSuccess: () => {
+          toast.success("Invitation accepted");
+          router.replace(organizationSlug ? `/dashboard/${organizationSlug}` : "/dashboard");
+        },
       },
+      invitationId,
     });
   };
 
   const handleDecline = async () => {
     setPending("decline");
     await authClient.organization.rejectInvitation({
-      invitationId,
       fetchOptions: {
-        onSuccess: () => {
-          toast.success("Invitation declined");
-          router.replace("/dashboard");
-        },
         onError: (ctx) => {
           toast.error(ctx.error.message);
           setPending(null);
         },
+        onSuccess: () => {
+          toast.success("Invitation declined");
+          router.replace("/dashboard");
+        },
       },
+      invitationId,
     });
   };
 

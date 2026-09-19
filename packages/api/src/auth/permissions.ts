@@ -30,7 +30,7 @@ export const member = ac.newRole({
   billing: [],
 });
 
-export const roles = { owner, admin, member };
+export const roles = { admin, member, owner };
 
 // Parse database role strings before permission checks.
 export const roleSchema = z.enum(["owner", "admin", "member"], {

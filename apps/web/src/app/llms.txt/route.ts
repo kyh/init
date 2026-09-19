@@ -6,7 +6,7 @@ export const GET = () => {
   const links = source
     .getPages()
     .map((page) => {
-      const title = page.data.title;
+      const { title } = page.data;
       return `- [${title}](${siteConfig.url}${page.url})`;
     })
     .join("\n");

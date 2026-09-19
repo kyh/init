@@ -1,8 +1,8 @@
 import { db } from "@repo/db/drizzle-client";
 import { ORPCError, os } from "@orpc/server";
-import { z } from "zod";
+import type { z } from "zod";
 
-import { organizationInput } from "./organization/organization-schema";
+import type { organizationInput } from "./organization/organization-schema";
 
 import type { Session } from "./auth/auth";
 import { auth } from "./auth/auth";
@@ -18,7 +18,7 @@ export const createORPCContext = async (opts: {
       ? await auth.api.getSession({ headers: opts.headers })
       : opts.session;
 
-  return { session, db };
+  return { db, session };
 };
 
 export type ORPCContext = Awaited<ReturnType<typeof createORPCContext>>;
@@ -66,5 +66,5 @@ export const organizationProcedure = <T extends z.ZodType<z.infer<typeof organiz
       });
     }
 
-    return next({ context: { organization, membership } });
+    return next({ context: { membership, organization } });
   });

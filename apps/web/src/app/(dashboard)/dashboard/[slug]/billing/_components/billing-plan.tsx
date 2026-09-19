@@ -9,15 +9,14 @@ import { useQuery } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
 import { formatDate } from "@/lib/format";
 
-type BillingPlanProps = {
+interface BillingPlanProps {
   organizationId: string;
   slug: string;
   canManage: boolean;
-};
+}
 
 const useSubscriptions = (organizationId: string) =>
   useQuery({
-    queryKey: ["subscriptions", organizationId],
     queryFn: async () => {
       const { data, error } = await authClient.subscription.list({
         query: { referenceId: organizationId },
@@ -27,6 +26,7 @@ const useSubscriptions = (organizationId: string) =>
       }
       return data;
     },
+    queryKey: ["subscriptions", organizationId],
   });
 
 export const BillingPlan = ({ organizationId, slug, canManage }: BillingPlanProps) => {
@@ -42,9 +42,6 @@ export const BillingPlan = ({ organizationId, slug, canManage }: BillingPlanProp
   const handleUpgrade = async () => {
     setRedirecting("upgrade");
     await authClient.subscription.upgrade({
-      plan: "pro",
-      referenceId: organizationId,
-      successUrl: returnUrl,
       cancelUrl: returnUrl,
       fetchOptions: {
         onError: (ctx) => {
@@ -52,20 +49,23 @@ export const BillingPlan = ({ organizationId, slug, canManage }: BillingPlanProp
           setRedirecting(null);
         },
       },
+      plan: "pro",
+      referenceId: organizationId,
+      successUrl: returnUrl,
     });
   };
 
   const handlePortal = async () => {
     setRedirecting("portal");
     await authClient.subscription.billingPortal({
-      referenceId: organizationId,
-      returnUrl,
       fetchOptions: {
         onError: (ctx) => {
           toast.error(ctx.error.message);
           setRedirecting(null);
         },
       },
+      referenceId: organizationId,
+      returnUrl,
     });
   };
 
@@ -117,14 +117,14 @@ export const BillingHistory = ({ organizationId, slug, canManage }: BillingPlanP
   const handlePortal = async () => {
     setRedirecting(true);
     await authClient.subscription.billingPortal({
-      referenceId: organizationId,
-      returnUrl: `/dashboard/${slug}/billing`,
       fetchOptions: {
         onError: (ctx) => {
           toast.error(ctx.error.message);
           setRedirecting(false);
         },
       },
+      referenceId: organizationId,
+      returnUrl: `/dashboard/${slug}/billing`,
     });
   };
 

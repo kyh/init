@@ -5,10 +5,10 @@ import { defineConfig, defineDocs, frontmatterSchema, metaSchema } from "fumadoc
 export const docs = defineDocs({
   dir: "content/docs",
   docs: {
-    schema: frontmatterSchema,
     postprocess: {
       includeProcessedMarkdown: true,
     },
+    schema: frontmatterSchema,
   },
   meta: {
     schema: metaSchema,

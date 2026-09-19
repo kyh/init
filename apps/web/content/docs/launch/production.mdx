@@ -17,17 +17,17 @@ Init ships with the author's defaults baked in. Change these before launch:
 
 - `BETTER_AUTH_SECRET` - unique per environment, `openssl rand -base64 32`. Rotating it invalidates existing sessions
 - Separate GitHub OAuth apps for dev and prod; prod callback is `https://your-domain.com/api/auth/callback/github`
-- `SUPABASE_SERVICE_ROLE_KEY` bypasses RLS - it must only appear in server code (`apps/web/src/lib/supabase-server.ts` and the avatar route are the only consumers)
+- `POSTGRES_URL` and `BLOB_READ_WRITE_TOKEN` are full-access credentials - server code only (the avatar route, `apps/web/src/app/api/account/avatar/route.ts`, is the token's only consumer)
 - Nothing secret in `NEXT_PUBLIC_*` - those ship to the browser
 
 ## The Authorization Model
 
 Two layers, know both:
 
-1. **RLS deny-by-default** - every table calls `.enableRLS()` with no policies, so the anon key gets nothing through PostgREST
+1. **RLS deny-by-default** - every table calls `.enableRLS()` with no policies, so any connection that isn't the table owner gets nothing
 2. **oRPC procedures** - the real authorization. `protectedProcedure` requires a session; `organizationProcedure(schema)` (in `packages/api/src/orpc.ts`) resolves the org and proves membership before any org-scoped handler runs
 
-On a hosted Supabase project, also disable the Data API (Settings → API) - local dev already has it off in `packages/db/supabase/config.toml`. And if you regenerate the auth schema, re-add `.enableRLS()` to every table.
+Nothing in this stack puts Postgres on the network, so the oRPC procedures are the only way in and RLS is the backstop rather than the gate. Keep it that way: if you ever enable a hosted data API or hand out a lower-privileged role, deny-by-default is what stops a forgotten table from being world-readable. If you regenerate the auth schema, re-add `.enableRLS()` to every table.
 
 ## What Init Doesn't Ship
 
@@ -43,7 +43,7 @@ Honest gaps. Each is a deliberate "add when you need it":
 
 - `drizzle-kit push` has no down migrations. Back up before schema changes: `pg_dump $POSTGRES_URL > backup.sql`
 - Prefer add-column → backfill → drop-column over destructive changes on live data
-- `POSTGRES_URL` must be the transaction pooler (:6543); the client already sets `prepare: false` for it
+- `POSTGRES_URL` should be the pooled endpoint (`-pooler` in the hostname); the client already sets `prepare: false` for it, and `drizzle.config.ts` strips `-pooler` so DDL runs on a direct connection
 
 ## CI Gate
 
@@ -59,7 +59,7 @@ Green CI is the merge bar. Note `apps/web/next.config.ts` sets `typescript.ignor
 
 - [ ] `site-config.ts` (name, description, Twitter), `githubUrl`, `og.jpg` updated
 - [ ] Unique `BETTER_AUTH_SECRET`; separate GitHub OAuth apps
-- [ ] Production schema pushed; `avatars` bucket created; Data API disabled (Settings → API)
+- [ ] Production schema pushed; Vercel Blob store created and `BLOB_READ_WRITE_TOKEN` set
 - [ ] `RESEND_API_KEY` + `EMAIL_FROM` set (verification, password reset, invite emails)
 - [ ] Stripe keys set + webhook pointed at `/api/auth/stripe/webhook`
 - [ ] Uptime monitor on `/api/health`

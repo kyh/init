@@ -13,24 +13,24 @@ import { cn } from "cn";
 import { useFieldContext } from "@/lib/form-context";
 import { toFieldErrors } from "./field-errors";
 
-type SelectFieldProps = {
+interface SelectFieldProps {
   label: string;
-  options: ReadonlyArray<{ value: string; label: string }>;
+  options: readonly { value: string; label: string }[];
   placeholder?: string;
   labelClassName?: string;
   className?: string;
   itemClassName?: string;
-};
+}
 
 /** Select has no native blur event; changing its value also marks the field touched. */
-export function SelectField({
+export const SelectField = ({
   label,
   options,
   placeholder,
   labelClassName,
   className,
   itemClassName,
-}: SelectFieldProps) {
+}: SelectFieldProps) => {
   const field = useFieldContext<string>();
   const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
 
@@ -43,7 +43,9 @@ export function SelectField({
         <Select
           value={field.state.value ?? ""}
           onValueChange={(value) => {
-            if (value === null) return;
+            if (value === null) {
+              return;
+            }
             field.handleChange(value);
             field.handleBlur();
           }}
@@ -63,4 +65,4 @@ export function SelectField({
       {isInvalid ? <FieldError errors={toFieldErrors(field.state.meta.errors)} /> : null}
     </Field>
   );
-}
+};

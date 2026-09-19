@@ -16,18 +16,19 @@ export const WaitlistForm = () => {
     defaultValues: {
       email: "",
     },
+    onSubmit: ({ value, formApi }) => {
+      const submit = async () => {
+        await joinWaitlist.mutateAsync({ email: value.email });
+        formApi.reset({ email: "" });
+      };
+      toast.promise(submit(), {
+        error: "Failed to join waitlist",
+        loading: "Submitting...",
+        success: "Waitlist joined!",
+      });
+    },
     validators: {
       onSubmit: joinWaitlistInput,
-    },
-    onSubmit: ({ value, formApi }) => {
-      toast.promise(
-        joinWaitlist.mutateAsync({ email: value.email }).then(() => formApi.reset({ email: "" })),
-        {
-          loading: "Submitting...",
-          success: "Waitlist joined!",
-          error: "Failed to join waitlist",
-        },
-      );
     },
   });
 

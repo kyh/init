@@ -3,9 +3,8 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import type { QueryClient } from "@tanstack/react-query";
 import { orpc } from "@/orpc/react";
 
-export const useOrganization = (slug: string) => {
-  return useSuspenseQuery(orpc.organization.get.queryOptions({ input: { slug } }));
-};
+export const useOrganization = (slug: string) =>
+  useSuspenseQuery(orpc.organization.get.queryOptions({ input: { slug } }));
 
 export const invalidateOrganization = (queryClient: QueryClient, slug: string) =>
   queryClient.invalidateQueries({ queryKey: orpc.organization.get.key({ input: { slug } }) });

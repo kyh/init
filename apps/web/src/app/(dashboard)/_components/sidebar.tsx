@@ -46,57 +46,11 @@ import type { Session } from "@repo/api/auth/auth";
 import { NavLink } from "@/components/nav";
 import { authClient } from "@/lib/auth-client";
 
-type SidebarProps = {
-  user: Session["user"];
-};
-
-export const Sidebar = ({ user }: SidebarProps) => {
-  const params = useParams<{ slug: string | undefined }>();
-
-  const { data: organizations } = authClient.useListOrganizations();
-  const { data: activeOrganization } = authClient.useActiveOrganization();
-
-  const rootUrl = `/dashboard/${params.slug ?? activeOrganization?.slug}`;
-  const pageLinks = [
-    { href: rootUrl, label: "Todos", exact: true, icon: CheckSquareIcon },
-    { href: `${rootUrl}/members`, label: "Members", icon: Users2Icon },
-    { href: `${rootUrl}/billing`, label: "Billing", icon: CreditCardIcon },
-    { href: `${rootUrl}/settings`, label: "Settings", icon: SettingsIcon },
-  ];
-
-  return (
-    <nav className="sticky top-0 flex h-dvh w-[80px] flex-col items-center overflow-x-hidden overflow-y-auto px-4 py-[26px]">
-      <div className="flex flex-col">
-        <div className="flex justify-center pb-2">
-          <NavLink href={rootUrl}>
-            <Logo className="bg-muted text-primary size-10 rounded-lg" />
-            <span className="sr-only">Init</span>
-          </NavLink>
-        </div>
-        {pageLinks.map((link) => (
-          <NavLink
-            key={link.href}
-            href={link.href}
-            exact={link.exact}
-            className="group flex flex-col items-center gap-1 p-2 text-xs"
-          >
-            <span className="group-hover:bg-secondary group-data-[state=active]:bg-secondary flex size-9 items-center justify-center rounded-lg transition">
-              <link.icon className="size-4" />
-            </span>
-            <span>{link.label}</span>
-          </NavLink>
-        ))}
-      </div>
-      <UserDropdown slug={params.slug} user={user} organizations={organizations ?? []} />
-    </nav>
-  );
-};
-
-type UserDropdownProps = {
+interface UserDropdownProps {
   slug?: string;
   user: Session["user"];
   organizations: Organization[];
-};
+}
 
 const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
   const [isOrganizationsDialogOpen, setIsOrganizationsDialogOpen] = useState(false);
@@ -106,6 +60,25 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
     defaultValues: {
       name: "",
     },
+    onSubmit: async ({ value, formApi }) => {
+      await authClient.organization.create({
+        fetchOptions: {
+          onError: (ctx) => {
+            toast.error(ctx.error.message);
+          },
+          onSuccess: (ctx) => {
+            setIsOrganizationsDialogOpen(false);
+            router.push(`/dashboard/${ctx.data.slug}`);
+            toast.success("Organization created successfully");
+          },
+        },
+        keepCurrentActiveOrganization: false,
+        name: value.name,
+        slug: slugify(value.name) || FALLBACK_ORGANIZATION_SLUG,
+      });
+
+      formApi.reset({ name: "" });
+    },
     validators: {
       onSubmit: z.object({
         name: z
@@ -114,35 +87,16 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
           .max(50, "Organization name must be at most 50 characters"),
       }),
     },
-    onSubmit: async ({ value, formApi }) => {
-      await authClient.organization.create({
-        name: value.name,
-        slug: slugify(value.name) || FALLBACK_ORGANIZATION_SLUG,
-        keepCurrentActiveOrganization: false,
-        fetchOptions: {
-          onSuccess: (ctx) => {
-            setIsOrganizationsDialogOpen(false);
-            router.push(`/dashboard/${ctx.data.slug}`);
-            toast.success("Organization created successfully");
-          },
-          onError: (ctx) => {
-            toast.error(ctx.error.message);
-          },
-        },
-      });
-
-      formApi.reset({ name: "" });
-    },
   });
 
   const handleSignOut = async () => {
     await authClient.signOut({
       fetchOptions: {
-        onSuccess: () => {
-          router.replace("/");
-        },
         onError: (ctx) => {
           toast.error(ctx.error.message);
+        },
+        onSuccess: () => {
+          router.replace("/");
         },
       },
     });
@@ -259,5 +213,51 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
         </form>
       </DialogContent>
     </Dialog>
+  );
+};
+
+interface SidebarProps {
+  user: Session["user"];
+}
+
+export const Sidebar = ({ user }: SidebarProps) => {
+  const params = useParams<{ slug: string | undefined }>();
+
+  const { data: organizations } = authClient.useListOrganizations();
+  const { data: activeOrganization } = authClient.useActiveOrganization();
+
+  const rootUrl = `/dashboard/${params.slug ?? activeOrganization?.slug}`;
+  const pageLinks = [
+    { exact: true, href: rootUrl, icon: CheckSquareIcon, label: "Todos" },
+    { href: `${rootUrl}/members`, icon: Users2Icon, label: "Members" },
+    { href: `${rootUrl}/billing`, icon: CreditCardIcon, label: "Billing" },
+    { href: `${rootUrl}/settings`, icon: SettingsIcon, label: "Settings" },
+  ];
+
+  return (
+    <nav className="sticky top-0 flex h-dvh w-[80px] flex-col items-center overflow-x-hidden overflow-y-auto px-4 py-[26px]">
+      <div className="flex flex-col">
+        <div className="flex justify-center pb-2">
+          <NavLink href={rootUrl}>
+            <Logo className="bg-muted text-primary size-10 rounded-lg" />
+            <span className="sr-only">Init</span>
+          </NavLink>
+        </div>
+        {pageLinks.map((link) => (
+          <NavLink
+            key={link.href}
+            href={link.href}
+            exact={link.exact}
+            className="group flex flex-col items-center gap-1 p-2 text-xs"
+          >
+            <span className="group-hover:bg-secondary group-data-[state=active]:bg-secondary flex size-9 items-center justify-center rounded-lg transition">
+              <link.icon className="size-4" />
+            </span>
+            <span>{link.label}</span>
+          </NavLink>
+        ))}
+      </div>
+      <UserDropdown slug={params.slug} user={user} organizations={organizations ?? []} />
+    </nav>
   );
 };

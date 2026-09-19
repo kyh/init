@@ -5,15 +5,15 @@ import { hasPermission } from "@repo/api/auth/permissions";
 import { PageHeader } from "@/components/header";
 import { BillingHistory, BillingPlan } from "./_components/billing-plan";
 
-type PageProps = {
+interface PageProps {
   params: Promise<{
     slug: string;
   }>;
-};
+}
 
 const Page = async (props: PageProps) => {
   const params = await props.params;
-  const slug = params.slug;
+  const { slug } = params;
 
   const session = await getSession();
   if (!session) {

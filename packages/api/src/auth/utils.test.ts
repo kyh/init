@@ -68,6 +68,7 @@ describe("isSlugCollision", () => {
     assert.strictEqual(isSlugCollision(new Error("network down")), false);
     assert.strictEqual(isSlugCollision({ code: "08006" }), false);
     assert.strictEqual(isSlugCollision(null), false);
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- the explicit undefined is the value under test
     assert.strictEqual(isSlugCollision(undefined), false);
   });
 });

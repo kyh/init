@@ -9,11 +9,11 @@ import { InvitationsTable } from "./_components/invitations-table";
 import { InviteMembersDialog } from "./_components/invite-members-form";
 import { MembersTable } from "./_components/members-table";
 
-type PageProps = {
+interface PageProps {
   params: Promise<{
     slug: string;
   }>;
-};
+}
 
 const SKELETON_ROW_KEYS = ["a", "b", "c", "d", "e"];
 
@@ -34,7 +34,7 @@ const RowsSkeleton = ({ rows, withAvatar }: { rows: number; withAvatar?: boolean
 
 const Page = async (props: PageProps) => {
   const params = await props.params;
-  const slug = params.slug;
+  const { slug } = params;
 
   const session = await getSession();
   if (!session) {

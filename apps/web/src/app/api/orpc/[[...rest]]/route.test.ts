@@ -11,9 +11,9 @@ const APP_ORIGIN = "http://localhost:3000";
 
 const rpc = (headers: Record<string, string>) =>
   new NextRequest(`${APP_ORIGIN}/api/orpc/todo/list`, {
-    method: "POST",
-    headers: { "content-type": "application/json", ...headers },
     body: JSON.stringify({ json: { slug: "acme" } }),
+    headers: { "content-type": "application/json", ...headers },
+    method: "POST",
   });
 
 describe("rpc endpoint", () => {
@@ -33,14 +33,14 @@ describe("rpc endpoint", () => {
     const response = await POST(rpc({ origin: APP_ORIGIN }));
 
     assert.strictEqual(response.status, 401);
-    assert.match(await response.text(), /UNAUTHORIZED/);
+    assert.match(await response.text(), /UNAUTHORIZED/u);
   });
 
   test("allows a POST with no Origin at all, so the mobile client still reaches it", async () => {
     const response = await POST(rpc({}));
 
     assert.strictEqual(response.status, 401);
-    assert.match(await response.text(), /UNAUTHORIZED/);
+    assert.match(await response.text(), /UNAUTHORIZED/u);
   });
 
   test("refuses GET, so a cross-site navigation cannot invoke a procedure", async () => {

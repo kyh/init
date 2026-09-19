@@ -8,18 +8,18 @@ const sitemap = (): MetadataRoute.Sitemap => {
   const lastModified = new Date();
 
   const docs = source.getPages().map((page) => ({
-    url: `${siteConfig.url}${page.url}`,
-    lastModified,
     changeFrequency: "weekly" as const,
+    lastModified,
     priority: 0.5,
+    url: `${siteConfig.url}${page.url}`,
   }));
 
   return [
     {
-      url: siteConfig.url,
-      lastModified,
       changeFrequency: "weekly",
+      lastModified,
       priority: 1,
+      url: siteConfig.url,
     },
     ...docs,
   ];

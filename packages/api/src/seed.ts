@@ -19,7 +19,7 @@ const seed = async () => {
     console.log(`  ✓ user ${DEV_EMAIL} already exists`);
   } else {
     const { user } = await auth.api.signUpEmail({
-      body: { email: DEV_EMAIL, password: DEV_PASSWORD, name: DEV_NAME },
+      body: { email: DEV_EMAIL, name: DEV_NAME, password: DEV_PASSWORD },
     });
     userId = user.id;
     console.log(`  ✓ created ${DEV_EMAIL} (password: ${DEV_PASSWORD})`);
@@ -34,7 +34,7 @@ const seed = async () => {
   const { organizationId } = membership;
 
   const existingTodo = await db.query.todo.findFirst({
-    where: (todo, { eq }) => eq(todo.organizationId, organizationId),
+    where: (todoTable, { eq }) => eq(todoTable.organizationId, organizationId),
   });
   if (existingTodo) {
     console.log("  ✓ sample todos already present");
@@ -43,28 +43,29 @@ const seed = async () => {
 
   await db.insert(todo).values([
     {
+      completed: true,
+      description: "The agent quickstart lives there.",
       organizationId,
       title: "Read AGENTS.md",
-      description: "The agent quickstart lives there.",
-      completed: true,
     },
     {
+      description: "Typecheck, lint, format, and test in one gate.",
       organizationId,
       title: "Run pnpm verify",
-      description: "Typecheck, lint, format, and test in one gate.",
     },
     {
+      description: "Open http://localhost:3000 and log in as dev@init.local.",
       organizationId,
       title: "Drive the app with agent-browser",
-      description: "Open http://localhost:3000 and log in as dev@init.local.",
     },
   ]);
   console.log("  ✓ inserted sample todos");
 };
 
-seed()
-  .then(() => process.exit(0))
-  .catch((cause: unknown) => {
-    console.error(cause);
-    process.exit(1);
-  });
+try {
+  await seed();
+  process.exit(0);
+} catch (error: unknown) {
+  console.error(error);
+  process.exit(1);
+}

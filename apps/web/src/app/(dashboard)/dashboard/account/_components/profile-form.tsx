@@ -21,9 +21,9 @@ import { authClient } from "@/lib/auth-client";
 
 const avatarResponseSchema = z.object({ url: z.string() });
 
-type ProfileFormProps = {
+interface ProfileFormProps {
   user: Session["user"];
-};
+}
 
 export const ProfileForm = ({ user }: ProfileFormProps) => {
   const [isUploadingProfileImage, setIsUploadingProfileImage] = useState(false);
@@ -32,36 +32,38 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
     defaultValues: {
       displayName: user.name ?? "",
     },
+    onSubmit: async ({ value }) => {
+      await authClient.updateUser({
+        fetchOptions: {
+          onError: (ctx) => {
+            toast.error(ctx.error.message);
+          },
+          onSuccess: () => {
+            toast.success("Profile successfully updated");
+          },
+        },
+        name: value.displayName,
+      });
+    },
     validators: {
       onSubmit: z.object({
         displayName: z.string().min(1, "Name is required"),
       }),
     },
-    onSubmit: async ({ value }) => {
-      await authClient.updateUser({
-        name: value.displayName,
-        fetchOptions: {
-          onSuccess: () => {
-            toast.success("Profile successfully updated");
-          },
-          onError: (ctx) => {
-            toast.error(ctx.error.message);
-          },
-        },
-      });
-    },
   });
 
   const handleProfileImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     setIsUploadingProfileImage(true);
     const id = toast.loading("Uploading profile image...");
 
     const formData = new FormData();
     formData.append("file", file);
-    const response = await fetch("/api/account/avatar", { method: "POST", body: formData });
+    const response = await fetch("/api/account/avatar", { body: formData, method: "POST" });
 
     if (!response.ok) {
       toast.error(await response.text(), { id });
@@ -71,18 +73,18 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
 
     const { url } = avatarResponseSchema.parse(await response.json());
     await authClient.updateUser({
-      image: url,
       fetchOptions: {
-        onSuccess: () => {
-          toast.success("Profile image uploaded successfully", { id });
-        },
         onError: (ctx) => {
           toast.error(ctx.error.message, { id });
         },
         onResponse: () => {
           setIsUploadingProfileImage(false);
         },
+        onSuccess: () => {
+          toast.success("Profile image uploaded successfully", { id });
+        },
       },
+      image: url,
     });
   };
 
@@ -97,18 +99,18 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
     }
 
     await authClient.updateUser({
-      image: "",
       fetchOptions: {
-        onSuccess: () => {
-          toast.success("Profile image removed successfully");
-        },
         onError: (ctx) => {
           toast.error(ctx.error.message);
         },
         onResponse: () => {
           setIsUploadingProfileImage(false);
         },
+        onSuccess: () => {
+          toast.success("Profile image removed successfully");
+        },
       },
+      image: "",
     });
   };
 

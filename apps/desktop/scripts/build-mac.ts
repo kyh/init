@@ -1,11 +1,10 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, rmSync } from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { z } from "zod";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __dirname = import.meta.dirname;
 const appDir = path.resolve(__dirname, "..");
 const outputDir = path.join(appDir, ".output");
 const appBuildDir = path.join(outputDir, "app");
@@ -13,20 +12,20 @@ const binaryOutputDir = path.join(outputDir, "bin");
 const packageJsonPath = path.join(appDir, "package.json");
 const packageJson = z
   .object({ version: z.string() })
-  .safeParse(JSON.parse(readFileSync(packageJsonPath, "utf8")));
+  .safeParse(JSON.parse(readFileSync(packageJsonPath, "utf-8")));
 if (!packageJson.success) {
   throw new Error(`Expected a string "version" in ${packageJsonPath}`);
 }
-const version = packageJson.data.version;
+const { version } = packageJson.data;
 const appBundlePath = path.join(binaryOutputDir, "mac-arm64", "Init.app");
 const zipPath = path.join(binaryOutputDir, `Init-${version}-arm64-mac.zip`);
 
-function run(command: string, args: string[]): void {
+const run = (command: string, args: string[]): void => {
   execFileSync(command, args, {
     cwd: appDir,
     stdio: "inherit",
   });
-}
+};
 
 rmSync(outputDir, { force: true, recursive: true });
 

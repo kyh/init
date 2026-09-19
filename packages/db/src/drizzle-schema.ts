@@ -3,16 +3,18 @@ import { index, pgTable } from "drizzle-orm/pg-core";
 
 import { organization, user } from "./drizzle-schema-auth";
 
-// All tables enable RLS with no policies (deny-by-default): the public schema
-// is reachable through PostgREST with the anon key, and authz lives in the API layer.
-// The server's drizzle connection is unaffected (table owner bypasses RLS).
+// All tables enable RLS with no policies (deny-by-default). Nothing here
+// exposes Postgres to untrusted clients, so this is defense in depth: any
+// connection made with a non-owner role reads nothing unless a policy says
+// otherwise, and authz lives in the API layer. The server's drizzle connection
+// is unaffected (table owner bypasses RLS).
 export const waitlist = pgTable(
   "waitlist",
   (t) => ({
-    id: t.uuid().notNull().primaryKey().defaultRandom(),
-    userId: t.text().references(() => user.id, { onDelete: "set null" }),
-    source: t.text(),
     email: t.text().notNull().unique(),
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    source: t.text(),
+    userId: t.text().references(() => user.id, { onDelete: "set null" }),
   }),
   // Postgres doesn't auto-index FK columns; user deletions (incl. signup
   // rollback) would otherwise seq-scan to satisfy ON DELETE SET NULL.
@@ -29,15 +31,15 @@ export const waitlistRelations = relations(waitlist, ({ one }) => ({
 export const todo = pgTable(
   "todo",
   (t) => ({
+    completed: t.boolean().notNull().default(false),
+    createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+    description: t.text(),
     id: t.uuid().notNull().primaryKey().defaultRandom(),
     organizationId: t
       .text()
       .notNull()
       .references(() => organization.id, { onDelete: "cascade" }),
     title: t.text().notNull(),
-    description: t.text(),
-    completed: t.boolean().notNull().default(false),
-    createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
     updatedAt: t
       .timestamp({ withTimezone: true })
       .notNull()

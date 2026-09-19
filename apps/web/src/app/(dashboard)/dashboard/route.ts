@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getOrganizationById, getSession, listOrganizations } from "@/lib/auth-server";
 
-export async function GET() {
+export const GET = async () => {
   const session = await getSession();
 
   if (!session) {
@@ -23,4 +23,4 @@ export async function GET() {
 
   // Unreachable in practice — signup always creates an organization
   return redirect("/dashboard/account");
-}
+};

@@ -6,7 +6,7 @@ const pgUniqueViolation = z.object({ code: z.literal("23505") });
 /** Retry slug collisions from better-auth or Postgres; propagate other failures. */
 export const isSlugCollision = (cause: unknown): boolean => {
   if (cause instanceof APIError) {
-    return /slug|already (exists|taken)/i.test(cause.message);
+    return /slug|already (?:exists|taken)/iu.test(cause.message);
   }
   return pgUniqueViolation.safeParse(cause).success;
 };
@@ -15,12 +15,12 @@ export const isSlugCollision = (cause: unknown): boolean => {
 export const slugify = (str: string) =>
   str
     .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replaceAll(/[\u0300-\u036F]/gu, "")
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9 -]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
+    .replaceAll(/[^a-z0-9 -]/gu, "")
+    .replaceAll(/\s+/gu, "-")
+    .replaceAll(/-+/gu, "-")
+    .replaceAll(/^-|-$/gu, "");
 
 export const FALLBACK_ORGANIZATION_SLUG = "workspace";

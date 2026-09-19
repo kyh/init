@@ -25,9 +25,38 @@ const updateOrganizationSchema = z.object({
     .refine((value) => slugify(value).length > 0, "Slug must contain a letter or number"),
 });
 
-type UpdateOrganizationFormProps = {
-  slug: string;
+const useUpdateOrganization = (slug: string, organizationId: string) => {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: z.infer<typeof updateOrganizationSchema>) =>
+      authClient.organization.update({
+        data: {
+          name: data.name,
+          slug: slugify(data.slug),
+        },
+        fetchOptions: { throw: true },
+        organizationId,
+      }),
+    onError: (error) => {
+      toast.error(error.message);
+    },
+    onSuccess: async (updatedOrganization) => {
+      toast.success("Organization successfully updated");
+      if (updatedOrganization.slug === slug) {
+        await invalidateOrganization(queryClient, slug);
+      } else {
+        removeOrganization(queryClient, slug);
+      }
+      router.replace(`/dashboard/${updatedOrganization.slug}/settings`);
+    },
+  });
 };
+
+interface UpdateOrganizationFormProps {
+  slug: string;
+}
 
 export const UpdateOrganizationForm = ({ slug }: UpdateOrganizationFormProps) => {
   const { data: organizationData } = useOrganization(slug);
@@ -42,10 +71,10 @@ export const UpdateOrganizationForm = ({ slug }: UpdateOrganizationFormProps) =>
       name: organizationData.organization.name,
       slug: organizationData.organization.slug ?? "",
     },
+    onSubmit: ({ value }) => updateOrganization(value),
     validators: {
       onSubmit: updateOrganizationSchema,
     },
-    onSubmit: ({ value }) => updateOrganization(value),
   });
 
   return (
@@ -90,34 +119,4 @@ export const UpdateOrganizationForm = ({ slug }: UpdateOrganizationFormProps) =>
       </footer>
     </form>
   );
-};
-
-const useUpdateOrganization = (slug: string, organizationId: string) => {
-  const router = useRouter();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: z.infer<typeof updateOrganizationSchema>) => {
-      return authClient.organization.update({
-        organizationId,
-        fetchOptions: { throw: true },
-        data: {
-          name: data.name,
-          slug: slugify(data.slug),
-        },
-      });
-    },
-    onSuccess: async (updatedOrganization) => {
-      toast.success("Organization successfully updated");
-      if (updatedOrganization.slug === slug) {
-        await invalidateOrganization(queryClient, slug);
-      } else {
-        removeOrganization(queryClient, slug);
-      }
-      router.replace(`/dashboard/${updatedOrganization.slug}/settings`);
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
 };

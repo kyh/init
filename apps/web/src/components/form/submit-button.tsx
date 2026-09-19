@@ -5,10 +5,10 @@ import { Button } from "@repo/ui/components/button";
 import { useFormContext } from "@/lib/form-context";
 
 /** Requires a surrounding <form.AppForm>. */
-export function SubmitButton({
+export const SubmitButton = ({
   children,
   ...props
-}: Omit<React.ComponentProps<typeof Button>, "type" | "loading">) {
+}: Omit<React.ComponentProps<typeof Button>, "type" | "loading">) => {
   const form = useFormContext();
 
   return (
@@ -20,4 +20,4 @@ export function SubmitButton({
       )}
     </form.Subscribe>
   );
-}
+};

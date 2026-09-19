@@ -31,82 +31,40 @@ import {
 
 type MemberWithUser = RouterOutputs["organization"]["get"]["members"][number];
 
-type MembersTableProps = {
-  slug: string;
+const getDisplayName = (member: MemberWithUser) =>
+  member.user?.name ?? member.user?.email ?? "Unknown";
+
+const useUpdateMemberRole = (slug: string, memberId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (newRole: string) =>
+      authClient.organization.updateMemberRole({
+        fetchOptions: { throw: true },
+        memberId,
+        role: roleSchema.parse(newRole),
+      }),
+    onError: (error) => toast.error(error.message),
+    onSuccess: () => {
+      toast.success("Member role updated successfully");
+      return invalidateOrganization(queryClient, slug);
+    },
+  });
 };
 
-export const MembersTable = ({ slug }: MembersTableProps) => {
-  const { data: organizationData } = useOrganization(slug);
-  const userId = organizationData.currentUserMember.userId;
-  const canManageMembers = hasPermission(organizationData.currentUserMember.role, {
-    member: ["update", "delete"],
+const useRemoveMember = (slug: string, memberId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      authClient.organization.removeMember({
+        fetchOptions: { throw: true },
+        memberIdOrEmail: memberId,
+      }),
+    onError: (error) => toast.error(error.message),
+    onSuccess: () => {
+      toast.success("Member removed successfully");
+      return invalidateOrganization(queryClient, slug);
+    },
   });
-
-  const columns = useMemo(() => {
-    const columnDefs: ColumnDef<AutoTableFeatures, MemberWithUser>[] = [
-      {
-        header: "Name",
-        cell: ({ row }) => {
-          const member = row.original;
-          const displayName = getDisplayName(member);
-          const isSelf = member.userId === userId;
-
-          return (
-            <span className="flex items-center gap-4 text-left">
-              <Avatar className="size-9">
-                <AvatarFallback className="animate-in fade-in uppercase">
-                  {displayName?.slice(0, 1)}
-                </AvatarFallback>
-              </Avatar>
-              <span>{displayName}</span>
-              {isSelf && <Badge variant="outline">You</Badge>}
-            </span>
-          );
-        },
-      },
-      {
-        header: "Email",
-        cell: ({ row }) => {
-          const member = row.original;
-          return member.user?.email;
-        },
-      },
-      {
-        header: "Role",
-        cell: ({ row }) => <Badge className="capitalize">{row.original.role}</Badge>,
-      },
-      {
-        header: "Joined at",
-        cell: ({ row }) => formatDate(row.original.createdAt),
-      },
-      {
-        header: "",
-        id: "actions",
-        cell: ({ row }) => (
-          <ActionsDropdown
-            slug={slug}
-            member={row.original}
-            userId={userId}
-            canManageMembers={canManageMembers}
-          />
-        ),
-      },
-    ];
-
-    return columnDefs;
-  }, [slug, userId, canManageMembers]);
-
-  const table = useTable({
-    features: autoTableFeatures,
-    data: organizationData.members,
-    columns,
-  });
-
-  return (
-    <div className="rounded-md border">
-      <AutoTable table={table} />
-    </div>
-  );
 };
 
 const ActionsDropdown = ({
@@ -127,26 +85,26 @@ const ActionsDropdown = ({
   const { mutateAsync: updateMemberRole } = useUpdateMemberRole(slug, member.id);
   const handleChangeRole = (newRole: string) => {
     alertDialog.open(`Change ${displayName}'s role?`, {
-      description: `You are about to change ${displayName}'s role to ${newRole}. This may affect their permissions.`,
       action: {
         label: "Change",
         onClick: async () => {
           await updateMemberRole(newRole);
         },
       },
+      description: `You are about to change ${displayName}'s role to ${newRole}. This may affect their permissions.`,
     });
   };
 
   const { mutateAsync: removeMember } = useRemoveMember(slug, member.id);
   const handleRemoveFromOrganization = () => {
     alertDialog.open(`Remove ${displayName} from the organization?`, {
-      description: `You are about to remove ${displayName} from the organization. They will lose access to this organization.`,
       action: {
         label: "Remove",
         onClick: async () => {
           await removeMember();
         },
       },
+      description: `You are about to remove ${displayName} from the organization. They will lose access to this organization.`,
     });
   };
 
@@ -183,39 +141,85 @@ const ActionsDropdown = ({
   return <TableRowActions>{actions}</TableRowActions>;
 };
 
-const getDisplayName = (member: MemberWithUser) => {
-  return member.user?.name ?? member.user?.email ?? "Unknown";
-};
+const createColumns = (
+  slug: string,
+  userId: string,
+  canManageMembers: boolean,
+): ColumnDef<AutoTableFeatures, MemberWithUser>[] => [
+  {
+    cell: ({ row }) => {
+      const member = row.original;
+      const displayName = getDisplayName(member);
+      const isSelf = member.userId === userId;
 
-const useUpdateMemberRole = (slug: string, memberId: string) => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (newRole: string) =>
-      authClient.organization.updateMemberRole({
-        memberId,
-        role: roleSchema.parse(newRole),
-        fetchOptions: { throw: true },
-      }),
-    onSuccess: () => {
-      toast.success("Member role updated successfully");
-      return invalidateOrganization(queryClient, slug);
+      return (
+        <span className="flex items-center gap-4 text-left">
+          <Avatar className="size-9">
+            <AvatarFallback className="animate-in fade-in uppercase">
+              {displayName?.slice(0, 1)}
+            </AvatarFallback>
+          </Avatar>
+          <span>{displayName}</span>
+          {isSelf && <Badge variant="outline">You</Badge>}
+        </span>
+      );
     },
-    onError: (error) => toast.error(error.message),
-  });
-};
+    header: "Name",
+  },
+  {
+    cell: ({ row }) => {
+      const member = row.original;
+      return member.user?.email;
+    },
+    header: "Email",
+  },
+  {
+    cell: ({ row }) => <Badge className="capitalize">{row.original.role}</Badge>,
+    header: "Role",
+  },
+  {
+    cell: ({ row }) => formatDate(row.original.createdAt),
+    header: "Joined at",
+  },
+  {
+    cell: ({ row }) => (
+      <ActionsDropdown
+        slug={slug}
+        member={row.original}
+        userId={userId}
+        canManageMembers={canManageMembers}
+      />
+    ),
+    header: "",
+    id: "actions",
+  },
+];
 
-const useRemoveMember = (slug: string, memberId: string) => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: () =>
-      authClient.organization.removeMember({
-        memberIdOrEmail: memberId,
-        fetchOptions: { throw: true },
-      }),
-    onSuccess: () => {
-      toast.success("Member removed successfully");
-      return invalidateOrganization(queryClient, slug);
-    },
-    onError: (error) => toast.error(error.message),
+interface MembersTableProps {
+  slug: string;
+}
+
+export const MembersTable = ({ slug }: MembersTableProps) => {
+  const { data: organizationData } = useOrganization(slug);
+  const { userId } = organizationData.currentUserMember;
+  const canManageMembers = hasPermission(organizationData.currentUserMember.role, {
+    member: ["update", "delete"],
   });
+
+  const columns = useMemo(
+    () => createColumns(slug, userId, canManageMembers),
+    [slug, userId, canManageMembers],
+  );
+
+  const table = useTable({
+    columns,
+    data: organizationData.members,
+    features: autoTableFeatures,
+  });
+
+  return (
+    <div className="rounded-md border">
+      <AutoTable table={table} />
+    </div>
+  );
 };

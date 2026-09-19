@@ -11,7 +11,7 @@ export const organizationRouter = {
         where: (member, { eq }) => eq(member.organizationId, organization.id),
         with: {
           // Exclude admin-only user fields from the member response.
-          user: { columns: { id: true, name: true, email: true, image: true } },
+          user: { columns: { email: true, id: true, image: true, name: true } },
         },
       }),
       context.db.query.invitation.findMany({
@@ -22,10 +22,10 @@ export const organizationRouter = {
 
     return {
       currentUserMember,
+      invitations,
+      members,
       organization,
       organizationMetadata: authMetadataSchema.parse(organization.metadata ?? "{}"),
-      members,
-      invitations,
     };
   }),
 };

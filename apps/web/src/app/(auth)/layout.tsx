@@ -3,16 +3,16 @@ import Link from "next/link";
 import { Logo } from "@repo/ui/components/logo";
 
 export const metadata: Metadata = {
-  title: "Authentication",
   description: "Sign in or create an account.",
   robots: {
     index: false,
   },
+  title: "Authentication",
 };
 
-type LayoutProps = {
+interface LayoutProps {
   children: React.ReactNode;
-};
+}
 
 const Layout = (props: LayoutProps) => (
   <div className="relative container grid min-h-dvh flex-col items-center justify-center lg:max-w-none lg:grid-cols-2 lg:px-0">
