@@ -1,18 +1,17 @@
 import type { Config } from "drizzle-kit";
 
-if (!process.env.POSTGRES_URL) {
+// drizzle-kit's introspection and DDL stall behind a transaction-mode pooler,
+// which is what POSTGRES_URL is in production. Hosted providers ship a direct
+// URL alongside it; locally there is no pooler and POSTGRES_URL is direct.
+const url = process.env.POSTGRES_URL_NON_POOLING ?? process.env.POSTGRES_URL;
+
+if (!url) {
   throw new Error("Missing POSTGRES_URL");
 }
 
-// Vercel Postgres serves a pooled endpoint — `-pooler` in the hostname, the
-// convention it inherits from Neon underneath — fronted by PgBouncer in
-// transaction mode, which drizzle-kit's DDL can't run through. Strip it for a
-// direct connection; a no-op for local Postgres.
-const nonPoolingUrl = process.env.POSTGRES_URL.replace("-pooler.", ".");
-
 export default {
   dbCredentials: {
-    url: nonPoolingUrl,
+    url,
   },
   dialect: "postgresql",
   out: "./drizzle",
