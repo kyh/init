@@ -31,7 +31,23 @@ It comes with a personal organization and a few sample todos (see `packages/api/
 pnpm verify   # typecheck · lint · format · test
 ```
 
-**Runtime** — the part most templates skip. Passing types isn't proof the feature works. Init ships [agent-browser](https://github.com/vercel-labs/agent-browser) so an agent can drive the real web app:
+**Smoke gate** — the part most templates skip. Passing types isn't proof the app boots, that auth works, or that a mutation reached the database. `pnpm smoke` drives a _running_ server and fails with the step that broke:
+
+```bash
+pnpm dev:web &
+pnpm smoke
+```
+
+```
+  ✓ server is live (/api/health)
+  ✓ signed in as dev@init.local
+  ✓ created a todo
+  ✗ todo.update did not persist `completed`
+```
+
+It calls oRPC through the same `RPCLink` client the apps use, typed against `AppRouter`, so a procedure whose input or output shape changes breaks the smoke script at typecheck rather than at runtime. CI runs it on every commit against a real Postgres (see `.github/workflows/ci.yml`), and `SMOKE_URL=https://my-app-git-branch.vercel.app pnpm smoke` points it at a preview deployment instead.
+
+**UI** — Init ships [agent-browser](https://github.com/vercel-labs/agent-browser) so an agent can drive the real web app:
 
 ```bash
 npm i -g agent-browser && agent-browser install
@@ -75,3 +91,32 @@ Setup and verification are the runnable half of Init's agent story. The rest is 
 - **[Agent wiki](/docs/build/agent-wiki)** — an optional OpenWiki job that keeps a generated map current
 
 See [Local Development](/docs/overview/local-development) for the human day-to-day workflow.
+
+## Shipping a change behind a flag
+
+A flagged change is reversible without a revert — flip one environment variable and redeploy. Declare the flag in `packages/api/src/flags/flags.ts`:
+
+```typescript
+export const flagDefaults = {
+  myFeature: false,
+} as const satisfies Record<string, boolean>;
+```
+
+The registry is the only source of flag names, so a typo at a read site is a type error rather than a flag that reads `false` forever. Read it as `context.flags.myFeature` in a procedure, or via the `flag.list` call on any client.
+
+```bash
+FEATURE_FLAGS="myFeature"         # on
+FEATURE_FLAGS="myFeature=false"   # off, explicitly
+```
+
+Set it per Vercel environment to land a change dark: on for preview, off in production, until a human decides. That is what makes a change atomic — it goes in without changing what users see, and comes out without a git operation.
+
+## Tracing a failed call
+
+Every oRPC call emits one JSON line, and the request id in it comes back on the response as `x-request-id`:
+
+```text
+{"ts":"2026-09-19T…","requestId":"5f3c…","path":"todo.create","durationMs":18,"ok":false,"code":"UNAUTHORIZED"}
+```
+
+Take the id off a failed response, grep the server output for it, and you have the record of that exact call — no correlating by timestamp. CI dumps these logs when the smoke gate fails, so a red build explains itself without a rerun. See `packages/api/src/observability/logger.ts`.
