@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import * as drizzleSchema from "@repo/db/drizzle-schema-auth";
 import { getAuthTables } from "better-auth/db";
-import { getTableColumns, is, Table } from "drizzle-orm";
+import { getColumns, is, Table } from "drizzle-orm";
 
 import { auth } from "./auth";
 
@@ -18,7 +18,7 @@ for (const [key, authTable] of Object.entries(getAuthTables(auth.options))) {
   test(`${key} matches better-auth's table contract`, () => {
     const table = drizzleTables.get(authTable.modelName);
     assert.ok(table, `Missing Drizzle export: ${authTable.modelName}`);
-    const columns = getTableColumns(table);
+    const columns = getColumns(table);
     const fields = Object.entries(authTable.fields);
     const expected = fields.map(([fieldKey, field]) => field.fieldName ?? fieldKey);
     assert.deepEqual(Object.keys(columns).toSorted(), [...expected, "id"].toSorted());

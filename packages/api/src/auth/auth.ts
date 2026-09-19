@@ -1,10 +1,11 @@
 import type { User } from "better-auth";
+// The default adapter entry reads `db._.fullSchema`, gone in drizzle 1.0; relations-v2 reads `db._.relations`.
+import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { expo } from "@better-auth/expo";
 import { stripe } from "@better-auth/stripe";
 import { db } from "@repo/db/drizzle-client";
 import { session as sessionSchema, user as userSchema } from "@repo/db/drizzle-schema-auth";
 import { betterAuth } from "better-auth";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { admin, genericOAuth, oAuthProxy, organization } from "better-auth/plugins";
 import { and, eq, isNull } from "drizzle-orm";
@@ -38,9 +39,7 @@ const emulatorUrl = process.env.NEXT_PUBLIC_GITHUB_EMULATOR_URL;
 
 const generateAvailableSlug = async (baseSlug: string, attempt = 0): Promise<string> => {
   const slug = attempt === 0 ? baseSlug : `${baseSlug}-${attempt}`;
-  const org = await db.query.organization.findFirst({
-    where: (organizationTable) => eq(organizationTable.slug, slug),
-  });
+  const org = await db.query.organization.findFirst({ where: { slug } });
   if (org) {
     return generateAvailableSlug(baseSlug, attempt + 1);
   }
@@ -97,9 +96,7 @@ const createDefaultOrganization = async (user: User) => {
 };
 
 const setActiveOrganization = async (session: { userId: string }) => {
-  const firstOrg = await db.query.member.findFirst({
-    where: (member) => eq(member.userId, session.userId),
-  });
+  const firstOrg = await db.query.member.findFirst({ where: { userId: session.userId } });
 
   return {
     data: {
@@ -182,8 +179,7 @@ export const auth = betterAuth({
       subscription: {
         authorizeReference: async ({ user, referenceId }) => {
           const membership = await db.query.member.findFirst({
-            where: (member) =>
-              and(eq(member.organizationId, referenceId), eq(member.userId, user.id)),
+            where: { organizationId: referenceId, userId: user.id },
           });
           return hasPermission(membership?.role, { billing: ["manage"] });
         },

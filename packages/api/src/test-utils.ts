@@ -1,8 +1,8 @@
 import { mock } from "node:test";
 import type { InferSelectModel, Table } from "drizzle-orm";
-import { getTableColumns } from "drizzle-orm";
+import { getColumns } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
-import * as schema from "@repo/db/drizzle-schema";
+import { relations } from "@repo/db/drizzle-relations";
 import * as schemaAuth from "@repo/db/drizzle-schema-auth";
 
 import type { ORPCContext } from "./orpc";
@@ -53,7 +53,7 @@ export const mockMembership = {
 export const databaseRows = <T extends Table>(table: T, ...rows: InferSelectModel<T>[]) =>
   rows.map((row) => {
     const values = new Map<string, unknown>(Object.entries(row));
-    return Object.entries(getTableColumns(table)).map(([key, column]) => {
+    return Object.entries(getColumns(table)).map(([key, column]) => {
       const value = values.get(key);
       if (!(value instanceof Date)) {
         return value;
@@ -65,9 +65,8 @@ export const databaseRows = <T extends Table>(table: T, ...rows: InferSelectMode
 
 export const createMockContext = (session: ORPCContext["session"] = mockSession) => {
   const db = drizzle({
-    casing: "snake_case",
     connection: "postgresql://unused:unused@localhost/unused",
-    schema: { ...schemaAuth, ...schema },
+    relations,
   });
   const responses: unknown[][][] = [];
   const query = mock.fn((sql: string, params: readonly unknown[]) => {

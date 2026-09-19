@@ -16,7 +16,8 @@ describe("organizationRouter.get", () => {
     context.responses.push(
       databaseRows(organization, org),
       databaseRows(member, mockMembership),
-      [[...membership, JSON.stringify(Object.values(user))]],
+      // The relation rides a row_to_json lateral join, which the driver hands back parsed.
+      [[...membership, user]],
       [],
     );
     const caller = createRouterClient(organizationRouter, { context });
@@ -33,19 +34,16 @@ describe("organizationRouter.get", () => {
     assert.ok(membersQuery);
     assert.match(
       membersQuery.arguments[0],
-      /json_build_array\("member_user"\."email", "member_user"\."id", "member_user"\."image", "member_user"\."name"\)/u,
+      /row_to_json\("t"\.\*\) "r" from \(select "d1"\."email" as "email", "d1"\."id" as "id", "d1"\."image" as "image", "d1"\."name" as "name" from "user" as "d1"/u,
     );
-    assert.doesNotMatch(
-      membersQuery.arguments[0],
-      /ban_reason|stripe_customer_id|"member_user"\."role"/u,
-    );
+    assert.doesNotMatch(membersQuery.arguments[0], /ban_reason|stripe_customer_id|"d1"\."role"/u);
     assert.deepEqual(membersQuery.arguments[1], [1, "org-1"]);
 
     const invitationsQuery = context.query.mock.calls.at(3);
     assert.ok(invitationsQuery);
     assert.match(
       invitationsQuery.arguments[0],
-      /where \("invitation"\."organization_id" = \$1 and "invitation"\."status" <> \$2\)/u,
+      /from "invitation" as "d0" where \(\("d0"\."organization_id" = \$1\) and \("d0"\."status" <> \$2\)\)/u,
     );
     assert.deepEqual(invitationsQuery.arguments[1], ["org-1", "canceled"]);
   });

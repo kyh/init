@@ -11,7 +11,6 @@ if (!process.env.POSTGRES_URL) {
 const nonPoolingUrl = process.env.POSTGRES_URL.replace("-pooler.", ".");
 
 export default {
-  casing: "snake_case",
   dbCredentials: {
     url: nonPoolingUrl,
   },
