@@ -47,7 +47,7 @@ const client = postgres(
 export const db = drizzle({ client, relations });
 ```
 
-`POSTGRES_URL` is the only connection env var. It defaults to the local Docker container.
+`POSTGRES_URL` is the only connection env var the app reads. It defaults to the local Docker container. `drizzle-kit` alone prefers `POSTGRES_URL_NON_POOLING` when set.
 
 ## Schema
 
@@ -112,8 +112,8 @@ export default {
   out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {
-    // drizzle-kit needs a direct connection, not the pooler
-    url: nonPoolingUrl,
+    // POSTGRES_URL_NON_POOLING ?? POSTGRES_URL - drizzle-kit needs a direct connection
+    url,
   },
   schemaFilter: ["public"],
 } satisfies Config;

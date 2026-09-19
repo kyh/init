@@ -43,7 +43,7 @@ Honest gaps. Each is a deliberate "add when you need it":
 
 - `drizzle-kit push` has no down migrations. Back up before schema changes: `pg_dump $POSTGRES_URL > backup.sql`
 - Prefer add-column → backfill → drop-column over destructive changes on live data
-- `POSTGRES_URL` should be the pooled endpoint (`-pooler` in the hostname); the client already sets `prepare: false` for it, and `drizzle.config.ts` strips `-pooler` so DDL runs on a direct connection
+- `POSTGRES_URL` should be the pooled endpoint; the client already sets `prepare: false` for it, and `drizzle.config.ts` prefers `POSTGRES_URL_NON_POOLING` so DDL runs on a direct connection
 
 ## CI Gate
 
