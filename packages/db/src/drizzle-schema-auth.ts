@@ -10,7 +10,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 // Maintained by hand while the auth CLI lags the runtime. Preserve RLS
-// (pgTable.withRLS), indexes, account.issuer and rate_limit when regenerating.
+// (pgTable.withRLS), indexes and rate_limit when regenerating.
 // auth-tables.test.ts checks the contract; drizzle-relations.ts declares the
 // relations these tables take part in.
 
@@ -68,7 +68,6 @@ export const account = pgTable.withRLS(
     createdAt: timestamp("created_at").defaultNow().notNull(),
     id: text("id").primaryKey(),
     idToken: text("id_token"),
-    issuer: text("issuer").notNull(),
     password: text("password"),
     providerId: text("provider_id").notNull(),
     refreshToken: text("refresh_token"),
@@ -81,12 +80,7 @@ export const account = pgTable.withRLS(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
   },
-  // better-auth 1.7 scopes account identity by (issuer, accountId) — the unique
-  // index is what stops two identities from the same issuer colliding on link.
-  (table) => [
-    index("account_userId_idx").on(table.userId),
-    uniqueIndex("account_issuer_accountId_uidx").on(table.issuer, table.accountId),
-  ],
+  (table) => [index("account_userId_idx").on(table.userId)],
 );
 
 export const verification = pgTable.withRLS(
