@@ -59,6 +59,7 @@ update:
     - react-native
     - react-native-*
     - "@react-native/*"
+    - nativewind
 
 allowBuilds:
   "@tailwindcss/oxide": true

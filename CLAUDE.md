@@ -40,7 +40,7 @@ Mutations go through oRPC or the better-auth client — never Next Server Action
 
 `nativewind` is pinned to the `5.0.0-preview` channel because it's the only Tailwind 4-compatible line; `react-native-css` is exact-pinned to the tested version. Lift both when nativewind 5 stable ships (see the tracking issue).
 
-The Expo SDK pins the native modules. `update.ignoreDeps` in `pnpm-workspace.yaml` makes `pnpm up --latest -r` skip `expo`, `expo-*`, `@expo/*`, `react-native`, `react-native-*` and `@react-native/*`; bump those with `npx expo install --fix` during an SDK upgrade. It matches by name only, so the `expo:` catalog rows (`react`, `react-dom`, `typescript`, `@types/react`) are **not** guarded — ignoring them would freeze web too. After a sweep, revert those rows by hand, then run `npx expo install --check` in `apps/mobile`.
+The Expo SDK pins the native modules. `update.ignoreDeps` in `pnpm-workspace.yaml` makes `pnpm up --latest -r` skip `expo`, `expo-*`, `@expo/*`, `react-native`, `react-native-*`, `@react-native/*` and `nativewind`; bump the SDK-pinned ones with `npx expo install --fix` during an SDK upgrade. It matches by name only, so the `expo:` catalog rows (`react`, `react-dom`, `typescript`, `@types/react`) are **not** guarded — ignoring them would freeze web too. After a sweep, revert those rows by hand, then run `npx expo install --check` in `apps/mobile`.
 
 ## Common Commands
 
