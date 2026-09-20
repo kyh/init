@@ -48,6 +48,18 @@ catalogs:
 
 linkWorkspacePackages: true
 
+# The Expo SDK pins these; `pnpm up --latest` would move them past it. Bump them
+# with `npx expo install --fix` during an SDK upgrade. Matching is by name only,
+# so the `expo` catalog's names shared with web cannot be listed here.
+update:
+  ignoreDeps:
+    - expo
+    - expo-*
+    - "@expo/*"
+    - react-native
+    - react-native-*
+    - "@react-native/*"
+
 allowBuilds:
   "@tailwindcss/oxide": true
   electron: true
