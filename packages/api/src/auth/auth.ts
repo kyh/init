@@ -5,7 +5,7 @@ import { expo } from "@better-auth/expo";
 import { stripe } from "@better-auth/stripe";
 import { db } from "@repo/db/drizzle-client";
 import { session as sessionSchema, user as userSchema } from "@repo/db/drizzle-schema-auth";
-import { betterAuth } from "better-auth";
+import { betterAuth, logger } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 import { admin, genericOAuth, oAuthProxy, organization } from "better-auth/plugins";
 import { and, eq, isNull } from "drizzle-orm";
@@ -77,21 +77,31 @@ const createPersonalOrganization = async (user: User) => {
 };
 
 /** Roll back signup if personal-organization creation fails: every user needs a membership. */
-const createDefaultOrganization = async (user: User) => {
+const createRequiredOrganization = async (user: User) => {
   try {
-    const createdOrganization = await createPersonalOrganization(user);
-
-    // The signup session is created before this hook finishes, so the
-    // session.create.before hook found no membership — backfill it
-    if (createdOrganization) {
-      await db
-        .update(sessionSchema)
-        .set({ activeOrganizationId: createdOrganization.id })
-        .where(and(eq(sessionSchema.userId, user.id), isNull(sessionSchema.activeOrganizationId)));
-    }
+    return await createPersonalOrganization(user);
   } catch (error) {
     await db.delete(userSchema).where(eq(userSchema.id, user.id));
     throw error;
+  }
+};
+
+const createDefaultOrganization = async (user: User) => {
+  const createdOrganization = await createRequiredOrganization(user);
+  if (!createdOrganization) {
+    return;
+  }
+
+  // The signup session is created before this hook finishes, so the
+  // session.create.before hook found no membership — backfill it
+  try {
+    await db
+      .update(sessionSchema)
+      .set({ activeOrganizationId: createdOrganization.id })
+      .where(and(eq(sessionSchema.userId, user.id), isNull(sessionSchema.activeOrganizationId)));
+  } catch (error) {
+    // Non-fatal: the organization exists, and session.create.before sets it on the next session.
+    logger.error("Failed to set the active organization on the signup session", error);
   }
 };
 
