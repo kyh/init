@@ -16,6 +16,7 @@
   "dependencies": {
     "@better-auth/stripe": "catalog:",
     "@orpc/client": "catalog:",
+    "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
     "@orpc/tanstack-query": "catalog:",
     "@repo/api": "workspace:*",

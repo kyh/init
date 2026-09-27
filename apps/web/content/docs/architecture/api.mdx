@@ -274,6 +274,17 @@ Both halves hold because every surface authenticates first-party:
 
 Two things keep it true. Do not set `sameSite: "none"` for a surface that wants to embed the app — that re-opens cross-site CSRF for every client at once; make the surface first-party instead. And do not add CORS headers to the RPC route: a simple form POST needs no preflight, so CORS is not CSRF protection, while credentialed CORS would hand a cross-origin page authenticated access.
 
+## REST and OpenAPI
+
+The same router is also served over oRPC's OpenAPI protocol at `/api/v1` (`apps/web/src/app/api/v1/[[...rest]]/route.ts`), described by a generated OpenAPI 3.1 document at `/openapi.json` (`apps/web/src/orpc/openapi.ts`). It exists for agents and non-TypeScript clients; the app's own clients keep using RPC.
+
+```bash
+curl -X POST https://your-domain.com/api/v1/waitlist/join \
+  -H 'content-type: application/json' -d '{"email":"me@example.com"}'
+```
+
+Every procedure is `POST /<router>/<procedure>` with the input as the JSON body, and every error is JSON (`{"code":"UNAUTHORIZED","message":"..."}`), including unknown `/api/*` paths. The route runs the same origin check as RPC. Schemas convert from Zod automatically, so a new procedure appears in the spec with no extra code; add `.route({ summary, description })` from `@orpc/openapi` only when you want richer docs.
+
 ## Adding New Routes
 
 ### 1. Create Schema
