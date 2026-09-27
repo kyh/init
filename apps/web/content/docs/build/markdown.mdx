@@ -82,7 +82,7 @@ No external service, no index to deploy. The search dialog in the docs layout qu
 Every docs page is also machine-readable - useful when your users' AI tools read your docs:
 
 - **`/llms.txt`** - flat index of every page with canonical URLs (`src/app/llms.txt/route.ts`)
-- **`Accept: text/markdown`** - requesting any docs page with this header returns raw markdown instead of HTML. `src/proxy.ts` rewrites the request to the `/md` handler, which serves the processed markdown with an `x-markdown-tokens` size hint
+- **`Accept: text/markdown`** - requesting the home page, any docs page, or `/about`, `/contact`, `/privacy` with this header returns markdown instead of HTML (unknown paths get a markdown 404). `src/proxy.ts` rewrites the request to the `/md` handler, which serves it with `Vary: Accept` and an `x-markdown-tokens` size hint
 - **Content-Signal** - `robots.txt` declares how AI systems may use the content (`src/app/robots.txt/route.ts`)
 
 ```bash

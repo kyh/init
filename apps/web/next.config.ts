@@ -39,11 +39,12 @@ const config: NextConfig = {
   agentRules: false,
   /**
    * RFC 8288 Link headers pointing agents at discovery resources.
-   * api-catalog (RFC 9727) and service-doc (RFC 8631) are IANA-registered rels.
+   * api-catalog (RFC 9727), service-desc and service-doc (RFC 8631) are IANA-registered rels.
    */
   headers: () => {
     const link = [
       '</.well-known/api-catalog>; rel="api-catalog"',
+      '</openapi.json>; rel="service-desc"; type="application/openapi+json"',
       '</docs/architecture/api>; rel="service-doc"; type="text/html"',
       '</llms.txt>; rel="alternate"; type="text/plain"',
     ].join(", ");

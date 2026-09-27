@@ -50,6 +50,30 @@ export const Footer = () => (
             <li>
               <Link
                 className="text-sm text-muted-foreground transition hover:text-secondary-foreground"
+                href="/about"
+              >
+                About
+              </Link>
+            </li>
+            <li>
+              <Link
+                className="text-sm text-muted-foreground transition hover:text-secondary-foreground"
+                href="/contact"
+              >
+                Contact
+              </Link>
+            </li>
+            <li>
+              <Link
+                className="text-sm text-muted-foreground transition hover:text-secondary-foreground"
+                href="/privacy"
+              >
+                Privacy
+              </Link>
+            </li>
+            <li>
+              <Link
+                className="text-sm text-muted-foreground transition hover:text-secondary-foreground"
                 href="https://github.com/kyh/init/blob/main/LICENSE"
                 target="_blank"
               >

@@ -1,18 +1,25 @@
+import { OPENAPI_PREFIX } from "@/orpc/openapi";
 import { siteConfig } from "@/lib/site-config";
 
 /**
  * API catalog for automated discovery (RFC 9727), serialized as a linkset
  * (RFC 9264) with media type application/linkset+json.
  *
- * The anchor is the oRPC API surface. We advertise human docs (service-doc) and
- * a health endpoint (status). We intentionally omit `service-desc`: the RPC
- * handler publishes no OpenAPI document. Add it here if/when one is published.
+ * The anchor is the REST view of the oRPC router. We advertise its OpenAPI
+ * description (service-desc), human docs (service-doc) and a health endpoint
+ * (status). The RPC transport at /api/orpc is the app's own client protocol.
  */
 export const GET = () => {
   const linkset = {
     linkset: [
       {
-        anchor: `${siteConfig.url}/api/orpc`,
+        anchor: `${siteConfig.url}${OPENAPI_PREFIX}`,
+        "service-desc": [
+          {
+            href: `${siteConfig.url}/openapi.json`,
+            type: "application/openapi+json",
+          },
+        ],
         "service-doc": [
           {
             href: `${siteConfig.url}/docs/architecture/api`,
