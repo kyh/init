@@ -36,7 +36,7 @@ describe("site pages", () => {
   test("contact lists the email and the GitHub issues", () => {
     const contact = sitePages.find((page) => page.path === "/contact");
     const body = contact ? renderSitePageMarkdown(contact) : "";
-    assert.ok(body.includes("im.kaiyu@gmail.com"));
+    assert.ok(body.includes("kai@kyh.io"));
     assert.ok(body.includes("github.com/kyh/init/issues"));
   });
 });

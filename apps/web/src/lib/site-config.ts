@@ -1,7 +1,7 @@
 export const siteConfig = {
   author: { name: "Kaiyu Hsu", url: "https://kyh.io" },
   description: "An AI native starter kit to build, launch, and scale your next project.",
-  email: "im.kaiyu@gmail.com",
+  email: "kai@kyh.io",
   name: "Init",
   ogImage: "/og.jpg",
   repository: "https://github.com/kyh/init",

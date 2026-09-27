@@ -8,7 +8,7 @@ describe("buildOrganization", () => {
 
   test("carries a description, contact point and profiles", () => {
     assert.ok(organization.description.length > 0);
-    assert.equal(organization.contactPoint.email, "im.kaiyu@gmail.com");
+    assert.equal(organization.contactPoint.email, "kai@kyh.io");
     assert.ok(organization.sameAs.includes("https://github.com/kyh/init"));
   });
 
