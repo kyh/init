@@ -101,5 +101,5 @@ For the three non-web targets, verify with `pnpm typecheck` and `pnpm build`; a 
 - `apps/{web,mobile,extension,desktop}` · `packages/{api,db,ui}`
 - `CLAUDE.md` — conventions + command list (Claude-specific)
 - `apps/web/content/docs` — full docs (served at `/docs`, and as raw markdown per page)
-- `/llms.txt`, `/.well-known/api-catalog` — machine-readable surfaces
+- `/llms.txt`, `/.well-known/api-catalog`, `/openapi.json` — machine-readable surfaces · `apps/web/src/lib/agent` — their builders + the trust pages
 - `packages/api/src/auth/auth.ts` — auth config · `packages/db/src/drizzle-schema.ts` — app tables · `packages/api/src/seed.ts` — the seed
