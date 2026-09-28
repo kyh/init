@@ -22,7 +22,7 @@ Every feature is built the way its library's own docs say to build it: better-au
 
 - **`AGENTS.md` + `CLAUDE.md`** - conventions and the full agent workflow, loaded automatically
 - **One-command setup** - `pnpm bootstrap --yes` provisions a headless dev environment (database, `.env`, schema, seeded login) so an agent goes from clone to running app unattended
-- **End-to-end verifiable** - `agent-browser` drives the real web app and `emulate` fakes GitHub OAuth offline, so an agent proves a change works instead of just typechecking it
+- **End-to-end verifiable** - `agent-browser` drives the real web app and `emulate` stands in for GitHub sign-in offline, so an agent proves a change works instead of just typechecking it
 - **`llms.txt`** - a machine-readable map of the docs
 - **Markdown negotiation** - every docs page serves markdown to any client that asks for `Accept: text/markdown`
 - **API catalog** - `/.well-known/api-catalog` so agents can discover endpoints
@@ -36,7 +36,7 @@ An optional [OpenWiki](https://github.com/langchain-ai/openwiki) workflow regene
 
 - **🚀 Full-Stack TypeScript** - End-to-end type safety from database to UI
 - **📱 Multi-Platform** - Next.js web, Expo mobile, Chrome extension, Electron desktop
-- **🔐 Authentication Ready** - better-auth with email/password, GitHub OAuth, email verification
+- **🔐 Authentication Ready** - better-auth with email/password, GitHub sign-in, email verification
 - **👥 Organizations** - Multi-tenant by default; every user gets a personal org
 - **💳 Billing** - Org-scoped Stripe subscriptions, webhook-synced to your database
 - **🎨 Modern UI** - Tailwind CSS 4, Base UI, shadcn-style shared components
