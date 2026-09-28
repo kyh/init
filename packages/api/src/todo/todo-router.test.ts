@@ -27,7 +27,7 @@ describe("todoRouter", () => {
     assert.ok(query);
     assert.match(
       query.arguments[0],
-      /where "todo"\."organization_id" = \$1 order by "todo"\."created_at" desc/u,
+      /from "todo" as "d0" where "d0"\."organization_id" = \$1 order by "d0"\."created_at" desc/u,
     );
     assert.deepEqual(query.arguments[1], ["org-1"]);
   });
@@ -60,7 +60,7 @@ describe("todoRouter", () => {
     assert.ok(query);
     assert.match(
       query.arguments[0],
-      /set "title" = \$1, "updated_at" = \$2 where \("todo"\."id" = \$3 and "todo"\."organization_id" = \$4\)/u,
+      /set "title" = \$1, "updated_at" = \$2 where \(\("todo"\."id" = \$3\) and \("todo"\."organization_id" = \$4\)\)/u,
     );
     assert.equal(query.arguments[1][0], "Updated");
     assert.deepEqual(query.arguments[1].slice(2), [TODO.id, "org-1"]);
@@ -97,7 +97,7 @@ describe("todoRouter", () => {
     assert.ok(query);
     assert.match(
       query.arguments[0],
-      /where \("todo"\."id" = \$1 and "todo"\."organization_id" = \$2\)/u,
+      /where \(\("todo"\."id" = \$1\) and \("todo"\."organization_id" = \$2\)\)/u,
     );
     assert.deepEqual(query.arguments[1], [TODO.id, "org-1"]);
   });

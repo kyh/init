@@ -26,8 +26,9 @@ vercel   # from apps/web
 Set in the Vercel dashboard (same keys as `.env.example`):
 
 ```
-# Database — the pooled connection string (hostname contains -pooler)
+# Database — the pooled connection string, plus the direct one for schema pushes
 POSTGRES_URL=postgresql://...
+POSTGRES_URL_NON_POOLING=postgresql://...
 
 # Auth
 BETTER_AUTH_SECRET=generate-with-openssl-rand--base64-32
@@ -53,15 +54,16 @@ The `oAuthProxy` plugin in `packages/api/src/auth/auth.ts` routes OAuth callback
 
 ## Database (Vercel Postgres)
 
-1. **Create the database** from the Vercel dashboard under Storage, which wires `POSTGRES_URL` into the project
+1. **Create the database** from the Vercel dashboard under Storage, which wires `POSTGRES_URL` and `POSTGRES_URL_NON_POOLING` into the project
 2. **Push the schema**:
 
    ```bash
    # .env.production.local at the repo root with the production POSTGRES_URL
+   # and POSTGRES_URL_NON_POOLING (`vercel env pull` writes both)
    pnpm db:push-remote
    ```
 
-   `drizzle-kit push` needs a direct connection, so the config strips `-pooler` from the hostname automatically.
+   `drizzle-kit push` hangs behind a transaction-mode pooler, so the config prefers `POSTGRES_URL_NON_POOLING` and falls back to `POSTGRES_URL`.
 
 Any Postgres works - [Vercel Postgres](https://vercel.com/docs/postgres) is the default because of branching (below), not because anything in the code depends on it.
 
@@ -104,12 +106,12 @@ Upload the extension to the Chrome Web Store; distribute desktop builds per `ele
 
 ## CI/CD
 
-Vercel deploys on push once the repo is connected - previews per PR, production on `main`. Schema pushes stay manual (`pnpm db:push-remote`) or go in a workflow step with `POSTGRES_URL` as a secret:
+Vercel deploys on push once the repo is connected - previews per PR, production on `main`. Schema pushes stay manual (`pnpm db:push-remote`) or go in a workflow step with the direct connection string as a secret:
 
 ```yaml
 - name: Push database schema
   env:
-    POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+    POSTGRES_URL_NON_POOLING: ${{ secrets.POSTGRES_URL_NON_POOLING }}
   run: pnpm -F db drizzle:kit push --force
 ```
 
@@ -147,7 +149,7 @@ Vercel Postgres also keeps point-in-time restore over a retention window, and a 
 
 - `BETTER_AUTH_SECRET` set and unique per environment
 - Separate GitHub OAuth apps for dev and prod (callback: `https://your-domain.com/api/auth/callback/github`)
-- `POSTGRES_URL` uses the pooled endpoint (`-pooler` in the hostname) - the client is configured for it
+- `POSTGRES_URL` uses the pooled endpoint - the client is configured for it; `POSTGRES_URL_NON_POOLING` is the direct one for schema pushes
 - `BLOB_READ_WRITE_TOKEN` set, with a Blob store created in the Vercel project
 - Uptime monitor on `/api/health`
 

@@ -19,14 +19,14 @@ A feedback feature is a [CRUD feature](/docs/build/crud) with three twists. The 
 
 ```typescript
 // packages/db/src/drizzle-schema.ts
-export const feedback = pgTable("feedback", (t) => ({
+export const feedback = pgTable.withRLS("feedback", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   userId: t.text().references(() => user.id, { onDelete: "set null" }),
   organizationId: t.text().references(() => organization.id, { onDelete: "set null" }),
   message: t.text().notNull(),
   path: t.text(), // Which page they were on
   createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
-})).enableRLS();
+}));
 ```
 
 The twists versus the todo template:

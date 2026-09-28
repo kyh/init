@@ -14,6 +14,20 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TURBO_TELEMETRY_DISABLED: 1
+      TEST_POSTGRES_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres
+    services:
+      # Same major as packages/db/docker-compose.yml.
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 30
+        ports:
+          - 5432:5432
     steps:
       - uses: actions/checkout@v6
 
@@ -30,6 +44,12 @@ jobs:
 
       - name: Format
         run: pnpm format
+
+      # Suites that need a real database skip without TEST_POSTGRES_URL.
+      - name: Push test schema
+        run: pnpm db:push
+        env:
+          POSTGRES_URL: ${{ env.TEST_POSTGRES_URL }}
 
       - name: Test
         run: pnpm test

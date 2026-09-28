@@ -62,7 +62,9 @@ oRPC has no `.query` / `.mutation` split - every procedure ends in `.handler()`,
 Available to everyone:
 
 ```typescript
-export const publicProcedure = o;
+export const publicProcedure = o.errors({
+  BAD_REQUEST: { message: "The input failed validation" },
+});
 
 // packages/api/src/waitlist/waitlist-router.ts
 export const waitlistRouter = {
@@ -83,18 +85,21 @@ export const waitlistRouter = {
 Require a session:
 
 ```typescript
-export const protectedProcedure = publicProcedure.use(({ context, next }) => {
-  if (!context.session?.user) {
-    throw new ORPCError("UNAUTHORIZED", {
-      message: "You must be logged in to access this resource",
+export const protectedProcedure = publicProcedure
+  .errors({ UNAUTHORIZED: { message: "No signed-in session" } })
+  .meta(requireSession) // marks the operation with the `session` security scheme in /openapi.json
+  .use(({ context, next }) => {
+    if (!context.session?.user) {
+      throw new ORPCError("UNAUTHORIZED", {
+        message: "You must be logged in to access this resource",
+      });
+    }
+    return next({
+      context: {
+        session: { ...context.session, user: context.session.user },
+      },
     });
-  }
-  return next({
-    context: {
-      session: { ...context.session, user: context.session.user },
-    },
   });
-});
 ```
 
 #### Organization Access
@@ -113,7 +118,7 @@ export const organizationProcedure = <T extends z.ZodType<z.infer<typeof organiz
 ) =>
   protectedProcedure.input(input).use(async ({ context, next }, validated) => {
     const organization = await context.db.query.organization.findFirst({
-      where: (org, { eq }) => eq(org.slug, validated.slug),
+      where: { slug: validated.slug },
     });
 
     if (!organization) {
@@ -121,8 +126,7 @@ export const organizationProcedure = <T extends z.ZodType<z.infer<typeof organiz
     }
 
     const membership = await context.db.query.member.findFirst({
-      where: (member, { and, eq }) =>
-        and(eq(member.organizationId, organization.id), eq(member.userId, context.session.user.id)),
+      where: { organizationId: organization.id, userId: context.session.user.id },
     });
 
     if (!membership) {
@@ -275,6 +279,53 @@ Both halves hold because every surface authenticates first-party:
 
 Two things keep it true. Do not set `sameSite: "none"` for a surface that wants to embed the app — that re-opens cross-site CSRF for every client at once; make the surface first-party instead. And do not add CORS headers to the RPC route: a simple form POST needs no preflight, so CORS is not CSRF protection, while credentialed CORS would hand a cross-origin page authenticated access.
 
+## REST and OpenAPI
+
+The same router is also served over oRPC's OpenAPI protocol at `/api/v1` (`apps/web/src/app/api/v1/[[...rest]]/route.ts`), described by a generated OpenAPI 3.1 document at `/openapi.json` (`apps/web/src/orpc/openapi.ts`). It exists for agents and non-TypeScript clients; the app's own clients keep using RPC.
+
+```bash
+curl -X POST https://your-domain.com/api/v1/waitlist/join \
+  -H 'content-type: application/json' -d '{"email":"me@example.com"}'
+```
+
+Every procedure is `POST /<router>/<procedure>` with the input as the JSON body, and unknown `/api/*` paths answer JSON too. The route runs the same origin check as RPC.
+
+### Documenting procedures
+
+Each procedure carries its own OpenAPI metadata and a typed output, so the spec describes what it returns and not just what it accepts:
+
+```typescript
+// packages/api/src/todo/todo-router.ts
+list: organizationProcedure(organizationInput)
+  .meta(openapi({ summary: "List todos", description: "...", tags: ["Todo"] }))
+  .output(z.object({ todos: z.array(createSelectSchema(todo)) }))
+  .handler(...)
+```
+
+`.output()` also validates at runtime, and it strips fields the schema leaves out, so it doubles as an allow-list. Output schemas live in the router, not `*-schema.ts`, because they import Drizzle tables and the schema files are shared with client bundles. `apps/web/src/orpc/openapi.test.ts` fails if any operation is missing a summary, description, tags, a typed `200`, or an error response pointing at the shared `Error` schema.
+
+### Errors
+
+Every error body has one shape, the `Error` schema in the spec:
+
+```json
+{
+  "code": "UNAUTHORIZED",
+  "message": "You must be logged in to access this resource",
+  "defined": true
+}
+```
+
+Branch on `code`. The procedure builders declare the codes they raise with `.errors()` (`BAD_REQUEST` for input, `UNAUTHORIZED` for protected procedures, `NOT_FOUND` for organization-scoped ones), so each operation lists them with its own status. The route adds `403 FORBIDDEN` (cross-origin browser request) and `500 INTERNAL_SERVER_ERROR`.
+
+### Authentication
+
+Operations that need a session reference the `session` security scheme: the better-auth session cookie, obtained by signing in (`POST /api/auth/sign-in/email`, or GitHub sign-in in the app). It is first-party session auth - there are no API keys, OAuth clients, or scopes.
+
+### Versioning and deprecation
+
+v1 is stable. It only gains backward-compatible changes: new operations, new optional input fields, new output fields. A breaking change ships as a new major version at `/api/v2`, and `/api/v1` keeps serving for at least 90 days after v2 launches. During that overlap every v1 response carries a `Deprecation` header ([RFC 9745](https://www.rfc-editor.org/rfc/rfc9745)), a `Sunset` header with the shutdown date ([RFC 8594](https://www.rfc-editor.org/rfc/rfc8594)), and a `Link` to the migration guide. The spec states the same policy under `info.x-api-lifecycle`.
+
 ## Adding New Routes
 
 ### 1. Create Schema
@@ -294,16 +345,29 @@ export const createPostInput = organizationInput.extend({
 
 ```typescript
 // packages/api/src/post/post-router.ts
+import { post } from "@repo/db/drizzle-schema";
+import { openapi } from "@orpc/openapi";
+import { ORPCError } from "@orpc/server";
+import { createSelectSchema } from "drizzle-orm/zod";
+import { z } from "zod";
+
 import { organizationProcedure } from "../orpc";
 import { createPostInput } from "./post-schema";
 
 export const postRouter = {
-  create: organizationProcedure(createPostInput).handler(async ({ context, input }) => {
-    return context.db.insert(post).values({
-      organizationId: context.organization.id,
-      title: input.title,
-    });
-  }),
+  create: organizationProcedure(createPostInput)
+    .meta(openapi({ summary: "Create a post", description: "...", tags: ["Post"] }))
+    .output(z.object({ post: createSelectSchema(post) }))
+    .handler(async ({ context, input }) => {
+      const [created] = await context.db
+        .insert(post)
+        .values({ organizationId: context.organization.id, title: input.title })
+        .returning();
+      if (!created) {
+        throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "Post was not created" });
+      }
+      return { post: created };
+    }),
 };
 ```
 

@@ -57,6 +57,8 @@ catch; see `packages/api/src/observability/logger.ts` and `src/orpc.ts`.
 
 `nativewind` is pinned to the `5.0.0-preview` channel because it's the only Tailwind 4-compatible line; `react-native-css` is exact-pinned to the tested version. Lift both when nativewind 5 stable ships (see the tracking issue).
 
+The Expo SDK pins the native modules. `update.ignoreDeps` in `pnpm-workspace.yaml` makes `pnpm up --latest -r` skip `expo`, `expo-*`, `@expo/*`, `react-native`, `react-native-*`, `@react-native/*` and `nativewind`; bump the SDK-pinned ones with `npx expo install --fix` during an SDK upgrade. It matches by name only, so the `expo:` catalog rows (`react`, `react-dom`, `typescript`, `@types/react`) are **not** guarded — ignoring them would freeze web too. After a sweep, revert those rows by hand, then run `npx expo install --check` in `apps/mobile`.
+
 ## Common Commands
 
 ```bash
@@ -69,6 +71,7 @@ pnpm lint             # Lint all packages (oxlint)
 pnpm format           # Check formatting (oxfmt)
 pnpm format:fix       # Format all packages (oxfmt)
 pnpm test             # Run tests (node:test — do not add vitest or jest)
+                      # Real-database suites skip unless TEST_POSTGRES_URL points at a disposable, schema-pushed Postgres
 pnpm verify           # typecheck · lint · format · test (static CI gate)
 pnpm smoke            # Drive a running app end-to-end (runtime CI gate)
 pnpm build            # Build all packages

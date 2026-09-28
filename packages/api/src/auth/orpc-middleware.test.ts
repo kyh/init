@@ -41,12 +41,15 @@ describe("procedure authorization", () => {
     });
     const [organizationQuery, membershipQuery] = context.query.mock.calls;
     assert.ok(organizationQuery);
-    assert.match(organizationQuery.arguments[0], /where "organization"\."slug" = \$1/u);
+    assert.match(
+      organizationQuery.arguments[0],
+      /from "organization" as "d0" where "d0"\."slug" = \$1/u,
+    );
     assert.deepEqual(organizationQuery.arguments[1], ["acme", 1]);
     assert.ok(membershipQuery);
     assert.match(
       membershipQuery.arguments[0],
-      /where \("member"\."organization_id" = \$1 and "member"\."user_id" = \$2\)/u,
+      /from "member" as "d0" where \(\("d0"\."organization_id" = \$1\) and \("d0"\."user_id" = \$2\)\)/u,
     );
     assert.deepEqual(membershipQuery.arguments[1], ["org-1", "user-1", 1]);
   });

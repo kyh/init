@@ -3,6 +3,8 @@ import { appRouter, createORPCContext, REQUEST_ID_HEADER, resolveRequestId } fro
 import { onError, ORPCError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 
+import { isCrossOrigin, jsonError } from "@/orpc/request";
+
 // Browser clients are same-origin. Leave CORS disabled; RPC also refuses GET by default.
 const handler = new RPCHandler(appRouter, {
   clientInterceptors: [
@@ -17,16 +19,9 @@ const handler = new RPCHandler(appRouter, {
   ],
 });
 
-/** SameSite permits sibling origins, so browser requests also need an exact Origin check.
- * Allow absent Origin for native clients that send credentials explicitly. */
-const isCrossOrigin = (request: Request) => {
-  const origin = request.headers.get("origin");
-  return origin !== null && origin !== new URL(request.url).origin;
-};
-
 const handleRequest = async (req: NextRequest) => {
   if (isCrossOrigin(req)) {
-    return new Response("Cross-origin request blocked.", { status: 403 });
+    return jsonError(403, "FORBIDDEN", "Cross-origin request blocked.");
   }
 
   // Minted here rather than read back off the context, so the response carries
@@ -39,7 +34,7 @@ const handleRequest = async (req: NextRequest) => {
     prefix: "/api/orpc",
   });
 
-  const result = response ?? new Response("Not found", { status: 404 });
+  const result = response ?? jsonError(404, "NOT_FOUND", "No procedure matches this path.");
   // Hands the caller the id its log line was tagged with, so a failed response
   // traces to the server-side record of the call without matching timestamps.
   result.headers.set(REQUEST_ID_HEADER, requestId);

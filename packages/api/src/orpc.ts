@@ -1,4 +1,5 @@
 import { db } from "@repo/db/drizzle-client";
+import { openapi } from "@orpc/openapi";
 import { ORPCError, os } from "@orpc/server";
 import type { z } from "zod";
 
@@ -82,46 +83,64 @@ const logged = o.use(async ({ context, next: proceed, path }) => {
   }
 });
 
-export const publicProcedure = logged;
-
-export const protectedProcedure = publicProcedure.use(({ context, next }) => {
-  if (!context.session?.user) {
-    throw new ORPCError("UNAUTHORIZED", {
-      message: "You must be logged in to access this resource",
-    });
-  }
-  return next({
-    context: {
-      session: { ...context.session, user: context.session.user },
-    },
-  });
+/** Declared codes reach /openapi.json and typed clients. A plain `throw new ORPCError` with a
+ * declared code is reported as defined, so handlers need no `errors` helper. */
+export const publicProcedure = logged.errors({
+  BAD_REQUEST: { message: "The input failed validation" },
 });
+
+/** `session` names the security scheme apps/web declares in its OpenAPI document. */
+const requireSession = openapi.spec((operation) => ({
+  ...operation,
+  security: [{ session: [] }],
+}));
+
+export const protectedProcedure = publicProcedure
+  .errors({ UNAUTHORIZED: { message: "No signed-in session" } })
+  .meta(requireSession)
+  .use(({ context, next }) => {
+    if (!context.session?.user) {
+      throw new ORPCError("UNAUTHORIZED", {
+        message: "You must be logged in to access this resource",
+      });
+    }
+    return next({
+      context: {
+        session: { ...context.session, user: context.session.user },
+      },
+    });
+  });
 
 /** Resolves membership before any tenant query. Handlers must scope rows by organization.id.
  * A factory is required because oRPC replaces, rather than merges, successive input schemas. */
 export const organizationProcedure = <T extends z.ZodType<z.infer<typeof organizationInput>>>(
   input: T,
 ) =>
-  protectedProcedure.input(input).use(async ({ context, next }, validated) => {
-    const organization = await context.db.query.organization.findFirst({
-      where: (org, { eq }) => eq(org.slug, validated.slug),
-    });
-
-    if (!organization) {
-      throw new ORPCError("NOT_FOUND", { message: "Organization not found" });
-    }
-
-    // Separate lookups distinguish a missing organization from missing membership.
-    const membership = await context.db.query.member.findFirst({
-      where: (member, { and, eq }) =>
-        and(eq(member.organizationId, organization.id), eq(member.userId, context.session.user.id)),
-    });
-
-    if (!membership) {
-      throw new ORPCError("UNAUTHORIZED", {
-        message: "You do not have access to this organization",
+  protectedProcedure
+    .errors({
+      NOT_FOUND: { message: "The organization or a record in it does not exist" },
+      UNAUTHORIZED: { message: "No signed-in session, or not a member of the organization" },
+    })
+    .input(input)
+    .use(async ({ context, next }, validated) => {
+      const organization = await context.db.query.organization.findFirst({
+        where: { slug: validated.slug },
       });
-    }
 
-    return next({ context: { membership, organization } });
-  });
+      if (!organization) {
+        throw new ORPCError("NOT_FOUND", { message: "Organization not found" });
+      }
+
+      // Separate lookups distinguish a missing organization from missing membership.
+      const membership = await context.db.query.member.findFirst({
+        where: { organizationId: organization.id, userId: context.session.user.id },
+      });
+
+      if (!membership) {
+        throw new ORPCError("UNAUTHORIZED", {
+          message: "You do not have access to this organization",
+        });
+      }
+
+      return next({ context: { membership, organization } });
+    });

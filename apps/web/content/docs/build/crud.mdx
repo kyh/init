@@ -19,7 +19,7 @@ apps/web/src/app/.../posts/_components/  # 6. Client UI
 
 ```typescript
 // packages/db/src/drizzle-schema.ts
-export const post = pgTable(
+export const post = pgTable.withRLS(
   "post",
   (t) => ({
     id: t.uuid().notNull().primaryKey().defaultRandom(),
@@ -33,17 +33,18 @@ export const post = pgTable(
     updatedAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
   }),
   (table) => [index("post_organization_id_idx").on(table.organizationId)],
-).enableRLS();
+);
 
-export const postRelations = relations(post, ({ one }) => ({
-  organization: one(organization, {
-    fields: [post.organizationId],
-    references: [organization.id],
-  }),
+// packages/db/src/drizzle-relations.ts
+export const relations = defineRelations({ ...schemaAuth, ...schema }, (r) => ({
+  // ...
+  post: {
+    organization: r.one.organization({ from: r.post.organizationId, to: r.organization.id }),
+  },
 }));
 ```
 
-Every rule here matters: `organizationId` scopes the data to a tenant, the index makes the list query fast, `cascade` cleans up when an org is deleted, `.enableRLS()` keeps PostgREST locked out. See [Data Modelling](/docs/build/database) for why.
+Every rule here matters: `organizationId` scopes the data to a tenant, the index makes the list query fast, `cascade` cleans up when an org is deleted, `pgTable.withRLS` keeps PostgREST locked out. See [Data Modelling](/docs/build/database) for why.
 
 ## 2. Push the Schema
 
@@ -88,8 +89,8 @@ import { createPostInput, deletePostInput } from "./post-schema";
 export const postRouter = {
   list: organizationProcedure(organizationInput).handler(async ({ context }) => {
     const posts = await context.db.query.post.findMany({
-      where: (postTable, { eq }) => eq(postTable.organizationId, context.organization.id),
-      orderBy: (postTable, { desc }) => desc(postTable.createdAt),
+      where: { organizationId: context.organization.id },
+      orderBy: { createdAt: "desc" },
     });
 
     return { posts };
@@ -247,7 +248,7 @@ Nothing else to do. The mobile app (`apps/mobile/src/utils/api.ts`) consumes the
 
 ## Checklist
 
-- Table has `organizationId` + index + `.enableRLS()`
+- Table has `organizationId` + index + `pgTable.withRLS`
 - `pnpm db:push` ran
 - Zod schema extends `organizationInput` and validates the feature's own fields
 - Router is built with `organizationProcedure` and filters mutations by `organizationId`

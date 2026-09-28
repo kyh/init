@@ -20,6 +20,7 @@
     },
     "test": {
       "dependsOn": ["^topo"],
+      "passThroughEnv": ["TEST_POSTGRES_URL"],
       "cache": false
     },
     "clean": {

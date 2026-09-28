@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { Meteors } from "@/app/(marketing)/_components/meteor";
 import { WaitlistForm } from "@/app/(marketing)/_components/waitlist-form";
-import { siteConfig } from "@/lib/site-config";
+import { buildHomeGraph, serializeJsonLd } from "@/lib/agent/structured-data";
 
 export const metadata: Metadata = {
   alternates: {
@@ -11,29 +11,11 @@ export const metadata: Metadata = {
   },
 };
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Organization",
-      logo: `${siteConfig.url}/logo.svg`,
-      name: siteConfig.name,
-      url: siteConfig.url,
-    },
-    {
-      "@type": "WebSite",
-      description: siteConfig.description,
-      name: siteConfig.name,
-      url: siteConfig.url,
-    },
-  ],
-};
-
-const jsonLdScript = JSON.stringify(jsonLd).replaceAll("<", "\\u003c");
+const jsonLdScript = serializeJsonLd(buildHomeGraph());
 
 const Page = () => (
   <>
-    {/* oxlint-disable-next-line react/no-danger -- JSON-LD must be inline script text; jsonLdScript escapes `<` above */}
+    {/* oxlint-disable-next-line react/no-danger -- JSON-LD must be inline script text; serializeJsonLd escapes `<` */}
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript }} />
     <section>
       <div className="border-border relative mx-auto max-w-7xl border-x border-b p-8 lg:py-32">
@@ -82,7 +64,7 @@ const Page = () => (
           <div className="flex h-full flex-col gap-6 p-8">
             <div>Emulate</div>
             <div className="text-muted-foreground space-y-3">
-              <p>A local server fakes GitHub OAuth, so the login flow tests with no network.</p>
+              <p>A local server stands in for GitHub, so GitHub sign-in tests with no network.</p>
               <p className="font-mono text-sm">pnpm emulate</p>
             </div>
           </div>

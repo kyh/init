@@ -9,7 +9,12 @@ import { waitlistRouter } from "./waitlist-router";
 describe("waitlistRouter.join", () => {
   test("accepts anonymous signup and ignores duplicate email conflicts", async () => {
     const context = createMockContext(null);
-    const entry = { email: "hello@example.com", id: "wl-1", source: "", userId: null };
+    const entry = {
+      email: "hello@example.com",
+      id: "5f0c7c1e-8b1a-4c1e-9d3e-2a6b7c8d9e01",
+      source: "",
+      userId: null,
+    };
     context.responses.push(databaseRows(waitlist, entry), []);
     const caller = createRouterClient(waitlistRouter, { context });
 
@@ -26,7 +31,12 @@ describe("waitlistRouter.join", () => {
 
   test("attaches the current user to authenticated signups", async () => {
     const context = createMockContext();
-    const entry = { email: "user@example.com", id: "wl-2", source: "", userId: "user-1" };
+    const entry = {
+      email: "user@example.com",
+      id: "5f0c7c1e-8b1a-4c1e-9d3e-2a6b7c8d9e02",
+      source: "",
+      userId: "user-1",
+    };
     context.responses.push(databaseRows(waitlist, entry));
     const caller = createRouterClient(waitlistRouter, { context });
 
