@@ -22,7 +22,7 @@ export const about: SitePage = {
     {
       heading: "Built for coding agents",
       paragraphs: [
-        "The template is designed to be driven end to end by a coding agent. pnpm bootstrap --yes provisions Postgres, environment, schema, and a seeded login with no prompts; agent-browser drives the real web app; a local emulator fakes GitHub OAuth offline; and pnpm verify runs the same typecheck, lint, format, and test gate as CI. AGENTS.md and CLAUDE.md describe the conventions agents should follow.",
+        "The template is designed to be driven end to end by a coding agent. pnpm bootstrap --yes provisions Postgres, environment, schema, and a seeded login with no prompts; agent-browser drives the real web app; a local emulator stands in for GitHub so sign-in works offline; and pnpm verify runs the same typecheck, lint, format, and test gate as CI. AGENTS.md and CLAUDE.md describe the conventions agents should follow.",
       ],
     },
     {

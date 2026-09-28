@@ -19,6 +19,7 @@
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
     "@orpc/tanstack-query": "catalog:",
+    "@orpc/zod": "catalog:",
     "@repo/api": "workspace:*",
     "@repo/ui": "workspace:*",
     "@tanstack/react-form": "catalog:",

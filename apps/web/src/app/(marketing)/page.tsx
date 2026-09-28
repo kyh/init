@@ -64,7 +64,7 @@ const Page = () => (
           <div className="flex h-full flex-col gap-6 p-8">
             <div>Emulate</div>
             <div className="text-muted-foreground space-y-3">
-              <p>A local server fakes GitHub OAuth, so the login flow tests with no network.</p>
+              <p>A local server stands in for GitHub, so GitHub sign-in tests with no network.</p>
               <p className="font-mono text-sm">pnpm emulate</p>
             </div>
           </div>

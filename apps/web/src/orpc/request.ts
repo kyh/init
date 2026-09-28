@@ -5,6 +5,11 @@ export const isCrossOrigin = (request: Request) => {
   return origin !== null && origin !== new URL(request.url).origin;
 };
 
-/** Mirrors the `code` and `message` of oRPC's own error bodies, so clients parse one format. */
-export const jsonError = (status: number, code: string, message: string) =>
-  Response.json({ code, message }, { status });
+/** Vercel overwrites x-forwarded-for with the client's address; without such a proxy in front,
+ * callers control this header, so self-hosting needs one that sets it. */
+export const clientAddress = (request: Request) =>
+  request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "";
+
+/** Mirrors the body oRPC sends for its own errors, so clients parse one format. */
+export const jsonError = (status: number, code: string, message: string, headers?: HeadersInit) =>
+  Response.json({ code, defined: false, message }, { headers, status });
