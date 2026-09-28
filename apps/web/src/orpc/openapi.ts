@@ -1,5 +1,4 @@
 import { appRouter } from "@repo/api";
-import { API_RATE_LIMIT } from "@repo/api/rate-limit/rate-limit";
 import type { OpenAPIOperationObject } from "@orpc/openapi";
 import { OpenAPIGenerator } from "@orpc/openapi";
 import { ZodToJsonSchemaConverter } from "@orpc/zod";
@@ -21,32 +20,12 @@ const errorResponse = (description: string) => ({
   description,
 });
 
-const rateLimitHeaderRefs = Object.fromEntries(
-  [
-    "RateLimit",
-    "RateLimit-Policy",
-    "RateLimit-Limit",
-    "RateLimit-Remaining",
-    "RateLimit-Reset",
-  ].map((name) => [name, { $ref: `#/components/headers/${name}` }]),
-);
-
 /** The route, not the procedure, sends these, so the generator cannot see them. */
 const withRouteResponses = (operation: OpenAPIOperationObject): OpenAPIOperationObject => ({
   ...operation,
   responses: {
     ...operation.responses,
     403: errorResponse("A browser request from another origin (`FORBIDDEN`)."),
-    429: {
-      ...errorResponse("Rate limit exceeded (`TOO_MANY_REQUESTS`). Retry after `Retry-After`."),
-      headers: {
-        ...rateLimitHeaderRefs,
-        "Retry-After": {
-          description: "Seconds until the window resets.",
-          schema: { type: "integer" },
-        },
-      },
-    },
     500: errorResponse("An unexpected server fault (`INTERNAL_SERVER_ERROR`)."),
   },
 });
@@ -65,32 +44,12 @@ Every operation is a \`POST\` with a JSON body. Every error is a JSON \`Error\` 
 
 **Authentication.** Operations marked with the \`session\` scheme need a first-party better-auth session cookie, obtained by signing in (\`POST /api/auth/sign-in/email\`, or GitHub sign-in in the app). There are no API keys, OAuth clients, or scopes; \`waitlist.join\` is public. Browser requests from other origins are refused.
 
-**Rate limits.** ${API_RATE_LIMIT.max} requests per ${API_RATE_LIMIT.windowSeconds}s fixed window per client IP. Responses carry \`RateLimit-Limit\`, \`RateLimit-Remaining\`, \`RateLimit-Reset\`, \`RateLimit\` and \`RateLimit-Policy\`; a refused request gets \`429\` with \`Retry-After\`.
-
 **Versioning.** v1 is stable: it only gains backward-compatible changes (new operations, new optional input fields, new output fields). A breaking change ships as \`/api/v2\`, and v1 keeps serving for at least ${DEPRECATION_OVERLAP_DAYS} days afterwards. During that overlap v1 responses carry \`Deprecation\` (RFC 9745) and \`Sunset\` (RFC 8594) headers with a \`Link\` to the migration guide.`;
-
-const rateLimitHeader = (headerDescription: string, type: "integer" | "string") => ({
-  description: headerDescription,
-  schema: { type },
-});
 
 export const generateOpenAPIDocument = async () => {
   const document = await generator.generate(appRouter, {
     base: {
       components: {
-        headers: {
-          RateLimit: rateLimitHeader(
-            'Current window, IETF structured form: `"default";r=<remaining>;t=<seconds to reset>`.',
-            "string",
-          ),
-          "RateLimit-Limit": rateLimitHeader("Requests allowed per window.", "integer"),
-          "RateLimit-Policy": rateLimitHeader(
-            'Quota policy, IETF structured form: `"default";q=<limit>;w=<window seconds>`.',
-            "string",
-          ),
-          "RateLimit-Remaining": rateLimitHeader("Requests left in the current window.", "integer"),
-          "RateLimit-Reset": rateLimitHeader("Seconds until the current window resets.", "integer"),
-        },
         schemas: {
           Error: {
             description:

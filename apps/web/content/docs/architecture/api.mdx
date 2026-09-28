@@ -316,25 +316,11 @@ Every error body has one shape, the `Error` schema in the spec:
 }
 ```
 
-Branch on `code`. The procedure builders declare the codes they raise with `.errors()` (`BAD_REQUEST` for input, `UNAUTHORIZED` for protected procedures, `NOT_FOUND` for organization-scoped ones), so each operation lists them with its own status. The route adds `403 FORBIDDEN` (cross-origin browser request), `429 TOO_MANY_REQUESTS`, and `500 INTERNAL_SERVER_ERROR`.
+Branch on `code`. The procedure builders declare the codes they raise with `.errors()` (`BAD_REQUEST` for input, `UNAUTHORIZED` for protected procedures, `NOT_FOUND` for organization-scoped ones), so each operation lists them with its own status. The route adds `403 FORBIDDEN` (cross-origin browser request) and `500 INTERNAL_SERVER_ERROR`.
 
 ### Authentication
 
 Operations that need a session reference the `session` security scheme: the better-auth session cookie, obtained by signing in (`POST /api/auth/sign-in/email`, or GitHub sign-in in the app). It is first-party session auth - there are no API keys, OAuth clients, or scopes.
-
-### Rate limits
-
-`/api/v1` allows 100 requests per 60-second fixed window per client IP, counted in the `rate_limit` table better-auth already uses (`packages/api/src/rate-limit/rate-limit.ts`), so the count holds across serverless instances. Every response carries both generations of the IETF RateLimit headers:
-
-```
-RateLimit-Limit: 100
-RateLimit-Remaining: 99
-RateLimit-Reset: 60
-RateLimit-Policy: "default";q=100;w=60
-RateLimit: "default";r=99;t=60
-```
-
-Past the limit the route answers `429` with `Retry-After`. The client IP comes from `x-forwarded-for`, which Vercel sets; self-hosted, put a proxy in front that sets it, since a client can otherwise choose its own. A request without the header is not limited. The RPC route is not limited - see [Production](/docs/launch/production).
 
 ### Versioning and deprecation
 
