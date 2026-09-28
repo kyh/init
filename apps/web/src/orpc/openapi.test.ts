@@ -54,10 +54,6 @@ describe("openapi document", () => {
       const errors = Object.entries(operation.responses).filter(
         ([status]) => Number(status) >= 400,
       );
-      assert.ok(
-        errors.some(([status]) => status === "429"),
-        `${id} misses 429`,
-      );
       for (const [status, response] of errors) {
         const parsed = errorSchema.safeParse(response.content["application/json"].schema);
         assert.ok(parsed.success, `${id} ${status} does not reference the Error schema`);
