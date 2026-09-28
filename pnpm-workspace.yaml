@@ -12,6 +12,7 @@ catalog:
   "@orpc/openapi": 2.0.0-beta.31
   "@orpc/server": 2.0.0-beta.31
   "@orpc/tanstack-query": 2.0.0-beta.31
+  "@orpc/zod": 2.0.0-beta.31
   "@tailwindcss/postcss": ^4.3.3
   "@tailwindcss/vite": ^4.3.3
   "@tanstack/react-form": ^1.33.5

@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+export const authMetadata = z.object({
+  personal: z.boolean().optional(),
+});
+
 export const authMetadataSchema = z
   .string()
   .transform((str, ctx): z.JSONType => {
@@ -10,8 +14,4 @@ export const authMetadataSchema = z
       return z.NEVER;
     }
   })
-  .pipe(
-    z.object({
-      personal: z.boolean().optional(),
-    }),
-  );
+  .pipe(authMetadata);

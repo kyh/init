@@ -1,37 +1,178 @@
 import { appRouter } from "@repo/api";
+import { API_RATE_LIMIT } from "@repo/api/rate-limit/rate-limit";
+import type { OpenAPIOperationObject } from "@orpc/openapi";
 import { OpenAPIGenerator } from "@orpc/openapi";
+import { ZodToJsonSchemaConverter } from "@orpc/zod";
 
 import { siteConfig } from "@/lib/site-config";
 
 export const OPENAPI_PREFIX = "/api/v1";
 
-/** Zod schemas convert through Standard JSON Schema, which oRPC applies by default. */
-const generator = new OpenAPIGenerator();
+/** Sunset overlap promised by the versioning policy in the API docs. */
+export const DEPRECATION_OVERLAP_DAYS = 90;
 
-export const generateOpenAPIDocument = () =>
-  generator.generate(appRouter, {
+// The Zod converter represents Date outputs as date-time strings; the default one drops them.
+const generator = new OpenAPIGenerator({ converters: [new ZodToJsonSchemaConverter()] });
+
+const errorRef = { $ref: "#/components/schemas/Error" };
+
+const errorResponse = (description: string) => ({
+  content: { "application/json": { schema: errorRef } },
+  description,
+});
+
+const rateLimitHeaderRefs = Object.fromEntries(
+  [
+    "RateLimit",
+    "RateLimit-Policy",
+    "RateLimit-Limit",
+    "RateLimit-Remaining",
+    "RateLimit-Reset",
+  ].map((name) => [name, { $ref: `#/components/headers/${name}` }]),
+);
+
+/** The route, not the procedure, sends these, so the generator cannot see them. */
+const withRouteResponses = (operation: OpenAPIOperationObject): OpenAPIOperationObject => ({
+  ...operation,
+  responses: {
+    ...operation.responses,
+    403: errorResponse("A browser request from another origin (`FORBIDDEN`)."),
+    429: {
+      ...errorResponse("Rate limit exceeded (`TOO_MANY_REQUESTS`). Retry after `Retry-After`."),
+      headers: {
+        ...rateLimitHeaderRefs,
+        "Retry-After": {
+          description: "Seconds until the window resets.",
+          schema: { type: "integer" },
+        },
+      },
+    },
+    500: errorResponse("An unexpected server fault (`INTERNAL_SERVER_ERROR`)."),
+  },
+});
+
+const httpMethods: ("delete" | "get" | "patch" | "post" | "put")[] = [
+  "delete",
+  "get",
+  "patch",
+  "post",
+  "put",
+];
+
+const description = `The ${siteConfig.name} app API: the same procedures the app's own clients call, served as JSON over HTTP.
+
+Every operation is a \`POST\` with a JSON body. Every error is a JSON \`Error\` object with a machine-readable \`code\`.
+
+**Authentication.** Operations marked with the \`session\` scheme need a first-party better-auth session cookie, obtained by signing in (\`POST /api/auth/sign-in/email\`, or GitHub sign-in in the app). There are no API keys, OAuth clients, or scopes; \`waitlist.join\` is public. Browser requests from other origins are refused.
+
+**Rate limits.** ${API_RATE_LIMIT.max} requests per ${API_RATE_LIMIT.windowSeconds}s fixed window per client IP. Responses carry \`RateLimit-Limit\`, \`RateLimit-Remaining\`, \`RateLimit-Reset\`, \`RateLimit\` and \`RateLimit-Policy\`; a refused request gets \`429\` with \`Retry-After\`.
+
+**Versioning.** v1 is stable: it only gains backward-compatible changes (new operations, new optional input fields, new output fields). A breaking change ships as \`/api/v2\`, and v1 keeps serving for at least ${DEPRECATION_OVERLAP_DAYS} days afterwards. During that overlap v1 responses carry \`Deprecation\` (RFC 9745) and \`Sunset\` (RFC 8594) headers with a \`Link\` to the migration guide.`;
+
+const rateLimitHeader = (headerDescription: string, type: "integer" | "string") => ({
+  description: headerDescription,
+  schema: { type },
+});
+
+export const generateOpenAPIDocument = async () => {
+  const document = await generator.generate(appRouter, {
     base: {
       components: {
+        headers: {
+          RateLimit: rateLimitHeader(
+            'Current window, IETF structured form: `"default";r=<remaining>;t=<seconds to reset>`.',
+            "string",
+          ),
+          "RateLimit-Limit": rateLimitHeader("Requests allowed per window.", "integer"),
+          "RateLimit-Policy": rateLimitHeader(
+            'Quota policy, IETF structured form: `"default";q=<limit>;w=<window seconds>`.',
+            "string",
+          ),
+          "RateLimit-Remaining": rateLimitHeader("Requests left in the current window.", "integer"),
+          "RateLimit-Reset": rateLimitHeader("Seconds until the current window resets.", "integer"),
+        },
+        schemas: {
+          Error: {
+            description:
+              "Every error body, from a procedure or from the route in front of it. Branch on `code`; `message` is for humans.",
+            properties: {
+              code: {
+                description: "Stable machine-readable code, e.g. `UNAUTHORIZED` or `NOT_FOUND`.",
+                type: "string",
+              },
+              data: { description: "Extra detail some errors carry." },
+              defined: {
+                description:
+                  "True when the operation declares this code, so its shape is documented on the operation.",
+                type: "boolean",
+              },
+              inferable: {
+                description: "oRPC client hint; safe to ignore.",
+                type: "boolean",
+              },
+              message: { description: "Human-readable explanation.", type: "string" },
+            },
+            required: ["code", "defined", "message"],
+            type: "object",
+          },
+        },
         securitySchemes: {
           session: {
             description:
-              "better-auth session cookie; `__Secure-` prefixed over HTTPS. Obtain one from POST /api/auth/sign-in/email.",
+              "First-party better-auth session cookie, set by signing in (`POST /api/auth/sign-in/email`, or GitHub sign-in in the app). Not OAuth: there are no API keys, clients, or scopes.",
             in: "cookie",
-            name: "better-auth.session_token",
+            // better-auth prefixes the cookie only when the app is served over HTTPS.
+            name: `${siteConfig.url.startsWith("https://") ? "__Secure-" : ""}better-auth.session_token`,
             type: "apiKey",
           },
         },
       },
+      externalDocs: { description: "API guide", url: `${siteConfig.url}/docs/architecture/api` },
       info: {
         contact: { email: siteConfig.email, url: `${siteConfig.url}/contact` },
-        description: `The ${siteConfig.name} app API. Organization and todo procedures need a signed-in session; waitlist.join is public.`,
+        description,
         license: { name: "MIT", url: "https://opensource.org/licenses/MIT" },
         title: `${siteConfig.name} API`,
         version: "1.0.0",
+        "x-api-lifecycle": {
+          deprecationPolicy: `Breaking changes ship as a new major version at /api/v2. The previous version keeps serving for at least ${DEPRECATION_OVERLAP_DAYS} days, and its responses carry Deprecation (RFC 9745) and Sunset (RFC 8594) headers during that time.`,
+          status: "stable",
+          version: "v1",
+        },
       },
       openapi: "3.1.1",
-      // An empty requirement keeps the session optional, since waitlist.join is public.
-      security: [{ session: [] }, {}],
       servers: [{ url: `${siteConfig.url}${OPENAPI_PREFIX}` }],
+      tags: [
+        {
+          description: "The caller's organizations and their membership.",
+          name: "Organization",
+        },
+        { description: "Example CRUD scoped to an organization.", name: "Todo" },
+        { description: "Pre-launch email signups; public.", name: "Waitlist" },
+      ],
     },
+    // Every status shares one error shape; this narrows `code` to what the operation declares.
+    customErrorResponseBodySchema: (definedErrors) => ({
+      allOf: [errorRef],
+      properties: { code: { enum: definedErrors.map(({ code }) => code) } },
+    }),
   });
+
+  if (document.components?.schemas) {
+    // oRPC registers this for its own error shape, which customErrorResponseBodySchema replaces.
+    document.components.schemas = Object.fromEntries(
+      Object.entries(document.components.schemas).filter(([name]) => name !== "UndefinedError"),
+    );
+  }
+
+  for (const item of Object.values(document.paths ?? {})) {
+    for (const method of httpMethods) {
+      const operation = item[method];
+      if (operation) {
+        item[method] = withRouteResponses(operation);
+      }
+    }
+  }
+
+  return document;
+};

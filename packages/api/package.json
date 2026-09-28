@@ -21,6 +21,7 @@
     "@better-auth/drizzle-adapter": "catalog:",
     "@better-auth/expo": "catalog:",
     "@better-auth/stripe": "catalog:",
+    "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
     "@repo/db": "workspace:*",
     "better-auth": "catalog:",
