@@ -47,27 +47,18 @@ export const Footer = () => (
                 Documentation
               </Link>
             </li>
-            <li>
-              <Link
-                className="text-sm text-muted-foreground transition hover:text-secondary-foreground"
-                href="/about"
-              >
+            <li className="sr-only">
+              <Link href="/about" prefetch={false} tabIndex={-1}>
                 About
               </Link>
             </li>
-            <li>
-              <Link
-                className="text-sm text-muted-foreground transition hover:text-secondary-foreground"
-                href="/contact"
-              >
+            <li className="sr-only">
+              <Link href="/contact" prefetch={false} tabIndex={-1}>
                 Contact
               </Link>
             </li>
-            <li>
-              <Link
-                className="text-sm text-muted-foreground transition hover:text-secondary-foreground"
-                href="/privacy"
-              >
+            <li className="sr-only">
+              <Link href="/privacy" prefetch={false} tabIndex={-1}>
                 Privacy
               </Link>
             </li>
