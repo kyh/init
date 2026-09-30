@@ -35,6 +35,14 @@ curl -s -i -X POST localhost:3000/api/auth/sign-in/email \
   -d '{"email":"dev@init.local","password":"password"}' | grep -i set-cookie
 ```
 
+**Writing a `fetch`-based client instead of curl? Send an `Origin` header.** Node's
+`fetch` always sends `Sec-Fetch-Mode: cors`, and that fetch metadata puts
+better-auth's CSRF check into strict mode, where a missing `Origin` is a 403
+(`MISSING_OR_NULL_ORIGIN`) raised with nothing logged server-side — a confusing
+failure to debug. A browser sends both headers; metadata without an origin is a
+combination nothing real produces. curl sends neither, which is why the recipe
+above needs no such header. See `scripts/smoke.ts`.
+
 ## Seeded login
 
 ```
@@ -45,11 +53,30 @@ Created by `pnpm db:seed` with a personal organization and three sample todos. U
 
 ## Verify a change end-to-end
 
+Three gates, cheapest first. **Static** proves it compiles; **smoke** proves it
+runs; **agent-browser** proves the UI works. CI runs the first two on every
+commit; the third is yours to drive.
+
 Static gate (mirrors CI — run before every commit):
 
 ```sh
 pnpm verify           # typecheck · lint · format · test
 ```
+
+Smoke gate — drives a **running** server: health, a real sign-in with the seeded
+login, the full todo lifecycle through oRPC, and the authenticated dashboard
+render. This is the gate that catches "types fine, app broken":
+
+```sh
+pnpm dev:web &        # or `pnpm -F @repo/web build && pnpm -F @repo/web start`
+pnpm smoke            # exits non-zero with the failing step named
+
+SMOKE_URL=https://my-app-git-branch.vercel.app pnpm smoke   # or against a preview
+```
+
+It calls oRPC through the same `RPCLink` client the apps use, typed against
+`AppRouter`, so a procedure whose input or output shape changes breaks
+`scripts/smoke.ts` at typecheck rather than at runtime.
 
 Runtime — drive the **real** web UI (the only headless-driveable surface) with [agent-browser](https://github.com/vercel-labs/agent-browser):
 
@@ -81,20 +108,52 @@ With the var set, the shipped "Continue with GitHub" button routes through a dev
 
 ## Platform matrix
 
-| Platform           | Dev command          | Agent-verifiable at runtime?         |
-| ------------------ | -------------------- | ------------------------------------ |
-| Web (Next.js)      | `pnpm dev:web`       | **Yes** — headless via agent-browser |
-| Mobile (Expo)      | `pnpm dev:mobile`    | No — needs a simulator/device        |
-| Extension (WXT)    | `pnpm dev:extension` | No — load-unpacked in real Chrome    |
-| Desktop (Electron) | `pnpm dev:desktop`   | No — GUI window                      |
+| Platform           | Dev command          | Agent-verifiable at runtime?           |
+| ------------------ | -------------------- | -------------------------------------- |
+| Web (Next.js)      | `pnpm dev:web`       | **Yes** — `pnpm smoke` + agent-browser |
+| Mobile (Expo)      | `pnpm dev:mobile`    | No — needs a simulator/device          |
+| Extension (WXT)    | `pnpm dev:extension` | No — load-unpacked in real Chrome      |
+| Desktop (Electron) | `pnpm dev:desktop`   | No — GUI window                        |
 
 For the three non-web targets, verify with `pnpm typecheck` and `pnpm build`; a runtime check needs a human.
 
 ## Rules that matter
 
 - **Mutations go through oRPC or the better-auth client — never Next Server Actions.** All four platforms share one typed surface; each mutation invalidates the specific queries it touches in `onSuccess` (see `CLAUDE.md` → Mutation path).
+- **A risky or half-finished change ships behind a flag**, not on a branch that rots. See "Shipping a change behind a flag" below.
 - **No `any`, no non-null `!`, no `as` casts.** Kebab-case filenames. Make illegal states unrepresentable.
 - Env degrades gracefully: missing keys (Stripe, Resend) disable a feature, they don't crash boot.
+
+## Reading the server's own logs
+
+Every oRPC call prints one JSON line, tagged with the request id that also comes
+back on the response as `x-request-id`. Take the id off a failed response and
+grep for it — no correlating by timestamp:
+
+```sh
+pnpm dev:web 2>&1 | tee /tmp/web.log
+grep '"requestId":"<id>"' /tmp/web.log
+# {"ts":"…","requestId":"…","path":"todo.create","durationMs":18,"ok":false,"code":"UNAUTHORIZED"}
+```
+
+Successes go to stdout and failures to stderr. `pnpm smoke` quotes the id in its
+own failure messages, so a red CI run points straight at the matching line.
+Config lives in `packages/api/src/observability/logger.ts`.
+
+## Shipping a change behind a flag
+
+A flagged change is reversible without a revert — flip one env var and redeploy.
+Declare the flag in `packages/api/src/flags/flags.ts` (that registry is the only
+source of flag names, so a typo at a read site is a type error), then read it as
+`context.flags.myFlag` server-side or via the `flag.list` call on any client.
+
+```sh
+FEATURE_FLAGS="myFlag" pnpm dev:web     # on locally
+FEATURE_FLAGS="myFlag=false"            # off, explicitly
+```
+
+Set it per Vercel environment to land a change dark: on for preview, off in
+production, until a human flips it.
 
 ## Map
 

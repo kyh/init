@@ -61,12 +61,17 @@ describe("openapi document", () => {
     }
   });
 
-  test("requires a declared scheme on every operation except waitlist.join", () => {
+  test("requires a declared scheme on every unsecured operation bar the public two", () => {
     const schemes = Object.keys(document.components.securitySchemes);
     const unsecured = operations
       .filter(({ operation }) => operation.security === undefined)
       .map(({ id }) => id);
-    assert.deepEqual(unsecured, ["post /waitlist/join"]);
+    // Both are deliberately reachable without a session: the waitlist takes
+    // signups before anyone has an account, and the flag set gates UI as well
+    // as server behaviour, so an unauthenticated page needs to read it. Keep
+    // this list exact — it is the tripwire for an endpoint going public by
+    // accident, so never put a secret behind a flag name.
+    assert.deepEqual(unsecured, ["post /flag/list", "post /waitlist/join"]);
     for (const { operation } of operations) {
       for (const requirement of operation.security ?? []) {
         for (const name of Object.keys(requirement)) {

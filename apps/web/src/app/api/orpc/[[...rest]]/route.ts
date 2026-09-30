@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { appRouter, createORPCContext } from "@repo/api";
+import { appRouter, createORPCContext, REQUEST_ID_HEADER, resolveRequestId } from "@repo/api";
 import { onError, ORPCError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 
@@ -24,12 +24,21 @@ const handleRequest = async (req: NextRequest) => {
     return jsonError(403, "FORBIDDEN", "Cross-origin request blocked.");
   }
 
+  // Minted here rather than read back off the context, so the response carries
+  // an id even when context creation itself fails — a failed session lookup is
+  // precisely when the caller needs something to quote.
+  const requestId = resolveRequestId(req.headers);
+
   const { response } = await handler.handle(req, {
-    context: await createORPCContext({ headers: req.headers }),
+    context: await createORPCContext({ headers: req.headers, requestId }),
     prefix: "/api/orpc",
   });
 
-  return response ?? jsonError(404, "NOT_FOUND", "No procedure matches this path.");
+  const result = response ?? jsonError(404, "NOT_FOUND", "No procedure matches this path.");
+  // Hands the caller the id its log line was tagged with, so a failed response
+  // traces to the server-side record of the call without matching timestamps.
+  result.headers.set(REQUEST_ID_HEADER, requestId);
+  return result;
 };
 
 export { handleRequest as GET, handleRequest as POST };

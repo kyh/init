@@ -6,6 +6,7 @@ import { relations } from "@repo/db/drizzle-relations";
 import * as schemaAuth from "@repo/db/drizzle-schema-auth";
 
 import type { ORPCContext } from "./orpc";
+import { flagDefaults } from "./flags/flags";
 
 export const mockUser = {
   banned: null,
@@ -78,7 +79,12 @@ export const createMockContext = (session: ORPCContext["session"] = mockSession)
   });
   // Keep Drizzle's query generation and result mapping; replace only database I/O.
   mock.method(db.$client, "unsafe", query);
-  const context = { db, session } satisfies ORPCContext;
+  const context = {
+    db,
+    flags: flagDefaults,
+    requestId: "test-request-id",
+    session,
+  } satisfies ORPCContext;
   return { ...context, query, responses };
 };
 
