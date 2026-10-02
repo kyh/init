@@ -52,6 +52,17 @@ const configureAppIdentity = (): void => {
   });
 };
 
+// Guard existing-window navigation too: other origins must not inherit desktopBridge.
+const guardNavigation = (event: Electron.Event, url: string): void => {
+  if (isAllowedInWindow(url)) {
+    return;
+  }
+  event.preventDefault();
+  if (isHttpUrl(url)) {
+    void shell.openExternal(url);
+  }
+};
+
 const createWindow = (): BrowserWindow => {
   const window = new BrowserWindow({
     autoHideMenuBar: true,
@@ -78,17 +89,6 @@ const createWindow = (): BrowserWindow => {
     }
     return { action: "deny" };
   });
-
-  // Guard existing-window navigation too: other origins must not inherit desktopBridge.
-  const guardNavigation = (event: Electron.Event, url: string) => {
-    if (isAllowedInWindow(url)) {
-      return;
-    }
-    event.preventDefault();
-    if (isHttpUrl(url)) {
-      void shell.openExternal(url);
-    }
-  };
 
   window.webContents.on("will-navigate", guardNavigation);
   window.webContents.on("will-redirect", guardNavigation);
