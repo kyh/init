@@ -2,10 +2,12 @@ import { todo } from "@repo/db/drizzle-schema";
 import { ORPCError } from "@orpc/server";
 import { and, eq } from "drizzle-orm";
 
-import { os, requireOrganization } from "../orpc";
+import { os, requireOrganization, requireSession } from "../orpc";
 
-export const todoRouter = os.todo.router({
-  create: os.todo.create.use(requireOrganization).handler(async ({ context, input }) => {
+const authed = os.todo.use(requireSession);
+
+export const todoRouter = {
+  create: authed.create.use(requireOrganization).handler(async ({ context, input }) => {
     const [createdTodo] = await context.db
       .insert(todo)
       .values({
@@ -20,7 +22,7 @@ export const todoRouter = os.todo.router({
 
     return { todo: createdTodo };
   }),
-  delete: os.todo.delete.use(requireOrganization).handler(async ({ context, input }) => {
+  delete: authed.delete.use(requireOrganization).handler(async ({ context, input }) => {
     const [deletedTodo] = await context.db
       .delete(todo)
       .where(and(eq(todo.id, input.id), eq(todo.organizationId, context.organization.id)))
@@ -32,7 +34,7 @@ export const todoRouter = os.todo.router({
 
     return { todo: deletedTodo };
   }),
-  list: os.todo.list.use(requireOrganization).handler(async ({ context }) => {
+  list: authed.list.use(requireOrganization).handler(async ({ context }) => {
     const todos = await context.db.query.todo.findMany({
       orderBy: { createdAt: "desc" },
       where: { organizationId: context.organization.id },
@@ -40,7 +42,7 @@ export const todoRouter = os.todo.router({
 
     return { todos };
   }),
-  update: os.todo.update.use(requireOrganization).handler(async ({ context, input }) => {
+  update: authed.update.use(requireOrganization).handler(async ({ context, input }) => {
     const [updatedTodo] = await context.db
       .update(todo)
       .set({ completed: input.completed, title: input.title })
@@ -53,4 +55,4 @@ export const todoRouter = os.todo.router({
 
     return { todo: updatedTodo };
   }),
-});
+};

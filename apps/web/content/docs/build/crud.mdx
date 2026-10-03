@@ -131,10 +131,12 @@ import { post } from "@repo/db/drizzle-schema";
 import { ORPCError } from "@orpc/server";
 import { and, eq } from "drizzle-orm";
 
-import { os, requireOrganization } from "../orpc";
+import { os, requireOrganization, requireSession } from "../orpc";
 
-export const postRouter = os.post.router({
-  list: os.post.list.use(requireOrganization).handler(async ({ context }) => {
+const authed = os.post.use(requireSession);
+
+export const postRouter = {
+  list: authed.list.use(requireOrganization).handler(async ({ context }) => {
     const posts = await context.db.query.post.findMany({
       where: { organizationId: context.organization.id },
       orderBy: { createdAt: "desc" },
@@ -142,7 +144,7 @@ export const postRouter = os.post.router({
 
     return { posts };
   }),
-  create: os.post.create.use(requireOrganization).handler(async ({ context, input }) => {
+  create: authed.create.use(requireOrganization).handler(async ({ context, input }) => {
     const [createdPost] = await context.db
       .insert(post)
       .values({
@@ -158,7 +160,7 @@ export const postRouter = os.post.router({
 
     return { post: createdPost };
   }),
-  delete: os.post.delete.use(requireOrganization).handler(async ({ context, input }) => {
+  delete: authed.delete.use(requireOrganization).handler(async ({ context, input }) => {
     const [deletedPost] = await context.db
       .delete(post)
       .where(and(eq(post.id, input.id), eq(post.organizationId, context.organization.id)))
@@ -170,10 +172,10 @@ export const postRouter = os.post.router({
 
     return { post: deletedPost };
   }),
-});
+};
 ```
 
-`requireOrganization` (in `packages/api/src/orpc.ts`) checks the session, resolves the org named by `input.slug`, and proves membership before any handler runs - so handlers just read `context.organization.id`. Attach it per procedure, not on the router: oRPC's `.router()` re-applies router-level middleware, so it would run twice. Every mutation still filters by `organizationId` in the `where` clause, so a valid member of org A can never touch org B's rows.
+`requireSession` goes on the implementer, so it runs before input validation and anonymous callers get `UNAUTHORIZED`. `requireOrganization` (in `packages/api/src/orpc.ts`) then resolves the org named by the validated `input.slug` and proves membership before any handler runs - so handlers just read `context.organization.id`. The router is a plain object: `os.post.router({...})` would re-apply `requireSession`, running it twice. Every mutation still filters by `organizationId` in the `where` clause, so a valid member of org A can never touch org B's rows.
 
 Mount it in the root router:
 
@@ -303,7 +305,7 @@ Nothing else to do. The mobile app (`apps/mobile/src/utils/api.ts`) types its cl
 - `pnpm db:push` ran
 - Zod schema extends `organizationInput` and validates the feature's own fields
 - Contract built on `organizationBase` with `.input()` and `.output()`, registered in `packages/contract/src/index.ts`
-- Each procedure `.use(requireOrganization)` and filters mutations by `organizationId`
+- Router built from `os.post.use(requireSession)`; each procedure `.use(requireOrganization)` and filters mutations by `organizationId`
 - Router mounted in `root-router.ts`
 - Page prefetches; client uses `useSuspenseQuery`
 - Tests cover the unauthorized paths

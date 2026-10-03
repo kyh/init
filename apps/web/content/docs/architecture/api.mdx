@@ -17,7 +17,7 @@ oRPC gives you typesafe APIs without code generation. Types flow from database t
 
 ## API Structure
 
-The API is contract-first. `packages/contract/` declares every procedure - input, output, errors, OpenAPI metadata - and is the single source of truth. `packages/api/` implements that contract on the server. Clients type against the contract, so they never import server code (better-auth, Drizzle client, handlers):
+The API is contract-first. `packages/contract/` declares every procedure - input, output, errors, OpenAPI metadata - and is the single source of truth. `packages/api/` implements that contract on the server. Clients type their RPC calls against the contract, so the client stays free of server code (better-auth, Drizzle client, handlers). The one exception is the better-auth access-control roles (`@repo/api/auth/permissions`), which web and mobile still import for permission checks:
 
 ```
 packages/contract/src/
@@ -72,7 +72,7 @@ export const publicBase = oc.errors({
   BAD_REQUEST: { message: "The input failed validation" },
 });
 
-/** Implementations must `.use(requireSession)`; the contract only declares the outcome. */
+/** Implementers apply `os.<feature>.use(requireSession)`; the contract only declares the outcome. */
 export const protectedBase = publicBase
   .errors({ UNAUTHORIZED: { message: "No signed-in session" } })
   .meta(requireSession); // marks the operation with the `session` security scheme in /openapi.json
@@ -119,7 +119,7 @@ Public procedures need no middleware:
 
 ```typescript
 // packages/api/src/waitlist/waitlist-router.ts
-export const waitlistRouter = os.waitlist.router({
+export const waitlistRouter = {
   join: os.waitlist.join.handler(async ({ context, input }) => {
     const [created] = await context.db
       .insert(waitlist)
@@ -129,12 +129,12 @@ export const waitlistRouter = os.waitlist.router({
 
     return { waitlist: created ?? null };
   }),
-});
+};
 ```
 
 #### Session middleware
 
-The contract only declares `UNAUTHORIZED`; the implementation enforces it. `requireSession` pairs with `protectedBase`:
+The contract only declares `UNAUTHORIZED`; the implementation enforces it. `requireSession` pairs with `protectedBase` and goes on the implementer (`os.<feature>.use(requireSession)`), where middleware runs before input validation - so an anonymous caller gets `UNAUTHORIZED`, never a `BAD_REQUEST` describing the input:
 
 ```typescript
 // packages/api/src/orpc.ts
@@ -157,7 +157,7 @@ export const requireSession = base.middleware(({ context, next }) => {
 
 #### Organization Access
 
-`requireOrganization` pairs with `organizationBase`. It includes the session check, resolves the organization named by `input.slug`, and proves the caller is a member before the handler runs:
+`requireOrganization` pairs with `organizationBase` and expects `requireSession` to have run. It resolves the organization named by `input.slug`, and proves the caller is a member before the handler runs:
 
 ```typescript
 // packages/contract/src/organization/organization-schema.ts
@@ -166,8 +166,11 @@ export const organizationInput = z.object({
 });
 
 // packages/api/src/orpc.ts
-export const requireOrganization = requireSession.use(
-  async ({ context, next }, input: z.infer<typeof organizationInput>) => {
+type SessionContext = ORPCContext & { session: NonNullable<ORPCContext["session"]> };
+
+export const requireOrganization = builder
+  .$context<SessionContext>()
+  .middleware(async ({ context, next }, input: z.infer<typeof organizationInput>) => {
     const organization = await context.db.query.organization.findFirst({
       where: { slug: input.slug },
     });
@@ -187,28 +190,29 @@ export const requireOrganization = requireSession.use(
     }
 
     return next({ context: { membership, organization } });
-  },
-);
+  });
 ```
 
 Handlers get `context.organization` and `context.membership`, and should still scope their queries by `context.organization.id`.
 
-Middleware runs after input validation, so `slug` is already checked. oRPC does not merge `.input()` calls - each contract declares its whole input - so org-scoped input schemas extend `organizationInput`, and `requireOrganization` only type-checks on procedures whose input carries a `slug`:
+Middleware `.use()`d on a procedure runs after input validation, so `slug` is already checked. Each contract declares its whole input, so org-scoped input schemas extend `organizationInput`, and `requireOrganization` only type-checks on procedures whose input carries a `slug`:
 
 ```typescript
 // packages/api/src/todo/todo-router.ts
-export const todoRouter = os.todo.router({
-  create: os.todo.create.use(requireOrganization).handler(async ({ context, input }) => {
+const authed = os.todo.use(requireSession);
+
+export const todoRouter = {
+  create: authed.create.use(requireOrganization).handler(async ({ context, input }) => {
     // ...
   }),
-  list: os.todo.list.use(requireOrganization).handler(async ({ context }) => {
+  list: authed.list.use(requireOrganization).handler(async ({ context }) => {
     // ...
   }),
   // ...
-});
+};
 ```
 
-Attach middleware per procedure, never on the router: oRPC's `.router()` re-applies router-level middleware, so it would run twice.
+Feature routers are plain objects, not `os.todo.router({...})`: oRPC's `.router()` re-applies the implementer's middleware, so `requireSession` would run twice. The root `os.router` still checks every procedure against the contract.
 
 ### 4. Router Composition
 
@@ -454,10 +458,12 @@ If clients need the schema at runtime (form validation), add `"./post/post-schem
 import { post } from "@repo/db/drizzle-schema";
 import { ORPCError } from "@orpc/server";
 
-import { os, requireOrganization } from "../orpc";
+import { os, requireOrganization, requireSession } from "../orpc";
 
-export const postRouter = os.post.router({
-  create: os.post.create.use(requireOrganization).handler(async ({ context, input }) => {
+const authed = os.post.use(requireSession);
+
+export const postRouter = {
+  create: authed.create.use(requireOrganization).handler(async ({ context, input }) => {
     const [created] = await context.db
       .insert(post)
       .values({ organizationId: context.organization.id, title: input.title })
@@ -467,7 +473,7 @@ export const postRouter = os.post.router({
     }
     return { post: created };
   }),
-});
+};
 ```
 
 ### 4. Add to Root Router

@@ -67,21 +67,22 @@ const handler = new RPCHandler(appRouter, {
   clientInterceptors: [
     async ({ next, path }) => {
       const start = Date.now();
-      const result = await next();
-      const duration = Date.now() - start;
-
-      if (duration > 1000) {
-        console.warn(`Slow procedure: ${path.join(".")} took ${duration}ms`);
+      try {
+        return await next();
+      } finally {
+        // `finally` so slow failures are logged too.
+        const duration = Date.now() - start;
+        if (duration > 1000) {
+          console.warn(`Slow procedure: ${path.join(".")} took ${duration}ms`);
+        }
       }
-
-      return result;
     },
     // ...the existing onError interceptor
   ],
 });
 ```
 
-The REST handler (`apps/web/src/app/api/v1/[[...rest]]/route.ts`) takes the same `clientInterceptors`; the in-process server caller (`apps/web/src/orpc/server.tsx`) takes them as `interceptors` on `createRouterClient`. A middleware works too, but must be `.use()`d on each procedure - oRPC's `.router()` re-applies router-level middleware, so it would run twice.
+The REST handler (`apps/web/src/app/api/v1/[[...rest]]/route.ts`) takes the same `clientInterceptors`; the in-process server caller (`apps/web/src/orpc/server.tsx`) takes them as `interceptors` on `createRouterClient`. A middleware works too (`os.<feature>.use(...)`), but must be added to every feature router.
 
 Vercel's log drains forward these warnings to your log store.
 

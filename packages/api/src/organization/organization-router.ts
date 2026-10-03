@@ -1,8 +1,10 @@
 import { authMetadataSchema } from "../auth/auth-schema";
-import { os, requireOrganization } from "../orpc";
+import { os, requireOrganization, requireSession } from "../orpc";
 
-export const organizationRouter = os.organization.router({
-  get: os.organization.get.use(requireOrganization).handler(async ({ context }) => {
+const authed = os.organization.use(requireSession);
+
+export const organizationRouter = {
+  get: authed.get.use(requireOrganization).handler(async ({ context }) => {
     const { organization, membership: currentUserMember } = context;
 
     const [members, invitations] = await Promise.all([
@@ -26,4 +28,4 @@ export const organizationRouter = os.organization.router({
       organizationMetadata: authMetadataSchema.parse(organization.metadata ?? "{}"),
     };
   }),
-});
+};

@@ -112,17 +112,19 @@ export const postContract = {
 };
 
 // packages/api/src/post/post-router.ts
-export const postRouter = os.post.router({
-  list: os.post.list.use(requireOrganization).handler(async ({ context }) => {
+const authed = os.post.use(requireSession);
+
+export const postRouter = {
+  list: authed.list.use(requireOrganization).handler(async ({ context }) => {
     const posts = await context.db.query.post.findMany({
       where: { organizationId: context.organization.id },
     });
     return { posts };
   }),
-});
+};
 ```
 
-`requireOrganization` (from `../orpc`) proves membership before the handler runs. Register the contract in `packages/contract/src/index.ts` and the router in `packages/api/src/root-router.ts`. See the [API guide](/docs/architecture/api) for the full pattern.
+`requireSession` and `requireOrganization` (from `../orpc`) prove the session and membership before the handler runs. Register the contract in `packages/contract/src/index.ts` and the router in `packages/api/src/root-router.ts`. See the [API guide](/docs/architecture/api) for the full pattern.
 
 ### Using Routes in Components
 

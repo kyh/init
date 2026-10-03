@@ -158,7 +158,7 @@ export const createORPCContext = async (opts: {
 };
 ```
 
-The `requireSession` middleware guarantees a logged-in user. Procedures whose contract extends `protectedBase` attach it with `.use(requireSession)`:
+The `requireSession` middleware guarantees a logged-in user. Routers whose contracts extend `protectedBase` apply it on the implementer - `os.<feature>.use(requireSession)` - so it runs before input validation:
 
 ```typescript
 export const requireSession = base.middleware(({ context, next }) => {
@@ -176,7 +176,7 @@ export const requireSession = base.middleware(({ context, next }) => {
 });
 ```
 
-Organization membership is a layer on top: `requireOrganization` in `packages/api/src/orpc.ts` includes the session check, then resolves the organization named by `input.slug` and proves the caller is a member before the handler runs - handlers get `context.organization` and `context.membership`.
+Organization membership is a layer on top: `requireOrganization` in `packages/api/src/orpc.ts` runs after `requireSession` and input validation, resolves the organization named by `input.slug` and proves the caller is a member before the handler runs - handlers get `context.organization` and `context.membership`.
 
 ## Client Usage
 

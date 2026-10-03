@@ -35,7 +35,7 @@ packages/
 
 ### Contract-first API
 
-`@repo/contract` is the single source of truth: each feature has `<f>-schema.ts` (zod inputs; org-scoped ones extend `organizationInput`) and `<f>-contract.ts` (built on `publicBase` / `protectedBase` / `organizationBase` from `base.ts`), registered in `src/index.ts`. `@repo/api` implements it with `os = implement(contract)` — `os.<f>.router({ <proc>: os.<f>.<proc>.use(requireOrganization).handler(...) })`, mounted in `root-router.ts`; `os.router` fails to compile if a procedure is missing or mistyped. Attach middleware (`requireSession`, `requireOrganization`) per procedure, never router-level — `.router()` re-applies it, so it would run twice. Clients type against `ContractClient` / `RouterInputs` / `RouterOutputs` from `@repo/contract`, never `@repo/api`.
+`@repo/contract` is the single source of truth: each feature has `<f>-schema.ts` (zod inputs; org-scoped ones extend `organizationInput`) and `<f>-contract.ts` (built on `publicBase` / `protectedBase` / `organizationBase` from `base.ts`), registered in `src/index.ts`. `@repo/api` implements it with `os = implement(contract)` — `const authed = os.<f>.use(requireSession); export const <f>Router = { <proc>: authed.<proc>.use(requireOrganization).handler(...) }`, mounted in `root-router.ts`; `os.router` fails to compile if a procedure is missing or mistyped. Implementer-level `.use` runs before input validation (anonymous → UNAUTHORIZED); procedure-level `.use` runs after. Feature routers stay plain objects — `os.<f>.router()` re-applies implementer middleware, so it would run twice. Clients type against `ContractClient` / `RouterInputs` / `RouterOutputs` from `@repo/contract`, never `@repo/api`.
 
 ### Mutation path
 

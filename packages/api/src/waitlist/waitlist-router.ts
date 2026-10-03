@@ -2,7 +2,7 @@ import { waitlist } from "@repo/db/drizzle-schema";
 
 import { os } from "../orpc";
 
-export const waitlistRouter = os.waitlist.router({
+export const waitlistRouter = {
   join: os.waitlist.join.handler(async ({ context, input }) => {
     const [created] = await context.db
       .insert(waitlist)
@@ -19,4 +19,4 @@ export const waitlistRouter = os.waitlist.router({
       waitlist: created ?? null,
     };
   }),
-});
+};

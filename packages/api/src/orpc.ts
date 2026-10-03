@@ -23,14 +23,14 @@ export const createORPCContext = async (opts: {
 
 export type ORPCContext = Awaited<ReturnType<typeof createORPCContext>>;
 
-/** Implements @repo/contract. Procedures attach middleware themselves, because a router-level
- * `.use` followed by `.router()` would run it twice. */
+/** Implements @repo/contract. `.use` on the implementer runs before input validation, so
+ * anonymous callers get UNAUTHORIZED rather than BAD_REQUEST; `.use` on a procedure runs after it.
+ * Feature routers are plain objects: `.router()` would re-apply implementer middleware. */
 export const os = implement(contract).$context<ORPCContext>();
 
-/** Middleware is contract-independent, so tests can reuse it on their own contracts. */
 const base = builder.$context<ORPCContext>();
 
-/** Pairs with `protectedBase`, which declares UNAUTHORIZED. */
+/** Pairs with `protectedBase`, which declares UNAUTHORIZED. Apply as `os.<feature>.use(requireSession)`. */
 export const requireSession = base.middleware(({ context, next }) => {
   if (!context.session?.user) {
     throw new ORPCError("UNAUTHORIZED", {
@@ -44,10 +44,13 @@ export const requireSession = base.middleware(({ context, next }) => {
   });
 });
 
-/** Pairs with `organizationBase`. Resolves membership before any tenant query; handlers must
- * scope rows by organization.id. Runs after validation, so `slug` is already checked. */
-export const requireOrganization = requireSession.use(
-  async ({ context, next }, input: z.infer<typeof organizationInput>) => {
+type SessionContext = ORPCContext & { session: NonNullable<ORPCContext["session"]> };
+
+/** Pairs with `organizationBase`; needs `requireSession` first. Resolves membership before any
+ * tenant query; handlers must scope rows by organization.id. Runs after validation, so `slug` is checked. */
+export const requireOrganization = builder
+  .$context<SessionContext>()
+  .middleware(async ({ context, next }, input: z.infer<typeof organizationInput>) => {
     const organization = await context.db.query.organization.findFirst({
       where: { slug: input.slug },
     });
@@ -68,5 +71,4 @@ export const requireOrganization = requireSession.use(
     }
 
     return next({ context: { membership, organization } });
-  },
-);
+  });

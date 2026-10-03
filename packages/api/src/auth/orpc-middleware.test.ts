@@ -22,15 +22,14 @@ const testContract = {
 };
 
 const os = implement(testContract).$context<ORPCContext>();
+const authed = os.use(requireSession);
 
 const testRouter = os.router({
-  organizationQuery: os.organizationQuery.use(requireOrganization).handler(({ context }) => ({
+  organizationQuery: authed.organizationQuery.use(requireOrganization).handler(({ context }) => ({
     organizationId: context.organization.id,
     role: context.membership.role,
   })),
-  protectedQuery: os.protectedQuery
-    .use(requireSession)
-    .handler(({ context }) => context.session.user.id),
+  protectedQuery: authed.protectedQuery.handler(({ context }) => context.session.user.id),
   publicQuery: os.publicQuery.handler(({ context }) => context.session !== null),
 });
 
@@ -88,6 +87,12 @@ describe("procedure authorization", () => {
     const caller = createRouterClient(testRouter, { context });
     await assert.rejects(caller.organizationQuery({ slug: "acme" }), { code: "UNAUTHORIZED" });
     assert.equal(context.query.mock.callCount(), 0);
+  });
+
+  test("rejects unauthenticated callers before validating input", async () => {
+    const context = createMockContext(null);
+    const caller = createRouterClient(testRouter, { context });
+    await assert.rejects(caller.organizationQuery({ slug: "" }), { code: "UNAUTHORIZED" });
   });
 
   test("rejects an empty slug before querying", async () => {

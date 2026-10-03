@@ -33,7 +33,7 @@ The twists versus the todo template:
 
 1. **`set null`, not `cascade`** - feedback should outlive the account that filed it
 2. **Capture context automatically** - `path` from `usePathname()`, user and org from the session; don't make users describe where they were
-3. **Create-only** - users submit; you read. One `protectedBase` contract implemented with `.use(requireSession)`, no public list
+3. **Create-only** - users submit; you read. One procedure contract extending `protectedBase`, implemented from `os.feedback.use(requireSession)`, no public list
 
 Then follow the [CRUD guide](/docs/build/crud): Zod schema → contract → router → mount in `root-router.ts` → a dialog in the dashboard layout so it's reachable from every page.
 

@@ -10,7 +10,7 @@ Every mutation is a contract with a Zod input (`packages/contract/src/todo/todo-
 
 ```typescript
 // packages/api/src/todo/todo-router.ts
-create: os.todo.create.use(requireOrganization).handler(async ({ context, input }) => {
+create: authed.create.use(requireOrganization) // authed = os.todo.use(requireSession).handler(async ({ context, input }) => {
   const [createdTodo] = await context.db
     .insert(todo)
     .values({ organizationId: context.organization.id, title: input.title })

@@ -13,7 +13,7 @@ const requireSession = openapi.spec((operation) => ({
   security: [{ session: [] }],
 }));
 
-/** Implementations must `.use(requireSession)`; the contract only declares the outcome. */
+/** Implementers apply `os.<feature>.use(requireSession)`; the contract only declares the outcome. */
 export const protectedBase = publicBase
   .errors({ UNAUTHORIZED: { message: "No signed-in session" } })
   .meta(requireSession);
