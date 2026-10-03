@@ -71,7 +71,7 @@ pnpm typecheck        # Type check all packages
 pnpm lint             # Lint all packages (oxlint)
 pnpm format           # Check formatting (oxfmt)
 pnpm format:fix       # Format all packages (oxfmt)
-pnpm test             # Run tests (node:test — do not add vitest or jest)
+pnpm test             # Run tests (node:test)
                       # Real-database suites skip unless TEST_POSTGRES_URL points at a disposable, schema-pushed Postgres
 pnpm verify           # typecheck · lint · format · test (static CI gate)
 pnpm smoke            # Drive a running app end-to-end (runtime CI gate)
