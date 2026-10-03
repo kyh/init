@@ -114,7 +114,7 @@ type NewTodo = InferInsertModel<typeof todo>;
 const updateData: Partial<typeof todo.$inferInsert> = { updatedAt: new Date() };
 ```
 
-On the client, prefer `RouterOutputs` from `@repo/contract` - it reflects what the API actually returns, not the raw row.
+On the client, prefer `RouterOutputs` from `@repo/core-contract` - it reflects what the API actually returns, not the raw row.
 
 ## Checklist for a New Table
 

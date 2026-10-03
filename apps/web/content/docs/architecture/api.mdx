@@ -17,17 +17,17 @@ oRPC gives you typesafe APIs without code generation. Types flow from database t
 
 ## API Structure
 
-The API is contract-first. `packages/contract/` declares every procedure - input, output, errors, OpenAPI metadata - and is the single source of truth. `packages/api/` implements that contract on the server. Clients type their RPC calls against the contract, so the client stays free of server code (better-auth, Drizzle client, handlers). The one exception is the better-auth access-control roles (`@repo/api/auth/permissions`), which web and mobile still import for permission checks:
+The API is contract-first. `packages/core-contract/` declares every procedure - input, output, errors, OpenAPI metadata - and is the single source of truth. `packages/core-service/` implements that contract on the server. Clients type their RPC calls against the contract, so the client stays free of server code (better-auth, Drizzle client, handlers). The one exception is the better-auth access-control roles (`@repo/auth-shared/permissions`), which web and mobile still import for permission checks:
 
 ```
-packages/contract/src/
+packages/core-contract/src/
 ├── organization/          # organization-contract.ts, organization-schema.ts
 ├── todo/                  # todo-contract.ts, todo-schema.ts
 ├── waitlist/              # waitlist-contract.ts, waitlist-schema.ts
 ├── base.ts                # publicBase / protectedBase / organizationBase
 └── index.ts               # contract, ContractClient, RouterInputs/Outputs
 
-packages/api/src/
+packages/core-service/src/
 ├── auth/                  # better-auth config + helpers
 ├── organization/          # organization-router.ts
 ├── todo/                  # Example CRUD implementation
@@ -60,14 +60,14 @@ export const createORPCContext = async (opts: {
 };
 ```
 
-### 2. Contract (`@repo/contract`)
+### 2. Contract (`@repo/core-contract`)
 
 oRPC has no `.query` / `.mutation` split - every procedure is declared once and implemented with `.handler()`, and handlers receive `context` rather than `ctx`.
 
 Contracts are built with `oc` from `@orpc/contract`. `base.ts` declares three bases, each adding the error codes its procedures can raise:
 
 ```typescript
-// packages/contract/src/base.ts
+// packages/core-contract/src/base.ts
 export const publicBase = oc.errors({
   BAD_REQUEST: { message: "The input failed validation" },
 });
@@ -87,7 +87,7 @@ export const organizationBase = protectedBase.errors({
 A feature contract picks a base and declares input and output:
 
 ```typescript
-// packages/contract/src/waitlist/waitlist-contract.ts
+// packages/core-contract/src/waitlist/waitlist-contract.ts
 export const waitlistContract = {
   join: publicBase
     .meta(openapi({ summary: "Join the waitlist", description: "...", tags: ["Waitlist"] }))
@@ -96,7 +96,7 @@ export const waitlistContract = {
 };
 ```
 
-`packages/contract/src/index.ts` collects the feature contracts into one object:
+`packages/core-contract/src/index.ts` collects the feature contracts into one object:
 
 ```typescript
 export const contract = {
@@ -106,19 +106,19 @@ export const contract = {
 };
 ```
 
-### 3. Implementation (`@repo/api`)
+### 3. Implementation (`@repo/core-service`)
 
 `orpc.ts` binds the contract to the server context. `os` mirrors the contract's shape - `os.todo.create` is the implementer for that one procedure:
 
 ```typescript
-// packages/api/src/orpc.ts
+// packages/core-service/src/orpc.ts
 export const os = implement(contract).$context<ORPCContext>();
 ```
 
 Public procedures need no middleware:
 
 ```typescript
-// packages/api/src/waitlist/waitlist-router.ts
+// packages/core-service/src/waitlist/waitlist-router.ts
 export const waitlistRouter = {
   join: os.waitlist.join.handler(async ({ context, input }) => {
     const [created] = await context.db
@@ -137,7 +137,7 @@ export const waitlistRouter = {
 The contract only declares `UNAUTHORIZED`; the implementation enforces it. `requireSession` pairs with `protectedBase` and goes on the implementer (`os.<feature>.use(requireSession)`), where middleware runs before input validation - so an anonymous caller gets `UNAUTHORIZED`, never a `BAD_REQUEST` describing the input:
 
 ```typescript
-// packages/api/src/orpc.ts
+// packages/core-service/src/orpc.ts
 /** Middleware is contract-independent, so tests can reuse it on their own contracts. */
 const base = builder.$context<ORPCContext>(); // `os as builder` from @orpc/server
 
@@ -160,12 +160,12 @@ export const requireSession = base.middleware(({ context, next }) => {
 `requireOrganization` pairs with `organizationBase` and expects `requireSession` to have run. It resolves the organization named by `input.slug`, and proves the caller is a member before the handler runs:
 
 ```typescript
-// packages/contract/src/organization/organization-schema.ts
+// packages/core-contract/src/organization/organization-schema.ts
 export const organizationInput = z.object({
   slug: z.string().min(1, "Organization slug is required"),
 });
 
-// packages/api/src/orpc.ts
+// packages/core-service/src/orpc.ts
 type SessionContext = ORPCContext & { session: NonNullable<ORPCContext["session"]> };
 
 export const requireOrganization = builder
@@ -198,7 +198,7 @@ Handlers get `context.organization` and `context.membership`, and should still s
 Middleware `.use()`d on a procedure runs after input validation, so `slug` is already checked. Each contract declares its whole input, so org-scoped input schemas extend `organizationInput`, and `requireOrganization` only type-checks on procedures whose input carries a `slug`:
 
 ```typescript
-// packages/api/src/todo/todo-router.ts
+// packages/core-service/src/todo/todo-router.ts
 const authed = os.todo.use(requireSession);
 
 export const todoRouter = {
@@ -219,7 +219,7 @@ Feature routers are plain objects, not `os.todo.router({...})`: oRPC's `.router(
 `os.router` assembles the feature routers and fails to compile if any contract procedure is missing or mistyped:
 
 ```typescript
-// packages/api/src/root-router.ts
+// packages/core-service/src/root-router.ts
 export const appRouter = os.router({
   organization: organizationRouter,
   todo: todoRouter,
@@ -229,7 +229,7 @@ export const appRouter = os.router({
 export type AppRouter = typeof appRouter;
 ```
 
-Server-side code - the RPC and OpenAPI handlers, the server caller, the OpenAPI generator - uses `appRouter` from `@repo/api`. Clients use the contract.
+Server-side code - the RPC and OpenAPI handlers, the server caller, the OpenAPI generator - uses `appRouter` from `@repo/core-service`. Clients use the contract.
 
 ## Client Usage
 
@@ -239,7 +239,7 @@ The client is typed by the contract, not the server router, so no server code re
 
 ```typescript
 // apps/web/src/orpc/react.tsx
-import type { ContractClient } from "@repo/contract";
+import type { ContractClient } from "@repo/core-contract";
 
 const client: ContractClient = createORPCClient(link);
 
@@ -285,7 +285,7 @@ queryClient.setQueryData(orpc.todo.list.queryKey({ input: { slug } }), next);
 ### Type Helpers
 
 ```typescript
-import type { RouterInputs, RouterOutputs } from "@repo/contract";
+import type { RouterInputs, RouterOutputs } from "@repo/core-contract";
 
 type Todo = RouterOutputs["todo"]["list"]["todos"][number];
 type CreateTodoInput = RouterInputs["todo"]["create"];
@@ -300,7 +300,7 @@ The same router serves web and mobile, and both clients are `ContractClient`s. W
 All procedures validate inputs with Zod, in the contract package's `*-schema.ts` files:
 
 ```typescript
-// packages/contract/src/todo/todo-schema.ts
+// packages/core-contract/src/todo/todo-schema.ts
 import { organizationInput } from "../organization/organization-schema";
 
 const titleField = z.string().trim().min(1, "Title is required").max(255, "Title is too long");
@@ -310,7 +310,7 @@ export const createTodoInput = organizationInput.extend({
 });
 ```
 
-Org-scoped schemas extend `organizationInput` so the slug is part of the declared contract. Forms import the same schemas for client-side validation (`@repo/contract/waitlist/waitlist-schema`).
+Org-scoped schemas extend `organizationInput` so the slug is part of the declared contract. Forms import the same schemas for client-side validation (`@repo/core-contract/waitlist/waitlist-schema`).
 
 Rejected input reaches the client as a `BAD_REQUEST` error carrying the schema's issues.
 
@@ -341,7 +341,7 @@ const createTodo = useMutation(
 
 CSRF protection is a cookie attribute plus an origin check, not a token.
 
-`packages/api/src/auth/auth.ts` sets `sameSite: "lax"`, so a request a third-party page originates arrives with no session — a forged `multipart/form-data` POST reaches the router and does nothing. `RPCHandler` refuses `GET` by default (`allowMethods` is `["POST", "PUT", "PATCH", "DELETE"]`), closing the one method a cookie-bearing navigation can produce.
+`packages/core-service/src/auth/auth.ts` sets `sameSite: "lax"`, so a request a third-party page originates arrives with no session — a forged `multipart/form-data` POST reaches the router and does nothing. `RPCHandler` refuses `GET` by default (`allowMethods` is `["POST", "PUT", "PATCH", "DELETE"]`), closing the one method a cookie-bearing navigation can produce.
 
 `SameSite` keys on _site_, not origin, so that covers cross-site only: a sibling subdomain or another port on the same host is same-site, and the browser does attach the session cookie to a form POST served from there. `apps/web/src/app/api/orpc/[[...rest]]/route.ts` closes that with an origin check ahead of `handler.handle` — an `Origin` header that is not the route's own origin gets `403`. An absent `Origin` passes, which is what keeps the non-browser mobile client working; browsers set `Origin` on every POST and page script cannot forge it. `route.test.ts` pins all three cases.
 
@@ -372,7 +372,7 @@ Every procedure is `POST /<router>/<procedure>` with the input as the JSON body,
 Each contract carries its own OpenAPI metadata and a typed output, so the spec describes what it returns and not just what it accepts:
 
 ```typescript
-// packages/contract/src/todo/todo-contract.ts
+// packages/core-contract/src/todo/todo-contract.ts
 list: organizationBase
   .meta(openapi({ summary: "List todos", description: "...", tags: ["Todo"] }))
   .input(organizationInput)
@@ -408,7 +408,7 @@ v1 is stable. It only gains backward-compatible changes: new operations, new opt
 ### 1. Create Schema
 
 ```typescript
-// packages/contract/src/post/post-schema.ts
+// packages/core-contract/src/post/post-schema.ts
 import { z } from "zod";
 
 import { organizationInput } from "../organization/organization-schema";
@@ -421,7 +421,7 @@ export const createPostInput = organizationInput.extend({
 ### 2. Declare the Contract
 
 ```typescript
-// packages/contract/src/post/post-contract.ts
+// packages/core-contract/src/post/post-contract.ts
 import { post } from "@repo/db/drizzle-schema";
 import { openapi } from "@orpc/openapi";
 import { createSelectSchema } from "drizzle-orm/zod";
@@ -438,7 +438,7 @@ export const postContract = {
 };
 ```
 
-Register it in `packages/contract/src/index.ts`:
+Register it in `packages/core-contract/src/index.ts`:
 
 ```typescript
 export const contract = {
@@ -449,12 +449,12 @@ export const contract = {
 };
 ```
 
-If clients need the schema at runtime (form validation), add `"./post/post-schema"` to the `exports` in `packages/contract/package.json`.
+If clients need the schema at runtime (form validation), add `"./post/post-schema"` to the `exports` in `packages/core-contract/package.json`.
 
 ### 3. Implement the Router
 
 ```typescript
-// packages/api/src/post/post-router.ts
+// packages/core-service/src/post/post-router.ts
 import { post } from "@repo/db/drizzle-schema";
 import { ORPCError } from "@orpc/server";
 
@@ -479,7 +479,7 @@ export const postRouter = {
 ### 4. Add to Root Router
 
 ```typescript
-// packages/api/src/root-router.ts
+// packages/core-service/src/root-router.ts
 export const appRouter = os.router({
   organization: organizationRouter,
   post: postRouter, // Add here
@@ -512,12 +512,12 @@ const { todos } = await caller.list({ slug: "acme" });
 ```
 
 ```bash
-pnpm -F @repo/api test
+pnpm -F @repo/core-service test
 ```
 
 ## Best Practices
 
-- **Organize by feature** - One folder per domain in each package: contract + schema in `@repo/contract`, router + test in `@repo/api`
+- **Organize by feature** - One folder per domain in each package: contract + schema in `@repo/core-contract`, router + test in `@repo/core-service`
 - **Validate everything** - Zod at every boundary
 - **Check org access** - Every multi-tenant contract extends `organizationBase`, and its implementation `.use(requireOrganization)`, so membership is proven before the handler runs
 - **Allow-list columns** - Don't return full user rows; see `organization-router.ts`

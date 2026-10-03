@@ -8,7 +8,7 @@ import { organizationContract } from "./organization/organization-contract";
 import { todoContract } from "./todo/todo-contract";
 import { waitlistContract } from "./waitlist/waitlist-contract";
 
-/** The API's single source of truth: @repo/api implements it, clients type against it. */
+/** The API's single source of truth: @repo/core-service implements it, clients type against it. */
 export const contract = {
   organization: organizationContract,
   todo: todoContract,

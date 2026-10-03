@@ -3,7 +3,7 @@ import { RPCLink } from "@orpc/client/fetch";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import { QueryClient } from "@tanstack/react-query";
 
-import type { ContractClient } from "@repo/contract";
+import type { ContractClient } from "@repo/core-contract";
 import { authClient } from "./auth";
 import { getBaseUrl } from "./base-url";
 

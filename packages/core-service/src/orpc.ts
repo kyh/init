@@ -1,6 +1,6 @@
 import { db } from "@repo/db/drizzle-client";
-import { contract } from "@repo/contract";
-import type { organizationInput } from "@repo/contract/organization/organization-schema";
+import { contract } from "@repo/core-contract";
+import type { organizationInput } from "@repo/core-contract/organization/organization-schema";
 import { implement, ORPCError, os as builder } from "@orpc/server";
 import type { z } from "zod";
 
@@ -23,7 +23,7 @@ export const createORPCContext = async (opts: {
 
 export type ORPCContext = Awaited<ReturnType<typeof createORPCContext>>;
 
-/** Implements @repo/contract. `.use` on the implementer runs before input validation, so
+/** Implements @repo/core-contract. `.use` on the implementer runs before input validation, so
  * anonymous callers get UNAUTHORIZED rather than BAD_REQUEST; `.use` on a procedure runs after it.
  * Feature routers are plain objects: `.router()` would re-apply implementer middleware. */
 export const os = implement(contract).$context<ORPCContext>();

@@ -75,7 +75,7 @@ pnpm emulate     # GitHub emulator on :4000
 pnpm dev:web
 ```
 
-With the var set, the shipped "Continue with GitHub" button routes through a dev-only `genericOAuth` provider aimed at the emulator — same button, no diverging prod path (unset ⇒ the real provider; see `packages/api/src/auth/auth.ts`). Open `/auth/login`, click the button, and the emulator's user-picker (octocat) completes sign-in.
+With the var set, the shipped "Continue with GitHub" button routes through a dev-only `genericOAuth` provider aimed at the emulator — same button, no diverging prod path (unset ⇒ the real provider; see `packages/core-service/src/auth/auth.ts`). Open `/auth/login`, click the button, and the emulator's user-picker (octocat) completes sign-in.
 
 (Pure HTTP: `POST /api/auth/sign-in/social {"provider":"github"}` returns the authorize URL directly — the same flow the button triggers.)
 
@@ -98,8 +98,8 @@ For the three non-web targets, verify with `pnpm typecheck` and `pnpm build`; a 
 
 ## Map
 
-- `apps/{web,mobile,extension,desktop}` · `packages/{api,contract,db,ui}`
+- `apps/{web,mobile,extension,desktop}` · `packages/{auth-shared,core-contract,core-service,db,ui}`
 - `CLAUDE.md` — conventions + command list (Claude-specific)
 - `apps/web/content/docs` — full docs (served at `/docs`, and as raw markdown per page)
 - `/llms.txt`, `/.well-known/api-catalog`, `/openapi.json` — machine-readable surfaces · `apps/web/src/lib/agent` — their builders + the trust pages
-- `packages/api/src/auth/auth.ts` — auth config · `packages/db/src/drizzle-schema.ts` — app tables · `packages/api/src/seed.ts` — the seed
+- `packages/core-service/src/auth/auth.ts` — auth config · `packages/db/src/drizzle-schema.ts` — app tables · `packages/core-service/src/seed.ts` — the seed

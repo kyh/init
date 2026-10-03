@@ -11,7 +11,7 @@
     "db:reset": "pnpm -F db reset && pnpm db:seed",
     "db:push": "pnpm -F db push",
     "db:push-remote": "pnpm -F db push:remote",
-    "db:seed": "pnpm -F @repo/api seed",
+    "db:seed": "pnpm -F @repo/core-service seed",
     "dev": "turbo watch dev --continue",
     "dev:web": "turbo watch dev -F @repo/web...",
     "dev:mobile": "turbo watch dev -F @repo/mobile...",
