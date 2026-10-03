@@ -62,6 +62,11 @@ export const Footer = () => (
                 Privacy
               </Link>
             </li>
+            <li className="sr-only">
+              <Link href="/terms" prefetch={false} tabIndex={-1}>
+                Terms
+              </Link>
+            </li>
             <li>
               <Link
                 className="text-sm text-muted-foreground transition hover:text-secondary-foreground"
