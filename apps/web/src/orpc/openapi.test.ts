@@ -28,7 +28,10 @@ const documentSchema = z.object({
     schemas: z.record(z.string(), z.unknown()),
     securitySchemes: z.record(z.string(), z.unknown()),
   }),
-  info: z.object({ "x-api-lifecycle": z.object({ deprecationPolicy: z.string().min(1) }) }),
+  info: z.object({
+    termsOfService: z.string(),
+    "x-api-lifecycle": z.object({ deprecationPolicy: z.string().min(1) }),
+  }),
   paths: z.record(z.string(), z.record(z.string(), operationSchema)),
 });
 
@@ -40,6 +43,10 @@ const operations = Object.entries(document.paths).flatMap(([path, item]) =>
 );
 
 describe("openapi document", () => {
+  test("links the terms of use", () => {
+    assert.ok(document.info.termsOfService.endsWith("/terms"));
+  });
+
   test("gives every operation a typed success schema", () => {
     for (const { id, operation } of operations) {
       const schema = operation.responses["200"]?.content["application/json"].schema;
