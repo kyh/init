@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { createRouterClient } from "@orpc/server";
+import { organizationBase, protectedBase, publicBase } from "@repo/contract/base";
+import { organizationInput } from "@repo/contract/organization/organization-schema";
 import { organization } from "@repo/db/drizzle-schema-auth";
+import { createRouterClient, implement } from "@orpc/server";
+import { z } from "zod";
 
 import {
   createMockContext,
@@ -9,17 +12,27 @@ import {
   databaseRows,
   mockOrganization,
 } from "../test-utils";
-import { organizationProcedure, protectedProcedure, publicProcedure } from "../orpc";
-import { organizationInput } from "../organization/organization-schema";
+import type { ORPCContext } from "../orpc";
+import { requireOrganization, requireSession } from "../orpc";
 
-const testRouter = {
-  organizationQuery: organizationProcedure(organizationInput).handler(({ context }) => ({
+const testContract = {
+  organizationQuery: organizationBase.input(organizationInput).output(z.unknown()),
+  protectedQuery: protectedBase.output(z.string()),
+  publicQuery: publicBase.output(z.boolean()),
+};
+
+const os = implement(testContract).$context<ORPCContext>();
+
+const testRouter = os.router({
+  organizationQuery: os.organizationQuery.use(requireOrganization).handler(({ context }) => ({
     organizationId: context.organization.id,
     role: context.membership.role,
   })),
-  protectedQuery: protectedProcedure.handler(({ context }) => context.session.user.id),
-  publicQuery: publicProcedure.handler(({ context }) => context.session !== null),
-};
+  protectedQuery: os.protectedQuery
+    .use(requireSession)
+    .handler(({ context }) => context.session.user.id),
+  publicQuery: os.publicQuery.handler(({ context }) => context.session !== null),
+});
 
 describe("procedure authorization", () => {
   test("allows public access and passes authenticated sessions through", async () => {

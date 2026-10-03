@@ -61,7 +61,7 @@ const config: NextConfig = {
     remotePatterns: getRemotePatterns(),
   },
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
-  transpilePackages: ["@repo/api", "@repo/db", "@repo/ui"],
+  transpilePackages: ["@repo/api", "@repo/contract", "@repo/db", "@repo/ui"],
 };
 
 export default withMDX(config);

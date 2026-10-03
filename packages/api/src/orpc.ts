@@ -1,9 +1,8 @@
 import { db } from "@repo/db/drizzle-client";
-import { openapi } from "@orpc/openapi";
-import { ORPCError, os } from "@orpc/server";
+import { contract } from "@repo/contract";
+import type { organizationInput } from "@repo/contract/organization/organization-schema";
+import { implement, ORPCError, os as builder } from "@orpc/server";
 import type { z } from "zod";
-
-import type { organizationInput } from "./organization/organization-schema";
 
 import type { Session } from "./auth/auth";
 import { auth } from "./auth/auth";
@@ -24,66 +23,50 @@ export const createORPCContext = async (opts: {
 
 export type ORPCContext = Awaited<ReturnType<typeof createORPCContext>>;
 
-const o = os.$context<ORPCContext>();
+/** Implements @repo/contract. Procedures attach middleware themselves, because a router-level
+ * `.use` followed by `.router()` would run it twice. */
+export const os = implement(contract).$context<ORPCContext>();
 
-/** Declared codes reach /openapi.json and typed clients. A plain `throw new ORPCError` with a
- * declared code is reported as defined, so handlers need no `errors` helper. */
-export const publicProcedure = o.errors({
-  BAD_REQUEST: { message: "The input failed validation" },
+/** Middleware is contract-independent, so tests can reuse it on their own contracts. */
+const base = builder.$context<ORPCContext>();
+
+/** Pairs with `protectedBase`, which declares UNAUTHORIZED. */
+export const requireSession = base.middleware(({ context, next }) => {
+  if (!context.session?.user) {
+    throw new ORPCError("UNAUTHORIZED", {
+      message: "You must be logged in to access this resource",
+    });
+  }
+  return next({
+    context: {
+      session: { ...context.session, user: context.session.user },
+    },
+  });
 });
 
-/** `session` names the security scheme apps/web declares in its OpenAPI document. */
-const requireSession = openapi.spec((operation) => ({
-  ...operation,
-  security: [{ session: [] }],
-}));
+/** Pairs with `organizationBase`. Resolves membership before any tenant query; handlers must
+ * scope rows by organization.id. Runs after validation, so `slug` is already checked. */
+export const requireOrganization = requireSession.use(
+  async ({ context, next }, input: z.infer<typeof organizationInput>) => {
+    const organization = await context.db.query.organization.findFirst({
+      where: { slug: input.slug },
+    });
 
-export const protectedProcedure = publicProcedure
-  .errors({ UNAUTHORIZED: { message: "No signed-in session" } })
-  .meta(requireSession)
-  .use(({ context, next }) => {
-    if (!context.session?.user) {
+    if (!organization) {
+      throw new ORPCError("NOT_FOUND", { message: "Organization not found" });
+    }
+
+    // Separate lookups distinguish a missing organization from missing membership.
+    const membership = await context.db.query.member.findFirst({
+      where: { organizationId: organization.id, userId: context.session.user.id },
+    });
+
+    if (!membership) {
       throw new ORPCError("UNAUTHORIZED", {
-        message: "You must be logged in to access this resource",
+        message: "You do not have access to this organization",
       });
     }
-    return next({
-      context: {
-        session: { ...context.session, user: context.session.user },
-      },
-    });
-  });
 
-/** Resolves membership before any tenant query. Handlers must scope rows by organization.id.
- * A factory is required because oRPC replaces, rather than merges, successive input schemas. */
-export const organizationProcedure = <T extends z.ZodType<z.infer<typeof organizationInput>>>(
-  input: T,
-) =>
-  protectedProcedure
-    .errors({
-      NOT_FOUND: { message: "The organization or a record in it does not exist" },
-      UNAUTHORIZED: { message: "No signed-in session, or not a member of the organization" },
-    })
-    .input(input)
-    .use(async ({ context, next }, validated) => {
-      const organization = await context.db.query.organization.findFirst({
-        where: { slug: validated.slug },
-      });
-
-      if (!organization) {
-        throw new ORPCError("NOT_FOUND", { message: "Organization not found" });
-      }
-
-      // Separate lookups distinguish a missing organization from missing membership.
-      const membership = await context.db.query.member.findFirst({
-        where: { organizationId: organization.id, userId: context.session.user.id },
-      });
-
-      if (!membership) {
-        throw new ORPCError("UNAUTHORIZED", {
-          message: "You do not have access to this organization",
-        });
-      }
-
-      return next({ context: { membership, organization } });
-    });
+    return next({ context: { membership, organization } });
+  },
+);

@@ -125,6 +125,9 @@ catalogs:
     '@orpc/client':
       specifier: 2.0.0-beta.31
       version: 2.0.0-beta.31
+    '@orpc/contract':
+      specifier: 2.0.0-beta.31
+      version: 2.0.0-beta.31
     '@orpc/openapi':
       specifier: 2.0.0-beta.31
       version: 2.0.0-beta.31
@@ -341,12 +344,12 @@ importers:
       '@orpc/client':
         specifier: 'catalog:'
         version: 2.0.0-beta.31
-      '@orpc/server':
-        specifier: 'catalog:'
-        version: 2.0.0-beta.31
       '@orpc/tanstack-query':
         specifier: 'catalog:'
         version: 2.0.0-beta.31(@tanstack/query-core@5.103.1)
+      '@repo/contract':
+        specifier: workspace:*
+        version: link:../../packages/contract
       '@tanstack/react-query':
         specifier: 'catalog:'
         version: 5.103.1(react@19.2.3)
@@ -453,6 +456,9 @@ importers:
       '@repo/api':
         specifier: workspace:*
         version: link:../../packages/api
+      '@repo/contract':
+        specifier: workspace:*
+        version: link:../../packages/contract
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -556,12 +562,12 @@ importers:
       '@better-auth/stripe':
         specifier: 'catalog:'
         version: 1.7.5(@better-auth/core@1.7.5(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.6.5))(jose@6.2.12)(kysely@0.29.6)(nanostores@1.5.3))(better-auth@1.7.5(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(postgres@3.4.9)(zod@4.6.5))(next@16.3.5(@babel/core@7.29.7(supports-color@8.1.1))(@types/node@26.6.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(solid-js@1.9.15))(better-call@1.4.0(zod@4.6.5))(stripe@22.6.2(@types/node@26.6.1))
-      '@orpc/openapi':
-        specifier: 'catalog:'
-        version: 2.0.0-beta.31
       '@orpc/server':
         specifier: 'catalog:'
         version: 2.0.0-beta.31
+      '@repo/contract':
+        specifier: workspace:*
+        version: link:../contract
       '@repo/db':
         specifier: workspace:*
         version: link:../db
@@ -590,6 +596,31 @@ importers:
       tsx:
         specifier: 'catalog:'
         version: 4.23.13
+      typescript:
+        specifier: 'catalog:'
+        version: 7.0.2
+
+  packages/contract:
+    dependencies:
+      '@orpc/contract':
+        specifier: 'catalog:'
+        version: 2.0.0-beta.31
+      '@orpc/openapi':
+        specifier: 'catalog:'
+        version: 2.0.0-beta.31
+      '@repo/db':
+        specifier: workspace:*
+        version: link:../db
+      drizzle-orm:
+        specifier: 'catalog:'
+        version: 1.0.0-rc.4(postgres@3.4.9)(zod@4.6.5)
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.5
+    devDependencies:
+      '@kyh/tsconfig':
+        specifier: 'catalog:'
+        version: 1.2.0
       typescript:
         specifier: 'catalog:'
         version: 7.0.2

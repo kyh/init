@@ -9,7 +9,7 @@ import { toast } from "@repo/ui/components/sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTable } from "@tanstack/react-table";
 
-import type { RouterOutputs } from "@repo/api";
+import type { RouterOutputs } from "@repo/contract";
 import type { AutoTableFeatures } from "@repo/ui/components/table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { authClient } from "@/lib/auth-client";
