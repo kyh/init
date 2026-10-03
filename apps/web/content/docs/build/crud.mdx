@@ -8,11 +8,11 @@ The full path touches four packages:
 
 ```
 packages/db/src/drizzle-schema.ts             # 1. Table
-packages/core-contract/src/post/post-schema.ts     # 2. Zod inputs
-packages/core-contract/src/post/post-contract.ts   # 3. Procedure contract
-packages/core-contract/src/index.ts                #    Register
-packages/core-service/src/post/post-router.ts          # 4. Implementation
-packages/core-service/src/root-router.ts               #    Mount
+packages/contract/src/post/post-schema.ts     # 2. Zod inputs
+packages/contract/src/post/post-contract.ts   # 3. Procedure contract
+packages/contract/src/index.ts                #    Register
+packages/service/src/post/post-router.ts          # 4. Implementation
+packages/service/src/root-router.ts               #    Mount
 apps/web/src/app/.../posts/page.tsx           # 5. Server page
 apps/web/src/app/.../posts/_components/       # 6. Client UI
 ```
@@ -59,7 +59,7 @@ No migration files, no codegen. Types flow from the schema definition immediatel
 ## 3. Validate Inputs
 
 ```typescript
-// packages/core-contract/src/post/post-schema.ts
+// packages/contract/src/post/post-schema.ts
 import { z } from "zod";
 
 import { organizationInput } from "../organization/organization-schema";
@@ -81,7 +81,7 @@ Org-scoped schemas extend `organizationInput`, so the `slug` is part of each pro
 The contract is what clients type against: input, output, error codes, and OpenAPI metadata. No handlers, no server imports.
 
 ```typescript
-// packages/core-contract/src/post/post-contract.ts
+// packages/contract/src/post/post-contract.ts
 import { post } from "@repo/db/drizzle-schema";
 import { openapi } from "@orpc/openapi";
 import { createSelectSchema } from "drizzle-orm/zod";
@@ -110,7 +110,7 @@ export const postContract = {
 };
 ```
 
-Register it in `packages/core-contract/src/index.ts`:
+Register it in `packages/contract/src/index.ts`:
 
 ```typescript
 export const contract = {
@@ -121,12 +121,12 @@ export const contract = {
 };
 ```
 
-`organizationBase` declares `NOT_FOUND` and `UNAUTHORIZED` and marks the operation as session-authenticated in `/openapi.json`. `list` needs nothing but the slug, so it takes `organizationInput` itself. If a client form needs the Zod schema at runtime, add `"./post/post-schema"` to `exports` in `packages/core-contract/package.json` (see `waitlist-schema`).
+`organizationBase` declares `NOT_FOUND` and `UNAUTHORIZED` and marks the operation as session-authenticated in `/openapi.json`. `list` needs nothing but the slug, so it takes `organizationInput` itself. If a client form needs the Zod schema at runtime, add `"./post/post-schema"` to `exports` in `packages/contract/package.json` (see `waitlist-schema`).
 
 ## 5. Implement the Router
 
 ```typescript
-// packages/core-service/src/post/post-router.ts
+// packages/service/src/post/post-router.ts
 import { post } from "@repo/db/drizzle-schema";
 import { ORPCError } from "@orpc/server";
 import { and, eq } from "drizzle-orm";
@@ -175,12 +175,12 @@ export const postRouter = {
 };
 ```
 
-`requireSession` goes on the implementer, so it runs before input validation and anonymous callers get `UNAUTHORIZED`. `requireOrganization` (in `packages/core-service/src/orpc.ts`) then resolves the org named by the validated `input.slug` and proves membership before any handler runs - so handlers just read `context.organization.id`. The router is a plain object: `os.post.router({...})` would re-apply `requireSession`, running it twice. Every mutation still filters by `organizationId` in the `where` clause, so a valid member of org A can never touch org B's rows.
+`requireSession` goes on the implementer, so it runs before input validation and anonymous callers get `UNAUTHORIZED`. `requireOrganization` (in `packages/service/src/orpc.ts`) then resolves the org named by the validated `input.slug` and proves membership before any handler runs - so handlers just read `context.organization.id`. The router is a plain object: `os.post.router({...})` would re-apply `requireSession`, running it twice. Every mutation still filters by `organizationId` in the `where` clause, so a valid member of org A can never touch org B's rows.
 
 Mount it in the root router:
 
 ```typescript
-// packages/core-service/src/root-router.ts
+// packages/service/src/root-router.ts
 export const appRouter = os.router({
   organization: organizationRouter,
   post: postRouter, // Add here
@@ -273,7 +273,7 @@ The full reference - inline editing, delete confirmation, per-row pending states
 Run the real router and middleware with a stubbed Postgres connection:
 
 ```typescript
-// packages/core-service/src/post/post-router.test.ts
+// packages/service/src/post/post-router.test.ts
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { createRouterClient } from "@orpc/server";
@@ -290,7 +290,7 @@ test("rejects unauthenticated callers before querying", async () => {
 ```
 
 ```bash
-pnpm -F @repo/core-service test
+pnpm -F @repo/service test
 ```
 
 `todo-router.test.ts` checks tenant-scoped SQL, updates and missing rows. `auth/orpc-middleware.test.ts` covers missing organizations and non-members. Keep a live UI check for database constraints and persistence.
@@ -304,7 +304,7 @@ Nothing else to do. The mobile app (`apps/mobile/src/utils/api.ts`) types its cl
 - Table has `organizationId` + index + `pgTable.withRLS`
 - `pnpm db:push` ran
 - Zod schema extends `organizationInput` and validates the feature's own fields
-- Contract built on `organizationBase` with `.input()` and `.output()`, registered in `packages/core-contract/src/index.ts`
+- Contract built on `organizationBase` with `.input()` and `.output()`, registered in `packages/contract/src/index.ts`
 - Router built from `os.post.use(requireSession)`; each procedure `.use(requireOrganization)` and filters mutations by `organizationId`
 - Router mounted in `root-router.ts`
 - Page prefetches; client uses `useSuspenseQuery`

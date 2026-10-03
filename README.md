@@ -29,9 +29,9 @@ apps/
   extension/   # WXT Chrome extension
   desktop/     # Electron desktop app
 packages/
-  auth-shared/    # Client-safe auth helpers: role permissions, slugify
-  core-contract/  # oRPC contract shared by server and clients
-  core-service/   # oRPC implementation + better-auth
+  auth/        # Client-safe auth helpers: role permissions, slugify
+  contract/    # oRPC contract shared by server and clients
+  service/     # oRPC implementation + better-auth
   db/          # Drizzle schema + local Postgres compose
   ui/          # Shared React components
 ```

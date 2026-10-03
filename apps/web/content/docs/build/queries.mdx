@@ -91,7 +91,7 @@ Prefer suspense for page-level data (it pairs with the server prefetch); use `us
 Don't redeclare API shapes - derive them:
 
 ```typescript
-import type { RouterOutputs } from "@repo/core-contract";
+import type { RouterOutputs } from "@repo/contract";
 
 type Todo = RouterOutputs["todo"]["list"]["todos"][number];
 ```

@@ -58,9 +58,9 @@ apps/
 └── desktop/      # Electron desktop app
 
 packages/
-├── auth-shared/   # Client-safe auth helpers: role permissions, slugify
-├── core-contract/ # oRPC contract shared by server and clients
-├── core-service/  # oRPC implementation + better-auth
+├── auth/         # Client-safe auth helpers: role permissions, slugify
+├── contract/     # oRPC contract shared by server and clients
+├── service/      # oRPC implementation + better-auth
 ├── db/           # Drizzle schema + local Postgres compose
 └── ui/           # Shared React components
 ```
@@ -101,10 +101,10 @@ Always `pgTable.withRLS` - authorization lives in oRPC, and deny-by-default RLS 
 
 ### Adding Routes
 
-Declare the procedure in `packages/core-contract/src/<feature>/` (Zod schema + contract), then implement it in `packages/core-service/src/<feature>/`:
+Declare the procedure in `packages/contract/src/<feature>/` (Zod schema + contract), then implement it in `packages/service/src/<feature>/`:
 
 ```typescript
-// packages/core-contract/src/post/post-contract.ts
+// packages/contract/src/post/post-contract.ts
 export const postContract = {
   list: organizationBase
     .meta(openapi({ summary: "List posts", description: "...", tags: ["Post"] }))
@@ -112,7 +112,7 @@ export const postContract = {
     .output(z.object({ posts: z.array(createSelectSchema(post)) })),
 };
 
-// packages/core-service/src/post/post-router.ts
+// packages/service/src/post/post-router.ts
 const authed = os.post.use(requireSession);
 
 export const postRouter = {
@@ -125,7 +125,7 @@ export const postRouter = {
 };
 ```
 
-`requireSession` and `requireOrganization` (from `../orpc`) prove the session and membership before the handler runs. Register the contract in `packages/core-contract/src/index.ts` and the router in `packages/core-service/src/root-router.ts`. See the [API guide](/docs/architecture/api) for the full pattern.
+`requireSession` and `requireOrganization` (from `../orpc`) prove the session and membership before the handler runs. Register the contract in `packages/contract/src/index.ts` and the router in `packages/service/src/root-router.ts`. See the [API guide](/docs/architecture/api) for the full pattern.
 
 ### Using Routes in Components
 
@@ -141,7 +141,7 @@ const { data } = useSuspenseQuery(orpc.todo.list.queryOptions({ input: { slug } 
 Routers have node:test tests next to the code (`*-router.test.ts`):
 
 ```bash
-pnpm -F @repo/core-service test
+pnpm -F @repo/service test
 ```
 
 ## Frontend Development
@@ -168,7 +168,7 @@ apps/mobile/src/
 ### Adding a Feature
 
 1. **Schema** - table in `packages/db`
-2. **API** - router in `packages/core-service`
+2. **API** - router in `packages/service`
 3. **UI** - components in `packages/ui` if shared
 4. **Screens** - per app
 5. **Test** - router tests + manual pass on each platform

@@ -6,10 +6,10 @@ Writes go through oRPC procedures: Zod validates, `requireOrganization` proves o
 
 ## Server Side
 
-Every mutation is a contract with a Zod input (`packages/core-contract/src/todo/todo-contract.ts`), implemented with an ownership check:
+Every mutation is a contract with a Zod input (`packages/contract/src/todo/todo-contract.ts`), implemented with an ownership check:
 
 ```typescript
-// packages/core-service/src/todo/todo-router.ts
+// packages/service/src/todo/todo-router.ts
 create: authed.create.use(requireOrganization) // authed = os.todo.use(requireSession).handler(async ({ context, input }) => {
   const [createdTodo] = await context.db
     .insert(todo)
@@ -27,7 +27,7 @@ create: authed.create.use(requireOrganization) // authed = os.todo.use(requireSe
 Rules the todo router demonstrates:
 
 - **Validate at the boundary** - inputs are parsed by Zod before your code runs; invalid input never reaches the database
-- **Membership before the handler** - `requireOrganization` (`packages/core-service/src/orpc.ts`) reads the `slug` off the validated input, resolves the org, and proves the caller is a member; the handler just reads `context.organization.id`
+- **Membership before the handler** - `requireOrganization` (`packages/service/src/orpc.ts`) reads the `slug` off the validated input, resolves the org, and proves the caller is a member; the handler just reads `context.organization.id`
 - **Scope every write** - updates and deletes filter by `organizationId`, not just row id, so members of one org can't touch another's rows
 - **`.returning()` + explicit NOT_FOUND** - if the scoped write matched nothing, throw instead of silently succeeding
 
@@ -72,7 +72,7 @@ await orpc.todo.create.call({ slug, title });
 Input types come from the contract, not hand-written:
 
 ```typescript
-import type { RouterInputs } from "@repo/core-contract";
+import type { RouterInputs } from "@repo/contract";
 
 type CreateTodoInput = RouterInputs["todo"]["create"];
 ```
@@ -186,7 +186,7 @@ Reuse the contract's Zod schema on the client - one source of truth, errors befo
 
 ```tsx
 // waitlist-form.tsx
-import { joinWaitlistInput } from "@repo/core-contract/waitlist/waitlist-schema";
+import { joinWaitlistInput } from "@repo/contract/waitlist/waitlist-schema";
 
 const form = useAppForm({
   validators: { onSubmit: joinWaitlistInput },
@@ -201,7 +201,7 @@ The server still validates - client-side is UX, server-side is the guarantee.
 For writes that may repeat (signups, upserts), absorb the conflict instead of erroring:
 
 ```typescript
-// packages/core-service/src/waitlist/waitlist-router.ts
+// packages/service/src/waitlist/waitlist-router.ts
 await context.db
   .insert(waitlist)
   .values({ ...input })

@@ -18,7 +18,7 @@ import { z } from "zod";
 
 import { authClient } from "@/lib/auth-client";
 import { useAppForm } from "@/lib/form";
-import { ROLES, roleSchema } from "@repo/auth-shared/permissions";
+import { ROLES, roleSchema } from "@repo/auth/permissions";
 import {
   invalidateOrganization,
   useOrganization,

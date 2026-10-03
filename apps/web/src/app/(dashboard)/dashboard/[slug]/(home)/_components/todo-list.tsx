@@ -11,7 +11,7 @@ import { cn } from "cn";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { PencilIcon, Trash2Icon } from "lucide-react";
 
-import type { RouterOutputs } from "@repo/core-contract";
+import type { RouterOutputs } from "@repo/contract";
 import { orpc } from "@/orpc/react";
 
 interface TodoListProps {

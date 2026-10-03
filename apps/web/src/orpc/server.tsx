@@ -2,7 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 import { headers } from "next/headers";
-import { appRouter, createORPCContext } from "@repo/core-service";
+import { appRouter, createORPCContext } from "@repo/service";
 import { getSession } from "@/lib/auth-server";
 import { createRouterClient } from "@orpc/server";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";

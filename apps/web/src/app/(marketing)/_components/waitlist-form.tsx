@@ -1,6 +1,6 @@
 "use client";
 
-import { joinWaitlistInput, waitlistEmail } from "@repo/core-contract/waitlist/waitlist-schema";
+import { joinWaitlistInput, waitlistEmail } from "@repo/contract/waitlist/waitlist-schema";
 import { Button } from "@repo/ui/components/button";
 import { toast } from "@repo/ui/components/sonner";
 import { cn } from "cn";

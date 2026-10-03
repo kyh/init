@@ -4,7 +4,7 @@ import type { Organization } from "better-auth/plugins/organization";
 import { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { FALLBACK_ORGANIZATION_SLUG, slugify } from "@repo/auth-shared/slug";
+import { FALLBACK_ORGANIZATION_SLUG, slugify } from "@repo/auth/slug";
 import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/components/avatar";
 import {
   Dialog,
@@ -42,7 +42,7 @@ import {
 import { useAppForm } from "@/lib/form";
 import { z } from "zod";
 
-import type { Session } from "@repo/core-service/auth/auth";
+import type { Session } from "@repo/service/auth/auth";
 import { NavLink } from "@/components/nav";
 import { authClient } from "@/lib/auth-client";
 

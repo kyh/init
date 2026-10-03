@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { organizationBase, protectedBase, publicBase } from "@repo/core-contract/base";
-import { organizationInput } from "@repo/core-contract/organization/organization-schema";
+import { organizationBase, protectedBase, publicBase } from "@repo/contract/base";
+import { organizationInput } from "@repo/contract/organization/organization-schema";
 import { organization } from "@repo/db/drizzle-schema-auth";
 import { createRouterClient, implement } from "@orpc/server";
 import { z } from "zod";

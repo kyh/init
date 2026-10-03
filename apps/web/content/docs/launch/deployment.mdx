@@ -43,7 +43,7 @@ The auth base URL derives from Vercel's built-in `VERCEL_ENV` / `VERCEL_PROJECT_
 
 ### 3. Preview Deployments
 
-The `oAuthProxy` plugin in `packages/core-service/src/auth/auth.ts` routes OAuth callbacks through the production URL, so GitHub login works on preview deployments without registering every preview domain.
+The `oAuthProxy` plugin in `packages/service/src/auth/auth.ts` routes OAuth callbacks through the production URL, so GitHub login works on preview deployments without registering every preview domain.
 
 ### 4. Custom Domain
 

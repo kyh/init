@@ -1,4 +1,4 @@
-import { authMetadata } from "@repo/core-contract/organization/organization-schema";
+import { authMetadata } from "@repo/contract/organization/organization-schema";
 import { z } from "zod";
 
 export const authMetadataSchema = z
