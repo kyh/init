@@ -133,7 +133,7 @@ grep for it — no correlating by timestamp:
 ```sh
 pnpm dev:web 2>&1 | tee /tmp/web.log
 grep '"requestId":"<id>"' /tmp/web.log
-# {"ts":"…","requestId":"…","path":"todo.create","durationMs":18,"ok":false,"code":"UNAUTHORIZED"}
+# {"ts":"…","code":"UNAUTHORIZED","durationMs":18,"ok":false,"path":"todo.create","requestId":"…"}
 ```
 
 Successes go to stdout and failures to stderr. `pnpm smoke` quotes the id in its

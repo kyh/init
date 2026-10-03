@@ -39,10 +39,13 @@ pnpm smoke
 ```
 
 ```
-  ✓ server is live (/api/health)
-  ✓ signed in as dev@init.local
-  ✓ created a todo
-  ✗ todo.update did not persist `completed`
+  ✓ server is live (/api/health) 412ms
+  ✓ signed in as dev@init.local 88ms
+  ✓ resolved the seeded organization 21ms
+  ✓ read the seeded todos 35ms
+  ✓ created a todo 40ms
+
+  ✗ Smoke test failed: todo.update did not persist `completed`
 ```
 
 It calls oRPC through the same `RPCLink` client the apps use, typed against `AppRouter`, so a procedure whose input or output shape changes breaks the smoke script at typecheck rather than at runtime. CI runs it on every commit against a real Postgres (see `.github/workflows/ci.yml`), and `SMOKE_URL=https://my-app-git-branch.vercel.app pnpm smoke` points it at a preview deployment instead.
@@ -114,10 +117,4 @@ Set it per Vercel environment to land a change dark: on for preview, off in prod
 
 ## Tracing a failed call
 
-Every oRPC call emits one JSON line, and the request id in it comes back on the response as `x-request-id`:
-
-```text
-{"ts":"2026-09-19T…","requestId":"5f3c…","path":"todo.create","durationMs":18,"ok":false,"code":"UNAUTHORIZED"}
-```
-
-Take the id off a failed response, grep the server output for it, and you have the record of that exact call — no correlating by timestamp. CI dumps these logs when the smoke gate fails, so a red build explains itself without a rerun. See `packages/api/src/observability/logger.ts`.
+Every oRPC response carries an `x-request-id`, and the server logs one JSON line per call tagged with it. Grep the server output for the id off a failed response to find that exact call; CI dumps these logs when the smoke gate fails. See [Monitoring](/docs/launch/monitoring#structured-request-logs).

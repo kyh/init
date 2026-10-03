@@ -60,7 +60,7 @@ jobs:
   # The runtime gate. `ci` proves the code compiles and units behave; this proves
   # the app actually boots, that auth works, and that a mutation reaches the
   # database — the breakage a typecheck-only pipeline waves through. Runs in
-  # parallel with `ci` because it needs none of its output.
+  # parallel with `ci`, at the cost of building web a second time.
   smoke:
     runs-on: ubuntu-latest
     env:
@@ -68,6 +68,18 @@ jobs:
       # Matches the port the web server is started on below, and drives
       # better-auth's baseUrl (see packages/api/src/auth/auth.ts).
       PORT: 3000
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 30
+        ports:
+          - 5432:5432
     steps:
       - uses: actions/checkout@v6
 
@@ -76,22 +88,15 @@ jobs:
           runtime: node@24
           cache: true
 
-      # Not `pnpm bootstrap`: its port-claiming exists for developer machines
-      # running other stacks, and a runner is empty, so pinning keeps this job
-      # predictable.
+      # Not `pnpm bootstrap`: the services container above already provides Postgres.
       - name: Write environment
         run: |
           cat > .env <<'EOF'
-          POSTGRES_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
-          POSTGRES_PORT="54322"
-          COMPOSE_PROJECT_NAME="init-ci"
+          POSTGRES_URL="postgresql://postgres:postgres@127.0.0.1:5432/postgres"
           BETTER_AUTH_SECRET="ci-only-secret-never-leaves-this-job"
           BLOB_READ_WRITE_TOKEN=""
           PORT=3000
           EOF
-
-      - name: Start Postgres
-        run: pnpm db:start
 
       - name: Push schema and seed
         run: pnpm db:push && pnpm db:seed

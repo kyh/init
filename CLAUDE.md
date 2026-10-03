@@ -49,9 +49,10 @@ Vercel environment to land a change dark and turn it on for preview only.
 
 Every oRPC call emits one JSON line carrying a request id, and the same id comes
 back on the response as `x-request-id` — so a failed call is traced to its
-server-side record by grepping for the id, not by matching timestamps. Note that
-oRPC's `next()` _throws_ on a downstream failure, so the middleware logs from a
-catch; see `packages/api/src/observability/logger.ts` and `src/orpc.ts`.
+server-side record by grepping for the id, not by matching timestamps. Both oRPC
+routes go through `handleORPCRequest` (`apps/web/src/orpc/request.ts`); procedures
+write via `context.log`, which `createMockContext` replaces with a capture. See
+`packages/api/src/observability/logger.ts` and `src/orpc.ts`.
 
 ### Mobile dependency pins
 

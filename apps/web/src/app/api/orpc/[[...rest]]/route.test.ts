@@ -55,4 +55,12 @@ describe("rpc endpoint", () => {
 
     assert.strictEqual(response.headers.get("access-control-allow-origin"), null);
   });
+
+  test("echoes a request id on every response, refusals included", async () => {
+    const refused = await POST(rpc({ origin: "http://evil.localhost:3000" }));
+    const unauthorized = await POST(rpc({ "x-request-id": "trace-1" }));
+
+    assert.ok(refused.headers.get("x-request-id"));
+    assert.strictEqual(unauthorized.headers.get("x-request-id"), "trace-1");
+  });
 });

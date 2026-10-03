@@ -5,6 +5,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { relations } from "@repo/db/drizzle-relations";
 import * as schemaAuth from "@repo/db/drizzle-schema-auth";
 
+import type { RequestLogRecord } from "./observability/logger";
 import type { ORPCContext } from "./orpc";
 import { flagDefaults } from "./flags/flags";
 
@@ -82,6 +83,8 @@ export const createMockContext = (session: ORPCContext["session"] = mockSession)
   const context = {
     db,
     flags: flagDefaults,
+    // Captures log records instead of writing them, so tests stay quiet and can assert on them.
+    log: mock.fn<(record: RequestLogRecord) => void>(),
     requestId: "test-request-id",
     session,
   } satisfies ORPCContext;

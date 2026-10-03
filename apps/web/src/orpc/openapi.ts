@@ -42,7 +42,7 @@ const description = `The ${siteConfig.name} app API: the same procedures the app
 
 Every operation is a \`POST\` with a JSON body. Every error is a JSON \`Error\` object with a machine-readable \`code\`.
 
-**Authentication.** Operations marked with the \`session\` scheme need a first-party better-auth session cookie, obtained by signing in (\`POST /api/auth/sign-in/email\`, or GitHub sign-in in the app). There are no API keys, OAuth clients, or scopes; \`waitlist.join\` is public. Browser requests from other origins are refused.
+**Authentication.** Operations marked with the \`session\` scheme need a first-party better-auth session cookie, obtained by signing in (\`POST /api/auth/sign-in/email\`, or GitHub sign-in in the app). There are no API keys, OAuth clients, or scopes; \`waitlist.join\` and \`flag.list\` are public. Every response carries an \`x-request-id\` to quote when reporting a failure. Browser requests from other origins are refused.
 
 **Versioning.** v1 is stable: it only gains backward-compatible changes (new operations, new optional input fields, new output fields). A breaking change ships as \`/api/v2\`, and v1 keeps serving for at least ${DEPRECATION_OVERLAP_DAYS} days afterwards. During that overlap v1 responses carry \`Deprecation\` (RFC 9745) and \`Sunset\` (RFC 8594) headers with a \`Link\` to the migration guide.`;
 
@@ -106,6 +106,7 @@ export const generateOpenAPIDocument = async () => {
           description: "The caller's organizations and their membership.",
           name: "Organization",
         },
+        { description: "Feature flags for this deployment; public.", name: "Flag" },
         { description: "Example CRUD scoped to an organization.", name: "Todo" },
         { description: "Pre-launch email signups; public.", name: "Waitlist" },
       ],

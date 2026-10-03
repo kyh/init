@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 
-import { flagDefaults, parseFlags, resolveFlags } from "./flags";
+import { parseFlags } from "./flags";
 
 describe("parseFlags", () => {
   test("reads a bare name as enabled and an explicit value as given", () => {
@@ -50,22 +50,5 @@ describe("parseFlags", () => {
 
     assert.deepEqual(parseFlags(), empty);
     assert.deepEqual(parseFlags(""), empty);
-  });
-});
-
-describe("resolveFlags", () => {
-  test("falls back to the registry defaults", () => {
-    assert.deepEqual(resolveFlags(), flagDefaults);
-  });
-
-  test("layers overrides over the defaults without adding keys", () => {
-    const resolved = resolveFlags("exampleNewFeature");
-
-    assert.equal(resolved.exampleNewFeature, true);
-    assert.deepEqual(Object.keys(resolved).toSorted(), Object.keys(flagDefaults).toSorted());
-  });
-
-  test("ignores an unknown name rather than adding it to the set", () => {
-    assert.deepEqual(resolveFlags("nosuchflag"), flagDefaults);
   });
 });

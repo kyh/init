@@ -20,16 +20,16 @@ curl https://your-domain.com/api/health
 Every oRPC call emits one JSON line on the server (`packages/api/src/observability/logger.ts`):
 
 ```text
-{"ts":"2026-09-19T12:04:31.882Z","requestId":"5f3c…","path":"todo.create","durationMs":18,"ok":true,"userId":"usr_…"}
+{"ts":"2026-09-19T12:04:31.882Z","durationMs":18,"ok":true,"path":"todo.create","requestId":"5f3c…","userId":"usr_…"}
 ```
 
-Successes go to stdout and failures to stderr, so a log drain can split streams without parsing. The `requestId` also comes back on the HTTP response as `x-request-id` — take it off a failed response and grep for that one line instead of correlating by timestamp:
+Successes go to stdout and failures to stderr, so a log drain can split streams without parsing. The `requestId` also comes back on every response from `/api/orpc` and `/api/v1` as `x-request-id` — take it off a failed response and grep for that one line instead of correlating by timestamp:
 
 ```bash
 grep '"requestId":"5f3c…"' /tmp/web.log
 ```
 
-`pnpm smoke` quotes the id in its own failure messages, so a red CI run points straight at the matching line. On Vercel these land in runtime logs as-is; any drain that understands JSON lines (Better Stack, Axiom, Datadog) indexes them without a parser. The lines are silent under the test runner so unit tests aren't drowned in them.
+`pnpm smoke` quotes the id in its own failure messages, so a red CI run points straight at the matching line. On Vercel these land in runtime logs as-is; any drain that understands JSON lines (Better Stack, Axiom, Datadog) indexes them without a parser. Procedures write through `context.log`, which unit tests replace with a capture, so test output stays clean.
 
 ### Dev-Time Logging
 
