@@ -91,7 +91,6 @@ export const generateOpenAPIDocument = async () => {
         contact: { email: siteConfig.email, url: `${siteConfig.url}/contact` },
         description,
         license: { name: "MIT", url: "https://opensource.org/licenses/MIT" },
-        termsOfService: `${siteConfig.url}/terms`,
         title: `${siteConfig.name} API`,
         version: "1.0.0",
         "x-api-lifecycle": {

@@ -28,8 +28,6 @@ const EFFECTIVE_DATE = "October 3, 2026";
 
 const email = link(siteConfig.email, `mailto:${siteConfig.email}`);
 
-const termsLink = link("Terms of Use", `${siteConfig.url}/terms`);
-
 /** Applies to every category in the CCPA chart below. */
 const GENERAL_PURPOSES =
   "Compliance and protection; Data sharing in the context of corporate events; To create aggregated, de-identified and/or anonymized data";
@@ -178,11 +176,7 @@ const howWeUseYourPersonalInformation = section(
     item(
       "audit our internal processes for compliance with legal and contractual requirements or our internal policies;",
     ),
-    item(
-      "enforce the terms and conditions that govern the Service, including our ",
-      termsLink,
-      "; and",
-    ),
+    item("enforce the terms and conditions that govern the Service; and"),
     item(
       "prevent, identify, investigate and deter fraudulent, harmful, unauthorized, unethical or illegal activity, including cyberattacks and identity theft.",
     ),
