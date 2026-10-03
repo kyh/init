@@ -1,10 +1,10 @@
 {
-  "name": "@repo/auth",
+  "name": "@repo/permissions",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "exports": {
-    "./permissions": "./src/permissions.ts",
+    ".": "./src/permissions.ts",
     "./slug": "./src/slug.ts"
   },
   "scripts": {

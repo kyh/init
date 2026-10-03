@@ -27,7 +27,7 @@ apps/
   extension/   # Chrome extension (wxt)
   desktop/     # Desktop app (Electron)
 packages/
-  auth/        # Client-safe auth helpers: role permissions, slugify
+  permissions/ # Client-safe auth helpers: role permissions, slugify
   contract/    # oRPC contract: zod inputs, outputs, errors, openapi meta
   service/     # oRPC implementation of the contract + better-auth
   db/          # Drizzle schema + client, local Postgres compose file
@@ -36,7 +36,7 @@ packages/
 
 ### Contract-first API
 
-`@repo/contract` is the single source of truth: each feature has `<f>-schema.ts` (zod inputs; org-scoped ones extend `organizationInput`) and `<f>-contract.ts` (built on `publicBase` / `protectedBase` / `organizationBase` from `base.ts`), registered in `src/index.ts`. `@repo/service` implements it with `os = implement(contract)` — org-scoped: `const authed = os.<f>.use(requireSession); export const <f>Router = { <proc>: authed.<proc>.use(requireOrganization).handler(...) }`; public procedures implement `os.<f>.<proc>` directly (see `waitlist-router.ts`). Mount in `root-router.ts`; `os.router` fails to compile if a procedure is missing or mistyped. Implementer-level `.use` runs before input validation (anonymous → UNAUTHORIZED); procedure-level `.use` runs after. Feature routers stay plain objects — `os.<f>.router()` re-applies implementer middleware, so it would run twice. Clients type against `ContractClient` / `RouterInputs` / `RouterOutputs` from `@repo/contract` and use `@repo/auth` for role checks; only server code (web route handlers, RSC) imports `@repo/service`. Layout follows oRPC's Hybrid monorepo recipe.
+`@repo/contract` is the single source of truth: each feature has `<f>-schema.ts` (zod inputs; org-scoped ones extend `organizationInput`) and `<f>-contract.ts` (built on `publicBase` / `protectedBase` / `organizationBase` from `base.ts`), registered in `src/index.ts`. `@repo/service` implements it with `os = implement(contract)` — org-scoped: `const authed = os.<f>.use(requireSession); export const <f>Router = { <proc>: authed.<proc>.use(requireOrganization).handler(...) }`; public procedures implement `os.<f>.<proc>` directly (see `waitlist-router.ts`). Mount in `root-router.ts`; `os.router` fails to compile if a procedure is missing or mistyped. Implementer-level `.use` runs before input validation (anonymous → UNAUTHORIZED); procedure-level `.use` runs after. Feature routers stay plain objects — `os.<f>.router()` re-applies implementer middleware, so it would run twice. Clients type against `ContractClient` / `RouterInputs` / `RouterOutputs` from `@repo/contract` and use `@repo/permissions` for role checks; only server code (web route handlers, RSC) imports `@repo/service`. Layout follows oRPC's Hybrid monorepo recipe.
 
 ### Mutation path
 

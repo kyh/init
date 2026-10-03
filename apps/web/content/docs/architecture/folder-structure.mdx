@@ -14,7 +14,7 @@ init/
 │   ├── extension/         # Chrome extension (WXT)
 │   └── desktop/           # Electron desktop app
 ├── packages/
-│   ├── auth/              # Client-safe auth helpers: role permissions, slugify
+│   ├── permissions/       # Client-safe auth helpers: role permissions, slugify
 │   ├── contract/          # oRPC contract: procedure inputs, outputs, errors
 │   ├── service/           # oRPC implementation of the contract + better-auth
 │   ├── db/                # Drizzle schema + local Postgres compose
@@ -139,12 +139,12 @@ packages/service/src/
 
 Convention per feature: `*-router.ts` (handlers), `*.test.ts` (tests).
 
-### Auth Package (`packages/auth/`)
+### Permissions Package (`packages/permissions/`)
 
 Client-safe auth helpers, imported by the server and by web and mobile clients alike:
 
 ```
-packages/auth/src/
+packages/permissions/src/
 ├── permissions.ts         # better-auth access control: ac, roles, hasPermission, ROLES, roleSchema
 └── slug.ts                # slugify, FALLBACK_ORGANIZATION_SLUG
 ```

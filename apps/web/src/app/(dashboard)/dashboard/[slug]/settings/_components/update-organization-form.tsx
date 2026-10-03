@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { slugify } from "@repo/auth/slug";
+import { slugify } from "@repo/permissions/slug";
 import { Button } from "@repo/ui/components/button";
 import { FieldGroup } from "@repo/ui/components/field";
 import { toast } from "@repo/ui/components/sonner";

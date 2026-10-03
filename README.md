@@ -29,7 +29,7 @@ apps/
   extension/   # WXT Chrome extension
   desktop/     # Electron desktop app
 packages/
-  auth/        # Client-safe auth helpers: role permissions, slugify
+  permissions/ # Client-safe auth helpers: role permissions, slugify
   contract/    # oRPC contract shared by server and clients
   service/     # oRPC implementation + better-auth
   db/          # Drizzle schema + local Postgres compose

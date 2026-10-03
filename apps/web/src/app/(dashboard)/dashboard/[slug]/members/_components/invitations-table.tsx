@@ -14,7 +14,7 @@ import type { AutoTableFeatures } from "@repo/ui/components/table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { authClient } from "@/lib/auth-client";
 import { formatDate } from "@/lib/format";
-import { hasPermission } from "@repo/auth/permissions";
+import { hasPermission } from "@repo/permissions";
 import { TableRowActions } from "@/app/(dashboard)/dashboard/[slug]/_components/table-row-actions";
 import {
   invalidateOrganization,

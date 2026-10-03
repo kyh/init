@@ -20,7 +20,7 @@ import { z } from "zod";
 import type { RouterOutputs } from "@repo/contract";
 import { authClient } from "@/lib/auth-client";
 import { useAppForm } from "@/lib/form";
-import { hasPermission } from "@repo/auth/permissions";
+import { hasPermission } from "@repo/permissions";
 import { useOrganization } from "@/app/(dashboard)/dashboard/[slug]/_components/use-organization";
 
 type Organization = RouterOutputs["organization"]["get"]["organization"];

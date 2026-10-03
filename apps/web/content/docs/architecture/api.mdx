@@ -17,7 +17,7 @@ oRPC gives you typesafe APIs without code generation. Types flow from database t
 
 ## API Structure
 
-The API is contract-first. `packages/contract/` declares every procedure - input, output, errors, OpenAPI metadata - and is the single source of truth. `packages/service/` implements that contract on the server. Clients type their RPC calls against the contract, so the client stays free of server code (better-auth, Drizzle client, handlers). The one exception is the better-auth access-control roles (`@repo/auth/permissions`), which web and mobile still import for permission checks:
+The API is contract-first. `packages/contract/` declares every procedure - input, output, errors, OpenAPI metadata - and is the single source of truth. `packages/service/` implements that contract on the server. Clients type their RPC calls against the contract, so the client stays free of server code (better-auth, Drizzle client, handlers). The one exception is the better-auth access-control roles (`@repo/permissions`), which web and mobile still import for permission checks:
 
 ```
 packages/contract/src/
