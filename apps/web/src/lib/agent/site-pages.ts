@@ -60,11 +60,7 @@ export const contact: SitePage = {
   title: `Contact ${siteConfig.name}`,
 };
 
-/** The pages the site's link lists (llms.txt, the Markdown home page) point at. */
-export const sitePages = [about, contact, privacy];
-
-/** Every site page served and in the sitemap; the Terms of Use is not linked from the lists. */
-export const servedPages = [...sitePages, terms];
+export const sitePages = [about, contact, privacy, terms];
 
 export const findSitePage = (path: string): SitePage | undefined =>
-  servedPages.find((page) => page.path === path);
+  sitePages.find((page) => page.path === path);

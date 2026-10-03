@@ -15,14 +15,21 @@ import {
   table,
 } from "./page-content";
 import { privacy } from "./privacy-policy";
-import { servedPages, sitePages } from "./site-pages";
+import { sitePages } from "./site-pages";
 import { terms } from "./terms-of-use";
 
 describe("renderHomeMarkdown", () => {
   test("starts with the product name and links the discovery surfaces", () => {
     const body = renderHomeMarkdown();
     assert.equal(body.split("\n")[0], "# Init");
-    for (const path of ["/llms.txt", "/sitemap.xml", "/openapi.json", "/about", "/privacy"]) {
+    for (const path of [
+      "/llms.txt",
+      "/sitemap.xml",
+      "/openapi.json",
+      "/about",
+      "/privacy",
+      "/terms",
+    ]) {
       assert.ok(body.includes(`${path})`), `should link ${path}`);
     }
   });
@@ -111,7 +118,7 @@ describe("renderSitePageMarkdown", () => {
 
 describe("site pages", () => {
   test("each carries enough content to be a trust anchor", () => {
-    for (const page of servedPages) {
+    for (const page of sitePages) {
       const body = renderSitePageMarkdown(page);
       assert.ok(body.length > 600, `${page.path} is ${body.length} chars`);
       assert.ok(body.startsWith(`# ${page.title}\n`));

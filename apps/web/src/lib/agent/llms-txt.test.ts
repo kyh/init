@@ -36,10 +36,9 @@ describe("renderLlmsTxt — llmstxt.org format", () => {
     assert.ok(body.includes("- [Introduction](http://localhost:3000/docs/overview/introduction)"));
   });
 
-  test("lists every trust page, but not the Terms of Use", () => {
-    for (const path of ["/about", "/contact", "/privacy"]) {
+  test("lists every trust page, the legal pages included", () => {
+    for (const path of ["/about", "/contact", "/privacy", "/terms"]) {
       assert.ok(body.includes(`](http://localhost:3000${path})`), path);
     }
-    assert.ok(!body.includes("/terms)"));
   });
 });
