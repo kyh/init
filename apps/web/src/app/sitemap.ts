@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-import { sitePages } from "@/lib/agent/site-pages";
+import { servedPages } from "@/lib/agent/site-pages";
 import { siteConfig } from "@/lib/site-config";
 import { source } from "@/lib/source";
 
@@ -23,7 +23,7 @@ const sitemap = (): MetadataRoute.Sitemap => {
       url: siteConfig.url,
     },
     ...docs,
-    ...sitePages.map((page) => ({
+    ...servedPages.map((page) => ({
       changeFrequency: "yearly" as const,
       lastModified,
       priority: 0.3,

@@ -8,7 +8,7 @@ import { renderSitePageMarkdown } from "./markdown";
 import type { Block, Inline, LinkRun, ListItem, SitePage } from "./page-content";
 import { GENERAL_LEGAL_CREDIT, headingId } from "./page-content";
 import { privacy } from "./privacy-policy";
-import { findSitePage, sitePages } from "./site-pages";
+import { findSitePage, servedPages, sitePages } from "./site-pages";
 import { terms } from "./terms-of-use";
 
 const itemRuns = (items: ListItem[]): Inline[] =>
@@ -50,8 +50,14 @@ const legalPages = [privacy, terms];
 
 describe("site page registry", () => {
   test("lists each page once and finds the legal pages by path", () => {
-    const paths = sitePages.map((page) => page.path);
-    assert.deepEqual(paths, ["/about", "/contact", "/privacy", "/terms"]);
+    assert.deepEqual(
+      sitePages.map((page) => page.path),
+      ["/about", "/contact", "/privacy"],
+    );
+    assert.deepEqual(
+      servedPages.map((page) => page.path),
+      ["/about", "/contact", "/privacy", "/terms"],
+    );
     assert.equal(findSitePage("/privacy"), privacy);
     assert.equal(findSitePage("/terms"), terms);
   });
