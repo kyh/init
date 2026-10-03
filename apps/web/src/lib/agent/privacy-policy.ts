@@ -261,7 +261,7 @@ const howWeShareYourPersonalInformation = section(
     ),
     item(
       strong("Other users and the public."),
-      " Your profile and other user-generated content and input data are visible to other users of the Service. Your name, email address, profile picture and role in an organization, and the todos and invitations added to it, are visible to the other members of that organization, and the people you invite see your email address. Profile pictures are stored at public web addresses, so anyone who has a picture's address can view it. This information can be seen, collected and used by others, including being cached, copied, screen captured or stored elsewhere by others, and we are not responsible for any such use of this information.",
+      " Your profile and other user-generated content and input data are visible to other users of the Service with whom you share them. Your name, email address, profile picture and role in an organization, and the todos and invitations added to it, are visible to the other members of that organization, and the people you invite see your email address. Profile pictures are stored at public web addresses, so anyone who has a picture's address can view it. This information can be seen, collected and used by others, including being cached, copied, screen captured or stored elsewhere by others, and we are not responsible for any such use of this information.",
     ),
   ),
 );
@@ -491,6 +491,7 @@ const statePrivacyRightsNotice = section(
     '" section of this Privacy Policy above and the categories of Personal Information specified in the CCPA (Cal. Civ. Code §1798.140). This chart describes our practices currently and during the 12 months preceding the effective date of this Privacy Policy. Information you voluntarily provide to us, such as in free-form webforms, may contain other categories of personal information not described below.',
   ),
   table(
+    "Personal information we collect, use and disclose",
     [
       'Personal Information ("PI") we collect',
       "CCPA statutory category",
@@ -626,6 +627,7 @@ const noticeToEuropeanUsers = section(
     "'.",
   ),
   table(
+    "Our legal bases for processing",
     ["Purpose", "Categories of personal information involved", "Legal basis"],
     [
       [

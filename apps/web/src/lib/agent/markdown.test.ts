@@ -60,7 +60,7 @@ describe("renderSitePageMarkdown", () => {
           list(itemWithList([strong("Parent")], [item("Child")]), item("Sibling")),
           p("Between the lists."),
           bullets("One", "Two"),
-          table(["Name", "Value"], [["a|b", "c"]]),
+          table("Sample table", ["Name", "Value"], [["a|b", "c"]]),
         ),
       ],
       title: "Sample",

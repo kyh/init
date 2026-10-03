@@ -49,6 +49,7 @@ const ListItems = ({ items, nested }: { items: ListItem[]; nested: boolean }) =>
 const Table = ({ block }: { block: TableBlock }) => (
   <div className="overflow-x-auto">
     <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
+      <caption className="sr-only">{block.caption}</caption>
       <thead>
         <tr>
           {block.columns.map((column) => (

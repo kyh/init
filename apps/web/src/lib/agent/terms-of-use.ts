@@ -122,7 +122,7 @@ export const terms: SitePage = {
       clause(
         "2.10",
         "Subscriptions and Payments.",
-        " The Site lets the owners and admins of an organization start a paid subscription for it. Payments are processed by Stripe on its own checkout page and under its own terms, and your payment details are collected by Stripe, not by us. A subscription renews at the end of each billing period until it is canceled, and an organization's owners and admins can manage it through Stripe's billing portal, which opens from the organization's billing page.",
+        " The Site lets the owners and admins of an organization start a paid subscription for it. Payments are processed by Stripe on its own checkout page and under its own terms, and your payment details are collected by Stripe, not by us. A subscription renews at the end of each billing period until it is canceled, and an organization's owners and admins can manage it through Stripe's billing portal, which opens from the organization's billing page. Closing your account or deleting an organization does not cancel a subscription on its own, so cancel it from the organization's billing page first.",
       ),
     ),
     section(
@@ -188,7 +188,7 @@ export const terms: SitePage = {
     section(
       "8. Term and Termination",
       p(
-        "These Terms remain in effect while you use the Site. We may suspend or terminate your access (including suspending access to or deleting your account) at any time and for any reason, including if we believe you have violated these Terms. We are not liable to you for any such termination. Upon termination, Sections 2.2 through 2.6, Section 2.9 and Sections 3 through 11 will survive.",
+        "These Terms remain in effect while you use the Site. We may suspend or terminate your access (including suspending access to or deleting your account) at any time and for any reason, including if we believe you have violated these Terms. We are not liable to you for any such termination. Upon termination, Sections 2.2 through 2.6, Sections 2.9 and 2.10 and Sections 3 through 11 will survive.",
       ),
     ),
     section(

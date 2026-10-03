@@ -47,8 +47,13 @@ export interface ListBlock {
   kind: "list";
 }
 
-/** Rendered as an HTML table and as a GFM pipe table. */
+/**
+ * Rendered as an HTML table and as a GFM pipe table. The caption names the table for
+ * assistive technology; GFM has no caption, so the Markdown twin relies on the paragraph
+ * that introduces the table, as the page does visually.
+ */
 export interface TableBlock {
+  caption: string;
   columns: string[];
   kind: "table";
   rows: string[][];
@@ -104,7 +109,8 @@ export const list = (...items: ListItem[]): ListBlock => ({ items, kind: "list" 
 /** A list whose items are plain text. */
 export const bullets = (...texts: string[]): ListBlock => list(...texts.map((text) => item(text)));
 
-export const table = (columns: string[], rows: string[][]): TableBlock => ({
+export const table = (caption: string, columns: string[], rows: string[][]): TableBlock => ({
+  caption,
   columns,
   kind: "table",
   rows,
