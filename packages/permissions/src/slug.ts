@@ -5,7 +5,7 @@ export const slugify = (str: string) =>
     .replaceAll(/[\u0300-\u036F]/gu, "")
     .trim()
     .toLowerCase()
-    .replaceAll(/[^a-z0-9 -]/gu, "")
+    .replaceAll(/[^a-z0-9\s-]/gu, "")
     .replaceAll(/\s+/gu, "-")
     .replaceAll(/-+/gu, "-")
     .replaceAll(/^-|-$/gu, "");

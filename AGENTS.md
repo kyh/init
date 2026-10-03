@@ -98,7 +98,7 @@ For the three non-web targets, verify with `pnpm typecheck` and `pnpm build`; a 
 
 ## Map
 
-- `apps/{web,mobile,extension,desktop}` · `packages/{auth,contract,service,db,ui}`
+- `apps/{web,mobile,extension,desktop}` · `packages/{contract,service,permissions,db,ui}`
 - `CLAUDE.md` — conventions + command list (Claude-specific)
 - `apps/web/content/docs` — full docs (served at `/docs`, and as raw markdown per page)
 - `/llms.txt`, `/.well-known/api-catalog`, `/openapi.json` — machine-readable surfaces · `apps/web/src/lib/agent` — their builders + the trust pages

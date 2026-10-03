@@ -65,7 +65,7 @@ packages/
 └── ui/           # Shared React components
 ```
 
-Every platform shares the API, auth, and database packages. Write business logic once.
+Every client - web, mobile, extension, desktop - types its API calls against `contract` and checks roles with `permissions`. Only the server (web's route handlers and server components) imports `service` and `db`. Write business logic once, in `service`.
 
 ## Working with the Database
 

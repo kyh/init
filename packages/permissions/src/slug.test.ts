@@ -8,6 +8,10 @@ describe("slugify", () => {
     assert.strictEqual(slugify("Hello World"), "hello-world");
   });
 
+  test("turns tabs and newlines into hyphens", () => {
+    assert.strictEqual(slugify("hello\tworld\nagain"), "hello-world-again");
+  });
+
   test("trims leading and trailing whitespace", () => {
     assert.strictEqual(slugify("  hello  "), "hello");
   });
