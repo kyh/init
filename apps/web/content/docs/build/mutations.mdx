@@ -2,19 +2,23 @@
 title: "Data Mutations"
 ---
 
-Writes go through oRPC procedures: Zod validates, `organizationProcedure` proves org membership, TanStack Query refreshes the cache. The todo list and waitlist form are the two reference implementations.
+Writes go through oRPC procedures: Zod validates, `requireOrganization` proves org membership, TanStack Query refreshes the cache. The todo list and waitlist form are the two reference implementations.
 
 ## Server Side
 
-Every mutation is a procedure with a Zod input and an ownership check:
+Every mutation is a contract with a Zod input (`packages/contract/src/todo/todo-contract.ts`), implemented with an ownership check:
 
 ```typescript
 // packages/api/src/todo/todo-router.ts
-create: organizationProcedure(createTodoInput).handler(async ({ context, input }) => {
+create: os.todo.create.use(requireOrganization).handler(async ({ context, input }) => {
   const [createdTodo] = await context.db
     .insert(todo)
     .values({ organizationId: context.organization.id, title: input.title })
     .returning();
+
+  if (!createdTodo) {
+    throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "Todo was not created" });
+  }
 
   return { todo: createdTodo };
 }),
@@ -23,7 +27,7 @@ create: organizationProcedure(createTodoInput).handler(async ({ context, input }
 Rules the todo router demonstrates:
 
 - **Validate at the boundary** - inputs are parsed by Zod before your code runs; invalid input never reaches the database
-- **Membership before the handler** - `organizationProcedure` (`packages/api/src/orpc.ts`) reads the `slug` off the validated input, resolves the org, and proves the caller is a member; the handler just reads `context.organization.id`
+- **Membership before the handler** - `requireOrganization` (`packages/api/src/orpc.ts`) reads the `slug` off the validated input, resolves the org, and proves the caller is a member; the handler just reads `context.organization.id`
 - **Scope every write** - updates and deletes filter by `organizationId`, not just row id, so members of one org can't touch another's rows
 - **`.returning()` + explicit NOT_FOUND** - if the scoped write matched nothing, throw instead of silently succeeding
 
@@ -65,10 +69,10 @@ createTodo.mutate({ slug, title: trimmed });
 await orpc.todo.create.call({ slug, title });
 ```
 
-Input types come from the router, not hand-written:
+Input types come from the contract, not hand-written:
 
 ```typescript
-import type { RouterInputs } from "@repo/api";
+import type { RouterInputs } from "@repo/contract";
 
 type CreateTodoInput = RouterInputs["todo"]["create"];
 ```
@@ -178,11 +182,11 @@ alertDialog.open(`Delete "${todo.title}"?`, {
 
 ## Form Validation
 
-Reuse the server's Zod schema on the client - one source of truth, errors before the round-trip:
+Reuse the contract's Zod schema on the client - one source of truth, errors before the round-trip:
 
 ```tsx
 // waitlist-form.tsx
-import { joinWaitlistInput } from "@repo/api/waitlist/waitlist-schema";
+import { joinWaitlistInput } from "@repo/contract/waitlist/waitlist-schema";
 
 const form = useAppForm({
   validators: { onSubmit: joinWaitlistInput },

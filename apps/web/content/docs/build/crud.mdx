@@ -4,15 +4,17 @@ title: "CRUD"
 
 Add a complete feature to Init: database table → API router → UI. The todo feature is the reference implementation - this guide builds a `post` feature the same way. Copy the pattern, rename the nouns.
 
-The full path touches three packages:
+The full path touches four packages:
 
 ```
-packages/db/src/drizzle-schema.ts        # 1. Table
-packages/api/src/post/post-schema.ts     # 2. Zod inputs
-packages/api/src/post/post-router.ts     # 3. Procedures
-packages/api/src/root-router.ts          # 4. Mount
-apps/web/src/app/.../posts/page.tsx      # 5. Server page
-apps/web/src/app/.../posts/_components/  # 6. Client UI
+packages/db/src/drizzle-schema.ts             # 1. Table
+packages/contract/src/post/post-schema.ts     # 2. Zod inputs
+packages/contract/src/post/post-contract.ts   # 3. Procedure contract
+packages/contract/src/index.ts                #    Register
+packages/api/src/post/post-router.ts          # 4. Implementation
+packages/api/src/root-router.ts               #    Mount
+apps/web/src/app/.../posts/page.tsx           # 5. Server page
+apps/web/src/app/.../posts/_components/       # 6. Client UI
 ```
 
 ## 1. Define the Table
@@ -57,7 +59,7 @@ No migration files, no codegen. Types flow from the schema definition immediatel
 ## 3. Validate Inputs
 
 ```typescript
-// packages/api/src/post/post-schema.ts
+// packages/contract/src/post/post-schema.ts
 import { z } from "zod";
 
 import { organizationInput } from "../organization/organization-schema";
@@ -72,9 +74,56 @@ export const deletePostInput = organizationInput.extend({
 });
 ```
 
-Org-scoped schemas extend `organizationInput`, so the `slug` is part of each procedure's declared contract - `organizationProcedure` (next step) takes the schema and reads the slug off it.
+Org-scoped schemas extend `organizationInput`, so the `slug` is part of each procedure's declared contract - `requireOrganization` (step 5) reads the slug off the validated input.
 
-## 4. Write the Router
+## 4. Declare the Contract
+
+The contract is what clients type against: input, output, error codes, and OpenAPI metadata. No handlers, no server imports.
+
+```typescript
+// packages/contract/src/post/post-contract.ts
+import { post } from "@repo/db/drizzle-schema";
+import { openapi } from "@orpc/openapi";
+import { createSelectSchema } from "drizzle-orm/zod";
+import { z } from "zod";
+
+import { organizationBase } from "../base";
+import { organizationInput } from "../organization/organization-schema";
+import { createPostInput, deletePostInput } from "./post-schema";
+
+const postRow = createSelectSchema(post);
+const postOutput = z.object({ post: postRow });
+
+export const postContract = {
+  list: organizationBase
+    .meta(openapi({ summary: "List posts", description: "...", tags: ["Post"] }))
+    .input(organizationInput)
+    .output(z.object({ posts: z.array(postRow) })),
+  create: organizationBase
+    .meta(openapi({ summary: "Create a post", description: "...", tags: ["Post"] }))
+    .input(createPostInput)
+    .output(postOutput),
+  delete: organizationBase
+    .meta(openapi({ summary: "Delete a post", description: "...", tags: ["Post"] }))
+    .input(deletePostInput)
+    .output(postOutput),
+};
+```
+
+Register it in `packages/contract/src/index.ts`:
+
+```typescript
+export const contract = {
+  organization: organizationContract,
+  post: postContract, // Add here
+  todo: todoContract,
+  waitlist: waitlistContract,
+};
+```
+
+`organizationBase` declares `NOT_FOUND` and `UNAUTHORIZED` and marks the operation as session-authenticated in `/openapi.json`. `list` needs nothing but the slug, so it takes `organizationInput` itself. If a client form needs the Zod schema at runtime, add `"./post/post-schema"` to `exports` in `packages/contract/package.json` (see `waitlist-schema`).
+
+## 5. Implement the Router
 
 ```typescript
 // packages/api/src/post/post-router.ts
@@ -82,12 +131,10 @@ import { post } from "@repo/db/drizzle-schema";
 import { ORPCError } from "@orpc/server";
 import { and, eq } from "drizzle-orm";
 
-import { organizationProcedure } from "../orpc";
-import { organizationInput } from "../organization/organization-schema";
-import { createPostInput, deletePostInput } from "./post-schema";
+import { os, requireOrganization } from "../orpc";
 
-export const postRouter = {
-  list: organizationProcedure(organizationInput).handler(async ({ context }) => {
+export const postRouter = os.post.router({
+  list: os.post.list.use(requireOrganization).handler(async ({ context }) => {
     const posts = await context.db.query.post.findMany({
       where: { organizationId: context.organization.id },
       orderBy: { createdAt: "desc" },
@@ -95,7 +142,7 @@ export const postRouter = {
 
     return { posts };
   }),
-  create: organizationProcedure(createPostInput).handler(async ({ context, input }) => {
+  create: os.post.create.use(requireOrganization).handler(async ({ context, input }) => {
     const [createdPost] = await context.db
       .insert(post)
       .values({
@@ -105,9 +152,13 @@ export const postRouter = {
       })
       .returning();
 
+    if (!createdPost) {
+      throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "Post was not created" });
+    }
+
     return { post: createdPost };
   }),
-  delete: organizationProcedure(deletePostInput).handler(async ({ context, input }) => {
+  delete: os.post.delete.use(requireOrganization).handler(async ({ context, input }) => {
     const [deletedPost] = await context.db
       .delete(post)
       .where(and(eq(post.id, input.id), eq(post.organizationId, context.organization.id)))
@@ -119,24 +170,24 @@ export const postRouter = {
 
     return { post: deletedPost };
   }),
-};
+});
 ```
 
-`organizationProcedure` (in `packages/api/src/orpc.ts`) takes the procedure's input schema, resolves the org named by `input.slug`, and proves membership before any handler runs - so handlers just read `context.organization.id`. `list` needs nothing but the slug, so it passes `organizationInput` itself. Every mutation still filters by `organizationId` in the `where` clause, so a valid member of org A can never touch org B's rows.
+`requireOrganization` (in `packages/api/src/orpc.ts`) checks the session, resolves the org named by `input.slug`, and proves membership before any handler runs - so handlers just read `context.organization.id`. Attach it per procedure, not on the router: oRPC's `.router()` re-applies router-level middleware, so it would run twice. Every mutation still filters by `organizationId` in the `where` clause, so a valid member of org A can never touch org B's rows.
 
-## 5. Mount the Router
+Mount it in the root router:
 
 ```typescript
 // packages/api/src/root-router.ts
-export const appRouter = {
-  waitlist: waitlistRouter,
+export const appRouter = os.router({
   organization: organizationRouter,
-  todo: todoRouter,
   post: postRouter, // Add here
-};
+  todo: todoRouter,
+  waitlist: waitlistRouter,
+});
 ```
 
-`orpc.post.*` now autocompletes in every app.
+`os.router` fails to compile until every contract procedure is implemented with matching types. `orpc.post.*` now autocompletes in every app.
 
 ## 6. Build the Page
 
@@ -244,14 +295,15 @@ pnpm -F @repo/api test
 
 ## Ship It Everywhere
 
-Nothing else to do. The mobile app (`apps/mobile/src/utils/api.ts`) consumes the same `AppRouter` type, so `orpc.post.list` works there too. The extension and desktop shells open the web app itself, so they get the feature for free.
+Nothing else to do. The mobile app (`apps/mobile/src/utils/api.ts`) types its client with the same `ContractClient`, so `orpc.post.list` works there too. The extension and desktop shells open the web app itself, so they get the feature for free.
 
 ## Checklist
 
 - Table has `organizationId` + index + `pgTable.withRLS`
 - `pnpm db:push` ran
 - Zod schema extends `organizationInput` and validates the feature's own fields
-- Router is built with `organizationProcedure` and filters mutations by `organizationId`
+- Contract built on `organizationBase` with `.input()` and `.output()`, registered in `packages/contract/src/index.ts`
+- Each procedure `.use(requireOrganization)` and filters mutations by `organizationId`
 - Router mounted in `root-router.ts`
 - Page prefetches; client uses `useSuspenseQuery`
 - Tests cover the unauthorized paths

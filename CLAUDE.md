@@ -27,10 +27,15 @@ apps/
   extension/   # Chrome extension (wxt)
   desktop/     # Desktop app (Electron)
 packages/
-  api/         # oRPC router + better-auth
+  api/         # oRPC router (implements contract) + better-auth
+  contract/    # oRPC contract: zod inputs, outputs, errors, openapi meta
   db/          # Drizzle schema + client, local Postgres compose file
   ui/          # Shared React components (shadcn-style)
 ```
+
+### Contract-first API
+
+`@repo/contract` is the single source of truth: each feature has `<f>-schema.ts` (zod inputs; org-scoped ones extend `organizationInput`) and `<f>-contract.ts` (built on `publicBase` / `protectedBase` / `organizationBase` from `base.ts`), registered in `src/index.ts`. `@repo/api` implements it with `os = implement(contract)` — `os.<f>.router({ <proc>: os.<f>.<proc>.use(requireOrganization).handler(...) })`, mounted in `root-router.ts`; `os.router` fails to compile if a procedure is missing or mistyped. Attach middleware (`requireSession`, `requireOrganization`) per procedure, never router-level — `.router()` re-applies it, so it would run twice. Clients type against `ContractClient` / `RouterInputs` / `RouterOutputs` from `@repo/contract`, never `@repo/api`.
 
 ### Mutation path
 

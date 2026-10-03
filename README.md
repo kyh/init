@@ -30,6 +30,7 @@ apps/
   desktop/     # Electron desktop app
 packages/
   api/         # oRPC router + better-auth
+  contract/    # oRPC contract shared by server and clients
   db/          # Drizzle schema + local Postgres compose
   ui/          # Shared React components
 ```

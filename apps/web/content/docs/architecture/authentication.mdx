@@ -144,22 +144,24 @@ The oRPC context resolves the session from request headers:
 
 ```typescript
 // packages/api/src/orpc.ts
-export const createORPCContext = async (opts: { headers: Headers }) => {
-  const session = await auth.api.getSession({
-    headers: opts.headers,
-  });
+export const createORPCContext = async (opts: {
+  headers: Headers;
+  /** null means resolved and logged out; undefined triggers a lookup. */
+  session?: Session | null;
+}) => {
+  const session =
+    opts.session === undefined
+      ? await auth.api.getSession({ headers: opts.headers })
+      : opts.session;
 
-  return {
-    session,
-    db,
-  };
+  return { db, session };
 };
 ```
 
-`protectedProcedure` guarantees a logged-in user:
+The `requireSession` middleware guarantees a logged-in user. Procedures whose contract extends `protectedBase` attach it with `.use(requireSession)`:
 
 ```typescript
-export const protectedProcedure = publicProcedure.use(({ context, next }) => {
+export const requireSession = base.middleware(({ context, next }) => {
   if (!context.session?.user) {
     throw new ORPCError("UNAUTHORIZED", {
       message: "You must be logged in to access this resource",
@@ -174,7 +176,7 @@ export const protectedProcedure = publicProcedure.use(({ context, next }) => {
 });
 ```
 
-Organization membership is a layer on top: `organizationProcedure(schema)` in `packages/api/src/orpc.ts` resolves the organization named by `input.slug` and proves the caller is a member before the handler runs - handlers get `context.organization` and `context.membership`.
+Organization membership is a layer on top: `requireOrganization` in `packages/api/src/orpc.ts` includes the session check, then resolves the organization named by `input.slug` and proves the caller is a member before the handler runs - handlers get `context.organization` and `context.membership`.
 
 ## Client Usage
 
