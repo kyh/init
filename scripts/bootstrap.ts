@@ -193,12 +193,14 @@ const removeExtension = () => {
 };
 
 const removeDesktop = () => {
-  if (fileExists("pnpm-workspace.yaml")) {
-    const workspace = readText("pnpm-workspace.yaml").replaceAll(
-      /^ {2}electron(?:-winstaller)?: true\n/gmu,
+  const ciPath = ".github/workflows/ci.yml";
+  if (fileExists(ciPath)) {
+    // the steps only the desktop app's Rust build needs, each named `Desktop …`
+    const ci = readText(ciPath).replaceAll(
+      /^(?: {6}# [^\n]*\n)?^ {6}- name: Desktop [^\n]*\n(?: {8}[^\n]*\n)*\n/gmu,
       "",
     );
-    writeText("pnpm-workspace.yaml", workspace);
+    writeText(ciPath, ci);
   }
 };
 
@@ -224,7 +226,7 @@ const apps: App[] = [
     cleanup: removeDesktop,
     devScript: "dev:desktop",
     dir: "apps/desktop",
-    name: "Desktop (Electron)",
+    name: "Desktop (Tauri)",
   },
 ];
 

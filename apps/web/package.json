@@ -26,6 +26,7 @@
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-query-devtools": "^5.103.1",
     "@tanstack/react-table": "catalog:",
+    "@tauri-apps/api": "^2.12.1",
     "@vercel/blob": "^2.8.0",
     "better-auth": "catalog:",
     "cn": "catalog:",

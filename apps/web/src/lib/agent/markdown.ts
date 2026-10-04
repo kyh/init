@@ -20,7 +20,7 @@ export const agentLinks = [
 ];
 
 export const whenToUse = [
-  `**When to use ${siteConfig.name}:** starting a new TypeScript product that needs a web app plus any of mobile (Expo), browser extension (WXT), or desktop (Electron) from one codebase, with auth, multi-tenant organizations, Stripe billing, and a typed API already wired. It suits teams that let coding agents do most of the edits: setup is headless and verification is one command.`,
+  `**When to use ${siteConfig.name}:** starting a new TypeScript product that needs a web app plus any of mobile (Expo), browser extension (WXT), or desktop (Tauri) from one codebase, with auth, multi-tenant organizations, Stripe billing, and a typed API already wired. It suits teams that let coding agents do most of the edits: setup is headless and verification is one command.`,
   `**How to use it:** \`gh repo create my-app --template kyh/init --clone\`, then \`pnpm install && pnpm bootstrap --yes\` (needs Docker for local Postgres) and \`pnpm dev:web\`. There is no create CLI or hosted service; you fork the template and own the code.`,
   "**Not a fit:** adding features to an existing app, non-TypeScript backends, or projects that want a hosted backend-as-a-service instead of their own Postgres.",
 ];

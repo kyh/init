@@ -11,7 +11,7 @@ One TypeScript codebase that ships to web, mobile, browser extension, and deskto
 
 ## Getting Started
 
-**Prerequisites**: [Node.js 24](https://nodejs.org), [pnpm 12](https://pnpm.io), [Docker](https://docs.docker.com/get-docker/)
+**Prerequisites**: [Node.js 24](https://nodejs.org), [pnpm 12](https://pnpm.io), [Docker](https://docs.docker.com/get-docker/), and [Rust](https://rustup.rs) for the desktop app (on Linux, also [Tauri's system libraries](https://v2.tauri.app/start/prerequisites/#linux))
 
 ```sh
 pnpm install
@@ -27,7 +27,7 @@ apps/
   web/         # Next.js web app
   mobile/      # Expo/React Native mobile app
   extension/   # WXT Chrome extension
-  desktop/     # Electron desktop app
+  desktop/     # Tauri desktop app
 packages/
   api/         # oRPC router + better-auth
   db/          # Drizzle schema + local Postgres compose
@@ -39,7 +39,7 @@ packages/
 - [Next.js](https://nextjs.org)
 - [Expo](https://expo.dev)
 - [Chrome Extension (WXT)](https://wxt.dev)
-- [Electron](https://www.electronjs.org)
+- [Tauri](https://v2.tauri.app)
 - [Tailwind CSS](https://tailwindcss.com)
 - [oRPC](https://orpc.dev)
 - [Drizzle](https://orm.drizzle.team)
@@ -54,7 +54,7 @@ packages/
 | `pnpm dev:web`       | Run Next.js only              |
 | `pnpm dev:mobile`    | Run Expo only                 |
 | `pnpm dev:extension` | Run Chrome extension only     |
-| `pnpm dev:desktop`   | Run Electron only             |
+| `pnpm dev:desktop`   | Run the Tauri desktop app     |
 | `pnpm build`         | Build all packages            |
 | `pnpm typecheck`     | Type check all packages       |
 | `pnpm lint`          | Lint all packages (oxlint)    |

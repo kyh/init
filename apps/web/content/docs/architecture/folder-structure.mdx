@@ -12,7 +12,7 @@ init/
 │   ├── web/               # Next.js 16 web app
 │   ├── mobile/            # Expo mobile app
 │   ├── extension/         # Chrome extension (WXT)
-│   └── desktop/           # Electron desktop app
+│   └── desktop/           # Tauri desktop app
 ├── packages/
 │   ├── api/               # oRPC router + better-auth
 │   ├── db/                # Drizzle schema + local Postgres compose
@@ -90,16 +90,17 @@ apps/extension/
 
 ### Desktop App (`apps/desktop/`)
 
-Electron via electron-vite:
+A Tauri 2 shell around the web app: a Rust binary that opens the system webview on `devUrl` under `pnpm dev:desktop` and on `frontendDist` in a build. The web app reaches it through `apps/web/src/lib/desktop-bridge.ts`, and only through the commands its capability grants:
 
 ```
 apps/desktop/
-├── src/
-│   ├── main/              # Main process
-│   ├── preload/           # Preload scripts
-│   └── renderer/          # UI
-├── electron.vite.config.ts
-└── electron-builder.yml
+├── src-tauri/
+│   ├── src/               # lib.rs (the builder), window, navigation, menu, updater
+│   ├── capabilities/      # what the web app may invoke
+│   ├── build.rs           # the app manifest: every command is a permission
+│   ├── Cargo.toml
+│   └── tauri.conf.json
+└── rust-toolchain.toml
 ```
 
 ## Shared Packages (`packages/`)

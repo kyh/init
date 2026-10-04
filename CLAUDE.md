@@ -2,9 +2,7 @@
 
 ## Project Overview
 
-**init** - pnpm monorepo with Turborepo. Multi-platform starter: Next.js web, Expo mobile, Chrome extension, Electron desktop.
-
-Desktop uses Vite 7: electron-vite 5 does not support the workspace's Vite 8.
+**init** - pnpm monorepo with Turborepo. Multi-platform starter: Next.js web, Expo mobile, Chrome extension, Tauri desktop.
 
 ## Tech Stack
 
@@ -17,6 +15,7 @@ Desktop uses Vite 7: electron-vite 5 does not support the workspace's Vite 8.
 - **Email**: Resend REST API (console fallback in dev)
 - **Database**: Postgres — Docker Compose locally, Vercel Postgres in production (auth is better-auth)
 - **Storage**: Vercel Blob (avatars only; no local emulator, so that route 501s offline)
+- **Desktop**: Tauri 2 — a Rust shell over the system webview (WebKit on macOS)
 
 ## Monorepo Structure
 
@@ -25,7 +24,7 @@ apps/
   web/         # Next.js 16 web app (fumadocs for docs)
   mobile/      # React Native mobile (nativewind)
   extension/   # Chrome extension (wxt)
-  desktop/     # Desktop app (Electron)
+  desktop/     # Desktop app (Tauri 2: a Rust shell around the web app)
 packages/
   api/         # oRPC router + better-auth
   db/          # Drizzle schema + client, local Postgres compose file
@@ -42,6 +41,10 @@ Mutations go through oRPC or the better-auth client — never Next Server Action
 
 The Expo SDK pins the native modules. `update.ignoreDeps` in `pnpm-workspace.yaml` makes `pnpm up --latest -r` skip `expo`, `expo-*`, `@expo/*`, `react-native`, `react-native-*`, `@react-native/*` and `nativewind`; bump the SDK-pinned ones with `npx expo install --fix` during an SDK upgrade. It matches by name only, so the `expo:` catalog rows (`react`, `react-dom`, `typescript`, `@types/react`) are **not** guarded — ignoring them would freeze web too. After a sweep, revert those rows by hand, then run `npx expo install --check` in `apps/mobile`.
 
+### Desktop shell
+
+`apps/desktop` is a Tauri 2 shell around the web app, not a second frontend: its window opens `devUrl` (`pnpm dev:desktop`, with `pnpm dev:web` running) or `frontendDist` (a build), and the web app reaches it through `apps/web/src/lib/desktop-bridge.ts`, which parses every frame with zod. Every command is named in `src-tauri/build.rs`'s app manifest, so a page reaches only what `src-tauri/capabilities/` grants; Tauri counts the app URL as a local origin, so an OAuth page the window navigates to gets no IPC. Rust rides the same gates: `typecheck` is clippy (pedantic, `-D warnings`), `test` is `cargo test`, `format` is `cargo fmt --check`. On Linux the build needs WebKitGTK (`libwebkit2gtk-4.1-dev`); macOS and Windows ship their webview. The updater stays off until `plugins.updater` is configured (`apps/web/content/docs/launch/deployment.mdx`).
+
 ## Common Commands
 
 ```bash
@@ -52,7 +55,7 @@ pnpm dev:mobile       # Run Expo only
 pnpm typecheck        # Type check all packages
 pnpm lint             # Lint all packages (oxlint)
 pnpm format           # Check formatting (oxfmt)
-pnpm format:fix       # Format all packages (oxfmt)
+pnpm format:fix       # Format all packages (oxfmt, cargo fmt)
 pnpm test             # Run tests (node:test)
                       # Real-database suites skip unless TEST_POSTGRES_URL points at a disposable, schema-pushed Postgres
 pnpm verify           # typecheck · lint · format · test (CI gate)

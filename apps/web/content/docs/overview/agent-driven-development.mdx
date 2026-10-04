@@ -58,12 +58,12 @@ One gap: avatar uploads go to Vercel Blob, which has no local emulator. Without 
 
 ## What an agent can verify
 
-| Platform           | Dev command          | Runtime-verifiable by an agent       |
-| ------------------ | -------------------- | ------------------------------------ |
-| Web (Next.js)      | `pnpm dev:web`       | **Yes** — headless via agent-browser |
-| Mobile (Expo)      | `pnpm dev:mobile`    | No — needs a simulator/device        |
-| Extension (WXT)    | `pnpm dev:extension` | No — real Chrome                     |
-| Desktop (Electron) | `pnpm dev:desktop`   | No — GUI window                      |
+| Platform        | Dev command          | Runtime-verifiable by an agent       |
+| --------------- | -------------------- | ------------------------------------ |
+| Web (Next.js)   | `pnpm dev:web`       | **Yes** — headless via agent-browser |
+| Mobile (Expo)   | `pnpm dev:mobile`    | No — needs a simulator/device        |
+| Extension (WXT) | `pnpm dev:extension` | No — real Chrome                     |
+| Desktop (Tauri) | `pnpm dev:desktop`   | No — GUI window                      |
 
 ## The rest of the surface
 
