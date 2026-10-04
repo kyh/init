@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getOrganizationBySlug, getSession } from "@/lib/auth-server";
 
-import { hasPermission } from "@repo/api/auth/permissions";
+import { hasPermission } from "@repo/permissions";
 import { PageHeader } from "@/components/header";
 import { BillingHistory, BillingPlan } from "./_components/billing-plan";
 

@@ -16,7 +16,7 @@ import { ImageIcon } from "lucide-react";
 import { useAppForm } from "@/lib/form";
 import { z } from "zod";
 
-import type { Session } from "@repo/api/auth/auth";
+import type { Session } from "@repo/service/auth/auth";
 import { authClient } from "@/lib/auth-client";
 
 const avatarResponseSchema = z.object({ url: z.string() });

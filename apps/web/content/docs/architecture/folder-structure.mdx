@@ -14,10 +14,12 @@ init/
 │   ├── extension/         # Chrome extension (WXT)
 │   └── desktop/           # Electron desktop app
 ├── packages/
-│   ├── api/               # oRPC router + better-auth
+│   ├── permissions/       # Client-safe auth helpers: role permissions, slugify
+│   ├── contract/          # oRPC contract: procedure inputs, outputs, errors
+│   ├── service/           # oRPC implementation of the contract + better-auth
 │   ├── db/                # Drizzle schema + local Postgres compose
 │   └── ui/                # Shared React components
-├── scripts/               # bootstrap.ts (provision + trim), seed via packages/api
+├── scripts/               # bootstrap.ts (provision + trim), seed via packages/service
 ├── package.json           # Root workspace scripts
 ├── turbo.json             # Turborepo pipeline + env
 └── pnpm-workspace.yaml    # Workspaces + version catalog
@@ -104,23 +106,50 @@ apps/desktop/
 
 ## Shared Packages (`packages/`)
 
-### API Package (`packages/api/`)
+### Contract Package (`packages/contract/`)
 
-oRPC router and better-auth config:
+The API's single source of truth - what each procedure accepts, returns, and can fail with. Clients type against it without importing server code:
 
 ```
-packages/api/src/
+packages/contract/src/
+├── organization/          # organization-contract.ts, organization-schema.ts
+├── todo/                  # Example CRUD contract
+├── waitlist/              # Waitlist contract
+├── base.ts                # publicBase, protectedBase, organizationBase
+└── index.ts               # Exports: contract, ContractClient, RouterInputs/Outputs
+```
+
+Convention per feature: `*-contract.ts` (procedures), `*-schema.ts` (Zod inputs).
+
+### Service Package (`packages/service/`)
+
+oRPC implementation of the contract, plus better-auth config:
+
+```
+packages/service/src/
 ├── auth/                  # auth.ts (better-auth), auth-schema.ts, utils
-├── organization/          # organization-router.ts, -schema.ts, -test
+├── organization/          # organization-router.ts, -test
 ├── todo/                  # Example CRUD router
 ├── waitlist/              # Waitlist router
-├── root-router.ts         # Router composition
-├── orpc.ts                # Context + procedures
+├── root-router.ts         # Implements the whole contract
+├── orpc.ts                # Context, implementer, middleware
 ├── test-utils.ts          # node:test helpers
-└── index.ts               # Exports: appRouter, RouterInputs/Outputs
+└── index.ts               # Exports: appRouter, AppRouter, createORPCContext
 ```
 
-Convention per feature: `*-router.ts` (procedures), `*-schema.ts` (Zod), `*.test.ts` (tests).
+Convention per feature: `*-router.ts` (handlers), `*.test.ts` (tests).
+
+### Permissions Package (`packages/permissions/`)
+
+Client-safe auth helpers, imported by the server and by web and mobile clients alike:
+
+```
+packages/permissions/src/
+├── permissions.ts         # better-auth access control: ac, roles, hasPermission, ROLES, roleSchema
+└── slug.ts                # slugify, FALLBACK_ORGANIZATION_SLUG
+```
+
+No server code (database, better-auth instance, secrets) belongs here.
 
 ### Database Package (`packages/db/`)
 
@@ -184,9 +213,10 @@ No separate docs package - these pages are MDX files in `apps/web/content/docs/`
 
 ### New API Routes
 
-1. Add `packages/api/src/<feature>/` with router + schema
-2. Register in `packages/api/src/root-router.ts`
-3. Consume with full types via the `orpc` utils
+1. Add `packages/contract/src/<feature>/` with contract + schema, and register it in `packages/contract/src/index.ts`
+2. Add `packages/service/src/<feature>/<feature>-router.ts` implementing it
+3. Register in `packages/service/src/root-router.ts`
+4. Consume with full types via the `orpc` utils
 
 ### New UI Components
 

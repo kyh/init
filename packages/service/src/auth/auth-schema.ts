@@ -1,8 +1,5 @@
+import { authMetadata } from "@repo/contract/organization/organization-schema";
 import { z } from "zod";
-
-export const authMetadata = z.object({
-  personal: z.boolean().optional(),
-});
 
 export const authMetadataSchema = z
   .string()

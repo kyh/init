@@ -59,24 +59,30 @@ Covers page views and Core Web Vitals with zero config on Vercel.
 
 ### API Timing
 
-Add an oRPC middleware to catch slow procedures:
+Add a client interceptor to the oRPC handler to catch slow procedures. It wraps every procedure call, so nothing is attached per procedure:
 
 ```typescript
-// packages/api/src/orpc.ts
-const timingMiddleware = o.middleware(async ({ next, path }) => {
-  const start = Date.now();
-  const result = await next();
-  const duration = Date.now() - start;
-
-  if (duration > 1000) {
-    console.warn(`Slow procedure: ${path.join(".")} took ${duration}ms`);
-  }
-
-  return result;
+// apps/web/src/app/api/orpc/[[...rest]]/route.ts
+const handler = new RPCHandler(appRouter, {
+  clientInterceptors: [
+    async ({ next, path }) => {
+      const start = Date.now();
+      try {
+        return await next();
+      } finally {
+        // `finally` so slow failures are logged too.
+        const duration = Date.now() - start;
+        if (duration > 1000) {
+          console.warn(`Slow procedure: ${path.join(".")} took ${duration}ms`);
+        }
+      }
+    },
+    // ...the existing onError interceptor
+  ],
 });
-
-export const publicProcedure = o.use(timingMiddleware);
 ```
+
+The REST handler (`apps/web/src/app/api/v1/[[...rest]]/route.ts`) takes the same `clientInterceptors`; the in-process server caller (`apps/web/src/orpc/server.tsx`) takes them as `interceptors` on `createRouterClient`. A middleware works too (`os.<feature>.use(...)`), but must be added to every feature router.
 
 Vercel's log drains forward these warnings to your log store.
 

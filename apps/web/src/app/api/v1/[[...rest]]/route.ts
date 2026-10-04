@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { appRouter, createORPCContext } from "@repo/api";
+import { appRouter, createORPCContext } from "@repo/service";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { onError, ORPCError } from "@orpc/server";
 

@@ -9,7 +9,7 @@ What to verify before real users arrive. [Deployment](/docs/launch/deployment) g
 Init ships with the author's defaults baked in. Change these before launch:
 
 - **`apps/web/src/lib/site-config.ts`** - name, description, production URL, Twitter handle. `siteConfig.url` feeds metadata, sitemap, robots, and `llms.txt`
-- **`packages/api/src/auth/auth.ts`** - `oAuthProxy` derives `productionURL` from `VERCEL_PROJECT_PRODUCTION_URL`; deploying off Vercel means setting that env var (or replacing the derivation)
+- **`packages/service/src/auth/auth.ts`** - `oAuthProxy` derives `productionURL` from `VERCEL_PROJECT_PRODUCTION_URL`; deploying off Vercel means setting that env var (or replacing the derivation)
 - **`apps/web/src/app/(docs)/docs/layout.tsx`** - `githubUrl` points at the upstream repo
 - **`public/og.jpg`** - the OpenGraph image referenced in `src/app/layout.tsx`
 
@@ -25,7 +25,7 @@ Init ships with the author's defaults baked in. Change these before launch:
 Two layers, know both:
 
 1. **RLS deny-by-default** - every table is declared through `pgTable.withRLS` with no policies, so any connection that isn't the table owner gets nothing
-2. **oRPC procedures** - the real authorization. `protectedProcedure` requires a session; `organizationProcedure(schema)` (in `packages/api/src/orpc.ts`) resolves the org and proves membership before any org-scoped handler runs
+2. **oRPC procedures** - the real authorization. The `requireSession` middleware requires a session; `requireOrganization` (both in `packages/service/src/orpc.ts`) resolves the org and proves membership before any org-scoped handler runs
 
 Nothing in this stack puts Postgres on the network, so the oRPC procedures are the only way in and RLS is the backstop rather than the gate. Keep it that way: if you ever enable a hosted data API or hand out a lower-privileged role, deny-by-default is what stops a forgotten table from being world-readable. If you regenerate the auth schema, declare every table through `pgTable.withRLS` again.
 
@@ -33,10 +33,10 @@ Nothing in this stack puts Postgres on the network, so the oRPC procedures are t
 
 Honest gaps. Each is a deliberate "add when you need it":
 
-- **Email delivery** - set `RESEND_API_KEY` (and `EMAIL_FROM`) in production. Password reset and organization invite emails send through Resend's REST API (`packages/api/src/email/send-email.ts`); without the key they log to the server console instead of sending
+- **Email delivery** - set `RESEND_API_KEY` (and `EMAIL_FROM`) in production. Password reset and organization invite emails send through Resend's REST API (`packages/service/src/email/send-email.ts`); without the key they log to the server console instead of sending
 - **Rate limiting** - better-auth's database-backed limiter covers auth routes, but oRPC procedures (`/api/orpc` and `/api/v1`) have none. Add [Vercel WAF rules](https://vercel.com/docs/security/vercel-waf) or a middleware backed by a shared store
 - **Billing** - Stripe via `@better-auth/stripe`. Set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and `STRIPE_PRO_PRICE_ID`, then point a Stripe webhook at `/api/auth/stripe/webhook` (events: `checkout.session.completed`, `customer.subscription.created/updated/deleted`). The webhook keeps the `subscription` table in sync; `dashboard/[slug]/billing` handles checkout and the billing portal. Subscriptions are org-scoped — only owners/admins can manage them
-- **Email verification** - verification emails send on signup. Uncomment `requireEmailVerification` in `packages/api/src/auth/auth.ts` to block unverified logins
+- **Email verification** - verification emails send on signup. Uncomment `requireEmailVerification` in `packages/service/src/auth/auth.ts` to block unverified logins
 - **Background jobs** - no queue. Long work either fits in a request or needs Inngest/Trigger.dev/QStash
 
 ## Database Safety
