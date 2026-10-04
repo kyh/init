@@ -31,6 +31,8 @@ It comes with a personal organization and a few sample todos (see `packages/serv
 pnpm verify   # typecheck · lint · format · test
 ```
 
+It checks the desktop app's Rust as well (clippy, `cargo test`, `cargo fmt`), so a sandbox that keeps the desktop app needs [rustup](https://rustup.rs) and, on Linux, WebKitGTK (`libwebkit2gtk-4.1-dev`), as CI installs them.
+
 **Runtime** — the part most templates skip. Passing types isn't proof the feature works. Init ships [agent-browser](https://github.com/vercel-labs/agent-browser) so an agent can drive the real web app:
 
 ```bash
@@ -52,7 +54,7 @@ pnpm emulate
 pnpm dev:web
 ```
 
-With the var set, the "Continue with GitHub" button routes through a dev-only `genericOAuth` provider aimed at the emulator — the same button, no diverging prod path (unset ⇒ the real provider). Click it and the emulator's user-picker completes sign-in. Fixtures live in `emulate.config.yaml`.
+With the var set, the "Continue with GitHub" button routes through a dev-only `genericOAuth` provider aimed at the emulator — the same button, no diverging prod path (unset ⇒ the real provider). Click it and the emulator's user-picker completes sign-in; under `pnpm dev:desktop` the shell keeps that sign-in in its own window. Fixtures live in `emulate.config.yaml`.
 
 One gap: avatar uploads go to Vercel Blob, which has no local emulator. Without `BLOB_READ_WRITE_TOKEN` that one route returns 501 with a pointer message — every other flow works offline.
 
