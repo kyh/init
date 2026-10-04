@@ -117,7 +117,7 @@ Updates are off until you configure them. Generate a key pair with `pnpm -F @rep
 }
 ```
 
-Build with `TAURI_SIGNING_PRIVATE_KEY` set and publish the bundle beside its `latest.json` (see [the updater guide](https://v2.tauri.app/plugin/updater/)). The app then gets Check for Updates… in its menu, and the web app's update banner appears when a release is out: the download and the restart each wait for a click.
+Build with `TAURI_SIGNING_PRIVATE_KEY` set and publish the bundle beside its `latest.json` (see [the updater guide](https://v2.tauri.app/plugin/updater/)). The web app then checks for a release each time it loads in the shell and shows its update banner when one is out (on macOS, the app menu's Check for Updates… also checks on demand); the download and the restart each wait for a click.
 
 ## CI/CD
 
