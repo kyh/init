@@ -11,7 +11,7 @@ One TypeScript codebase that ships to web, mobile, browser extension, and deskto
 
 ## Getting Started
 
-**Prerequisites**: [Node.js 24](https://nodejs.org), [pnpm 12](https://pnpm.io), [Docker](https://docs.docker.com/get-docker/), and [Rust](https://rustup.rs) for the desktop app (on Linux, also [Tauri's system libraries](https://v2.tauri.app/start/prerequisites/#linux))
+**Prerequisites**: [Node.js 24](https://nodejs.org), [pnpm 12](https://pnpm.io), [Docker](https://docs.docker.com/get-docker/), and for the desktop app [Rust](https://rustup.rs) plus [Tauri's platform prerequisites](https://v2.tauri.app/start/prerequisites/)
 
 ```sh
 pnpm install
@@ -54,7 +54,7 @@ packages/
 | `pnpm dev:web`       | Run Next.js only              |
 | `pnpm dev:mobile`    | Run Expo only                 |
 | `pnpm dev:extension` | Run Chrome extension only     |
-| `pnpm dev:desktop`   | Run the Tauri desktop app     |
+| `pnpm dev:desktop`   | Run the desktop app (and web) |
 | `pnpm build`         | Build all packages            |
 | `pnpm typecheck`     | Type check all packages       |
 | `pnpm lint`          | Lint all packages (oxlint)    |

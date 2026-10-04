@@ -16,7 +16,7 @@
     "dev:web": "turbo watch dev -F @repo/web...",
     "dev:mobile": "turbo watch dev -F @repo/mobile...",
     "dev:extension": "turbo watch dev -F @repo/extension...",
-    "dev:desktop": "turbo watch dev -F @repo/desktop...",
+    "dev:desktop": "turbo watch dev -F @repo/desktop... -F @repo/web...",
     "lint": "oxlint --report-unused-disable-directives",
     "lint:fix": "oxlint --fix",
     "format": "oxfmt --check && turbo run format",

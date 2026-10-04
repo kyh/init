@@ -8,13 +8,14 @@
   "scripts": {
     "build": "tauri build --no-bundle",
     "clean": "git clean -xdf .turbo src-tauri/target src-tauri/gen node_modules",
-    "dev": "tauri dev",
+    "dev": "pnpm with-env tauri dev",
     "format": "cargo fmt --manifest-path src-tauri/Cargo.toml --check",
     "format:fix": "cargo fmt --manifest-path src-tauri/Cargo.toml",
     "package": "tauri build",
     "tauri": "tauri",
     "test": "cargo test --locked --manifest-path src-tauri/Cargo.toml",
-    "typecheck": "cargo clippy --locked --all-targets --manifest-path src-tauri/Cargo.toml -- -D warnings"
+    "typecheck": "cargo clippy --locked --all-targets --manifest-path src-tauri/Cargo.toml -- -D warnings",
+    "with-env": "dotenv -e ../../.env --"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.12.1"

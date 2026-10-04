@@ -40,6 +40,7 @@ pub fn create_main<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<WebviewWindo
     } else {
         "Init"
     };
+    let allowed = navigation::allowed_origins(&app_url, navigation::emulator_url().as_deref());
     let navigating = app.clone();
     let opening = app.clone();
 
@@ -49,7 +50,7 @@ pub fn create_main<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<WebviewWindo
         .min_inner_size(800.0, 600.0)
         // WebKit asks about a frame's navigations too, so an iframe from an origin `classify`
         // does not allow is refused here; name its origin there if the web app embeds one
-        .on_navigation(move |url| match navigation::classify(url, &app_url) {
+        .on_navigation(move |url| match navigation::classify(url, &allowed) {
             Verdict::Allow => true,
             Verdict::OpenExternally => {
                 open_externally(&navigating, url);

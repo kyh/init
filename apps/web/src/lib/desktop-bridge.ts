@@ -22,26 +22,41 @@ export interface DesktopBridge {
   onUpdateState: (listener: (state: DesktopUpdateState) => void) => () => void;
 }
 
-// `listen` resolves its stop function later, so an early unsubscribe still detaches
-const detach = async (pending: Promise<UnlistenFn>): Promise<void> => {
-  const stop = await pending;
-  stop();
+/**
+ * Every frame from the shell is parsed before the page sees it; one it does not know is dropped.
+ * A registration the shell refused delivers nothing and leaves nothing to detach.
+ */
+const register = async <T>(
+  event: string,
+  schema: z.ZodType<T>,
+  listener: (value: T) => void,
+): Promise<UnlistenFn | null> => {
+  try {
+    return await listen<unknown>(event, ({ payload }) => {
+      const parsed = schema.safeParse(payload);
+      if (parsed.success) {
+        listener(parsed.data);
+      }
+    });
+  } catch {
+    return null;
+  }
 };
 
-/** Every frame from the shell is parsed before the page sees it; one it does not know is dropped. */
+// `listen` resolves its stop function later, so an early unsubscribe still detaches
+const detach = async (registration: Promise<UnlistenFn | null>): Promise<void> => {
+  const stop = await registration;
+  stop?.();
+};
+
 const subscribe = <T>(
   event: string,
   schema: z.ZodType<T>,
   listener: (value: T) => void,
 ): (() => void) => {
-  const unlisten = listen<unknown>(event, ({ payload }) => {
-    const parsed = schema.safeParse(payload);
-    if (parsed.success) {
-      listener(parsed.data);
-    }
-  });
+  const registration = register(event, schema, listener);
   return () => {
-    void detach(unlisten);
+    void detach(registration);
   };
 };
 
