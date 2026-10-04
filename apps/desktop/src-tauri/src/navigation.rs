@@ -7,7 +7,7 @@ use tauri::Url;
 const OAUTH_ORIGINS: &[&str] = &["https://github.com"];
 
 /// The dev-only GitHub emulator (`pnpm emulate`), named by the variable the web app's
-/// `genericOAuth` provider reads (`packages/api/src/auth/auth.ts`).
+/// `genericOAuth` provider reads (`packages/service/src/auth/auth.ts`).
 const EMULATOR_URL_VAR: &str = "NEXT_PUBLIC_GITHUB_EMULATOR_URL";
 
 #[derive(Debug, PartialEq, Eq)]

@@ -104,7 +104,20 @@ pnpm -F @repo/desktop package   # tauri build → src-tauri/target/release/bundl
 
 Upload the extension to the Chrome Web Store. The desktop bundle is ad-hoc signed by default; `tauri build` signs with a Developer ID and notarizes when `APPLE_SIGNING_IDENTITY` and the `APPLE_*` notarization variables are set (see [Tauri's macOS signing guide](https://v2.tauri.app/distribute/sign/macos/)). To point a build at another deployment, pass `--config '{"build":{"frontendDist":"https://staging.example.com"}}'`.
 
-Updates are off until you configure them: generate a key pair with `pnpm -F @repo/desktop tauri signer generate`, add `plugins.updater` (`pubkey`, `endpoints`) and `bundle.createUpdaterArtifacts: true` to `tauri.conf.json`, build with `TAURI_SIGNING_PRIVATE_KEY` set, and publish the bundle with its `latest.json` (see [the updater guide](https://v2.tauri.app/plugin/updater/)).
+Updates are off until you configure them. Generate a key pair with `pnpm -F @repo/desktop tauri signer generate`, then add the public key and your feed to `apps/desktop/src-tauri/tauri.conf.json`:
+
+```jsonc
+"bundle": { "createUpdaterArtifacts": true /* … */ },
+"plugins": {
+  "updater": {
+    "pubkey": "<contents of the .pub file>",
+    "endpoints": ["https://github.com/<owner>/<repo>/releases/latest/download/latest.json"],
+    "requireSignedVersion": true
+  }
+}
+```
+
+Build with `TAURI_SIGNING_PRIVATE_KEY` set and publish the bundle beside its `latest.json` (see [the updater guide](https://v2.tauri.app/plugin/updater/)). The app then gets Check for Updates… in its menu, and the web app's update banner appears when a release is out: the download and the restart each wait for a click.
 
 ## CI/CD
 

@@ -50,21 +50,22 @@ packages/
 
 ## Scripts
 
-| Command              | Description                   |
-| -------------------- | ----------------------------- |
-| `pnpm dev`           | Run all apps                  |
-| `pnpm dev:web`       | Run Next.js only              |
-| `pnpm dev:mobile`    | Run Expo only                 |
-| `pnpm dev:extension` | Run Chrome extension only     |
-| `pnpm dev:desktop`   | Run the desktop app (and web) |
-| `pnpm build`         | Build all packages            |
-| `pnpm typecheck`     | Type check all packages       |
-| `pnpm lint`          | Lint all packages (oxlint)    |
-| `pnpm format`        | Format all packages (oxfmt)   |
-| `pnpm db:start`      | Start local Postgres (Docker) |
-| `pnpm db:stop`       | Stop local Postgres           |
-| `pnpm db:push`       | Push Drizzle schema           |
-| `pnpm db:reset`      | Reset and push schema         |
+| Command                         | Description                                    |
+| ------------------------------- | ---------------------------------------------- |
+| `pnpm dev`                      | Run all apps                                   |
+| `pnpm dev:web`                  | Run Next.js only                               |
+| `pnpm dev:mobile`               | Run Expo only                                  |
+| `pnpm dev:extension`            | Run Chrome extension only                      |
+| `pnpm dev:desktop`              | Run the desktop app, with the web app it opens |
+| `pnpm build`                    | Build all packages                             |
+| `pnpm -F @repo/desktop package` | Bundle the desktop app (`.app`/`.dmg` on Mac)  |
+| `pnpm typecheck`                | Type check all packages (tsc, clippy)          |
+| `pnpm lint`                     | Lint all packages (oxlint)                     |
+| `pnpm format`                   | Check formatting (oxfmt, cargo fmt)            |
+| `pnpm db:start`                 | Start local Postgres (Docker)                  |
+| `pnpm db:stop`                  | Stop local Postgres                            |
+| `pnpm db:push`                  | Push Drizzle schema                            |
+| `pnpm db:reset`                 | Reset and push schema                          |
 
 ## License
 

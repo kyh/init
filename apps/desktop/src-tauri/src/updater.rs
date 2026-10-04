@@ -1,9 +1,9 @@
-//! The update flow, driven from the shell so the web app holds three commands and one event
-//! rather than the updater plugin's own permissions. Nothing moves without the user: a check
-//! runs on its own once after launch, the download and the restart each wait for a click.
+//! The update flow, behind three commands and one event the shell owns. The web app is deployed
+//! apart from the installed shell, so it speaks this contract rather than the updater plugin's
+//! own API, and holds no plugin permission. Nothing moves without the user: the banner checks
+//! when the page loads, and the download and the restart each wait for a click.
 
 use std::sync::{Mutex, MutexGuard, PoisonError};
-use std::time::Duration;
 
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager, Runtime};
@@ -11,7 +11,6 @@ use tauri_plugin_updater::{Update, UpdaterExt};
 
 /// The event the web app listens for (`apps/web/src/lib/desktop-bridge.ts`).
 const UPDATE_STATE_EVENT: &str = "update-state";
-const STARTUP_CHECK_DELAY: Duration = Duration::from_secs(15);
 
 /// Mirrored by `updateStateSchema` in `apps/web/src/lib/desktop-bridge.ts`, which parses it.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
@@ -203,18 +202,6 @@ pub fn install<R: Runtime>(app: AppHandle<R>) -> UpdateState {
         }
     });
     state
-}
-
-/// One check a little after launch, so the first window is never kept waiting on the network.
-pub fn check_after_launch<R: Runtime>(app: &AppHandle<R>) {
-    if !app.state::<Updates>().enabled() {
-        return;
-    }
-    let app = app.clone();
-    tauri::async_runtime::spawn(async move {
-        tokio::time::sleep(STARTUP_CHECK_DELAY).await;
-        check(&app).await;
-    });
 }
 
 #[tauri::command]

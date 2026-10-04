@@ -143,6 +143,18 @@ interface App {
   cleanup?: () => void;
 }
 
+const dropRecommendations = (...ids: string[]) => {
+  if (!fileExists(".vscode/extensions.json")) {
+    return;
+  }
+  const ext = z
+    .object({ recommendations: z.array(z.string()) })
+    .catchall(z.json())
+    .parse(JSON.parse(readText(".vscode/extensions.json")));
+  ext.recommendations = ext.recommendations.filter((r) => !ids.includes(r));
+  writeJson(".vscode/extensions.json", ext);
+};
+
 const removeMobile = () => {
   if (fileExists("pnpm-workspace.yaml")) {
     let ws = readText("pnpm-workspace.yaml");
@@ -174,14 +186,7 @@ const removeMobile = () => {
     writeText(".gitignore", gi);
   }
 
-  if (fileExists(".vscode/extensions.json")) {
-    const ext = z
-      .object({ recommendations: z.array(z.string()) })
-      .catchall(z.json())
-      .parse(JSON.parse(readText(".vscode/extensions.json")));
-    ext.recommendations = ext.recommendations.filter((r) => r !== "expo.vscode-expo-tools");
-    writeJson(".vscode/extensions.json", ext);
-  }
+  dropRecommendations("expo.vscode-expo-tools");
 };
 
 const removeExtension = () => {
@@ -193,6 +198,8 @@ const removeExtension = () => {
 };
 
 const removeDesktop = () => {
+  dropRecommendations("tauri-apps.tauri-vscode", "rust-lang.rust-analyzer");
+
   const ciPath = ".github/workflows/ci.yml";
   if (fileExists(ciPath)) {
     // the steps only the desktop app's Rust build needs, each named `Desktop …`

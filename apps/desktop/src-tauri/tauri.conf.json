@@ -1,22 +1,28 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Init",
-  "mainBinaryName": "Init",
   "version": "../package.json",
   "identifier": "com.init.desktop",
   "build": {
     "devUrl": "http://localhost:3000",
-    "frontendDist": "https://init.kyh.io"
+    "frontendDist": "https://init.kyh.io",
+    "removeUnusedCommands": true
   },
   "app": {
-    "windows": [],
-    "security": {
-      "csp": null
-    }
+    "windows": [
+      {
+        "label": "main",
+        "title": "Init",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 600,
+        "create": false
+      }
+    ]
   },
   "bundle": {
     "active": true,
-    "targets": "all",
     "category": "Productivity",
     "icon": [
       "icons/32x32.png",

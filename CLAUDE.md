@@ -49,7 +49,7 @@ The Expo SDK pins the native modules. `update.ignoreDeps` in `pnpm-workspace.yam
 
 ### Desktop shell
 
-`apps/desktop` is a Tauri 2 shell around the web app, not a second frontend: its window opens `devUrl` (`pnpm dev:desktop` starts the web app beside it, and `tauri dev` waits for it) or `frontendDist` (a build), and the web app reaches it through `apps/web/src/lib/desktop-bridge.ts`, which parses every frame with zod. Every command is named in `src-tauri/build.rs`'s app manifest, so a page reaches only what `src-tauri/capabilities/` grants; Tauri counts the app URL as a local origin, so an OAuth page the window navigates to gets no IPC. Rust rides the same gates: `typecheck` is clippy (pedantic, `-D warnings`), `test` is `cargo test`, `format` is `cargo fmt --check`. On Linux the build needs WebKitGTK (`libwebkit2gtk-4.1-dev`); macOS ships WebKit, and Windows uses the WebView2 Runtime, which the installer fetches where it is missing. The updater stays off until `plugins.updater` is configured (`apps/web/content/docs/launch/deployment.mdx`).
+`apps/desktop` is a Tauri 2 shell around the web app, not a second frontend. Its window is declared in `src-tauri/tauri.conf.json` (`create: false`) and built in `window.rs`, because the navigation pin needs closures: the web app's origin and the OAuth providers load in it, any other web page opens in the browser, and no page gets a second window or a device permission. It opens `devUrl` under `pnpm dev:desktop`, which starts the web app beside it (`tauri dev` waits for it), and `frontendDist` in a build. The web app reaches the shell only through `apps/web/src/lib/desktop-bridge.ts`, which parses every frame with zod: three update commands and the menu's `menu-action` event. Every command is named in `build.rs`'s app manifest, so a page reaches only what `capabilities/` grants, and `removeUnusedCommands` drops every other command from the binary; Tauri counts the app URL as a local origin, so an OAuth page gets no IPC. Rust rides the same gates on the toolchain `rust-toolchain.toml` pins: `typecheck` is clippy (pedantic, `-D warnings`), `test` is `cargo test`, `format` is `cargo fmt --check`. On Linux the build needs WebKitGTK (`libwebkit2gtk-4.1-dev`); macOS ships WebKit, and Windows uses the WebView2 Runtime, which the installer fetches where it is missing. Updates stay off until `plugins.updater` is configured (`apps/web/content/docs/launch/deployment.mdx`).
 
 ## Common Commands
 
@@ -58,14 +58,16 @@ pnpm bootstrap        # First-run: provision DB + .env + schema + seed (--yes = 
 pnpm dev              # Run all apps
 pnpm dev:web          # Run Next.js only
 pnpm dev:mobile       # Run Expo only
-pnpm typecheck        # Type check all packages
+pnpm dev:desktop      # Run the desktop app, with the web app it opens
+pnpm typecheck        # Type check all packages (tsc, clippy)
 pnpm lint             # Lint all packages (oxlint)
-pnpm format           # Check formatting (oxfmt)
+pnpm format           # Check formatting (oxfmt, cargo fmt)
 pnpm format:fix       # Format all packages (oxfmt, cargo fmt)
-pnpm test             # Run tests (node:test)
+pnpm test             # Run tests (node:test, cargo test)
                       # Real-database suites skip unless TEST_POSTGRES_URL points at a disposable, schema-pushed Postgres
 pnpm verify           # typecheck · lint · format · test (CI gate)
 pnpm build            # Build all packages
+pnpm -F @repo/desktop package  # Bundle the desktop app (.app/.dmg on macOS)
 
 # Database
 pnpm db:start         # Start local Postgres (Docker)

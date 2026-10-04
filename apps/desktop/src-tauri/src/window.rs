@@ -1,10 +1,8 @@
-//! The one window, on the web app's URL: the dev server under `tauri dev`, `frontendDist` in a build.
+//! The one window, on the web app's URL: `devUrl` under `tauri dev`, `frontendDist` in a build.
 
 use tauri::utils::config::FrontendDist;
 use tauri::webview::{NewWindowResponse, PermissionResponse};
-use tauri::{
-    AppHandle, Config, Manager, Runtime, Url, WebviewUrl, WebviewWindow, WebviewWindowBuilder,
-};
+use tauri::{AppHandle, Config, Manager, Runtime, Url, WebviewWindow, WebviewWindowBuilder};
 use tauri_plugin_opener::OpenerExt;
 
 use crate::navigation::{self, Verdict};
@@ -29,25 +27,27 @@ fn open_externally<R: Runtime>(app: &AppHandle<R>, url: &Url) {
     }
 }
 
+/// Built from its entry in tauri.conf.json (`create: false`), since the pin needs closures.
 pub fn create_main<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<WebviewWindow<R>> {
-    let Some(app_url) = app_url(app.config()) else {
+    let config = app.config();
+    let Some(window) = config
+        .app
+        .windows
+        .iter()
+        .find(|window| window.label == MAIN)
+    else {
+        return Err(tauri::Error::WindowNotFound);
+    };
+    let Some(app_url) = app_url(config) else {
         return Err(tauri::Error::InvalidWebviewUrl(
             "the web app's URL is not set: devUrl, or a URL as frontendDist",
         ));
-    };
-    let title = if tauri::is_dev() {
-        "Init (Dev)"
-    } else {
-        "Init"
     };
     let allowed = navigation::allowed_origins(&app_url, navigation::emulator_url().as_deref());
     let navigating = app.clone();
     let opening = app.clone();
 
-    WebviewWindowBuilder::new(app, MAIN, WebviewUrl::default())
-        .title(title)
-        .inner_size(1200.0, 800.0)
-        .min_inner_size(800.0, 600.0)
+    WebviewWindowBuilder::from_config(app, window)?
         // WebKit asks about a frame's navigations too, so an iframe from an origin `classify`
         // does not allow is refused here; name its origin there if the web app embeds one
         .on_navigation(move |url| match navigation::classify(url, &allowed) {
@@ -70,9 +70,11 @@ pub fn create_main<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<WebviewWindo
         .build()
 }
 
-/// Brings the window forward, for a second launch or a menu item that needs the page.
-pub fn show_main<R: Runtime>(app: &AppHandle<R>) -> Option<WebviewWindow<R>> {
-    let window = app.get_webview_window(MAIN)?;
+/// Brings the window forward for a menu item that needs the page; false when there is none.
+pub fn show_main<R: Runtime>(app: &AppHandle<R>) -> bool {
+    let Some(window) = app.get_webview_window(MAIN) else {
+        return false;
+    };
     let shown = window
         .unminimize()
         .and_then(|()| window.show())
@@ -80,5 +82,5 @@ pub fn show_main<R: Runtime>(app: &AppHandle<R>) -> Option<WebviewWindow<R>> {
     if let Err(error) = shown {
         eprintln!("[desktop] could not bring the window forward: {error}");
     }
-    Some(window)
+    true
 }

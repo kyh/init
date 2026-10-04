@@ -23,7 +23,7 @@ gh repo create my-app --template kyh/init --clone && cd my-app   # new project f
 pnpm install && pnpm bootstrap --yes                             # any clone: install + provision
 ```
 
-A clone has everything except `node_modules` and `.env` (bootstrap writes `.env`), and it **needs Docker** for local Postgres — the data + auth layer. Without Docker, `pnpm verify` and `pnpm build` still work, but authed/data flows can't run. The committed `.codex` / `.superset` cloud-runner descriptors install deps on clone; a cloud sandbox with Docker runs the full stack, without it stays static-only.
+A clone has everything except `node_modules` and `.env` (bootstrap writes `.env`), and it **needs Docker** for local Postgres — the data + auth layer. Without Docker, `pnpm verify` and `pnpm build` still work, but authed/data flows can't run. Both also check the desktop app's Rust, so they need [rustup](https://rustup.rs), plus WebKitGTK on Linux (`libwebkit2gtk-4.1-dev`, as CI installs it); `pnpm bootstrap` can drop the desktop app instead. The committed `.codex` / `.superset` cloud-runner descriptors install deps on clone; a cloud sandbox with Docker runs the full stack, without it stays static-only.
 
 A sandbox without Docker can instead point `POSTGRES_URL` at a hosted Postgres. Vercel Postgres branching is the cheap way to do that safely: each agent or preview deployment gets an isolated copy-on-write branch of production data, and Vercel creates one per preview deployment automatically.
 
