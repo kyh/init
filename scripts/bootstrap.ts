@@ -153,13 +153,13 @@ const removeMobile = () => {
     writeText("pnpm-workspace.yaml", ws);
   }
 
-  if (fileExists("packages/api/package.json")) {
-    const apiPkg = readPackage("packages/api/package.json");
+  if (fileExists("packages/service/package.json")) {
+    const apiPkg = readPackage("packages/service/package.json");
     delete apiPkg.dependencies?.["@better-auth/expo"];
-    writeJson("packages/api/package.json", apiPkg);
+    writeJson("packages/service/package.json", apiPkg);
   }
 
-  const authPath = "packages/api/src/auth/auth.ts";
+  const authPath = "packages/service/src/auth/auth.ts";
   if (fileExists(authPath)) {
     let auth = readText(authPath);
     auth = auth.replace(/import \{ expo \} from "@better-auth\/expo";\n/u, "");

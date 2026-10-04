@@ -27,17 +27,17 @@ graph TD
 
 ### Key Components
 
-1. **Server config** - `packages/api/src/auth/auth.ts` defines the whole auth system
+1. **Server config** - `packages/service/src/auth/auth.ts` defines the whole auth system
 2. **Route handler** - `apps/web/src/app/api/auth/[...all]/route.ts` mounts it
 3. **Web client** - `apps/web/src/lib/auth-client.ts`
 4. **Mobile client** - `apps/mobile/src/utils/auth.ts`
 
 ## Server Configuration
 
-The auth instance lives in `packages/api/src/auth/auth.ts`:
+The auth instance lives in `packages/service/src/auth/auth.ts`:
 
 ```typescript
-// packages/api/src/auth/auth.ts
+// packages/service/src/auth/auth.ts
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
@@ -80,7 +80,7 @@ All auth endpoints mount under `/api/auth/*`:
 
 ```typescript
 // apps/web/src/app/api/auth/[...all]/route.ts
-import { auth } from "@repo/api/auth/auth";
+import { auth } from "@repo/service/auth/auth";
 
 export const GET = auth.handler;
 export const POST = auth.handler;
@@ -125,7 +125,7 @@ export const getOrganization = cache(async (query) =>
 Usage in a server component:
 
 ```typescript
-import { getSession } from "@repo/api/auth/auth";
+import { getSession } from "@repo/service/auth/auth";
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -143,23 +143,25 @@ export default async function DashboardPage() {
 The oRPC context resolves the session from request headers:
 
 ```typescript
-// packages/api/src/orpc.ts
-export const createORPCContext = async (opts: { headers: Headers }) => {
-  const session = await auth.api.getSession({
-    headers: opts.headers,
-  });
+// packages/service/src/orpc.ts
+export const createORPCContext = async (opts: {
+  headers: Headers;
+  /** null means resolved and logged out; undefined triggers a lookup. */
+  session?: Session | null;
+}) => {
+  const session =
+    opts.session === undefined
+      ? await auth.api.getSession({ headers: opts.headers })
+      : opts.session;
 
-  return {
-    session,
-    db,
-  };
+  return { db, session };
 };
 ```
 
-`protectedProcedure` guarantees a logged-in user:
+The `requireSession` middleware guarantees a logged-in user. Routers whose contracts extend `protectedBase` apply it on the implementer - `os.<feature>.use(requireSession)` - so it runs before input validation:
 
 ```typescript
-export const protectedProcedure = publicProcedure.use(({ context, next }) => {
+export const requireSession = base.middleware(({ context, next }) => {
   if (!context.session?.user) {
     throw new ORPCError("UNAUTHORIZED", {
       message: "You must be logged in to access this resource",
@@ -174,7 +176,7 @@ export const protectedProcedure = publicProcedure.use(({ context, next }) => {
 });
 ```
 
-Organization membership is a layer on top: `organizationProcedure(schema)` in `packages/api/src/orpc.ts` resolves the organization named by `input.slug` and proves the caller is a member before the handler runs - handlers get `context.organization` and `context.membership`.
+Organization membership is a layer on top: `requireOrganization` in `packages/service/src/orpc.ts` runs after `requireSession` and input validation, resolves the organization named by `input.slug` and proves the caller is a member before the handler runs - handlers get `context.organization` and `context.membership`.
 
 ## Client Usage
 
@@ -245,7 +247,7 @@ GITHUB_CLIENT_SECRET=your-client-secret
 
 ### Adding OAuth Providers
 
-Add to `socialProviders` in `packages/api/src/auth/auth.ts`:
+Add to `socialProviders` in `packages/service/src/auth/auth.ts`:
 
 ```typescript
 socialProviders: {

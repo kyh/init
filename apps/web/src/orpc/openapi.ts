@@ -1,4 +1,4 @@
-import { appRouter } from "@repo/api";
+import { appRouter } from "@repo/service";
 import type { OpenAPIOperationObject } from "@orpc/openapi";
 import { OpenAPIGenerator } from "@orpc/openapi";
 import { ZodToJsonSchemaConverter } from "@orpc/zod";

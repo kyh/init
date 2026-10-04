@@ -29,7 +29,9 @@ apps/
   extension/   # WXT Chrome extension
   desktop/     # Tauri desktop app
 packages/
-  api/         # oRPC router + better-auth
+  permissions/ # Client-safe auth helpers: role permissions, slugify
+  contract/    # oRPC contract shared by server and clients
+  service/     # oRPC implementation + better-auth
   db/          # Drizzle schema + local Postgres compose
   ui/          # Shared React components
 ```

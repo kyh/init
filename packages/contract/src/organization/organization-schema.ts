@@ -4,3 +4,7 @@ import { z } from "zod";
 export const organizationInput = z.object({
   slug: z.string().min(1, "Organization slug is required"),
 });
+
+export const authMetadata = z.object({
+  personal: z.boolean().optional(),
+});

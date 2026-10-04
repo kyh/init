@@ -3,6 +3,8 @@ import type { User } from "better-auth";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { expo } from "@better-auth/expo";
 import { stripe } from "@better-auth/stripe";
+import { ac, roles, hasPermission } from "@repo/permissions";
+import { FALLBACK_ORGANIZATION_SLUG, slugify } from "@repo/permissions/slug";
 import { db } from "@repo/db/drizzle-client";
 import { session as sessionSchema, user as userSchema } from "@repo/db/drizzle-schema-auth";
 import { betterAuth, logger } from "better-auth";
@@ -13,8 +15,7 @@ import { Stripe } from "stripe";
 
 import { sendEmail } from "../email/send-email";
 import { env } from "../env";
-import { ac, roles, hasPermission } from "./permissions";
-import { FALLBACK_ORGANIZATION_SLUG, isSlugCollision, slugify } from "./utils";
+import { isSlugCollision } from "./utils";
 
 // The placeholder constructs offline; checkout requires a configured key.
 const stripeClient = new Stripe(env.STRIPE_SECRET_KEY);

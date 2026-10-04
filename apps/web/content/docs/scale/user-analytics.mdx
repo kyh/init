@@ -57,16 +57,23 @@ Instrument the loops Init ships, not everything:
 
 ## Server-Side Events
 
-For events you can't trust the client to report, an oRPC middleware sees every procedure call:
+For events you can't trust the client to report, a client interceptor on the oRPC handler sees every procedure call:
 
 ```typescript
-// packages/api/src/orpc.ts
-const analyticsMiddleware = o.middleware(async ({ next, path, context }) => {
-  const result = await next();
-  // capture(context.session?.user.id, path.join("."))
-  return result;
+// apps/web/src/app/api/orpc/[[...rest]]/route.ts
+const handler = new RPCHandler(appRouter, {
+  clientInterceptors: [
+    async ({ next, path, context }) => {
+      const result = await next();
+      // capture(context.session?.user.id, path.join("."))
+      return result;
+    },
+    // ...the existing onError interceptor
+  ],
 });
 ```
+
+Add the same interceptor to the REST handler at `/api/v1` if you want API traffic counted too.
 
 Keep it fire-and-forget - analytics must never fail a request.
 
