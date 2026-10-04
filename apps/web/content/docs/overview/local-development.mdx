@@ -35,7 +35,7 @@ pnpm dev
 pnpm dev:web         # Web only
 pnpm dev:mobile      # Mobile only
 pnpm dev:extension   # Extension only
-pnpm dev:desktop     # Desktop only
+pnpm dev:desktop     # Desktop shell, plus the web app it opens
 
 # Database
 pnpm db:reset        # Reset local database
@@ -43,9 +43,9 @@ pnpm db:push         # Push schema changes
 
 # Code quality
 pnpm lint            # oxlint
-pnpm typecheck       # TypeScript
-pnpm format          # oxfmt
-pnpm test            # node:test
+pnpm typecheck       # TypeScript, and clippy for the desktop app
+pnpm format          # oxfmt, and cargo fmt
+pnpm test            # node:test, and cargo test
 ```
 
 ## Monorepo Structure
@@ -55,7 +55,7 @@ apps/
 ├── web/          # Next.js web app
 ├── mobile/       # Expo mobile app
 ├── extension/    # Chrome extension (WXT)
-└── desktop/      # Electron desktop app
+└── desktop/      # Tauri desktop app
 
 packages/
 ├── permissions/  # Client-safe auth helpers: role permissions, slugify
@@ -65,7 +65,7 @@ packages/
 └── ui/           # Shared React components
 ```
 
-Every client - web, mobile, extension, desktop - types its API calls against `contract` and checks roles with `permissions`. Only the server (web's route handlers and server components) imports `service` and `db`. Write business logic once, in `service`.
+Every client that calls the API - web and mobile - types its calls against `contract` and checks roles with `permissions`; the extension and the desktop shell open the web app itself. Only the server (web's route handlers and server components) imports `service` and `db`. Write business logic once, in `service`.
 
 ## Working with the Database
 

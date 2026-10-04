@@ -1,0 +1,13 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "web-app",
+  "description": "What the web app may ask of the shell: the update flow and the menu's events. Tauri counts the app URL (devUrl, or frontendDist in a build) as a local origin, so this reaches it and nothing else: an OAuth provider the window navigates to is remote and gets no IPC.",
+  "windows": ["main"],
+  "permissions": [
+    "core:event:allow-listen",
+    "core:event:allow-unlisten",
+    "allow-check-for-updates",
+    "allow-download-update",
+    "allow-install-update"
+  ]
+}

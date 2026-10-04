@@ -10,6 +10,7 @@ Get Init running locally in a few minutes.
 - **pnpm** v12 - Fast, disk space efficient package manager
 - **Git**
 - **Docker** - Required by local Postgres
+- **Rust** - Only for the desktop app: install with [rustup](https://rustup.rs), which picks up the version `apps/desktop/rust-toolchain.toml` pins. Linux also needs WebKitGTK and the other [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/); macOS needs only the Xcode command line tools
 
 ### Install pnpm
 
@@ -26,9 +27,10 @@ curl -fsSL https://get.pnpm.io/install.sh | sh -
 ### Verify
 
 ```bash
-node --version  # v24+
-pnpm --version  # v12
+node --version   # v24+
+pnpm --version   # v12
 git --version
+cargo --version  # desktop app only: rustup fetches the pinned version on first build
 ```
 
 ## Quick Start
@@ -100,7 +102,7 @@ init/
 │   ├── web/           # Next.js web app (these docs live here)
 │   ├── mobile/        # Expo mobile app
 │   ├── extension/     # Chrome extension (WXT)
-│   └── desktop/       # Electron desktop app
+│   └── desktop/       # Tauri desktop app
 ├── packages/
 │   ├── permissions/   # Client-safe auth helpers: role permissions, slugify
 │   ├── contract/      # oRPC contract shared by server and clients
@@ -115,7 +117,8 @@ init/
 ### Development
 
 - `pnpm dev` - All apps
-- `pnpm dev:web` / `pnpm dev:mobile` / `pnpm dev:extension` / `pnpm dev:desktop` - One app
+- `pnpm dev:web` / `pnpm dev:mobile` / `pnpm dev:extension` - One app
+- `pnpm dev:desktop` - The desktop shell, with the web app it opens
 
 ### Database
 
@@ -128,14 +131,15 @@ init/
 ### Code Quality
 
 - `pnpm lint` / `pnpm lint:fix` - oxlint
-- `pnpm format` / `pnpm format:fix` - oxfmt
-- `pnpm typecheck` - TypeScript
-- `pnpm test` - node:test
+- `pnpm format` / `pnpm format:fix` - oxfmt, and `cargo fmt` for the desktop app
+- `pnpm typecheck` - TypeScript, and clippy for the desktop app
+- `pnpm test` - node:test, and `cargo test` for the desktop app
 - `pnpm verify` - typecheck · lint · format · test (the CI gate)
 
 ### Build
 
-- `pnpm build` - Build all packages
+- `pnpm build` - Build all packages (the desktop app's release binary included)
+- `pnpm -F @repo/desktop package` - Bundle the desktop app (`.app` and `.dmg` on macOS)
 
 ## Troubleshooting
 

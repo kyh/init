@@ -12,7 +12,7 @@ init/
 │   ├── web/               # Next.js 16 web app
 │   ├── mobile/            # Expo mobile app
 │   ├── extension/         # Chrome extension (WXT)
-│   └── desktop/           # Electron desktop app
+│   └── desktop/           # Tauri desktop app
 ├── packages/
 │   ├── permissions/       # Client-safe auth helpers: role permissions, slugify
 │   ├── contract/          # oRPC contract: procedure inputs, outputs, errors
@@ -92,16 +92,22 @@ apps/extension/
 
 ### Desktop App (`apps/desktop/`)
 
-Electron via electron-vite:
+A Tauri 2 shell around the web app, not a second frontend: a Rust binary that opens the system webview (WebKit on macOS) on `devUrl` under `pnpm dev:desktop` and on `frontendDist` in a build. The web app talks to it through `apps/web/src/lib/desktop-bridge.ts`, and only through what its capability grants:
 
 ```
 apps/desktop/
-├── src/
-│   ├── main/              # Main process
-│   ├── preload/           # Preload scripts
-│   └── renderer/          # UI
-├── electron.vite.config.ts
-└── electron-builder.yml
+├── src-tauri/
+│   ├── src/
+│   │   ├── lib.rs           # the builder: plugins, commands, menu, window
+│   │   ├── window.rs        # the window tauri.conf.json declares, with its navigation pin
+│   │   ├── navigation.rs    # which origins load in the window and which open in the browser
+│   │   ├── menu.rs          # Tauri's default macOS menu, plus Settings… and Check for Updates…
+│   │   └── updater.rs       # the update flow behind three commands and one event
+│   ├── capabilities/        # what the web app may invoke
+│   ├── build.rs             # the app manifest: every command is a permission
+│   ├── Cargo.toml
+│   └── tauri.conf.json      # identifier, URLs, the window, bundle settings
+└── rust-toolchain.toml      # the Rust version local checks and CI share
 ```
 
 ## Shared Packages (`packages/`)

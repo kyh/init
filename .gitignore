@@ -14,7 +14,7 @@ out/
 next-env.d.ts
 .source
 
-# wxt / electron-vite build output
+# wxt build output
 .output/
 
 # build output
@@ -27,9 +27,6 @@ apps/mobile/.gitignore
 
 # wxt
 .wxt/
-
-# electron
-dev-app-update.yml
 
 # misc
 .DS_Store

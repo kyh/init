@@ -12,7 +12,7 @@ export const about: SitePage = {
     section(
       "What it is",
       p(
-        `${siteConfig.name} is an open-source, MIT-licensed starter kit for TypeScript products. One pnpm and Turborepo monorepo ships a Next.js web app, an Expo mobile app, a WXT browser extension, and an Electron desktop app, all sharing one typed API built on oRPC, better-auth, Drizzle ORM, and Postgres.`,
+        `${siteConfig.name} is an open-source, MIT-licensed starter kit for TypeScript products. One pnpm and Turborepo monorepo ships a Next.js web app, an Expo mobile app, a WXT browser extension, and a Tauri desktop app, all sharing one typed API built on oRPC, better-auth, Drizzle ORM, and Postgres.`,
       ),
       p(
         "It comes with the plumbing most products rebuild from scratch: email and GitHub sign-in, multi-tenant organizations with roles and invitations, Stripe subscriptions, transactional email through Resend, avatar uploads to Vercel Blob, and documentation built with Fumadocs.",

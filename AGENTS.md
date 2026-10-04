@@ -1,6 +1,6 @@
 # AGENTS.md
 
-**init** is an agent-first, multi-platform TypeScript starter: one typed stack (oRPC · better-auth · Drizzle · Postgres) shipping to web (Next.js), mobile (Expo), extension (WXT), and desktop (Electron). This is the tool-agnostic guide for coding agents — it's meant to be run, not just read. Claude also reads `CLAUDE.md`; both point back here.
+**init** is an agent-first, multi-platform TypeScript starter: one typed stack (oRPC · better-auth · Drizzle · Postgres) shipping to web (Next.js), mobile (Expo), extension (WXT), and desktop (Tauri). This is the tool-agnostic guide for coding agents — it's meant to be run, not just read. Claude also reads `CLAUDE.md`; both point back here.
 
 ## Quickstart (headless)
 
@@ -23,7 +23,7 @@ gh repo create my-app --template kyh/init --clone && cd my-app   # new project f
 pnpm install && pnpm bootstrap --yes                             # any clone: install + provision
 ```
 
-A clone has everything except `node_modules` and `.env` (bootstrap writes `.env`), and it **needs Docker** for local Postgres — the data + auth layer. Without Docker, `pnpm verify` and `pnpm build` still work, but authed/data flows can't run. The committed `.codex` / `.superset` cloud-runner descriptors install deps on clone; a cloud sandbox with Docker runs the full stack, without it stays static-only.
+A clone has everything except `node_modules` and `.env` (bootstrap writes `.env`), and it **needs Docker** for local Postgres — the data + auth layer. Without Docker, `pnpm verify` and `pnpm build` still work, but authed/data flows can't run. Both also check the desktop app's Rust, so they need [rustup](https://rustup.rs), plus WebKitGTK on Linux (`libwebkit2gtk-4.1-dev`, as CI installs it); `pnpm bootstrap` can drop the desktop app instead. The committed `.codex` / `.superset` cloud-runner descriptors install deps on clone; a cloud sandbox with Docker runs the full stack, without it stays static-only.
 
 A sandbox without Docker can instead point `POSTGRES_URL` at a hosted Postgres. Vercel Postgres branching is the cheap way to do that safely: each agent or preview deployment gets an isolated copy-on-write branch of production data, and Vercel creates one per preview deployment automatically.
 
@@ -75,18 +75,18 @@ pnpm emulate     # GitHub emulator on :4000
 pnpm dev:web
 ```
 
-With the var set, the shipped "Continue with GitHub" button routes through a dev-only `genericOAuth` provider aimed at the emulator — same button, no diverging prod path (unset ⇒ the real provider; see `packages/service/src/auth/auth.ts`). Open `/auth/login`, click the button, and the emulator's user-picker (octocat) completes sign-in.
+With the var set, the shipped "Continue with GitHub" button routes through a dev-only `genericOAuth` provider aimed at the emulator — same button, no diverging prod path (unset ⇒ the real provider; see `packages/service/src/auth/auth.ts`). Open `/auth/login`, click the button, and the emulator's user-picker (octocat) completes sign-in — in the desktop shell's own window too, under `pnpm dev:desktop`.
 
 (Pure HTTP: `POST /api/auth/sign-in/social {"provider":"github"}` returns the authorize URL directly — the same flow the button triggers.)
 
 ## Platform matrix
 
-| Platform           | Dev command          | Agent-verifiable at runtime?         |
-| ------------------ | -------------------- | ------------------------------------ |
-| Web (Next.js)      | `pnpm dev:web`       | **Yes** — headless via agent-browser |
-| Mobile (Expo)      | `pnpm dev:mobile`    | No — needs a simulator/device        |
-| Extension (WXT)    | `pnpm dev:extension` | No — load-unpacked in real Chrome    |
-| Desktop (Electron) | `pnpm dev:desktop`   | No — GUI window                      |
+| Platform        | Dev command          | Agent-verifiable at runtime?         |
+| --------------- | -------------------- | ------------------------------------ |
+| Web (Next.js)   | `pnpm dev:web`       | **Yes** — headless via agent-browser |
+| Mobile (Expo)   | `pnpm dev:mobile`    | No — needs a simulator/device        |
+| Extension (WXT) | `pnpm dev:extension` | No — load-unpacked in real Chrome    |
+| Desktop (Tauri) | `pnpm dev:desktop`   | No — GUI window                      |
 
 For the three non-web targets, verify with `pnpm typecheck` and `pnpm build`; a runtime check needs a human.
 

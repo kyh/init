@@ -13,6 +13,7 @@ import {
 import { Progress } from "@repo/ui/components/progress";
 import { DownloadIcon, Loader2Icon, RotateCwIcon, TriangleAlertIcon } from "lucide-react";
 
+import { desktopBridge } from "@/lib/desktop-bridge";
 import type { DesktopUpdateState } from "@/lib/desktop-bridge";
 
 const FLOATING_CLASS = "fixed right-4 bottom-4 z-50 w-full max-w-sm";
@@ -24,19 +25,19 @@ const UpdateCard = ({ children }: { children: React.ReactNode }) => (
   </Card>
 );
 
-/** Updates download and install only on user action. Inert outside Electron. */
+/** Updates download and install only on user action. Inert outside the desktop shell. */
 export const DesktopUpdateBanner = () => {
   const [updateState, setUpdateState] = useState<DesktopUpdateState | null>(null);
 
   useEffect(() => {
-    const { desktopBridge } = window;
-    if (!desktopBridge) {
+    const bridge = desktopBridge();
+    if (!bridge) {
       return;
     }
 
-    const unsubscribe = desktopBridge.onUpdateState(setUpdateState);
+    const unsubscribe = bridge.onUpdateState(setUpdateState);
     const check = async () => {
-      setUpdateState(await desktopBridge.checkForUpdates());
+      setUpdateState(await bridge.checkForUpdates());
     };
     void check();
     return unsubscribe;
@@ -47,23 +48,23 @@ export const DesktopUpdateBanner = () => {
   }
 
   const handleDownload = async () => {
-    const { desktopBridge } = window;
-    if (desktopBridge) {
-      setUpdateState(await desktopBridge.downloadUpdate());
+    const bridge = desktopBridge();
+    if (bridge) {
+      setUpdateState(await bridge.downloadUpdate());
     }
   };
 
   const handleInstall = async () => {
-    const { desktopBridge } = window;
-    if (desktopBridge) {
-      setUpdateState(await desktopBridge.installUpdate());
+    const bridge = desktopBridge();
+    if (bridge) {
+      setUpdateState(await bridge.installUpdate());
     }
   };
 
   const handleRetry = async () => {
-    const { desktopBridge } = window;
-    if (desktopBridge) {
-      setUpdateState(await desktopBridge.checkForUpdates());
+    const bridge = desktopBridge();
+    if (bridge) {
+      setUpdateState(await bridge.checkForUpdates());
     }
   };
 
