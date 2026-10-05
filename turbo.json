@@ -18,6 +18,12 @@
       "dependsOn": ["^topo"],
       "outputs": [".cache/tsbuildinfo.json"]
     },
+    "format": {
+      "outputs": []
+    },
+    "format:fix": {
+      "cache": false
+    },
     "test": {
       "dependsOn": ["^topo"],
       "passThroughEnv": ["TEST_POSTGRES_URL"],

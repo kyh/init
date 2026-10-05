@@ -17,20 +17,27 @@ oRPC gives you typesafe APIs without code generation. Types flow from database t
 
 ## API Structure
 
-The API lives in `packages/api/`:
+The API is contract-first. `packages/contract/` declares every procedure - input, output, errors, OpenAPI metadata - and is the single source of truth. `packages/service/` implements that contract on the server. Clients type their RPC calls against the contract, so the client stays free of server code (better-auth, Drizzle client, handlers). The one exception is the better-auth access-control roles (`@repo/permissions`), which web and mobile still import for permission checks:
 
 ```
-packages/api/src/
+packages/contract/src/
+├── organization/          # organization-contract.ts, organization-schema.ts
+├── todo/                  # todo-contract.ts, todo-schema.ts
+├── waitlist/              # waitlist-contract.ts, waitlist-schema.ts
+├── base.ts                # publicBase / protectedBase / organizationBase
+└── index.ts               # contract, ContractClient, RouterInputs/Outputs
+
+packages/service/src/
 ├── auth/                  # better-auth config + helpers
-├── organization/          # Organization procedures
-├── todo/                  # Example CRUD procedures
+├── organization/          # organization-router.ts
+├── todo/                  # Example CRUD implementation
 ├── waitlist/              # Waitlist signup
-├── root-router.ts         # Router composition
-├── orpc.ts                # oRPC setup, context, procedures
-└── index.ts               # Package exports
+├── root-router.ts         # Implements the whole contract
+├── orpc.ts                # Context, implementer, middleware
+└── index.ts               # appRouter, AppRouter, createORPCContext
 ```
 
-Each feature folder holds a `*-router.ts` (procedures), `*-schema.ts` (Zod inputs), and `*.test.ts` (node:test).
+Each contract feature folder holds a `*-contract.ts` (procedure declarations) and `*-schema.ts` (Zod inputs). Each api feature folder holds a `*-router.ts` (handlers) and `*.test.ts` (node:test).
 
 ## Core Components
 
@@ -39,36 +46,81 @@ Each feature folder holds a `*-router.ts` (procedures), `*-schema.ts` (Zod input
 The context resolves the better-auth session and exposes the database:
 
 ```typescript
-export const createORPCContext = async (opts: { headers: Headers }) => {
-  const session = await auth.api.getSession({
-    headers: opts.headers,
-  });
+export const createORPCContext = async (opts: {
+  headers: Headers;
+  /** null means resolved and logged out; undefined triggers a lookup. */
+  session?: Session | null;
+}) => {
+  const session =
+    opts.session === undefined
+      ? await auth.api.getSession({ headers: opts.headers })
+      : opts.session;
 
-  return {
-    session,
-    db,
-  };
+  return { db, session };
 };
-
-const o = os.$context<ORPCContext>();
 ```
 
-### 2. Procedures
+### 2. Contract (`@repo/contract`)
 
-oRPC has no `.query` / `.mutation` split - every procedure ends in `.handler()`, and handlers receive `context` rather than `ctx`.
+oRPC has no `.query` / `.mutation` split - every procedure is declared once and implemented with `.handler()`, and handlers receive `context` rather than `ctx`.
 
-#### Public Procedures
-
-Available to everyone:
+Contracts are built with `oc` from `@orpc/contract`. `base.ts` declares three bases, each adding the error codes its procedures can raise:
 
 ```typescript
-export const publicProcedure = o.errors({
+// packages/contract/src/base.ts
+export const publicBase = oc.errors({
   BAD_REQUEST: { message: "The input failed validation" },
 });
 
-// packages/api/src/waitlist/waitlist-router.ts
+/** Implementers apply `os.<feature>.use(requireSession)`; the contract only declares the outcome. */
+export const protectedBase = publicBase
+  .errors({ UNAUTHORIZED: { message: "No signed-in session" } })
+  .meta(requireSession); // marks the operation with the `session` security scheme in /openapi.json
+
+/** Implementations must `.use(requireOrganization)`, so every input extends `organizationInput`. */
+export const organizationBase = protectedBase.errors({
+  NOT_FOUND: { message: "The organization or a record in it does not exist" },
+  UNAUTHORIZED: { message: "No signed-in session, or not a member of the organization" },
+});
+```
+
+A feature contract picks a base and declares input and output:
+
+```typescript
+// packages/contract/src/waitlist/waitlist-contract.ts
+export const waitlistContract = {
+  join: publicBase
+    .meta(openapi({ summary: "Join the waitlist", description: "...", tags: ["Waitlist"] }))
+    .input(joinWaitlistInput)
+    .output(z.object({ waitlist: createSelectSchema(waitlist).nullable() })),
+};
+```
+
+`packages/contract/src/index.ts` collects the feature contracts into one object:
+
+```typescript
+export const contract = {
+  organization: organizationContract,
+  todo: todoContract,
+  waitlist: waitlistContract,
+};
+```
+
+### 3. Implementation (`@repo/service`)
+
+`orpc.ts` binds the contract to the server context. `os` mirrors the contract's shape - `os.todo.create` is the implementer for that one procedure:
+
+```typescript
+// packages/service/src/orpc.ts
+export const os = implement(contract).$context<ORPCContext>();
+```
+
+Public procedures need no middleware:
+
+```typescript
+// packages/service/src/waitlist/waitlist-router.ts
 export const waitlistRouter = {
-  join: publicProcedure.input(joinWaitlistInput).handler(async ({ context, input }) => {
+  join: os.waitlist.join.handler(async ({ context, input }) => {
     const [created] = await context.db
       .insert(waitlist)
       .values({ ...input, userId: context.session?.user.id })
@@ -80,45 +132,47 @@ export const waitlistRouter = {
 };
 ```
 
-#### Protected Procedures
+#### Session middleware
 
-Require a session:
+The contract only declares `UNAUTHORIZED`; the implementation enforces it. `requireSession` pairs with `protectedBase` and goes on the implementer (`os.<feature>.use(requireSession)`), where middleware runs before input validation - so an anonymous caller gets `UNAUTHORIZED`, never a `BAD_REQUEST` describing the input:
 
 ```typescript
-export const protectedProcedure = publicProcedure
-  .errors({ UNAUTHORIZED: { message: "No signed-in session" } })
-  .meta(requireSession) // marks the operation with the `session` security scheme in /openapi.json
-  .use(({ context, next }) => {
-    if (!context.session?.user) {
-      throw new ORPCError("UNAUTHORIZED", {
-        message: "You must be logged in to access this resource",
-      });
-    }
-    return next({
-      context: {
-        session: { ...context.session, user: context.session.user },
-      },
+// packages/service/src/orpc.ts
+/** Middleware is contract-independent, so tests can reuse it on their own contracts. */
+const base = builder.$context<ORPCContext>(); // `os as builder` from @orpc/server
+
+export const requireSession = base.middleware(({ context, next }) => {
+  if (!context.session?.user) {
+    throw new ORPCError("UNAUTHORIZED", {
+      message: "You must be logged in to access this resource",
     });
+  }
+  return next({
+    context: {
+      session: { ...context.session, user: context.session.user },
+    },
   });
+});
 ```
 
 #### Organization Access
 
-Org-scoping is a procedure factory. It takes the procedure's input schema, resolves the organization named by `input.slug`, and proves the caller is a member before the handler runs - so a handler cannot read or write another tenant's rows by forgetting a check:
+`requireOrganization` pairs with `organizationBase` and expects `requireSession` to have run. It resolves the organization named by `input.slug`, and proves the caller is a member before the handler runs:
 
 ```typescript
-// packages/api/src/organization/organization-schema.ts
+// packages/contract/src/organization/organization-schema.ts
 export const organizationInput = z.object({
   slug: z.string().min(1, "Organization slug is required"),
 });
 
-// packages/api/src/orpc.ts
-export const organizationProcedure = <T extends z.ZodType<z.infer<typeof organizationInput>>>(
-  input: T,
-) =>
-  protectedProcedure.input(input).use(async ({ context, next }, validated) => {
+// packages/service/src/orpc.ts
+type SessionContext = ORPCContext & { session: NonNullable<ORPCContext["session"]> };
+
+export const requireOrganization = builder
+  .$context<SessionContext>()
+  .middleware(async ({ context, next }, input: z.infer<typeof organizationInput>) => {
     const organization = await context.db.query.organization.findFirst({
-      where: { slug: validated.slug },
+      where: { slug: input.slug },
     });
 
     if (!organization) {
@@ -135,39 +189,62 @@ export const organizationProcedure = <T extends z.ZodType<z.infer<typeof organiz
       });
     }
 
-    return next({ context: { organization, membership } });
+    return next({ context: { membership, organization } });
   });
 ```
 
 Handlers get `context.organization` and `context.membership`, and should still scope their queries by `context.organization.id`.
 
-Every org-scoped procedure is written the same way, passing its own input schema:
+Middleware `.use()`d on a procedure runs after input validation, so `slug` is already checked. Each contract declares its whole input, so org-scoped input schemas extend `organizationInput`, and `requireOrganization` only type-checks on procedures whose input carries a `slug`:
 
 ```typescript
-organizationProcedure(organizationInput).handler(...)  // slug only
-organizationProcedure(createTodoInput).handler(...)    // slug plus the feature's fields
+// packages/service/src/todo/todo-router.ts
+const authed = os.todo.use(requireSession);
+
+export const todoRouter = {
+  create: authed.create.use(requireOrganization).handler(async ({ context, input }) => {
+    // ...
+  }),
+  list: authed.list.use(requireOrganization).handler(async ({ context }) => {
+    // ...
+  }),
+  // ...
+};
 ```
 
-A factory rather than a builder because oRPC does not merge `.input()` calls - each procedure declares its whole input, so the schema has to carry the slug. Wrapping both steps means the membership check cannot be left off: there is no half-applied form to reach for. That is why org-scoped schemas extend `organizationInput`.
+Feature routers are plain objects, not `os.todo.router({...})`: oRPC's `.router()` re-applies the implementer's middleware, so `requireSession` would run twice. The root `os.router` still checks every procedure against the contract.
 
-### 3. Router Composition
+### 4. Router Composition
 
-Routers are plain objects - there is no router factory to wrap them in:
+`os.router` assembles the feature routers and fails to compile if any contract procedure is missing or mistyped:
 
 ```typescript
-// packages/api/src/root-router.ts
-export const appRouter = {
-  waitlist: waitlistRouter,
+// packages/service/src/root-router.ts
+export const appRouter = os.router({
   organization: organizationRouter,
   todo: todoRouter,
-};
+  waitlist: waitlistRouter,
+});
 
 export type AppRouter = typeof appRouter;
 ```
 
+Server-side code - the RPC and OpenAPI handlers, the server caller, the OpenAPI generator - uses `appRouter` from `@repo/service`. Clients use the contract.
+
 ## Client Usage
 
 Init uses the TanStack Query integration (`@orpc/tanstack-query`). `orpc` is a plain module export, not a React hook - there is no provider to thread through.
+
+The client is typed by the contract, not the server router, so no server code reaches the client bundle:
+
+```typescript
+// apps/web/src/orpc/react.tsx
+import type { ContractClient } from "@repo/contract";
+
+const client: ContractClient = createORPCClient(link);
+
+export const orpc = createTanstackQueryUtils(client);
+```
 
 ### Queries and Mutations
 
@@ -208,7 +285,7 @@ queryClient.setQueryData(orpc.todo.list.queryKey({ input: { slug } }), next);
 ### Type Helpers
 
 ```typescript
-import type { RouterInputs, RouterOutputs } from "@repo/api";
+import type { RouterInputs, RouterOutputs } from "@repo/contract";
 
 type Todo = RouterOutputs["todo"]["list"]["todos"][number];
 type CreateTodoInput = RouterInputs["todo"]["create"];
@@ -216,14 +293,14 @@ type CreateTodoInput = RouterInputs["todo"]["create"];
 
 ### Cross-Platform
 
-The same router serves web and mobile. Web hits `/api/orpc` (see `apps/web/src/app/api/orpc/[[...rest]]/route.ts`); mobile points its client at the deployed URL (`apps/mobile/src/utils/api.ts`).
+The same router serves web and mobile, and both clients are `ContractClient`s. Web hits `/api/orpc` (see `apps/web/src/app/api/orpc/[[...rest]]/route.ts`); mobile points its client at the deployed URL (`apps/mobile/src/utils/api.ts`).
 
 ## Input Validation
 
-All procedures validate inputs with Zod, colocated in `*-schema.ts`:
+All procedures validate inputs with Zod, in the contract package's `*-schema.ts` files:
 
 ```typescript
-// packages/api/src/todo/todo-schema.ts
+// packages/contract/src/todo/todo-schema.ts
 import { organizationInput } from "../organization/organization-schema";
 
 const titleField = z.string().trim().min(1, "Title is required").max(255, "Title is too long");
@@ -233,7 +310,7 @@ export const createTodoInput = organizationInput.extend({
 });
 ```
 
-Org-scoped schemas extend `organizationInput` so the slug is part of the declared contract.
+Org-scoped schemas extend `organizationInput` so the slug is part of the declared contract. Forms import the same schemas for client-side validation (`@repo/contract/waitlist/waitlist-schema`).
 
 Rejected input reaches the client as a `BAD_REQUEST` error carrying the schema's issues.
 
@@ -264,7 +341,7 @@ const createTodo = useMutation(
 
 CSRF protection is a cookie attribute plus an origin check, not a token.
 
-`packages/api/src/auth/auth.ts` sets `sameSite: "lax"`, so a request a third-party page originates arrives with no session — a forged `multipart/form-data` POST reaches the router and does nothing. `RPCHandler` refuses `GET` by default (`allowMethods` is `["POST", "PUT", "PATCH", "DELETE"]`), closing the one method a cookie-bearing navigation can produce.
+`packages/service/src/auth/auth.ts` sets `sameSite: "lax"`, so a request a third-party page originates arrives with no session — a forged `multipart/form-data` POST reaches the router and does nothing. `RPCHandler` refuses `GET` by default (`allowMethods` is `["POST", "PUT", "PATCH", "DELETE"]`), closing the one method a cookie-bearing navigation can produce.
 
 `SameSite` keys on _site_, not origin, so that covers cross-site only: a sibling subdomain or another port on the same host is same-site, and the browser does attach the session cookie to a form POST served from there. `apps/web/src/app/api/orpc/[[...rest]]/route.ts` closes that with an origin check ahead of `handler.handle` — an `Origin` header that is not the route's own origin gets `403`. An absent `Origin` passes, which is what keeps the non-browser mobile client working; browsers set `Origin` on every POST and page script cannot forge it. `route.test.ts` pins all three cases.
 
@@ -292,17 +369,17 @@ Every procedure is `POST /<router>/<procedure>` with the input as the JSON body,
 
 ### Documenting procedures
 
-Each procedure carries its own OpenAPI metadata and a typed output, so the spec describes what it returns and not just what it accepts:
+Each contract carries its own OpenAPI metadata and a typed output, so the spec describes what it returns and not just what it accepts:
 
 ```typescript
-// packages/api/src/todo/todo-router.ts
-list: organizationProcedure(organizationInput)
+// packages/contract/src/todo/todo-contract.ts
+list: organizationBase
   .meta(openapi({ summary: "List todos", description: "...", tags: ["Todo"] }))
-  .output(z.object({ todos: z.array(createSelectSchema(todo)) }))
-  .handler(...)
+  .input(organizationInput)
+  .output(z.object({ todos: z.array(todoRow) })),
 ```
 
-`.output()` also validates at runtime, and it strips fields the schema leaves out, so it doubles as an allow-list. Output schemas live in the router, not `*-schema.ts`, because they import Drizzle tables and the schema files are shared with client bundles. `apps/web/src/orpc/openapi.test.ts` fails if any operation is missing a summary, description, tags, a typed `200`, or an error response pointing at the shared `Error` schema.
+`.output()` also validates at runtime, and it strips fields the schema leaves out, so it doubles as an allow-list. Output schemas live in `*-contract.ts`, not `*-schema.ts`, because they import Drizzle tables and the schema files are imported at runtime by client bundles; clients import the contract index only as a type. `apps/web/src/orpc/openapi.test.ts` fails if any operation is missing a summary, description, tags, a typed `200`, or an error response pointing at the shared `Error` schema.
 
 ### Errors
 
@@ -316,7 +393,7 @@ Every error body has one shape, the `Error` schema in the spec:
 }
 ```
 
-Branch on `code`. The procedure builders declare the codes they raise with `.errors()` (`BAD_REQUEST` for input, `UNAUTHORIZED` for protected procedures, `NOT_FOUND` for organization-scoped ones), so each operation lists them with its own status. The route adds `403 FORBIDDEN` (cross-origin browser request) and `500 INTERNAL_SERVER_ERROR`.
+Branch on `code`. The contract bases declare the codes they raise with `.errors()` (`BAD_REQUEST` for input, `UNAUTHORIZED` for protected procedures, `NOT_FOUND` for organization-scoped ones), so each operation lists them with its own status. The route adds `403 FORBIDDEN` (cross-origin browser request) and `500 INTERNAL_SERVER_ERROR`.
 
 ### Authentication
 
@@ -331,7 +408,7 @@ v1 is stable. It only gains backward-compatible changes: new operations, new opt
 ### 1. Create Schema
 
 ```typescript
-// packages/api/src/post/post-schema.ts
+// packages/contract/src/post/post-schema.ts
 import { z } from "zod";
 
 import { organizationInput } from "../organization/organization-schema";
@@ -341,52 +418,82 @@ export const createPostInput = organizationInput.extend({
 });
 ```
 
-### 2. Create Router
+### 2. Declare the Contract
 
 ```typescript
-// packages/api/src/post/post-router.ts
+// packages/contract/src/post/post-contract.ts
 import { post } from "@repo/db/drizzle-schema";
 import { openapi } from "@orpc/openapi";
-import { ORPCError } from "@orpc/server";
 import { createSelectSchema } from "drizzle-orm/zod";
 import { z } from "zod";
 
-import { organizationProcedure } from "../orpc";
+import { organizationBase } from "../base";
 import { createPostInput } from "./post-schema";
 
-export const postRouter = {
-  create: organizationProcedure(createPostInput)
+export const postContract = {
+  create: organizationBase
     .meta(openapi({ summary: "Create a post", description: "...", tags: ["Post"] }))
-    .output(z.object({ post: createSelectSchema(post) }))
-    .handler(async ({ context, input }) => {
-      const [created] = await context.db
-        .insert(post)
-        .values({ organizationId: context.organization.id, title: input.title })
-        .returning();
-      if (!created) {
-        throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "Post was not created" });
-      }
-      return { post: created };
-    }),
+    .input(createPostInput)
+    .output(z.object({ post: createSelectSchema(post) })),
 };
 ```
 
-### 3. Add to Root Router
+Register it in `packages/contract/src/index.ts`:
 
 ```typescript
-// packages/api/src/root-router.ts
-export const appRouter = {
-  waitlist: waitlistRouter,
+export const contract = {
+  organization: organizationContract,
+  post: postContract, // Add here
+  todo: todoContract,
+  waitlist: waitlistContract,
+};
+```
+
+If clients need the schema at runtime (form validation), add `"./post/post-schema"` to the `exports` in `packages/contract/package.json`.
+
+### 3. Implement the Router
+
+```typescript
+// packages/service/src/post/post-router.ts
+import { post } from "@repo/db/drizzle-schema";
+import { ORPCError } from "@orpc/server";
+
+import { os, requireOrganization, requireSession } from "../orpc";
+
+const authed = os.post.use(requireSession);
+
+export const postRouter = {
+  create: authed.create.use(requireOrganization).handler(async ({ context, input }) => {
+    const [created] = await context.db
+      .insert(post)
+      .values({ organizationId: context.organization.id, title: input.title })
+      .returning();
+    if (!created) {
+      throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "Post was not created" });
+    }
+    return { post: created };
+  }),
+};
+```
+
+### 4. Add to Root Router
+
+```typescript
+// packages/service/src/root-router.ts
+export const appRouter = os.router({
   organization: organizationRouter,
-  todo: todoRouter,
   post: postRouter, // Add here
-};
+  todo: todoRouter,
+  waitlist: waitlistRouter,
+});
 ```
 
-### 4. Use in Client
+Until this line exists, `os.router` fails to compile: the contract declares `post`, so the implementation must provide it.
+
+### 5. Use in Client
 
 ```typescript
-const { data } = useSuspenseQuery(orpc.post.list.queryOptions({ input: { slug } }));
+const createPost = useMutation(orpc.post.create.mutationOptions());
 ```
 
 ## Testing
@@ -405,14 +512,14 @@ const { todos } = await caller.list({ slug: "acme" });
 ```
 
 ```bash
-pnpm -F @repo/api test
+pnpm -F @repo/service test
 ```
 
 ## Best Practices
 
-- **Organize by feature** - One folder per domain, router + schema + test
+- **Organize by feature** - One folder per domain in each package: contract + schema in `@repo/contract`, router + test in `@repo/service`
 - **Validate everything** - Zod at every boundary
-- **Check org access** - Every multi-tenant procedure is built with `organizationProcedure`, so membership is proven before the handler runs
+- **Check org access** - Every multi-tenant contract extends `organizationBase`, and its implementation `.use(requireOrganization)`, so membership is proven before the handler runs
 - **Allow-list columns** - Don't return full user rows; see `organization-router.ts`
 
 ## Next Steps

@@ -43,7 +43,7 @@ The auth base URL derives from Vercel's built-in `VERCEL_ENV` / `VERCEL_PROJECT_
 
 ### 3. Preview Deployments
 
-The `oAuthProxy` plugin in `packages/api/src/auth/auth.ts` routes OAuth callbacks through the production URL, so GitHub login works on preview deployments without registering every preview domain.
+The `oAuthProxy` plugin in `packages/service/src/auth/auth.ts` routes OAuth callbacks through the production URL, so GitHub login works on preview deployments without registering every preview domain.
 
 ### 4. Custom Domain
 
@@ -99,10 +99,25 @@ Dev builds derive the URL from Metro. Then follow the standard [EAS Build](https
 
 ```bash
 pnpm -F @repo/extension build   # wxt build → .output/chrome-mv3
-pnpm -F @repo/desktop build     # electron-vite build; package with electron-builder
+pnpm -F @repo/desktop package   # tauri build → src-tauri/target/release/bundle
 ```
 
-Upload the extension to the Chrome Web Store; distribute desktop builds per `electron-builder.yml`.
+Upload the extension to the Chrome Web Store. The desktop bundle is ad-hoc signed by default; `tauri build` signs with a Developer ID and notarizes when `APPLE_SIGNING_IDENTITY` and the `APPLE_*` notarization variables are set (see [Tauri's macOS signing guide](https://v2.tauri.app/distribute/sign/macos/)). To point a build at another deployment, pass `--config '{"build":{"frontendDist":"https://staging.example.com"}}'`.
+
+Updates are off until you configure them. Generate a key pair with `pnpm -F @repo/desktop tauri signer generate`, then add the public key and your feed to `apps/desktop/src-tauri/tauri.conf.json`:
+
+```jsonc
+"bundle": { "createUpdaterArtifacts": true /* … */ },
+"plugins": {
+  "updater": {
+    "pubkey": "<contents of the .pub file>",
+    "endpoints": ["https://github.com/<owner>/<repo>/releases/latest/download/latest.json"],
+    "requireSignedVersion": true
+  }
+}
+```
+
+Build with `TAURI_SIGNING_PRIVATE_KEY` set and publish the bundle beside its `latest.json` (see [the updater guide](https://v2.tauri.app/plugin/updater/)). The web app then checks for a release each time it loads in the shell and shows its update banner when one is out (on macOS, the app menu's Check for Updates… also checks on demand); the download and the restart each wait for a click.
 
 ## CI/CD
 

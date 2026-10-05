@@ -11,7 +11,7 @@ One TypeScript codebase that ships to web, mobile, browser extension, and deskto
 
 ## Getting Started
 
-**Prerequisites**: [Node.js 24](https://nodejs.org), [pnpm 12](https://pnpm.io), [Docker](https://docs.docker.com/get-docker/)
+**Prerequisites**: [Node.js 24](https://nodejs.org), [pnpm 12](https://pnpm.io), [Docker](https://docs.docker.com/get-docker/), and for the desktop app [Rust](https://rustup.rs) plus [Tauri's platform prerequisites](https://v2.tauri.app/start/prerequisites/)
 
 ```sh
 pnpm install
@@ -27,9 +27,11 @@ apps/
   web/         # Next.js web app
   mobile/      # Expo/React Native mobile app
   extension/   # WXT Chrome extension
-  desktop/     # Electron desktop app
+  desktop/     # Tauri desktop app
 packages/
-  api/         # oRPC router + better-auth
+  permissions/ # Client-safe auth helpers: role permissions, slugify
+  contract/    # oRPC contract shared by server and clients
+  service/     # oRPC implementation + better-auth
   db/          # Drizzle schema + local Postgres compose
   ui/          # Shared React components
 ```
@@ -39,7 +41,7 @@ packages/
 - [Next.js](https://nextjs.org)
 - [Expo](https://expo.dev)
 - [Chrome Extension (WXT)](https://wxt.dev)
-- [Electron](https://www.electronjs.org)
+- [Tauri](https://v2.tauri.app)
 - [Tailwind CSS](https://tailwindcss.com)
 - [oRPC](https://orpc.dev)
 - [Drizzle](https://orm.drizzle.team)
@@ -48,21 +50,22 @@ packages/
 
 ## Scripts
 
-| Command              | Description                   |
-| -------------------- | ----------------------------- |
-| `pnpm dev`           | Run all apps                  |
-| `pnpm dev:web`       | Run Next.js only              |
-| `pnpm dev:mobile`    | Run Expo only                 |
-| `pnpm dev:extension` | Run Chrome extension only     |
-| `pnpm dev:desktop`   | Run Electron only             |
-| `pnpm build`         | Build all packages            |
-| `pnpm typecheck`     | Type check all packages       |
-| `pnpm lint`          | Lint all packages (oxlint)    |
-| `pnpm format`        | Format all packages (oxfmt)   |
-| `pnpm db:start`      | Start local Postgres (Docker) |
-| `pnpm db:stop`       | Stop local Postgres           |
-| `pnpm db:push`       | Push Drizzle schema           |
-| `pnpm db:reset`      | Reset and push schema         |
+| Command                         | Description                                    |
+| ------------------------------- | ---------------------------------------------- |
+| `pnpm dev`                      | Run all apps                                   |
+| `pnpm dev:web`                  | Run Next.js only                               |
+| `pnpm dev:mobile`               | Run Expo only                                  |
+| `pnpm dev:extension`            | Run Chrome extension only                      |
+| `pnpm dev:desktop`              | Run the desktop app, with the web app it opens |
+| `pnpm build`                    | Build all packages                             |
+| `pnpm -F @repo/desktop package` | Bundle the desktop app (`.app`/`.dmg` on Mac)  |
+| `pnpm typecheck`                | Type check all packages (tsc, clippy)          |
+| `pnpm lint`                     | Lint all packages (oxlint)                     |
+| `pnpm format`                   | Check formatting (oxfmt, cargo fmt)            |
+| `pnpm db:start`                 | Start local Postgres (Docker)                  |
+| `pnpm db:stop`                  | Stop local Postgres                            |
+| `pnpm db:push`                  | Push Drizzle schema                            |
+| `pnpm db:reset`                 | Reset and push schema                          |
 
 ## License
 

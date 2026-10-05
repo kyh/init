@@ -35,4 +35,10 @@ describe("renderLlmsTxt — llmstxt.org format", () => {
   test("lists docs as absolute links", () => {
     assert.ok(body.includes("- [Introduction](http://localhost:3000/docs/overview/introduction)"));
   });
+
+  test("lists every trust page, the legal pages included", () => {
+    for (const path of ["/about", "/contact", "/privacy", "/terms"]) {
+      assert.ok(body.includes(`](http://localhost:3000${path})`), path);
+    }
+  });
 });

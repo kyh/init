@@ -2,7 +2,7 @@ import { siteConfig } from "@/lib/site-config";
 
 import { sitePages } from "./site-pages";
 
-import type { SitePage } from "./site-pages";
+import type { Block, Inline, ListItem, SitePage, TableBlock } from "./page-content";
 
 export const absoluteUrl = (path: string) => `${siteConfig.url}${path}`;
 
@@ -20,7 +20,7 @@ export const agentLinks = [
 ];
 
 export const whenToUse = [
-  `**When to use ${siteConfig.name}:** starting a new TypeScript product that needs a web app plus any of mobile (Expo), browser extension (WXT), or desktop (Electron) from one codebase, with auth, multi-tenant organizations, Stripe billing, and a typed API already wired. It suits teams that let coding agents do most of the edits: setup is headless and verification is one command.`,
+  `**When to use ${siteConfig.name}:** starting a new TypeScript product that needs a web app plus any of mobile (Expo), browser extension (WXT), or desktop (Tauri) from one codebase, with auth, multi-tenant organizations, Stripe billing, and a typed API already wired. It suits teams that let coding agents do most of the edits: setup is headless and verification is one command.`,
   `**How to use it:** \`gh repo create my-app --template kyh/init --clone\`, then \`pnpm install && pnpm bootstrap --yes\` (needs Docker for local Postgres) and \`pnpm dev:web\`. There is no create CLI or hosted service; you fork the template and own the code.`,
   "**Not a fit:** adding features to an existing app, non-TypeScript backends, or projects that want a hosted backend-as-a-service instead of their own Postgres.",
 ];
@@ -53,16 +53,67 @@ export const renderHomeMarkdown = () =>
     ...pageLinks(),
   ]);
 
+const renderInline = (run: Inline) => {
+  if (run.kind === "strong") {
+    return `**${run.text}**`;
+  }
+  if (run.kind === "link") {
+    return `[${run.text}](${run.href})`;
+  }
+  return run.text;
+};
+
+const renderRuns = (runs: Inline[]) => runs.map(renderInline).join("");
+
+/** Nested items indent two spaces per level, under their parent's text. */
+const renderListItems = (items: ListItem[], depth: number): string[] =>
+  items.flatMap((entry) => [
+    `${"  ".repeat(depth)}- ${renderRuns(entry.content)}`,
+    ...renderListItems(entry.items, depth + 1),
+  ]);
+
+/** A pipe inside a cell would end the cell early. */
+const tableRow = (cells: string[]) =>
+  `| ${cells.map((cell) => cell.replaceAll("|", "\\|")).join(" | ")} |`;
+
+const renderTable = (block: TableBlock) => [
+  tableRow(block.columns),
+  tableRow(block.columns.map(() => "---")),
+  ...block.rows.map(tableRow),
+];
+
+const renderBlock = (block: Block): string[] => {
+  switch (block.kind) {
+    case "paragraph": {
+      return [renderRuns(block.content)];
+    }
+    case "subheading": {
+      return [`### ${block.text}`];
+    }
+    case "list": {
+      return renderListItems(block.items, 0);
+    }
+    default: {
+      return renderTable(block);
+    }
+  }
+};
+
+/** A blank line before each block keeps lists and tables from running into the text above. */
+const renderBlocks = (blocks: Block[]) => blocks.flatMap((block) => ["", ...renderBlock(block)]);
+
 export const renderSitePageMarkdown = (page: SitePage) =>
   document([
     `# ${page.title}`,
     "",
     `> ${page.description}`,
+    ...renderBlocks(page.preamble ?? []),
     ...page.sections.flatMap((section) => [
       "",
       `## ${section.heading}`,
-      ...section.paragraphs.flatMap((paragraph) => ["", paragraph]),
+      ...renderBlocks(section.blocks),
     ]),
+    ...(page.footnote === undefined ? [] : ["", "---", "", page.footnote]),
   ]);
 
 export const renderNotFoundMarkdown = (pathname: string) =>

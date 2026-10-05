@@ -1,0 +1,28 @@
+{
+  "name": "@repo/contract",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./base": "./src/base.ts",
+    "./organization/organization-schema": "./src/organization/organization-schema.ts",
+    "./todo/todo-schema": "./src/todo/todo-schema.ts",
+    "./waitlist/waitlist-schema": "./src/waitlist/waitlist-schema.ts"
+  },
+  "scripts": {
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@orpc/contract": "catalog:",
+    "@orpc/openapi": "catalog:",
+    "@repo/db": "workspace:*",
+    "drizzle-orm": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@kyh/tsconfig": "catalog:",
+    "typescript": "catalog:"
+  }
+}

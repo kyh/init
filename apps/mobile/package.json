@@ -15,8 +15,9 @@
     "@better-auth/expo": "catalog:",
     "@expo/metro-runtime": "~57.0.16",
     "@orpc/client": "catalog:",
-    "@orpc/server": "catalog:",
     "@orpc/tanstack-query": "catalog:",
+    "@repo/contract": "workspace:*",
+    "@repo/permissions": "workspace:*",
     "@tanstack/react-query": "catalog:",
     "better-auth": "catalog:",
     "expo": "~57.0.24",
@@ -42,7 +43,6 @@
   },
   "devDependencies": {
     "@kyh/tsconfig": "catalog:",
-    "@repo/api": "workspace:*",
     "@types/react": "catalog:expo",
     "tailwindcss": "catalog:",
     "typescript": "catalog:expo"

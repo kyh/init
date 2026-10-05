@@ -2,9 +2,7 @@
 
 ## Project Overview
 
-**init** - pnpm monorepo with Turborepo. Multi-platform starter: Next.js web, Expo mobile, Chrome extension, Electron desktop.
-
-Desktop uses Vite 7: electron-vite 5 does not support the workspace's Vite 8.
+**init** - pnpm monorepo with Turborepo. Multi-platform starter: Next.js web, Expo mobile, Chrome extension, Tauri desktop.
 
 ## Tech Stack
 
@@ -17,6 +15,7 @@ Desktop uses Vite 7: electron-vite 5 does not support the workspace's Vite 8.
 - **Email**: Resend REST API (console fallback in dev)
 - **Database**: Postgres — Docker Compose locally, Vercel Postgres in production (auth is better-auth)
 - **Storage**: Vercel Blob (avatars only; no local emulator, so that route 501s offline)
+- **Desktop**: Tauri 2 — a Rust shell over the system webview (WebKit on macOS)
 
 ## Monorepo Structure
 
@@ -25,12 +24,18 @@ apps/
   web/         # Next.js 16 web app (fumadocs for docs)
   mobile/      # React Native mobile (nativewind)
   extension/   # Chrome extension (wxt)
-  desktop/     # Desktop app (Electron)
+  desktop/     # Desktop app (Tauri 2: a Rust shell around the web app)
 packages/
-  api/         # oRPC router + better-auth
+  permissions/ # Client-safe auth helpers: role permissions, slugify
+  contract/    # oRPC contract: zod inputs, outputs, errors, openapi meta
+  service/     # oRPC implementation of the contract + better-auth
   db/          # Drizzle schema + client, local Postgres compose file
   ui/          # Shared React components (shadcn-style)
 ```
+
+### Contract-first API
+
+`@repo/contract` is the single source of truth: each feature has `<f>-schema.ts` (zod inputs; org-scoped ones extend `organizationInput`) and `<f>-contract.ts` (built on `publicBase` / `protectedBase` / `organizationBase` from `base.ts`), registered in `src/index.ts`. `@repo/service` implements it with `os = implement(contract)` — org-scoped: `const authed = os.<f>.use(requireSession); export const <f>Router = { <proc>: authed.<proc>.use(requireOrganization).handler(...) }`; public procedures implement `os.<f>.<proc>` directly (see `waitlist-router.ts`). Mount in `root-router.ts`; `os.router` fails to compile if a procedure is missing or mistyped. Implementer-level `.use` runs before input validation (anonymous → UNAUTHORIZED); procedure-level `.use` runs after. Feature routers stay plain objects — `os.<f>.router()` re-applies implementer middleware, so it would run twice. Clients type against `ContractClient` / `RouterInputs` / `RouterOutputs` from `@repo/contract` and use `@repo/permissions` for role checks; only server code (web route handlers, RSC) imports `@repo/service`. Layout follows oRPC's Hybrid monorepo recipe.
 
 ### Mutation path
 
@@ -42,6 +47,10 @@ Mutations go through oRPC or the better-auth client — never Next Server Action
 
 The Expo SDK pins the native modules. `update.ignoreDeps` in `pnpm-workspace.yaml` makes `pnpm up --latest -r` skip `expo`, `expo-*`, `@expo/*`, `react-native`, `react-native-*`, `@react-native/*` and `nativewind`; bump the SDK-pinned ones with `npx expo install --fix` during an SDK upgrade. It matches by name only, so the `expo:` catalog rows (`react`, `react-dom`, `typescript`, `@types/react`) are **not** guarded — ignoring them would freeze web too. After a sweep, revert those rows by hand, then run `npx expo install --check` in `apps/mobile`.
 
+### Desktop shell
+
+`apps/desktop` is a Tauri 2 shell around the web app, not a second frontend. Its window is declared in `src-tauri/tauri.conf.json` (`create: false`) and built in `window.rs`, because the navigation pin needs closures: the web app's origin and the OAuth providers load in it, any other web page opens in the browser, and no page gets a second window or a device permission. It opens `devUrl` under `pnpm dev:desktop`, which starts the web app beside it (`tauri dev` waits for it), and `frontendDist` in a build. The web app reaches the shell only through `apps/web/src/lib/desktop-bridge.ts`, which parses every frame with zod: three update commands and the menu's `menu-action` event. Every command is named in `build.rs`'s app manifest, so a page reaches only what `capabilities/` grants, and `removeUnusedCommands` drops every other command from the binary; Tauri counts the app URL as a local origin, so an OAuth page gets no IPC. Rust rides the same gates on the toolchain `rust-toolchain.toml` pins: `typecheck` is clippy (pedantic, `-D warnings`), `test` is `cargo test`, `format` is `cargo fmt --check`. On Linux the build needs WebKitGTK (`libwebkit2gtk-4.1-dev`); macOS ships WebKit, and Windows uses the WebView2 Runtime, which the installer fetches where it is missing. Updates stay off until `plugins.updater` is configured (`apps/web/content/docs/launch/deployment.mdx`).
+
 ## Common Commands
 
 ```bash
@@ -49,14 +58,16 @@ pnpm bootstrap        # First-run: provision DB + .env + schema + seed (--yes = 
 pnpm dev              # Run all apps
 pnpm dev:web          # Run Next.js only
 pnpm dev:mobile       # Run Expo only
-pnpm typecheck        # Type check all packages
+pnpm dev:desktop      # Run the desktop app, with the web app it opens
+pnpm typecheck        # Type check all packages (tsc, clippy)
 pnpm lint             # Lint all packages (oxlint)
-pnpm format           # Check formatting (oxfmt)
-pnpm format:fix       # Format all packages (oxfmt)
-pnpm test             # Run tests (node:test — do not add vitest or jest)
+pnpm format           # Check formatting (oxfmt, cargo fmt)
+pnpm format:fix       # Format all packages (oxfmt, cargo fmt)
+pnpm test             # Run tests (node:test, cargo test)
                       # Real-database suites skip unless TEST_POSTGRES_URL points at a disposable, schema-pushed Postgres
 pnpm verify           # typecheck · lint · format · test (CI gate)
 pnpm build            # Build all packages
+pnpm -F @repo/desktop package  # Bundle the desktop app (.app/.dmg on macOS)
 
 # Database
 pnpm db:start         # Start local Postgres (Docker)

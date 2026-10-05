@@ -3,16 +3,18 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
+import { desktopBridge } from "@/lib/desktop-bridge";
+
 export const DesktopMenuListener = () => {
   const router = useRouter();
 
   useEffect(() => {
-    const { desktopBridge } = window;
-    if (!desktopBridge) {
+    const bridge = desktopBridge();
+    if (!bridge) {
       return;
     }
 
-    return desktopBridge.onMenuAction((action) => {
+    return bridge.onMenuAction((action) => {
       if (action === "open-settings") {
         router.push("/dashboard/account");
       }
