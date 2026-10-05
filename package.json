@@ -30,12 +30,12 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "dotenv-cli": "^11.0.0",
-    "oxfmt": "^0.68.0",
-    "oxlint": "^1.85.0",
+    "oxfmt": "^0.71.0",
+    "oxlint": "^1.86.0",
     "tsx": "catalog:",
-    "turbo": "^2.11.4",
+    "turbo": "^2.11.7",
     "typescript": "catalog:",
-    "ultracite": "^7.12.0",
+    "ultracite": "^7.12.2",
     "zod": "catalog:"
   },
   "engines": {
