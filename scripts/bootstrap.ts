@@ -1,8 +1,6 @@
 import { execSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import fs from "node:fs";
-import { once } from "node:events";
-import { createServer } from "node:net";
 import path from "node:path";
 import { z } from "zod";
 
@@ -254,67 +252,9 @@ const commandExists = (cmd: string): boolean => {
   }
 };
 
-const checkDocker = () => {
-  if (!commandExists("docker")) {
-    console.log("  ✗ Docker not found. Local Postgres runs in a Docker container.");
-    console.log("    Install Docker: https://docs.docker.com/get-docker/");
-    process.exit(1);
-  }
-  console.log("  ✓ Docker found");
-};
-
 // ── Postgres + env setup ─────────────────────────────────
 
-// Docker Compose derives its project name from the compose file's directory,
-// which is `db` for every repo cloned from this template — so they'd all share
-// one volume and leak schema between each other. COMPOSE_PROJECT_NAME pins it
-// to this repo's folder instead.
-const composeProjectName = () => {
-  const slug =
-    path
-      .basename(ROOT_DIR)
-      .toLowerCase()
-      .replaceAll(/[^a-z0-9_-]+/gu, "-")
-      .replaceAll(/^-+|-+$/gu, "") || "init";
-  return /^[a-z]/u.test(slug) ? slug : `app-${slug}`;
-};
-
-// COMPOSE_PROJECT_NAME keeps two clones off each other's data, but they'd
-// still both try to publish Postgres on the same host port and the second one
-// would fail to start. Give each project its own port so they can run at once.
-const isPortFree = async (port: number) => {
-  const server = createServer();
-  try {
-    // No host: bind every interface, matching what Docker does, so a port
-    // another project already published is correctly seen as taken
-    server.listen(port);
-    await once(server, "listening");
-  } catch {
-    return false;
-  }
-  server.close();
-  await once(server, "close");
-  return true;
-};
-
-const findFreePort = async (start = 54_322, range = 50) => {
-  for (let port = start; port < start + range; port += 1) {
-    if (await isPortFree(port)) {
-      return port;
-    }
-  }
-  throw new Error(`No free port for local Postgres in ${start}-${start + range - 1}`);
-};
-
-/** The port a previous run wrote, for logging. */
-const envPort = () => {
-  if (!fileExists(".env")) {
-    return "54322";
-  }
-  return readText(".env").match(/^POSTGRES_PORT="?(?<port>\d+)"?/mu)?.groups?.port ?? "54322";
-};
-
-const createEnv = async () => {
+const createEnv = () => {
   const envPath = ".env";
 
   if (fileExists(envPath)) {
@@ -322,13 +262,9 @@ const createEnv = async () => {
     return;
   }
 
-  const projectName = composeProjectName();
-  const port = await findFreePort();
-
   const env = [
-    `POSTGRES_URL="postgresql://postgres:postgres@127.0.0.1:${port}/postgres"`,
-    `POSTGRES_PORT="${port}"`,
-    `COMPOSE_PROJECT_NAME="${projectName}"`,
+    "# `pnpm db:start` fills this in: this checkout's local Supabase, on this branch",
+    `POSTGRES_URL=""`,
     `BETTER_AUTH_SECRET="${randomBytes(32).toString("base64")}"`,
     "",
     "# Avatar uploads need a Vercel Blob store; unset, that one route 501s",
@@ -341,45 +277,25 @@ const createEnv = async () => {
   ].join("\n");
 
   writeText(envPath, env);
-  console.log(`  ✓ .env created (Compose project "${projectName}", Postgres on ${port})`);
+  console.log("  ✓ .env created");
 };
 
-/** Points .env at a different host port, both the bare port and the URL's. */
-const repointEnvPort = (port: number) => {
-  const env = readText(".env")
-    .replace(/^POSTGRES_PORT="?\d+"?/mu, `POSTGRES_PORT="${port}"`)
-    .replace(/^(?<head>POSTGRES_URL="[^"]*:)\d+(?<tail>\/[^"]*")/mu, `$<head>${port}$<tail>`);
-  writeText(".env", env);
-};
-
-const startPostgres = async () => {
-  console.log("\nStarting Postgres...");
-
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    try {
-      // `--wait` blocks on the container's healthcheck, so the schema push
-      // below never races the database's first boot
-      exec("pnpm db:start", { stdio: "inherit" });
-      console.log(`  ✓ Postgres ready on port ${envPort()}`);
-      return;
-    } catch (error) {
-      // Picking a free port and publishing it aren't atomic, so another
-      // project can claim it in between — and a port chosen by an earlier
-      // bootstrap may have been taken since. Re-probe the port rather than
-      // parsing Docker's error text: if it really is free, the failure was
-      // something else and belongs to the caller.
-      const port = Number(envPort());
-      if (await isPortFree(port)) {
-        throw error;
-      }
-
-      const next = await findFreePort(port + 1);
-      console.log(`  ○ port ${port} is taken; moving this project to ${next}`);
-      repointEnvPort(next);
-    }
+// Local Supabase gives every checkout and git branch its own database on its own
+// port, so clones of this template never share data or fight over a port. The
+// CLI picks the port; `pnpm db:start` writes the URL into .env.
+const startPostgres = () => {
+  console.log("\nStarting local Supabase...");
+  try {
+    exec("pnpm db:start", { stdio: "inherit" });
+  } catch (error) {
+    console.log(
+      `\n  ${DIM}✗ Local Supabase didn't start.${RESET} Its native runtime needs macOS 14+ on ` +
+        "Apple silicon or Linux (glibc 2.35+). Elsewhere, re-run with SUPABASE_RUNTIME=docker " +
+        "and Docker running.",
+    );
+    throw error;
   }
-
-  throw new Error("Could not start Postgres: every candidate host port was taken");
+  console.log("  ✓ Postgres ready");
 };
 
 const pushSchema = () => {
@@ -395,8 +311,7 @@ const runSeed = () => {
   } catch (error) {
     console.log(
       `\n  ${DIM}✗ Seeding failed.${RESET} If the local database has a leftover or conflicting ` +
-        "schema (e.g. a Docker volume shared with another project), run 'pnpm db:reset' to " +
-        "rebuild it, then re-run 'pnpm bootstrap'.",
+        "schema, run 'pnpm db:reset' to rebuild it, then re-run 'pnpm bootstrap'.",
     );
     throw error;
   }
@@ -460,15 +375,11 @@ const main = async () => {
     exec("pnpm install", { stdio: "inherit" });
   }
 
-  console.log("\nChecking dependencies...");
-  checkDocker();
-
   // ── Step 3: Create .env, then start Postgres ──
-  // .env first: the local connection string is a constant, and `pnpm db:start`
-  // reads COMPOSE_PROJECT_NAME from it
+  // .env first: `pnpm db:start` writes this checkout's POSTGRES_URL into it
   console.log("\nConfiguring environment...");
-  await createEnv();
-  await startPostgres();
+  createEnv();
+  startPostgres();
 
   pushSchema();
 

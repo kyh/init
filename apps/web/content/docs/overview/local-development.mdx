@@ -8,11 +8,13 @@ Daily workflows, debugging, and conventions for building with Init.
 
 ### Starting Your Session
 
-1. **Start the database**:
+1. **Start the database** (local Supabase, no Docker; points `.env` at this branch's database):
 
    ```bash
    pnpm db:start
    ```
+
+   Each git branch has its own database. On a branch you haven't used before it starts empty: `pnpm db:push && pnpm db:seed`.
 
 2. **Start dev servers**:
 
@@ -61,7 +63,7 @@ packages/
 ├── permissions/  # Client-safe auth helpers: role permissions, slugify
 ├── contract/     # oRPC contract shared by server and clients
 ├── service/      # oRPC implementation + better-auth
-├── db/           # Drizzle schema + local Postgres compose
+├── db/           # Drizzle schema + local Supabase config
 └── ui/           # Shared React components
 ```
 
@@ -259,16 +261,14 @@ pnpm clean && pnpm install && pnpm build
 One root `.env` file. Apps and packages load it via `dotenv -e ../../.env`. Turborepo declares the allow-list in `turbo.json` (`globalEnv`).
 
 ```
-POSTGRES_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres
-POSTGRES_PORT=54322
-COMPOSE_PROJECT_NAME=init
+POSTGRES_URL=postgresql://postgres:postgres@127.0.0.1:24571/postgres
 BETTER_AUTH_SECRET=...
 GITHUB_CLIENT_ID=...
 GITHUB_CLIENT_SECRET=...
 BLOB_READ_WRITE_TOKEN=...
 ```
 
-`POSTGRES_URL` is the only database input - the local Docker container in dev, Vercel Postgres (or any Postgres) in production. `COMPOSE_PROJECT_NAME` namespaces that container's volume and `POSTGRES_PORT` is the host port it publishes; together they let two clones run their databases at the same time. `pnpm bootstrap` writes both — the project name from the repo folder, the port as the first free one from 54322 up.
+`POSTGRES_URL` is the only database input - local Supabase in dev, a Supabase project (or any Postgres) in production. Locally `pnpm db:start` writes it: the Supabase CLI gives every checkout and git branch its own database on its own port (24571 above is one such port), so clones, worktrees and parallel agents run their databases side by side. It only rewrites a `POSTGRES_URL` that points at this machine, never one you set to a hosted database.
 
 `BLOB_READ_WRITE_TOKEN` is for avatar uploads via Vercel Blob, which has no local emulator. Leave it unset offline - the avatar route returns 501 with a pointer, everything else works.
 

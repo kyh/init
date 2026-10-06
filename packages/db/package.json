@@ -12,11 +12,13 @@
   "scripts": {
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test 'src/**/*.test.ts'",
     "drizzle:kit": "pnpm with-env drizzle-kit",
-    "start": "pnpm with-env docker compose up -d --wait",
-    "stop": "pnpm with-env docker compose stop",
-    "reset": "pnpm with-env docker compose down -v && pnpm start && pnpm push",
-    "status": "pnpm with-env docker compose ps --all",
+    "supabase": "pnpm with-env supabase",
+    "start": "tsx src/local-supabase.ts",
+    "stop": "supabase stop",
+    "reset": "pnpm start && supabase db reset && pnpm push",
+    "status": "supabase status",
     "push": "pnpm with-env drizzle-kit push --force",
     "push:remote": "dotenv -e ../../.env.production.local -- drizzle-kit push",
     "studio": "pnpm with-env drizzle-kit studio",
@@ -32,6 +34,8 @@
     "@kyh/tsconfig": "catalog:",
     "@types/node": "catalog:",
     "drizzle-kit": "1.0.0-rc.4",
+    "supabase": "^2.119.0",
+    "tsx": "catalog:",
     "typescript": "catalog:"
   }
 }

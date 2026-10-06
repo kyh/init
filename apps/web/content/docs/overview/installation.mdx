@@ -9,7 +9,7 @@ Get Init running locally in a few minutes.
 - **Node.js** v24+ - [Download Node.js](https://nodejs.org/)
 - **pnpm** v12 - Fast, disk space efficient package manager
 - **Git**
-- **Docker** - Required by local Postgres
+- **macOS on Apple silicon, or Linux** - Local Postgres runs natively through the Supabase CLI (installed by `pnpm install`), no Docker. It needs macOS 14+ or glibc 2.35+; on an Intel Mac or Windows, set `SUPABASE_RUNTIME=docker` and run Docker instead
 - **Rust** - Only for the desktop app: install with [rustup](https://rustup.rs), which picks up the version `apps/desktop/rust-toolchain.toml` pins. Linux also needs WebKitGTK and the other [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/); macOS needs only the Xcode command line tools
 
 ### Install pnpm
@@ -58,8 +58,7 @@ cp .env.example .env
 
 Fill in as needed:
 
-- `POSTGRES_URL` - defaults to the local Postgres container; leave as-is for local dev
-- `COMPOSE_PROJECT_NAME` - namespaces the local Docker volume so clones don't share one database
+- `POSTGRES_URL` - leave it empty for local dev: `pnpm db:start` writes it
 - `BETTER_AUTH_SECRET` - generate with `openssl rand -base64 32`
 - `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` - only for GitHub login
 - `BLOB_READ_WRITE_TOKEN` - only for avatar uploads (Vercel Blob). There's no local emulator, so leave it unset offline: the avatar route returns 501 with a pointer and the rest of the app is unaffected.
@@ -69,15 +68,17 @@ Fill in as needed:
 Start local Postgres and push the schema:
 
 ```bash
-pnpm db:start   # Postgres on :54322 (or whatever port .env sets)
+pnpm db:start   # local Supabase; writes this checkout's POSTGRES_URL into .env
 pnpm db:push    # drizzle-kit push
 ```
 
-Using a hosted database instead? Create one on [Vercel Postgres](https://vercel.com/docs/postgres) (or any Postgres host), point `POSTGRES_URL` at it, and run `pnpm db:push`.
+The first start downloads Postgres (~400 MB, cached after that). Every git branch gets its own database on its own port, so a new branch starts empty: run `pnpm db:start && pnpm db:push` there.
+
+Using a hosted database instead? Create a [Supabase](https://supabase.com) project (or use any Postgres host), point `POSTGRES_URL` at it, and run `pnpm db:push`.
 
 ### 5. Trim the Starter (Optional)
 
-`pnpm bootstrap` is the one-command alternative to steps 3–4: it starts Postgres, writes `.env`, pushes the schema, and seeds a dev user (`dev@init.local` / `password`), then ends with an interactive checklist — deselect mobile, extension, or desktop and it deletes them cleanly. Pass `--yes` to keep all apps and run unattended (how a coding agent provisions).
+`pnpm bootstrap` is the one-command alternative to steps 3–4: it writes `.env`, starts Postgres, pushes the schema, and seeds a dev user (`dev@init.local` / `password`), then ends with an interactive checklist — deselect mobile, extension, or desktop and it deletes them cleanly. Pass `--yes` to keep all apps and run unattended (how a coding agent provisions).
 
 ```bash
 pnpm bootstrap        # interactive
@@ -107,7 +108,7 @@ init/
 │   ├── permissions/   # Client-safe auth helpers: role permissions, slugify
 │   ├── contract/      # oRPC contract shared by server and clients
 │   ├── service/       # oRPC implementation + better-auth
-│   ├── db/            # Drizzle schema + local Postgres compose
+│   ├── db/            # Drizzle schema + local Supabase config
 │   └── ui/            # Shared UI components
 └── package.json       # Root workspace scripts
 ```
@@ -122,7 +123,7 @@ init/
 
 ### Database
 
-- `pnpm db:start` / `pnpm db:stop` - Local Postgres container
+- `pnpm db:start` / `pnpm db:stop` - Local Postgres (Supabase CLI, no Docker)
 - `pnpm db:push` - Push schema to local database
 - `pnpm db:seed` - Seed a dev user + sample data
 - `pnpm db:push-remote` - Push schema to production
@@ -143,7 +144,7 @@ init/
 
 ## Troubleshooting
 
-**Port already in use** - Free port 3000. For Postgres, `pnpm bootstrap` picks a free port from 54322 up and records it as `POSTGRES_PORT`, so a second project on the same machine gets its own.
+**Port already in use** - Free port 3000. Postgres never clashes: the Supabase CLI gives each checkout and branch its own port and `pnpm db:start` writes it into `.env`.
 
 **pnpm install fails**
 
@@ -152,10 +153,11 @@ pnpm store prune
 pnpm install
 ```
 
-**Database connection issues** - Is Docker running? Then:
+**Database connection issues** - Start this branch's database, which also points `.env` at it:
 
 ```bash
 pnpm db:start
+pnpm -F db status   # what the CLI is running for this checkout
 ```
 
 **Type errors**

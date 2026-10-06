@@ -16,9 +16,9 @@ jobs:
       TURBO_TELEMETRY_DISABLED: 1
       TEST_POSTGRES_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres
     services:
-      # Same major as packages/db/docker-compose.yml.
+      # Same major as local Supabase (packages/db/supabase/config.toml).
       postgres:
-        image: postgres:18-alpine
+        image: postgres:17-alpine
         env:
           POSTGRES_PASSWORD: postgres
         options: >-

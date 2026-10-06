@@ -27,7 +27,7 @@ Two layers, know both:
 1. **RLS deny-by-default** - every table is declared through `pgTable.withRLS` with no policies, so any connection that isn't the table owner gets nothing
 2. **oRPC procedures** - the real authorization. The `requireSession` middleware requires a session; `requireOrganization` (both in `packages/service/src/orpc.ts`) resolves the org and proves membership before any org-scoped handler runs
 
-Nothing in this stack puts Postgres on the network, so the oRPC procedures are the only way in and RLS is the backstop rather than the gate. Keep it that way: if you ever enable a hosted data API or hand out a lower-privileged role, deny-by-default is what stops a forgotten table from being world-readable. If you regenerate the auth schema, declare every table through `pgTable.withRLS` again.
+With Supabase's Data API off ([Deployment](/docs/launch/deployment#database-supabase)), nothing in this stack puts Postgres on the network, so the oRPC procedures are the only way in and RLS is the backstop rather than the gate. Keep it that way: if you ever turn the Data API on or hand out a lower-privileged role, deny-by-default is what stops a forgotten table from being world-readable. If you regenerate the auth schema, declare every table through `pgTable.withRLS` again.
 
 ## What Init Doesn't Ship
 

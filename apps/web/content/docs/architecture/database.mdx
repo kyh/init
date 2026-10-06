@@ -2,13 +2,13 @@
 title: "Database"
 ---
 
-Init uses Postgres with Drizzle ORM for type-safe queries - a Docker container locally, Vercel Postgres in production. This guide covers the setup, schema, and development workflow.
+Init uses Postgres with Drizzle ORM for type-safe queries - local Supabase in development (native, no Docker), a Supabase project in production by default. This guide covers the setup, schema, and development workflow.
 
 ## Overview
 
 The stack:
 
-- **Postgres** - `postgres:18-alpine` via Docker Compose locally, Vercel Postgres in production
+- **Postgres** - Postgres 17 from the Supabase CLI locally, a Supabase project (or any Postgres) in production
 - **Drizzle ORM** - Type-safe queries over postgres.js
 - **drizzle-kit push** - Schema sync, no migration files
 - **RLS deny-by-default** - Authorization lives in oRPC, not the database
@@ -37,7 +37,9 @@ import postgres from "postgres";
 import { relations } from "./drizzle-relations";
 
 const client = postgres(
-  process.env.POSTGRES_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres",
+  // Locally `pnpm db:start` writes POSTGRES_URL; the fallback only lets code that
+  // never queries (a build, a unit test) import this
+  process.env.POSTGRES_URL ?? "postgresql://postgres:postgres@127.0.0.1:1/postgres",
   // POSTGRES_URL is the pooled URL in production, and transaction-mode
   // poolers do not support server-side prepared statements
   { prepare: false },
@@ -46,7 +48,7 @@ const client = postgres(
 export const db = drizzle({ client, relations });
 ```
 
-`POSTGRES_URL` is the only connection env var the app reads. It defaults to the local Docker container. `drizzle-kit` alone prefers `POSTGRES_URL_NON_POOLING` when set.
+`POSTGRES_URL` is the only connection env var the app reads; locally, `pnpm db:start` writes it into `.env`. `drizzle-kit` alone prefers `POSTGRES_URL_NON_POOLING` when set.
 
 ## Schema
 
@@ -90,7 +92,7 @@ export const todo = pgTable.withRLS(
 
 ### Row Level Security
 
-Every table is declared through `pgTable.withRLS` with no policies - deny by default. Nothing in this stack exposes Postgres to untrusted clients, so it's defense in depth rather than the primary control: it means a connection made with a non-owner role reads nothing by default. Authorization lives in oRPC. The server's Drizzle connection is unaffected: the table owner bypasses RLS.
+Every table is declared through `pgTable.withRLS` with no policies - deny by default. The app never hands Postgres to untrusted clients, so it's defense in depth rather than the primary control: it means a connection made with a non-owner role reads nothing by default. That includes Supabase's Data API, which serves the `public` schema to the `anon` and `authenticated` roles while it's on; the app doesn't use it, so turn it off ([Deployment](/docs/launch/deployment#database-supabase)). Authorization lives in oRPC. The server's Drizzle connection is unaffected: the table owner bypasses RLS.
 
 If you regenerate the auth schema, declare every table through `pgTable.withRLS` again.
 
@@ -123,7 +125,7 @@ export default {
 Init uses `drizzle-kit push` - schema goes straight to the database, no migration files.
 
 ```bash
-pnpm db:start         # Start local Postgres (Docker)
+pnpm db:start         # Start local Postgres (Supabase, no Docker)
 pnpm db:stop          # Stop local Postgres
 pnpm db:push          # Push schema to local database
 pnpm db:push-remote   # Push schema to production (.env.production.local)
@@ -196,18 +198,22 @@ type NewTodo = InferInsertModel<typeof todo>;
 
 ## Local Postgres
 
-One container, defined in `packages/db/docker-compose.yml`:
+Local Supabase, from the Supabase CLI that `pnpm install` brings in. `packages/db/supabase/config.toml` turns on its stack backend (`[experimental] stack`, CLI 2.119+), whose native runtime runs Postgres as a plain process - no Docker - on macOS 14+ (Apple silicon) and Linux (glibc 2.35+). The config runs Postgres alone: the app uses none of Supabase's other services.
 
 ```bash
-pnpm db:start    # docker compose up -d --wait (Postgres on :54322 by default)
-pnpm db:stop     # Stop the container, keep the data
-pnpm db:reset    # Drop the volume, recreate, re-push the schema
+pnpm db:start      # Start this branch's database; write its URL into .env
+pnpm db:stop       # Stop it, keep the data
+pnpm db:reset      # Wipe it, re-push the schema (and re-seed, from the root script)
+pnpm -F db status  # What the CLI is running for this checkout
 pnpm -F db studio  # Drizzle Studio, to browse data
 ```
 
-Port 54322 rather than 5432, so a Postgres already installed on the host doesn't clash — and `POSTGRES_PORT` overrides it, which is how two projects run at once. `--wait` blocks on the container's healthcheck, which checks over TCP - the throwaway server that runs during first-boot `initdb` answers on the Unix socket, so a socket check would return before the real server is listening.
+The CLI keeps one database per checkout **and git branch**, each with its own port from 20000 up, so clones, worktrees and parallel agents never share data or fight over a port. That's why the config pins no port: a pinned one makes a second branch's database fail to bind. `pnpm db:start` (`packages/db/src/local-supabase.ts`) writes the URL the CLI picked into `.env`, and a branch you haven't used before starts empty - `pnpm db:push && pnpm db:seed` there.
 
-`COMPOSE_PROJECT_NAME` in `.env` namespaces the Docker volume. Compose otherwise derives the project name from the compose file's directory - `db` for every repo cloned from this template - and they would all share one database. `pnpm bootstrap` sets it from the repo folder name.
+- The first start downloads Postgres (~400 MB, cached in `~/.supabase/cache`); later starts take seconds.
+- Postgres refuses to run as root, so as root (cloud sandboxes, containers) `pnpm db:start` runs it as a `supabase-postgres` system user it creates.
+- The native runtime doesn't support Intel Macs or Windows: `SUPABASE_RUNTIME=docker pnpm db:start` uses Docker there. A database keeps the runtime it was created with.
+- Keep `major_version` in `config.toml` the same as production's (`SHOW server_version;`).
 
 ## Best Practices
 
@@ -221,8 +227,8 @@ Port 54322 rather than 5432, so a Postgres already installed on the host doesn't
 **Connection errors**
 
 ```bash
-pnpm -F db status   # Is the Postgres container running?
-echo $POSTGRES_URL
+pnpm db:start       # Start this branch's database and point .env at it
+pnpm -F db status   # What is running for this checkout?
 ```
 
 **Schema drift**

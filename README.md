@@ -11,14 +11,14 @@ One TypeScript codebase that ships to web, mobile, browser extension, and deskto
 
 ## Getting Started
 
-**Prerequisites**: [Node.js 24](https://nodejs.org), [pnpm 12](https://pnpm.io), [Docker](https://docs.docker.com/get-docker/), and for the desktop app [Rust](https://rustup.rs) plus [Tauri's platform prerequisites](https://v2.tauri.app/start/prerequisites/)
+**Prerequisites**: [Node.js 24](https://nodejs.org), [pnpm 12](https://pnpm.io), macOS on Apple silicon or Linux for the local database (the Supabase CLI runs Postgres natively, no Docker), and for the desktop app [Rust](https://rustup.rs) plus [Tauri's platform prerequisites](https://v2.tauri.app/start/prerequisites/)
 
 ```sh
 pnpm install
 pnpm bootstrap
 ```
 
-The bootstrap script selects apps, starts local Postgres, configures your `.env`, pushes the schema, and seeds a dev user. It's interactive by default; pass `--yes` (or pipe it, as a coding agent would) to keep all apps and run unattended. See [`AGENTS.md`](./AGENTS.md) for the full agent-driven workflow.
+The bootstrap script selects apps, configures your `.env`, starts local Postgres, pushes the schema, and seeds a dev user. It's interactive by default; pass `--yes` (or pipe it, as a coding agent would) to keep all apps and run unattended. See [`AGENTS.md`](./AGENTS.md) for the full agent-driven workflow.
 
 ## Project Structure
 
@@ -32,7 +32,7 @@ packages/
   permissions/ # Client-safe auth helpers: role permissions, slugify
   contract/    # oRPC contract shared by server and clients
   service/     # oRPC implementation + better-auth
-  db/          # Drizzle schema + local Postgres compose
+  db/          # Drizzle schema + local Supabase config
   ui/          # Shared React components
 ```
 
@@ -45,7 +45,7 @@ packages/
 - [Tailwind CSS](https://tailwindcss.com)
 - [oRPC](https://orpc.dev)
 - [Drizzle](https://orm.drizzle.team)
-- [Vercel Postgres](https://vercel.com/docs/postgres)
+- [Supabase](https://supabase.com)
 - [better-auth](https://www.better-auth.com)
 
 ## Scripts
@@ -62,7 +62,7 @@ packages/
 | `pnpm typecheck`                | Type check all packages (tsc, clippy)          |
 | `pnpm lint`                     | Lint all packages (oxlint)                     |
 | `pnpm format`                   | Check formatting (oxfmt, cargo fmt)            |
-| `pnpm db:start`                 | Start local Postgres (Docker)                  |
+| `pnpm db:start`                 | Start local Postgres (Supabase, no Docker)     |
 | `pnpm db:stop`                  | Stop local Postgres                            |
 | `pnpm db:push`                  | Push Drizzle schema                            |
 | `pnpm db:reset`                 | Reset and push schema                          |

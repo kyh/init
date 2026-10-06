@@ -13,7 +13,7 @@
 - **Backend**: oRPC, better-auth, Drizzle ORM
 - **Billing**: Stripe via @better-auth/stripe
 - **Email**: Resend REST API (console fallback in dev)
-- **Database**: Postgres — Docker Compose locally, Vercel Postgres in production (auth is better-auth)
+- **Database**: Postgres — the Supabase CLI locally (native processes, no Docker), Supabase in production by default; any Postgres works (auth is better-auth)
 - **Storage**: Vercel Blob (avatars only; no local emulator, so that route 501s offline)
 - **Desktop**: Tauri 2 — a Rust shell over the system webview (WebKit on macOS)
 
@@ -29,7 +29,7 @@ packages/
   permissions/ # Client-safe auth helpers: role permissions, slugify
   contract/    # oRPC contract: zod inputs, outputs, errors, openapi meta
   service/     # oRPC implementation of the contract + better-auth
-  db/          # Drizzle schema + client, local Postgres compose file
+  db/          # Drizzle schema + client, local Supabase config
   ui/          # Shared React components (shadcn-style)
 ```
 
@@ -70,7 +70,7 @@ pnpm build            # Build all packages
 pnpm -F @repo/desktop package  # Bundle the desktop app (.app/.dmg on macOS)
 
 # Database
-pnpm db:start         # Start local Postgres (Docker)
+pnpm db:start         # Start local Postgres (Supabase, no Docker); writes POSTGRES_URL into .env
 pnpm db:stop          # Stop local Postgres
 pnpm db:push          # Push Drizzle schema
 pnpm db:reset         # Reset, push, and re-seed schema
@@ -87,11 +87,12 @@ cd packages/ui && pnpm dlx shadcn@latest add <component>
 
 This template is built to be driven end-to-end by a coding agent. `AGENTS.md` is the full workflow; the essentials:
 
-- **Provision headless**: `pnpm bootstrap --yes` (idempotent; needs Docker for local Postgres). Non-TTY runs auto-keep all apps, so a piped invocation won't hang on the app-picker.
+- **Provision headless**: `pnpm bootstrap --yes` (idempotent; no Docker — the Supabase CLI runs Postgres natively). Non-TTY runs auto-keep all apps, so a piped invocation won't hang on the app-picker.
+- **One local database per git branch**: `pnpm db:start` gives every checkout and branch its own database on its own port and writes its URL into `.env`, so a new branch or worktree starts EMPTY — re-run `pnpm bootstrap --yes` there. Never pin a port in `packages/db/supabase/config.toml`: a second branch's stack then fails to bind.
 - **Seeded login**: `dev@init.local` / `password` (via `pnpm db:seed`) — a personal org + sample todos to verify against, no signup step.
 - **Verify**: `pnpm verify` for the static gate; drive the running web app with `agent-browser` for runtime checks. Only web is headless-driveable — mobile/desktop/extension get `typecheck` + `build` only.
 - **OAuth offline**: uncomment `NEXT_PUBLIC_GITHUB_EMULATOR_URL` in `.env` + `pnpm emulate`, then `pnpm dev:web` — the shipped "Continue with GitHub" button runs through a local emulator (dev-only `genericOAuth`; real provider untouched in prod).
-- **Fresh clone / scaffold**: `gh repo create <name> --template kyh/init --clone`, then `pnpm install && pnpm bootstrap --yes` (needs Docker). Headless auth: POST `dev@init.local` / `password` to `/api/auth/sign-in/email` for a session cookie. See `AGENTS.md` → Fresh clone.
+- **Fresh clone / scaffold**: `gh repo create <name> --template kyh/init --clone`, then `pnpm install && pnpm bootstrap --yes`. Headless auth: POST `dev@init.local` / `password` to `/api/auth/sign-in/email` for a session cookie. See `AGENTS.md` → Fresh clone.
 
 ## UI Package
 
