@@ -11,7 +11,9 @@ pnpm install
 pnpm bootstrap --yes
 ```
 
-`pnpm bootstrap` starts the local Postgres container, writes `.env`, pushes the schema, and seeds a dev user. It's interactive by default (a checklist to trim platforms you don't want), but `--yes` — or any piped, non-TTY invocation, which is how an agent runs it — keeps all apps and runs unattended. It needs Docker for that container, and it's idempotent: re-run it, or `pnpm db:reset`, any time.
+`pnpm bootstrap` writes `.env`, starts local Postgres, pushes the schema, and seeds a dev user. It's interactive by default (a checklist to trim platforms you don't want), but `--yes` — or any piped, non-TTY invocation, which is how an agent runs it — keeps all apps and runs unattended. It's idempotent: re-run it, or `pnpm db:reset`, any time.
+
+Local Postgres needs no Docker, so cloud sandboxes run the whole stack: the Supabase CLI runs it as a native process. Postgres refuses root, so the repo's SessionStart hook gives Claude Code cloud sessions a system user to run it as. Every checkout and git branch gets its own database on its own port, so parallel agents and worktrees never share data — and a new branch starts empty, which one more `pnpm bootstrap --yes` fixes.
 
 ## A seeded login
 

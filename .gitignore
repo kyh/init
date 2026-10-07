@@ -52,6 +52,10 @@ yarn-error.log*
 # turbo
 .turbo
 
+# supabase CLI state
+packages/db/supabase/.temp
+packages/db/supabase/.branches
+
 # cloud runners
 .superset
 

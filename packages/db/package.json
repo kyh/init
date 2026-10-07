@@ -13,14 +13,15 @@
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "typecheck": "tsc --noEmit",
     "drizzle:kit": "pnpm with-env drizzle-kit",
-    "start": "pnpm with-env docker compose up -d --wait",
-    "stop": "pnpm with-env docker compose stop",
-    "reset": "pnpm with-env docker compose down -v && pnpm start && pnpm push",
-    "status": "pnpm with-env docker compose ps --all",
+    "supabase": "pnpm with-env supabase",
+    "start": "supabase start --runtime ${SUPABASE_RUNTIME:-native} && supabase status --env --output-format text --override-name DB_URL=POSTGRES_URL > ../../.env.local",
+    "stop": "supabase stop",
+    "reset": "pnpm start && supabase db reset && pnpm push",
+    "status": "supabase status",
     "push": "pnpm with-env drizzle-kit push --force",
     "push:remote": "dotenv -e ../../.env.production.local -- drizzle-kit push",
     "studio": "pnpm with-env drizzle-kit studio",
-    "with-env": "dotenv -e ../../.env --",
+    "with-env": "dotenv -e ../../.env.local -e ../../.env --",
     "generate:auth-schema": "echo 'Disabled. @better-auth/cli is stuck at 1.4.21: it strips hand-added indexes, RLS, and the rate_limit table. Running it silently breaks auth. Maintain src/drizzle-schema-auth.ts by hand until the CLI supports 1.7.' && exit 1"
   },
   "dependencies": {
@@ -32,6 +33,7 @@
     "@kyh/tsconfig": "catalog:",
     "@types/node": "catalog:",
     "drizzle-kit": "1.0.0-rc.4",
+    "supabase": "^2.119.0",
     "typescript": "catalog:"
   }
 }
