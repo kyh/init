@@ -9,7 +9,7 @@
   },
   "scripts": {
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "seed": "dotenv -e ../../.env -- tsx src/seed.ts",
+    "seed": "dotenv -e ../../.env.local -e ../../.env -- tsx src/seed.ts",
     "test": "POSTGRES_URL=${TEST_POSTGRES_URL:-postgresql://placeholder@127.0.0.1:5432/placeholder} node --import tsx --test 'src/**/*.test.ts'",
     "typecheck": "tsc --noEmit"
   },

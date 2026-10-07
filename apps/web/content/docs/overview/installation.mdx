@@ -58,7 +58,7 @@ cp .env.example .env
 
 Fill in as needed:
 
-- `POSTGRES_URL` - leave it empty for local dev: `pnpm db:start` writes it
+- `POSTGRES_URL` - leave it out for local dev: `pnpm db:start` writes it into `.env.local`, which wins over `.env`
 - `BETTER_AUTH_SECRET` - generate with `openssl rand -base64 32`
 - `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` - only for GitHub login
 - `BLOB_READ_WRITE_TOKEN` - only for avatar uploads (Vercel Blob). There's no local emulator, so leave it unset offline: the avatar route returns 501 with a pointer and the rest of the app is unaffected.
@@ -68,7 +68,7 @@ Fill in as needed:
 Start local Postgres and push the schema:
 
 ```bash
-pnpm db:start   # local Supabase; writes this checkout's POSTGRES_URL into .env
+pnpm db:start   # local Supabase; writes this checkout's POSTGRES_URL into .env.local
 pnpm db:push    # drizzle-kit push
 ```
 
@@ -144,7 +144,7 @@ init/
 
 ## Troubleshooting
 
-**Port already in use** - Free port 3000. Postgres never clashes: the Supabase CLI gives each checkout and branch its own port and `pnpm db:start` writes it into `.env`.
+**Port already in use** - Free port 3000. Postgres never clashes: the Supabase CLI gives each checkout and branch its own port and `pnpm db:start` writes it into `.env.local`.
 
 **pnpm install fails**
 
@@ -153,7 +153,7 @@ pnpm store prune
 pnpm install
 ```
 
-**Database connection issues** - Start this branch's database, which also points `.env` at it:
+**Database connection issues** - Start this branch's database, which also points `.env.local` at it:
 
 ```bash
 pnpm db:start

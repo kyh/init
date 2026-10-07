@@ -8,7 +8,7 @@ Daily workflows, debugging, and conventions for building with Init.
 
 ### Starting Your Session
 
-1. **Start the database** (local Supabase, no Docker; points `.env` at this branch's database):
+1. **Start the database** (local Supabase, no Docker; points `.env.local` at this branch's database):
 
    ```bash
    pnpm db:start
@@ -261,14 +261,13 @@ pnpm clean && pnpm install && pnpm build
 One root `.env` file. Apps and packages load it via `dotenv -e ../../.env`. Turborepo declares the allow-list in `turbo.json` (`globalEnv`).
 
 ```
-POSTGRES_URL=postgresql://postgres:postgres@127.0.0.1:24571/postgres
 BETTER_AUTH_SECRET=...
 GITHUB_CLIENT_ID=...
 GITHUB_CLIENT_SECRET=...
 BLOB_READ_WRITE_TOKEN=...
 ```
 
-`POSTGRES_URL` is the only database input - local Supabase in dev, a Supabase project (or any Postgres) in production. Locally `pnpm db:start` writes it: the Supabase CLI gives every checkout and git branch its own database on its own port (24571 above is one such port), so clones, worktrees and parallel agents run their databases side by side. It only rewrites a `POSTGRES_URL` that points at this machine, never one you set to a hosted database.
+`POSTGRES_URL` is the only database input - local Supabase in dev, a Supabase project (or any Postgres) in production. Locally it isn't in `.env`: `pnpm db:start` has the Supabase CLI write it into `.env.local` (`POSTGRES_URL=postgresql://postgres:postgres@127.0.0.1:24571/postgres`, say), and the scripts that need the database load `.env.local` before `.env`. Every checkout and git branch gets its own database on its own port, so clones, worktrees and parallel agents run their databases side by side. To use a hosted database instead, set `POSTGRES_URL` in `.env` and delete `.env.local`.
 
 `BLOB_READ_WRITE_TOKEN` is for avatar uploads via Vercel Blob, which has no local emulator. Leave it unset offline - the avatar route returns 501 with a pointer, everything else works.
 

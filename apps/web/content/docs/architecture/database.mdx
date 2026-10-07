@@ -48,7 +48,7 @@ const client = postgres(
 export const db = drizzle({ client, relations });
 ```
 
-`POSTGRES_URL` is the only connection env var the app reads; locally, `pnpm db:start` writes it into `.env`. `drizzle-kit` alone prefers `POSTGRES_URL_NON_POOLING` when set.
+`POSTGRES_URL` is the only connection env var the app reads; locally, `pnpm db:start` writes it into `.env.local`. `drizzle-kit` alone prefers `POSTGRES_URL_NON_POOLING` when set.
 
 ## Schema
 
@@ -201,17 +201,17 @@ type NewTodo = InferInsertModel<typeof todo>;
 Local Supabase, from the Supabase CLI that `pnpm install` brings in. `packages/db/supabase/config.toml` turns on its stack backend (`[experimental] stack`, CLI 2.119+), whose native runtime runs Postgres as a plain process - no Docker - on macOS 14+ (Apple silicon) and Linux (glibc 2.35+). The config runs Postgres alone: the app uses none of Supabase's other services.
 
 ```bash
-pnpm db:start      # Start this branch's database; write its URL into .env
+pnpm db:start      # Start this branch's database; write its URL into .env.local
 pnpm db:stop       # Stop it, keep the data
 pnpm db:reset      # Wipe it, re-push the schema (and re-seed, from the root script)
 pnpm -F db status  # What the CLI is running for this checkout
 pnpm -F db studio  # Drizzle Studio, to browse data
 ```
 
-The CLI keeps one database per checkout **and git branch**, each with its own port from 20000 up, so clones, worktrees and parallel agents never share data or fight over a port. That's why the config pins no port: a pinned one makes a second branch's database fail to bind. `pnpm db:start` (`packages/db/src/local-supabase.ts`) writes the URL the CLI picked into `.env`, and a branch you haven't used before starts empty - `pnpm db:push && pnpm db:seed` there.
+The CLI keeps one database per checkout **and git branch**, each with its own port from 20000 up, so clones, worktrees and parallel agents never share data or fight over a port. That's why the config pins no port: a pinned one makes a second branch's database fail to bind. `pnpm db:start` is two stock CLI calls: `supabase start --runtime native`, then `supabase status --env --override-name DB_URL=POSTGRES_URL` into `.env.local`, which the `with-env` scripts load before `.env`. A branch you haven't used before starts empty - `pnpm db:push && pnpm db:seed` there.
 
 - The first start downloads Postgres (~400 MB, cached in `~/.supabase/cache`); later starts take seconds.
-- Postgres refuses to run as root, so as root (cloud sandboxes, containers) `pnpm db:start` runs it as a `supabase-postgres` system user it creates.
+- Postgres refuses to run as root. Cloud sessions run as root, so the SessionStart hook in `.claude/settings.json` creates a `supabase-postgres` system user and exports `SUPABASE_NATIVE_POSTGRES_USER` for the session; elsewhere as root, the CLI's error says how.
 - The native runtime doesn't support Intel Macs or Windows: `SUPABASE_RUNTIME=docker pnpm db:start` uses Docker there. A database keeps the runtime it was created with.
 - Keep `major_version` in `config.toml` the same as production's (`SHOW server_version;`).
 

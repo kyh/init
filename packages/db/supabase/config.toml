@@ -1,5 +1,5 @@
-# Local Supabase, as `pnpm db:start` runs it (packages/db/src/local-supabase.ts): Postgres
-# alone, as a native process, no Docker. It shapes the local stack only; production is
+# Local Supabase, as `pnpm db:start` runs it: Postgres alone, as a native process, no
+# Docker. It shapes the local stack only; production is
 # whatever POSTGRES_URL names (a hosted Supabase project by default).
 project_id = "init"
 
@@ -11,7 +11,7 @@ enabled = false
 [db]
 # No `port` here, or under any service: the CLI gives every checkout and git branch its
 # own stack on its own ports, and a pinned port makes a second branch's stack fail to
-# bind. `pnpm db:start` writes the URL the CLI picked into .env.
+# bind. `pnpm db:start` writes the URL the CLI picked into .env.local.
 #
 # Keep it the same major as production (`SHOW server_version;` there). The native
 # runtime runs 15 and 17.

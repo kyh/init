@@ -263,8 +263,6 @@ const createEnv = () => {
   }
 
   const env = [
-    "# `pnpm db:start` fills this in: this checkout's local Supabase, on this branch",
-    `POSTGRES_URL=""`,
     `BETTER_AUTH_SECRET="${randomBytes(32).toString("base64")}"`,
     "",
     "# Avatar uploads need a Vercel Blob store; unset, that one route 501s",
@@ -282,7 +280,7 @@ const createEnv = () => {
 
 // Local Supabase gives every checkout and git branch its own database on its own
 // port, so clones of this template never share data or fight over a port. The
-// CLI picks the port; `pnpm db:start` writes the URL into .env.
+// CLI picks the port; `pnpm db:start` has it write the URL into .env.local.
 const startPostgres = () => {
   console.log("\nStarting local Supabase...");
   try {
@@ -290,8 +288,9 @@ const startPostgres = () => {
   } catch (error) {
     console.log(
       `\n  ${DIM}✗ Local Supabase didn't start.${RESET} Its native runtime needs macOS 14+ on ` +
-        "Apple silicon or Linux (glibc 2.35+). Elsewhere, re-run with SUPABASE_RUNTIME=docker " +
-        "and Docker running.",
+        "Apple silicon or Linux (glibc 2.35+); elsewhere, re-run with SUPABASE_RUNTIME=docker " +
+        "and Docker running. As root, the CLI's message above says how to run Postgres as " +
+        "another user.",
     );
     throw error;
   }
@@ -376,7 +375,7 @@ const main = async () => {
   }
 
   // ── Step 3: Create .env, then start Postgres ──
-  // .env first: `pnpm db:start` writes this checkout's POSTGRES_URL into it
+  // .env first, then the database: `pnpm db:start` writes POSTGRES_URL into .env.local
   console.log("\nConfiguring environment...");
   createEnv();
   startPostgres();

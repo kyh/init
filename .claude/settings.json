@@ -20,6 +20,10 @@
             "type": "command",
             "command": "[ \"$CLAUDE_CODE_REMOTE\" = \"true\" ] && cd \"$CLAUDE_PROJECT_DIR\" && pnpm install || true",
             "timeout": 600
+          },
+          {
+            "type": "command",
+            "command": "[ \"$(id -u)\" = 0 ] && [ -n \"$CLAUDE_ENV_FILE\" ] && { id -u supabase-postgres >/dev/null 2>&1 || useradd --system --user-group supabase-postgres; } && echo 'export SUPABASE_NATIVE_POSTGRES_USER=supabase-postgres' >> \"$CLAUDE_ENV_FILE\" || true"
           }
         ]
       }
