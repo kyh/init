@@ -2,7 +2,7 @@
 title: "Deployment"
 ---
 
-Ship Init to production. The web app targets Vercel; the database targets Vercel Postgres. Mobile, extension, and desktop each have their own pipeline.
+Ship Init to production. The web app targets Vercel; the database targets Supabase. Mobile, extension, and desktop each have their own pipeline.
 
 ## Web App (Vercel)
 
@@ -39,7 +39,7 @@ GITHUB_CLIENT_SECRET=...
 BLOB_READ_WRITE_TOKEN=...
 ```
 
-The auth base URL derives from Vercel's built-in `VERCEL_ENV` / `VERCEL_PROJECT_PRODUCTION_URL` / `VERCEL_URL` - nothing to set. Creating the database under the project's Storage tab populates `POSTGRES_URL`, and creating a Blob store there populates `BLOB_READ_WRITE_TOKEN`.
+The auth base URL derives from Vercel's built-in `VERCEL_ENV` / `VERCEL_PROJECT_PRODUCTION_URL` / `VERCEL_URL` - nothing to set. Adding Supabase from the project's Storage tab populates `POSTGRES_URL` and `POSTGRES_URL_NON_POOLING`, and creating a Blob store there populates `BLOB_READ_WRITE_TOKEN`.
 
 ### 3. Preview Deployments
 
@@ -52,10 +52,12 @@ The `oAuthProxy` plugin in `packages/service/src/auth/auth.ts` routes OAuth call
 3. SSL is automatic
 4. Update your GitHub OAuth app's callback URL
 
-## Database (Vercel Postgres)
+## Database (Supabase)
 
-1. **Create the database** from the Vercel dashboard under Storage, which wires `POSTGRES_URL` and `POSTGRES_URL_NON_POOLING` into the project
-2. **Push the schema**:
+1. **Create the project** from the Vercel dashboard under Storage → Supabase (a Marketplace integration). It sets `POSTGRES_URL` (the transaction-mode pooler) and `POSTGRES_URL_NON_POOLING` (session mode) on the Vercel project, plus `SUPABASE_*` keys this app doesn't read. Or create the project at [supabase.com](https://supabase.com) and copy its transaction pooler string into `POSTGRES_URL` and its session pooler string into `POSTGRES_URL_NON_POOLING`
+2. **Turn the Data API off** - the app reaches Postgres only through its own server, so nothing needs Supabase's Data API, which would otherwise serve the `public` schema to anyone holding the project's anon key. Untick it under Advanced options when creating the project, or switch it off later in the dashboard's Data API settings
+3. **Match the Postgres version** - local Supabase runs `major_version` from `packages/db/supabase/config.toml` (17); keep it equal to `SHOW server_version;` on the project
+4. **Push the schema**:
 
    ```bash
    # .env.production.local at the repo root with the production POSTGRES_URL
@@ -65,18 +67,16 @@ The `oAuthProxy` plugin in `packages/service/src/auth/auth.ts` routes OAuth call
 
    `drizzle-kit push` hangs behind a transaction-mode pooler, so the config prefers `POSTGRES_URL_NON_POOLING` and falls back to `POSTGRES_URL`.
 
-Any Postgres works - [Vercel Postgres](https://vercel.com/docs/postgres) is the default because of branching (below), not because anything in the code depends on it.
+Any Postgres works - nothing in the code depends on Supabase, and `POSTGRES_URL` is the only input. Supabase is the default because the same Postgres runs locally with no Docker (`pnpm db:start`), so development and production run one database flavor.
 
-RLS is already on for every table with no policies - deny by default. Nothing exposes Postgres directly, so this is belt-and-braces; authorization lives in the oRPC procedures, and the server connection bypasses RLS as table owner.
+RLS is already on for every table with no policies - deny by default. With the Data API off nothing exposes Postgres directly, so this is belt-and-braces; authorization lives in the oRPC procedures, and the server connection bypasses RLS as table owner.
 
-### Branching
+### Previews and Branches
 
-Branches are copy-on-write, so a branch is a full database with production's data at a fraction of the storage. Two uses:
+Supabase Branching gives a branch your schema but none of production's data, and its per-PR preview branches are built from migration files, which this template doesn't keep (`drizzle-kit push` syncs the schema instead). So:
 
-- **Preview deployments** - the Vercel integration creates a branch per preview automatically, so PRs run against real-shaped data without touching production
-- **Agents and experiments** - a branch created from the database's dashboard gives an isolated database to migrate against or destroy freely
-
-Delete a branch when you're done; nothing else in the stack needs to know it existed.
+- **Preview deployments** - give Vercel's Preview environment a second Supabase project (staging): set its `POSTGRES_URL` and `POSTGRES_URL_NON_POOLING` for Preview only, and push the schema to it with `pnpm db:push-remote` (its URLs in `.env.production.local`). If you want every PR on a copy-on-write copy of production's data, that's Neon's branching, also on the Vercel Marketplace - swap the URLs; nothing else changes
+- **Agents and experiments** - local databases are already isolated: `pnpm db:start` gives every git branch and worktree its own, to migrate against or destroy freely (`pnpm db:reset`)
 
 ## Avatar Storage (Vercel Blob)
 
@@ -158,13 +158,14 @@ vercel rollback [deployment-url]   # Roll back the web app
 pg_dump $POSTGRES_URL > backup_$(date +%Y%m%d_%H%M%S).sql
 ```
 
-Vercel Postgres also keeps point-in-time restore over a retention window, and a branch taken before a migration is itself a cheap rollback target.
+Supabase backs up paid-plan projects daily (7 days on Pro), and point-in-time recovery is a paid add-on. The Free plan has no automatic backups, so the `pg_dump` above is the whole safety net there.
 
 ## Production Checklist
 
 - `BETTER_AUTH_SECRET` set and unique per environment
 - Separate GitHub OAuth apps for dev and prod (callback: `https://your-domain.com/api/auth/callback/github`)
 - `POSTGRES_URL` uses the pooled endpoint - the client is configured for it; `POSTGRES_URL_NON_POOLING` is the direct one for schema pushes
+- Supabase's Data API off - the app doesn't use it
 - `BLOB_READ_WRITE_TOKEN` set, with a Blob store created in the Vercel project
 - Uptime monitor on `/api/health`
 

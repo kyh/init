@@ -1,0 +1,53 @@
+# Local Supabase, as `pnpm db:start` runs it: Postgres alone, as a native process, no
+# Docker. It shapes the local stack only; production is
+# whatever POSTGRES_URL names (a hosted Supabase project by default).
+project_id = "init"
+
+# Postgres is the only service the app runs on: auth is better-auth, the API is oRPC and
+# uploads go to Vercel Blob. Turn a service on here if you start using it.
+[api]
+enabled = false
+
+[db]
+# No `port` here, or under any service: the CLI gives every checkout and git branch its
+# own stack on its own ports, and a pinned port makes a second branch's stack fail to
+# bind. `pnpm db:start` writes the URL the CLI picked into .env.local.
+#
+# Keep it the same major as production (`SHOW server_version;` there). The native
+# runtime runs 15 and 17.
+major_version = 17
+
+[db.pooler]
+enabled = false
+
+[db.seed]
+# The seed is `pnpm db:seed` (packages/service/src/seed.ts), not a seed.sql.
+enabled = false
+
+[realtime]
+enabled = false
+
+[studio]
+# `pnpm -F db studio` (Drizzle Studio) browses the local database.
+enabled = false
+
+[local_smtp]
+enabled = false
+
+[storage]
+enabled = false
+
+[auth]
+enabled = false
+
+[edge_runtime]
+enabled = false
+
+[analytics]
+enabled = false
+
+[experimental]
+# The CLI's stack backend: local Supabase as plain processes, without Docker, one stack
+# per checkout and branch. Experimental (CLI 2.119+): its flags and output can change
+# between releases, so re-run `pnpm db:start` after bumping `supabase`.
+stack = true

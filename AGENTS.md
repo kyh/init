@@ -10,7 +10,9 @@ pnpm bootstrap --yes  # provision everything, non-interactively
 pnpm dev:web          # web app → http://localhost:3000
 ```
 
-`pnpm bootstrap --yes` (or any piped / non-TTY run — e.g. an agent) keeps all apps and: checks Docker → starts local Postgres → writes `.env` → pushes the Drizzle schema → seeds a dev user → reports agent tooling. It's idempotent; re-run any time, or `pnpm db:reset` to rebuild + re-seed. **Requires Docker** (local Postgres runs in a container defined by `packages/db/docker-compose.yml`); without it, the data and auth layer can't come up.
+`pnpm bootstrap --yes` (or any piped / non-TTY run — e.g. an agent) keeps all apps and: writes `.env` → starts local Postgres → pushes the Drizzle schema → seeds a dev user → reports agent tooling. It's idempotent; re-run any time, or `pnpm db:reset` to rebuild + re-seed. **No Docker**: `pnpm db:start` runs local Supabase on the CLI's native runtime — Postgres as a plain process, on macOS 14+ (Apple silicon) and Linux (glibc 2.35+) — then has the CLI write its URL into `.env.local` (`supabase status --env`, `DB_URL` renamed to `POSTGRES_URL`). The `with-env` scripts load `.env.local` before `.env`, so it wins; delete it to use a `POSTGRES_URL` from `.env` instead.
+
+The CLI keeps one local database per checkout **and git branch**, each on its own port, so worktrees and parallel agents never share data or fight over a port. A new branch therefore starts with an empty database: re-run `pnpm bootstrap --yes` there. The first start downloads Postgres (~400 MB from GitHub releases, then cached in `~/.supabase/cache`). Postgres refuses to run as root, which is how cloud sessions run: the SessionStart hook in `.claude/settings.json` creates a `supabase-postgres` system user and exports `SUPABASE_NATIVE_POSTGRES_USER` for the session; anywhere else that runs as root, do the same (the CLI's error says how). On Intel Macs or Windows, which the native runtime doesn't support, `SUPABASE_RUNTIME=docker pnpm bootstrap --yes` uses Docker instead.
 
 Liveness: `curl -s localhost:3000/api/health` → `{"status":"ok"}`.
 
@@ -23,9 +25,7 @@ gh repo create my-app --template kyh/init --clone && cd my-app   # new project f
 pnpm install && pnpm bootstrap --yes                             # any clone: install + provision
 ```
 
-A clone has everything except `node_modules` and `.env` (bootstrap writes `.env`), and it **needs Docker** for local Postgres — the data + auth layer. Without Docker, `pnpm verify` and `pnpm build` still work, but authed/data flows can't run. Both also check the desktop app's Rust, so they need [rustup](https://rustup.rs), plus WebKitGTK on Linux (`libwebkit2gtk-4.1-dev`, as CI installs it); `pnpm bootstrap` can drop the desktop app instead. The committed `.codex` / `.superset` cloud-runner descriptors install deps on clone; a cloud sandbox with Docker runs the full stack, without it stays static-only.
-
-A sandbox without Docker can instead point `POSTGRES_URL` at a hosted Postgres. Vercel Postgres branching is the cheap way to do that safely: each agent or preview deployment gets an isolated copy-on-write branch of production data, and Vercel creates one per preview deployment automatically.
+A clone has everything except `node_modules` and `.env` (bootstrap writes `.env`). Local Postgres needs no Docker, so a cloud sandbox runs the full stack — data, auth and all — the same way a laptop does. `pnpm verify` and `pnpm build` also check the desktop app's Rust, so they need [rustup](https://rustup.rs), plus WebKitGTK on Linux (`libwebkit2gtk-4.1-dev`, as CI installs it); `pnpm bootstrap` can drop the desktop app instead. The committed `.codex` / `.superset` cloud-runner descriptors install deps on clone.
 
 Headless auth (no browser) — exchange the seeded login (below) for a session cookie and hand it to agent-browser or curl:
 
