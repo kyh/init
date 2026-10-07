@@ -24,10 +24,13 @@
     "typecheck": "tsc --noEmit && turbo run typecheck",
     "test": "turbo run test",
     "verify": "pnpm typecheck && pnpm lint && pnpm format && pnpm test",
+    "smoke": "dotenv -e .env -- tsx scripts/smoke.ts",
     "bootstrap": "tsx scripts/bootstrap.ts",
     "emulate": "npx emulate@0.9.0 --service github"
   },
   "devDependencies": {
+    "@orpc/client": "catalog:",
+    "@repo/contract": "workspace:*",
     "@types/node": "catalog:",
     "dotenv-cli": "^11.0.0",
     "oxfmt": "^0.71.0",

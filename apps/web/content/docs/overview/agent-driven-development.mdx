@@ -33,7 +33,26 @@ pnpm verify   # typecheck · lint · format · test
 
 It checks the desktop app's Rust as well (clippy, `cargo test`, `cargo fmt`), so a sandbox that keeps the desktop app needs [rustup](https://rustup.rs) and, on Linux, WebKitGTK (`libwebkit2gtk-4.1-dev`), as CI installs them.
 
-**Runtime** — the part most templates skip. Passing types isn't proof the feature works. Init ships [agent-browser](https://github.com/vercel-labs/agent-browser) so an agent can drive the real web app:
+**Smoke gate** — passing types isn't proof the app boots, that auth works, or that a write reached the database. `pnpm smoke` drives a _running_ server through health, the seeded sign-in, the todo lifecycle over oRPC and the authenticated dashboard, and fails naming the step that broke:
+
+```bash
+pnpm dev:web &
+pnpm smoke
+```
+
+```
+  ✓ server is live (/api/health) 412ms
+  ✓ signed in as dev@init.local 88ms
+  ✓ resolved the seeded organization 21ms
+  ✓ read the seeded todos 35ms
+  ✓ created a todo 40ms
+
+  ✗ Smoke test failed: todo.update did not persist `completed`
+```
+
+It calls oRPC through the same `RPCLink` the apps use, typed against the shared contract, so a changed procedure shape breaks it at typecheck. CI runs it on every pull request against a real Postgres; `SMOKE_URL=https://my-app-git-branch.vercel.app pnpm smoke` points it at a preview deployment instead.
+
+**Interactive** — the part most templates skip. Passing types isn't proof the feature works. Init ships [agent-browser](https://github.com/vercel-labs/agent-browser) so an agent can drive the real web app:
 
 ```bash
 npm i -g agent-browser && agent-browser install
