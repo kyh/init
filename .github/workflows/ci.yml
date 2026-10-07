@@ -82,8 +82,9 @@ jobs:
       # better-auth's baseUrl (see packages/service/src/auth/auth.ts).
       PORT: 3000
     services:
+      # Same major as local Supabase (packages/db/supabase/config.toml).
       postgres:
-        image: postgres:18-alpine
+        image: postgres:17-alpine
         env:
           POSTGRES_PASSWORD: postgres
         options: >-
