@@ -1,5 +1,5 @@
 import { appRouter } from "@repo/service";
-import type { OpenAPIOperationObject } from "@orpc/openapi";
+import type { OpenAPIV3_2 } from "@orpc/openapi";
 import { OpenAPIGenerator } from "@orpc/openapi";
 import { ZodToJsonSchemaConverter } from "@orpc/zod";
 
@@ -21,7 +21,9 @@ const errorResponse = (description: string) => ({
 });
 
 /** The route, not the procedure, sends these, so the generator cannot see them. */
-const withRouteResponses = (operation: OpenAPIOperationObject): OpenAPIOperationObject => ({
+const withRouteResponses = (
+  operation: OpenAPIV3_2.OperationObject,
+): OpenAPIV3_2.OperationObject => ({
   ...operation,
   responses: {
     ...operation.responses,
@@ -65,10 +67,6 @@ export const generateOpenAPIDocument = async () => {
                   "True when the operation declares this code, so its shape is documented on the operation.",
                 type: "boolean",
               },
-              inferable: {
-                description: "oRPC client hint; safe to ignore.",
-                type: "boolean",
-              },
               message: { description: "Human-readable explanation.", type: "string" },
             },
             required: ["code", "defined", "message"],
@@ -100,7 +98,6 @@ export const generateOpenAPIDocument = async () => {
           version: "v1",
         },
       },
-      openapi: "3.1.1",
       servers: [{ url: `${siteConfig.url}${OPENAPI_PREFIX}` }],
       tags: [
         {
@@ -116,6 +113,8 @@ export const generateOpenAPIDocument = async () => {
       allOf: [errorRef],
       properties: { code: { enum: definedErrors.map(({ code }) => code) } },
     }),
+    // The generator builds 3.2 and downgrades to the version asked for.
+    version: "3.1.1",
   });
 
   if (document.components?.schemas) {
