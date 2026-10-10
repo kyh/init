@@ -69,3 +69,64 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+  # The runtime gate. `ci` proves the code compiles and units behave; this proves
+  # the app actually boots, that auth works, and that a mutation reaches the
+  # database — the breakage a typecheck-only pipeline waves through. Runs in
+  # parallel with `ci`, at the cost of building web a second time.
+  smoke:
+    runs-on: ubuntu-latest
+    env:
+      TURBO_TELEMETRY_DISABLED: 1
+      # Matches the port the web server is started on below, and drives
+      # better-auth's baseUrl (see packages/service/src/auth/auth.ts).
+      PORT: 3000
+    services:
+      # Same major as local Supabase (packages/db/supabase/config.toml).
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 30
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/setup@v2
+        with:
+          runtime: node@24
+          cache: true
+
+      # Not `pnpm bootstrap`: the services container above already provides Postgres.
+      - name: Write environment
+        run: |
+          cat > .env <<'EOF'
+          POSTGRES_URL="postgresql://postgres:postgres@127.0.0.1:5432/postgres"
+          BETTER_AUTH_SECRET="ci-only-secret-never-leaves-this-job"
+          BLOB_READ_WRITE_TOKEN=""
+          PORT=3000
+          EOF
+
+      - name: Push schema and seed
+        run: pnpm db:push && pnpm db:seed
+
+      - name: Build web
+        run: pnpm -F @repo/web build
+
+      - name: Start web
+        run: pnpm -F @repo/web start > /tmp/web.log 2>&1 &
+
+      # Polls /api/health until the server answers, then drives sign-in, the todo
+      # lifecycle through oRPC, and the authenticated dashboard render.
+      - name: Smoke test
+        run: pnpm smoke
+
+      # The server's own output makes a failure readable without a rerun.
+      - name: Server logs
+        if: failure()
+        run: cat /tmp/web.log || true

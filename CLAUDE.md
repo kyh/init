@@ -65,7 +65,8 @@ pnpm format           # Check formatting (oxfmt, cargo fmt)
 pnpm format:fix       # Format all packages (oxfmt, cargo fmt)
 pnpm test             # Run tests (node:test, cargo test)
                       # Real-database suites skip unless TEST_POSTGRES_URL points at a disposable, schema-pushed Postgres
-pnpm verify           # typecheck · lint · format · test (CI gate)
+pnpm verify           # typecheck · lint · format · test (static CI gate)
+pnpm smoke            # Drive a running app end-to-end (runtime CI gate)
 pnpm build            # Build all packages
 pnpm -F @repo/desktop package  # Bundle the desktop app (.app/.dmg on macOS)
 
@@ -90,7 +91,7 @@ This template is built to be driven end-to-end by a coding agent. `AGENTS.md` is
 - **Provision headless**: `pnpm bootstrap --yes` (idempotent; no Docker — the Supabase CLI runs Postgres natively). Non-TTY runs auto-keep all apps, so a piped invocation won't hang on the app-picker.
 - **One local database per git branch**: `pnpm db:start` gives every checkout and branch its own database on its own port, and the CLI writes its URL into `.env.local` (`supabase status --env`), which the `with-env` scripts load before `.env`. A new branch or worktree starts EMPTY — re-run `pnpm bootstrap --yes` there. Never pin a port in `packages/db/supabase/config.toml`: a second branch's stack then fails to bind. Postgres refuses root, so cloud sessions get a `supabase-postgres` user from the SessionStart hook in `.claude/settings.json`.
 - **Seeded login**: `dev@init.local` / `password` (via `pnpm db:seed`) — a personal org + sample todos to verify against, no signup step.
-- **Verify**: `pnpm verify` for the static gate; drive the running web app with `agent-browser` for runtime checks. Only web is headless-driveable — mobile/desktop/extension get `typecheck` + `build` only.
+- **Verify**: `pnpm verify` for the static gate, then `pnpm smoke` against a running server for the runtime gate (health → seeded sign-in → todo lifecycle through oRPC → authenticated render; `SMOKE_URL` points it at a deployment). Drive the UI itself with `agent-browser`. Only web is headless-driveable — mobile/desktop/extension get `typecheck` + `build` only.
 - **OAuth offline**: uncomment `NEXT_PUBLIC_GITHUB_EMULATOR_URL` in `.env` + `pnpm emulate`, then `pnpm dev:web` — the shipped "Continue with GitHub" button runs through a local emulator (dev-only `genericOAuth`; real provider untouched in prod).
 - **Fresh clone / scaffold**: `gh repo create <name> --template kyh/init --clone`, then `pnpm install && pnpm bootstrap --yes`. Headless auth: POST `dev@init.local` / `password` to `/api/auth/sign-in/email` for a session cookie. See `AGENTS.md` → Fresh clone.
 

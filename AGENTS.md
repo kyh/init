@@ -51,7 +51,16 @@ Static gate (mirrors CI — run before every commit):
 pnpm verify           # typecheck · lint · format · test
 ```
 
-Runtime — drive the **real** web UI (the only headless-driveable surface) with [agent-browser](https://github.com/vercel-labs/agent-browser):
+Smoke gate (also in CI) — drives a **running** server end-to-end: health, seeded sign-in, the todo lifecycle through oRPC, and the authenticated dashboard render. It fails naming the step that broke:
+
+```sh
+pnpm dev:web &        # or a production build: pnpm -F @repo/web build && pnpm -F @repo/web start
+pnpm smoke            # SMOKE_URL=https://<preview>.vercel.app pnpm smoke for a deployment
+```
+
+When calling better-auth from your own Node `fetch`, send an `Origin` header matching the app: Node sends `Sec-Fetch-Mode: cors`, which makes better-auth reject an Origin-less request with a 403 it doesn't log. `curl` sends neither, so it needs no such header.
+
+Interactive — drive the **real** web UI (the only headless-driveable surface) with [agent-browser](https://github.com/vercel-labs/agent-browser):
 
 ```sh
 npm i -g agent-browser && agent-browser install   # once, if missing
