@@ -11,7 +11,7 @@ One TypeScript codebase that ships to web, mobile, browser extension, and deskto
 
 ## Getting Started
 
-**Prerequisites**: [Node.js 24](https://nodejs.org), [pnpm 12](https://pnpm.io), macOS on Apple silicon or Linux for the local database (the Supabase CLI runs Postgres natively, no Docker), and for the desktop app [Rust](https://rustup.rs) plus [Tauri's platform prerequisites](https://v2.tauri.app/start/prerequisites/)
+**Prerequisites**: [Node.js 24](https://nodejs.org), [pnpm 12](https://pnpm.io), macOS on Apple silicon or Linux for the local database (the Supabase CLI runs Postgres natively), and for the desktop app [Rust](https://rustup.rs) plus [Tauri's platform prerequisites](https://v2.tauri.app/start/prerequisites/)
 
 ```sh
 pnpm install
@@ -62,7 +62,7 @@ packages/
 | `pnpm typecheck`                | Type check all packages (tsc, clippy)          |
 | `pnpm lint`                     | Lint all packages (oxlint)                     |
 | `pnpm format`                   | Check formatting (oxfmt, cargo fmt)            |
-| `pnpm db:start`                 | Start local Postgres (Supabase, no Docker)     |
+| `pnpm db:start`                 | Start local Postgres (Supabase)                |
 | `pnpm db:stop`                  | Stop local Postgres                            |
 | `pnpm db:push`                  | Push Drizzle schema                            |
 | `pnpm db:reset`                 | Reset and push schema                          |
