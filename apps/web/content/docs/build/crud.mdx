@@ -193,36 +193,42 @@ export const appRouter = os.router({
 
 ## 6. Build the Page
 
-Server component: check the session, prefetch the query, hydrate.
+Server component: check the session, prefetch the query, hydrate. The session and `params` are request data, so they're read under `<Suspense>` (see [Rendering and Prefetching](/docs/build/queries#rendering-and-prefetching)).
 
 ```tsx
 // apps/web/src/app/(dashboard)/dashboard/[slug]/posts/page.tsx
-import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 import { PageHeader } from "@/components/header";
-import { getSession } from "@/lib/auth-server";
 import { HydrateClient, orpc, prefetch } from "@/orpc/server";
+import { resolveOrganizationPage } from "../_components/organization-page";
 import { PostList } from "./_components/post-list";
 
-const Page = async (props: { params: Promise<{ slug: string }> }) => {
-  const { slug } = await props.params;
+interface PageProps {
+  params: Promise<{ slug: string }>;
+}
 
-  const session = await getSession();
-  if (!session) {
-    return redirect(`/auth/login?nextPath=/dashboard/${slug}/posts`);
-  }
+const Posts = async ({ params }: PageProps) => {
+  // Redirects a signed-out visitor to login, back to this page afterwards
+  const { slug } = await resolveOrganizationPage(params, "/posts");
 
   prefetch(orpc.post.list.queryOptions({ input: { slug } }));
 
   return (
     <HydrateClient>
-      <main className="flex flex-1 flex-col px-5 pb-5">
-        <PageHeader>Posts</PageHeader>
-        <PostList slug={slug} />
-      </main>
+      <PostList slug={slug} />
     </HydrateClient>
   );
 };
+
+const Page = ({ params }: PageProps) => (
+  <main className="flex flex-1 flex-col px-5 pb-5">
+    <PageHeader>Posts</PageHeader>
+    <Suspense fallback={<p className="text-muted-foreground text-sm">Loading posts…</p>}>
+      <Posts params={params} />
+    </Suspense>
+  </main>
+);
 
 export default Page;
 ```

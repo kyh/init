@@ -67,7 +67,7 @@ The `oAuthProxy` plugin in `packages/service/src/auth/auth.ts` routes OAuth call
 
    `drizzle-kit push` hangs behind a transaction-mode pooler, so the config prefers `POSTGRES_URL_NON_POOLING` and falls back to `POSTGRES_URL`.
 
-Any Postgres works - nothing in the code depends on Supabase, and `POSTGRES_URL` is the only input. Supabase is the default because the same Postgres runs locally with no Docker (`pnpm db:start`), so development and production run one database flavor.
+Any Postgres works - nothing in the code depends on Supabase, and `POSTGRES_URL` is the only input. Supabase is the default because the same Postgres runs locally as a native process (`pnpm db:start`), so development and production run one database flavor.
 
 RLS is already on for every table with no policies - deny by default. With the Data API off nothing exposes Postgres directly, so this is belt-and-braces; authorization lives in the oRPC procedures, and the server connection bypasses RLS as table owner.
 

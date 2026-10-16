@@ -9,7 +9,7 @@ Get Init running locally in a few minutes.
 - **Node.js** v24+ - [Download Node.js](https://nodejs.org/)
 - **pnpm** v12 - Fast, disk space efficient package manager
 - **Git**
-- **macOS on Apple silicon, or Linux** - Local Postgres runs natively through the Supabase CLI (installed by `pnpm install`), no Docker. It needs macOS 14+ or glibc 2.35+; on an Intel Mac or Windows, set `SUPABASE_RUNTIME=docker` and run Docker instead
+- **macOS on Apple silicon, or Linux** - Local Postgres runs natively through the Supabase CLI (installed by `pnpm install`). It needs macOS 14+ or glibc 2.35+; Intel Macs and Windows aren't supported
 - **Rust** - Only for the desktop app: install with [rustup](https://rustup.rs), which picks up the version `apps/desktop/rust-toolchain.toml` pins. Linux also needs WebKitGTK and the other [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/); macOS needs only the Xcode command line tools
 
 ### Install pnpm
@@ -123,7 +123,7 @@ init/
 
 ### Database
 
-- `pnpm db:start` / `pnpm db:stop` - Local Postgres (Supabase CLI, no Docker)
+- `pnpm db:start` / `pnpm db:stop` - Local Postgres (Supabase CLI)
 - `pnpm db:push` - Push schema to local database
 - `pnpm db:seed` - Seed a dev user + sample data
 - `pnpm db:push-remote` - Push schema to production

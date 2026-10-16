@@ -288,9 +288,8 @@ const startPostgres = () => {
   } catch (error) {
     console.log(
       `\n  ${DIM}✗ Local Supabase didn't start.${RESET} Its native runtime needs macOS 14+ on ` +
-        "Apple silicon or Linux (glibc 2.35+); elsewhere, re-run with SUPABASE_RUNTIME=docker " +
-        "and Docker running. As root, the CLI's message above says how to run Postgres as " +
-        "another user.",
+        "Apple silicon or Linux (glibc 2.35+); other platforms aren't supported. As root, the " +
+        "CLI's message above says how to run Postgres as another user.",
     );
     throw error;
   }

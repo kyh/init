@@ -13,7 +13,7 @@
 - **Backend**: oRPC, better-auth, Drizzle ORM
 - **Billing**: Stripe via @better-auth/stripe
 - **Email**: Resend REST API (console fallback in dev)
-- **Database**: Postgres — the Supabase CLI locally (native processes, no Docker), Supabase in production by default; any Postgres works (auth is better-auth)
+- **Database**: Postgres — the Supabase CLI locally (native processes), Supabase in production by default; any Postgres works (auth is better-auth)
 - **Storage**: Vercel Blob (avatars only; no local emulator, so that route 501s offline)
 - **Desktop**: Tauri 2 — a Rust shell over the system webview (WebKit on macOS)
 
@@ -40,6 +40,10 @@ packages/
 ### Mutation path
 
 Mutations go through oRPC or the better-auth client — never Next Server Actions. All four platforms (web, mobile, extension, desktop) then share one typed surface. Each mutation invalidates the specific queries it affects in its `onSuccess` (e.g. `queryClient.invalidateQueries({ queryKey: orpc.todo.list.key({ input: { slug } }) })`) — there is no global invalidate-everything cache. When wrapping better-auth in a TanStack mutation, set `fetchOptions: { throw: true }` so returned errors cannot trigger `onSuccess`.
+
+### Rendering
+
+`apps/web` runs Next 16.4 with `cacheComponents` and `partialPrefetching` on (`next.config.ts`). Request data (`getSession()`, `params`, `searchParams`) is read under `<Suspense>` so the rest of each route prerenders into the App Shell that `<Link>` prefetches; a page stays synchronous and hands the `params` promise to an async child (`dashboard/[slug]/_components/organization-page.ts` resolves slug + session). Route segment config (`dynamic`, `revalidate`, …) is gone: use `connection()` or `"use cache"`. Never plain-`"use cache"` per-user data. `src/proxy.ts` 307s a dashboard request with no session cookie to login (`nextPath` kept) before rendering; it's optimistic, and each page's `getSession()` stays the real gate. See `apps/web/content/docs/build/queries.mdx` → Rendering and Prefetching.
 
 ### Mobile dependency pins
 
@@ -71,7 +75,7 @@ pnpm build            # Build all packages
 pnpm -F @repo/desktop package  # Bundle the desktop app (.app/.dmg on macOS)
 
 # Database
-pnpm db:start         # Start local Postgres (Supabase, no Docker); writes POSTGRES_URL into .env.local
+pnpm db:start         # Start local Postgres (Supabase); writes POSTGRES_URL into .env.local
 pnpm db:stop          # Stop local Postgres
 pnpm db:push          # Push Drizzle schema
 pnpm db:reset         # Reset, push, and re-seed schema
@@ -88,7 +92,7 @@ cd packages/ui && pnpm dlx shadcn@latest add <component>
 
 This template is built to be driven end-to-end by a coding agent. `AGENTS.md` is the full workflow; the essentials:
 
-- **Provision headless**: `pnpm bootstrap --yes` (idempotent; no Docker — the Supabase CLI runs Postgres natively). Non-TTY runs auto-keep all apps, so a piped invocation won't hang on the app-picker.
+- **Provision headless**: `pnpm bootstrap --yes` (idempotent; the Supabase CLI runs Postgres natively). Non-TTY runs auto-keep all apps, so a piped invocation won't hang on the app-picker.
 - **One local database per git branch**: `pnpm db:start` gives every checkout and branch its own database on its own port, and the CLI writes its URL into `.env.local` (`supabase status --env`), which the `with-env` scripts load before `.env`. A new branch or worktree starts EMPTY — re-run `pnpm bootstrap --yes` there. Never pin a port in `packages/db/supabase/config.toml`: a second branch's stack then fails to bind. Postgres refuses root, so cloud sessions get a `supabase-postgres` user from the SessionStart hook in `.claude/settings.json`.
 - **Seeded login**: `dev@init.local` / `password` (via `pnpm db:seed`) — a personal org + sample todos to verify against, no signup step.
 - **Verify**: `pnpm verify` for the static gate, then `pnpm smoke` against a running server for the runtime gate (health → seeded sign-in → todo lifecycle through oRPC → authenticated render; `SMOKE_URL` points it at a deployment). Drive the UI itself with `agent-browser`. Only web is headless-driveable — mobile/desktop/extension get `typecheck` + `build` only.
