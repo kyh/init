@@ -38,6 +38,11 @@ const config: NextConfig = {
   /** next dev rewrites AGENTS.md/CLAUDE.md when it detects an agent; we own those files */
   agentRules: false,
   /**
+   * Cache Components: everything is dynamic unless cached with `"use cache"`, and request
+   * data (cookies, headers, params, searchParams) renders under a `<Suspense>` boundary.
+   */
+  cacheComponents: true,
+  /**
    * RFC 8288 Link headers pointing agents at discovery resources.
    * api-catalog (RFC 9727), service-desc and service-doc (RFC 8631) are IANA-registered rels.
    */
@@ -61,6 +66,11 @@ const config: NextConfig = {
     remotePatterns: getRemotePatterns(),
   },
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
+  /**
+   * A `<Link>` prefetches the route's App Shell (its static and cached parts), shared by
+   * every link to that route; `<Link prefetch>` adds cached content that depends on the URL.
+   */
+  partialPrefetching: true,
   transpilePackages: [
     "@repo/contract",
     "@repo/db",

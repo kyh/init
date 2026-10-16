@@ -7,6 +7,10 @@ import { siteConfig } from "@/lib/site-config";
 import { source } from "@/lib/source";
 import { getMDXComponents } from "@/mdx-components";
 
+// Docs are build-time content: every page is prerendered, and an unknown slug waits on its
+// static render, so notFound() answers a real 404 instead of a streamed fallback shell.
+export const ensureStatic = "navigation";
+
 const Page = async (props: { params: Promise<{ slug?: string[] }> }) => {
   const params = await props.params;
   const page = source.getPage(params.slug);

@@ -1,4 +1,7 @@
-export const dynamic = "force-dynamic";
+import { connection } from "next/server";
 
-export const GET = () =>
-  Response.json({ status: "ok" }, { headers: { "Cache-Control": "no-store" } });
+// Liveness answers per request, never from a build-time prerender.
+export const GET = async () => {
+  await connection();
+  return Response.json({ status: "ok" }, { headers: { "Cache-Control": "no-store" } });
+};

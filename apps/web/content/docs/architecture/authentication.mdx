@@ -111,7 +111,7 @@ databaseHooks: {
 
 ## Server-Side Session
 
-`auth.ts` exports cached helpers for server components:
+`apps/web/src/lib/auth-server.ts` exports cached helpers for server components:
 
 ```typescript
 // Cached per-request with React cache()
@@ -122,12 +122,14 @@ export const getOrganization = cache(async (query) =>
 );
 ```
 
-Usage in a server component:
+Usage in a server component. The session is request data, so with Cache Components it's read under `<Suspense>` and the rest of the page prerenders:
 
-```typescript
-import { getSession } from "@repo/service/auth/auth";
+```tsx
+import { Suspense } from "react";
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/auth-server";
 
-export default async function DashboardPage() {
+const Welcome = async () => {
   const session = await getSession();
 
   if (!session) {
@@ -135,7 +137,13 @@ export default async function DashboardPage() {
   }
 
   return <div>Welcome {session.user.email}</div>;
-}
+};
+
+const DashboardPage = () => (
+  <Suspense fallback={<div>Loading…</div>}>
+    <Welcome />
+  </Suspense>
+);
 ```
 
 ## oRPC Integration
