@@ -233,7 +233,7 @@ importers:
     devDependencies:
       '@orpc/client':
         specifier: 'catalog:'
-        version: 2.0.0-beta.31
+        version: 2.0.0-beta.42
       '@repo/contract':
         specifier: workspace:*
         version: link:packages/contract
