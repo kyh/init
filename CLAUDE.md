@@ -43,7 +43,7 @@ Mutations go through oRPC or the better-auth client — never Next Server Action
 
 ### Rendering
 
-`apps/web` runs Next 16.4 with `cacheComponents` and `partialPrefetching` on (`next.config.ts`). Request data (`getSession()`, `params`, `searchParams`) is read under `<Suspense>` so the rest of each route prerenders into the App Shell that `<Link>` prefetches; a page stays synchronous and hands the `params` promise to an async child (`dashboard/[slug]/_components/organization-page.ts` resolves slug + session). Route segment config (`dynamic`, `revalidate`, …) is gone: use `connection()` or `"use cache"`. Never plain-`"use cache"` per-user data. See `apps/web/content/docs/build/queries.mdx` → Rendering and Prefetching.
+`apps/web` runs Next 16.4 with `cacheComponents` and `partialPrefetching` on (`next.config.ts`). Request data (`getSession()`, `params`, `searchParams`) is read under `<Suspense>` so the rest of each route prerenders into the App Shell that `<Link>` prefetches; a page stays synchronous and hands the `params` promise to an async child (`dashboard/[slug]/_components/organization-page.ts` resolves slug + session). Route segment config (`dynamic`, `revalidate`, …) is gone: use `connection()` or `"use cache"`. Never plain-`"use cache"` per-user data. `src/proxy.ts` 307s a dashboard request with no session cookie to login (`nextPath` kept) before rendering; it's optimistic, and each page's `getSession()` stays the real gate. See `apps/web/content/docs/build/queries.mdx` → Rendering and Prefetching.
 
 ### Mobile dependency pins
 
