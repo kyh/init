@@ -94,6 +94,7 @@ For the three non-web targets, verify with `pnpm typecheck` and `pnpm build`; a 
 
 - **Mutations go through oRPC or the better-auth client — never Next Server Actions.** All four platforms share one typed surface; each mutation invalidates the specific queries it touches in `onSuccess` (see `CLAUDE.md` → Mutation path).
 - **No `any`, no non-null `!`, no `as` casts.** Kebab-case filenames. Make illegal states unrepresentable.
+- **Request data renders under `<Suspense>`.** `cacheComponents` is on: reading the session, `params` or `searchParams` outside a boundary fails `pnpm build` (not `verify`), so build after touching a page or layout. Signed-out `/dashboard/*` requests get a 307 from `src/proxy.ts` (a session-cookie check only); pages still verify the session.
 - Env degrades gracefully: missing keys (Stripe, Resend) disable a feature, they don't crash boot.
 
 ## Map

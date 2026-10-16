@@ -1,5 +1,4 @@
 import { generateOpenAPIDocument } from "@/orpc/openapi";
 
-export const dynamic = "force-static";
-
+// No request data is read, so Cache Components prerenders the document at build time.
 export const GET = async () => Response.json(await generateOpenAPIDocument());

@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@repo/service/auth/auth";
+import { Skeleton } from "@repo/ui/components/skeleton";
 import { getSession } from "@/lib/auth-server";
 
 import { InvitationActions } from "./_components/invitation-actions";
@@ -10,7 +12,11 @@ export const metadata: Metadata = {
   title: "Invitation",
 };
 
-const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+
+const Invitation = async ({ params }: PageProps) => {
   const [{ id }, session] = await Promise.all([params, getSession()]);
   if (!session) {
     redirect(`/auth/login?nextPath=/auth/invitation/${id}`);
@@ -49,5 +55,20 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
     </div>
   );
 };
+
+const InvitationSkeleton = () => (
+  <div className="mx-auto flex w-full flex-col items-center justify-center space-y-6 sm:w-[350px]">
+    <Skeleton className="h-6 w-48" />
+    <Skeleton className="h-4 w-64" />
+    <Skeleton className="h-9 w-full" />
+  </div>
+);
+
+// The invitation depends on the URL and the session, so it streams in under Suspense.
+const Page = ({ params }: PageProps) => (
+  <Suspense fallback={<InvitationSkeleton />}>
+    <Invitation params={params} />
+  </Suspense>
+);
 
 export default Page;

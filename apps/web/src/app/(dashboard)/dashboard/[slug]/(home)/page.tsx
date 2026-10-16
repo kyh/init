@@ -1,10 +1,9 @@
 import { Suspense } from "react";
-import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth-server";
 import { Skeleton } from "@repo/ui/components/skeleton";
 
 import { PageHeader } from "@/components/header";
 import { HydrateClient, orpc, prefetch } from "@/orpc/server";
+import { resolveOrganizationPage } from "../_components/organization-page";
 import { TodoList } from "./_components/todo-list";
 
 interface PageProps {
@@ -22,28 +21,26 @@ const TodoListSkeleton = () => (
   </div>
 );
 
-const Page = async (props: PageProps) => {
-  const { slug } = await props.params;
-
-  const session = await getSession();
-  if (!session) {
-    return redirect(`/auth/login?nextPath=/dashboard/${slug}`);
-  }
-
+const Todos = async ({ params }: PageProps) => {
+  const { slug } = await resolveOrganizationPage(params);
   prefetch(orpc.todo.list.queryOptions({ input: { slug } }));
 
   return (
     <HydrateClient>
-      <main className="flex flex-1 flex-col px-5 pb-5">
-        <PageHeader>Todos</PageHeader>
-        <section className="max-w-4xl space-y-8">
-          <Suspense fallback={<TodoListSkeleton />}>
-            <TodoList slug={slug} />
-          </Suspense>
-        </section>
-      </main>
+      <TodoList slug={slug} />
     </HydrateClient>
   );
 };
+
+const Page = ({ params }: PageProps) => (
+  <main className="flex flex-1 flex-col px-5 pb-5">
+    <PageHeader>Todos</PageHeader>
+    <section className="max-w-4xl space-y-8">
+      <Suspense fallback={<TodoListSkeleton />}>
+        <Todos params={params} />
+      </Suspense>
+    </section>
+  </main>
+);
 
 export default Page;

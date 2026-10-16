@@ -10,10 +10,13 @@ Two halves. The server component kicks off the query:
 
 ```tsx
 // apps/web/src/app/(dashboard)/dashboard/[slug]/(home)/page.tsx
+import { Suspense } from "react";
 import { HydrateClient, orpc, prefetch } from "@/orpc/server";
+import { resolveOrganizationPage } from "../_components/organization-page";
 
-const Page = async (props: PageProps) => {
-  const { slug } = await props.params;
+// Reads the URL and the session, so it renders under Suspense.
+const Todos = async ({ params }: PageProps) => {
+  const { slug } = await resolveOrganizationPage(params); // session check + slug
 
   prefetch(orpc.todo.list.queryOptions({ input: { slug } }));
 
@@ -23,6 +26,16 @@ const Page = async (props: PageProps) => {
     </HydrateClient>
   );
 };
+
+// Everything outside the boundary is the route's static App Shell.
+const Page = ({ params }: PageProps) => (
+  <main>
+    <PageHeader>Todos</PageHeader>
+    <Suspense fallback={<TodoListSkeleton />}>
+      <Todos params={params} />
+    </Suspense>
+  </main>
+);
 ```
 
 The client component consumes it:
@@ -43,6 +56,16 @@ export const TodoList = ({ slug }: { slug: string }) => {
 How it works: `prefetch` starts the query in a server-side query client without awaiting it. `HydrateClient` dehydrates the (possibly still pending) promise into the RSC payload. `useSuspenseQuery` picks it up on the client and streams the result in. See `apps/web/src/orpc/server.tsx`.
 
 The key: **query options are shared**. `orpc.todo.list.queryOptions({ input: { slug } })` produces the same query key on server and client, so hydration matches up.
+
+## Rendering and Prefetching
+
+`apps/web/next.config.ts` turns on `cacheComponents` and `partialPrefetching`. Every route is dynamic unless cached, and request data — `cookies()`, `headers()` (so `getSession()`), `params`, `searchParams` — must be read under a `<Suspense>` boundary or the build fails. What sits outside the boundaries is the route's App Shell: prerendered, and what a `<Link>` prefetches, shared by every link to that route.
+
+- **Pages** stay synchronous and pass the `params` promise into an async child under `<Suspense>`, as above. The dashboard layout does the same for the session-bound sidebar, so it never holds the page behind the session lookup. A redirect from inside a streamed boundary can only answer 200, so `src/proxy.ts` sends a dashboard request without a session cookie to `/auth/login?nextPath=…` with a 307 first. That check is optimistic (the cookie exists, nothing more); each page's `getSession()` is the real gate.
+- **Static content** (docs, marketing) needs nothing: it prerenders. A dynamic route with `generateStaticParams` and no request data can export `ensureStatic = "navigation"` (as `/docs` does) so unknown params still answer a real 404.
+- **Shared, non-personal data** can be cached into the shell with `"use cache"` plus `cacheLife`/`cacheTag`. Never cache per-user data with plain `"use cache"`: it's shared across users. Dashboard data is per-user, so it streams per request through the oRPC prefetch instead.
+- **Expensive secondary sections** can start with `await navigation()` (from `next/cache`) inside their `<Suspense>` so prefetches never run them.
+- **Links** keep the default prefetch. `prefetch={true}` only pays off for a dynamic route whose URL-specific content is cached; for a large grid of links prefetch on intent (hover/focus) instead of on viewport.
 
 ## Direct Server Calls
 
