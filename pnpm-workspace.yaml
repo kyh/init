@@ -44,9 +44,9 @@ catalogs:
   # unexplained version literal in apps/mobile/package.json that looks like drift.
   # Bump only alongside an Expo SDK upgrade.
   expo:
-    "@types/react": ~19.2.4
-    react: 19.2.3
-    react-dom: 19.2.3
+    "@types/react": ~19.3.0
+    react: 19.3.0
+    react-dom: 19.3.0
     typescript: ~6.0.3
 
 linkWorkspacePackages: true
@@ -71,5 +71,5 @@ allowBuilds:
   spawn-sync: true
 
 overrides:
-  "@expo/dom-webview": "57.0.1"
+  "@expo/dom-webview": "58.0.2"
   lightningcss: "1.30.1"

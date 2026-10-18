@@ -29,6 +29,7 @@ const appConfig = ({ config }: ConfigContext): ExpoConfig => ({
   plugins: [
     "expo-router",
     "expo-secure-store",
+    "expo-status-bar",
     "expo-web-browser",
     [
       "expo-splash-screen",
