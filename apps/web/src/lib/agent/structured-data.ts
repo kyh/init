@@ -35,6 +35,21 @@ export const buildOrganization = () => ({
   url: siteConfig.url,
 });
 
+/** The og:video clip, as the home page's VideoObject. */
+export const buildVideoObject = () => ({
+  "@id": `${siteConfig.url}/#video`,
+  "@type": "VideoObject",
+  contentUrl: absoluteUrl(siteConfig.ogVideo.url),
+  description: siteConfig.ogImageAlt,
+  duration: siteConfig.ogVideo.duration,
+  height: siteConfig.ogVideo.height,
+  name: `${siteConfig.name}: the rocket launches`,
+  publisher: { "@id": ORGANIZATION_ID },
+  thumbnailUrl: absoluteUrl(siteConfig.ogImage),
+  uploadDate: siteConfig.ogVideo.uploadDate,
+  width: siteConfig.ogVideo.width,
+});
+
 export const buildHomeGraph = () => ({
   "@context": "https://schema.org",
   "@graph": [
@@ -48,6 +63,7 @@ export const buildHomeGraph = () => ({
       publisher: { "@id": ORGANIZATION_ID },
       url: siteConfig.url,
     },
+    buildVideoObject(),
     {
       "@type": "SoftwareSourceCode",
       codeRepository: siteConfig.repository,
@@ -61,6 +77,57 @@ export const buildHomeGraph = () => ({
     },
   ],
 });
+
+export interface DocGraphInput {
+  title: string;
+  description?: string;
+  /** Site-relative, e.g. `/docs/build/queries`. */
+  path: string;
+  /** Site-relative URL of the page's OpenGraph image. */
+  image: string;
+  /** Last commit to the page's source, when known. */
+  lastModified?: Date;
+}
+
+/** A docs page: a TechArticle plus its BreadcrumbList (Home › Documentation › page). */
+export const buildDocGraph = (doc: DocGraphInput) => {
+  const url = absoluteUrl(doc.path);
+  const crumbs = [
+    { name: siteConfig.name, url: siteConfig.url },
+    { name: "Documentation", url: absoluteUrl("/docs") },
+    ...(doc.path === "/docs" ? [] : [{ name: doc.title, url }]),
+  ];
+
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@id": `${url}#article`,
+        "@type": "TechArticle",
+        author: { "@type": "Person", name: siteConfig.author.name, url: siteConfig.author.url },
+        dateModified: doc.lastModified?.toISOString(),
+        description: doc.description,
+        headline: doc.title,
+        image: absoluteUrl(doc.image),
+        inLanguage: "en-US",
+        isPartOf: { "@id": WEBSITE_ID },
+        mainEntityOfPage: url,
+        publisher: { "@id": ORGANIZATION_ID },
+        url,
+      },
+      {
+        "@id": `${url}#breadcrumb`,
+        "@type": "BreadcrumbList",
+        itemListElement: crumbs.map((crumb, index) => ({
+          "@type": "ListItem",
+          item: crumb.url,
+          name: crumb.name,
+          position: index + 1,
+        })),
+      },
+    ],
+  };
+};
 
 /** Escapes `<` so no value can close the surrounding `<script>` early. */
 export const serializeJsonLd = (graph: JsonLdNode) =>

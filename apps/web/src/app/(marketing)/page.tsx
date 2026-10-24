@@ -4,12 +4,14 @@ import Link from "next/link";
 import { Meteors } from "@/app/(marketing)/_components/meteor";
 import { WaitlistForm } from "@/app/(marketing)/_components/waitlist-form";
 import { buildHomeGraph, serializeJsonLd } from "@/lib/agent/structured-data";
+import { pageMetadata } from "@/lib/page-metadata";
+import { siteConfig } from "@/lib/site-config";
 
-export const metadata: Metadata = {
-  alternates: {
-    canonical: "/",
-  },
-};
+export const metadata: Metadata = pageMetadata({
+  description: siteConfig.description,
+  path: "/",
+  video: true,
+});
 
 const jsonLdScript = serializeJsonLd(buildHomeGraph());
 
