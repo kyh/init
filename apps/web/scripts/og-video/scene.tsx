@@ -1,197 +1,218 @@
 /**
- * The og:video scene: one command typed, then the four apps it ships assemble.
- * Static markup only (rendered by og-video.tsx with react-dom/server); `applyFrame`
- * in timeline.ts moves it. Web and desktop are screenshots of the running app;
- * the extension popup and the mobile screen are their real markup, transcribed
- * from apps/extension/src/entrypoints/popup/app.tsx and apps/mobile/src/app/index.tsx
- * with the same @repo/ui components, classes and seeded data. Never shipped:
- * nothing under src/ imports this folder.
+ * The og:video scene: one command typed, the four apps it ships assemble, then the
+ * wordmark. A simplified picture of the product, not a capture of it: every frame
+ * is drawn here with @repo/ui's tokens, components and the apps' own copy (the
+ * dashboard's todos are the seed's, the desktop window shows the marketing page,
+ * the popup and phone follow apps/extension/src/entrypoints/popup/app.tsx and
+ * apps/mobile/src/app/index.tsx), sized to read in a 600px link preview.
+ * Static markup only (og-video.tsx renders it); timeline.ts moves it. Never
+ * shipped: nothing under src/ imports this folder.
  */
 import { Button } from "@repo/ui/components/button";
 import { Logo } from "@repo/ui/components/logo";
-import { ExternalLink, Puzzle, Settings } from "lucide-react";
+import { CheckSquare, CreditCard, ExternalLink, Settings, Users2 } from "lucide-react";
 
 export const COMMAND = "gh repo create my-app --template kyh/init --clone";
 
-export interface Todo {
-  title: string;
-  completed: boolean;
-}
+// The seeded sample todos (packages/service/src/seed.ts): product copy, not user data.
+const TODOS = [
+  { completed: true, title: "Read AGENTS.md" },
+  { completed: false, title: "Run pnpm verify" },
+  { completed: false, title: "Drive the app with agent-browser" },
+];
 
-export interface SceneData {
-  /** Screenshot of the dashboard, as a file name beside the scene. */
-  dashboard: string;
-  /** Screenshot of `/`, the page the desktop window opens. */
-  home: string;
-  appUrl: string;
-  userName: string;
-  todos: Todo[];
+export interface SceneCopy {
   name: string;
   description: string;
 }
 
 const Label = ({ name, tech }: { name: string; tech: string }) => (
-  <div className="bg-background/90 border-border absolute -top-3.5 left-3 z-10 flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs">
-    <span className="text-foreground">{name}</span>
+  <div className="bg-background border-border absolute -top-5 left-5 z-10 flex items-center gap-2 rounded-full border px-4 py-1 text-lg">
+    <span className="text-foreground font-medium">{name}</span>
     <span className="text-muted-foreground">{tech}</span>
   </div>
 );
 
 const Dots = () => (
-  <div className="flex gap-1.5">
-    <span className="size-2.5 rounded-full bg-[#ff5f57]" />
-    <span className="size-2.5 rounded-full bg-[#febc2e]" />
-    <span className="size-2.5 rounded-full bg-[#28c840]" />
+  <div className="flex gap-2">
+    <span className="size-3.5 rounded-full bg-[#ff5f57]" />
+    <span className="size-3.5 rounded-full bg-[#febc2e]" />
+    <span className="size-3.5 rounded-full bg-[#28c840]" />
   </div>
 );
 
 const Terminal = () => (
   <div
     data-part="terminal"
-    className="bg-card border-border absolute top-[283px] left-[220px] flex h-16 w-[760px] items-center gap-5 rounded-xl border px-5 shadow-2xl"
+    className="bg-card border-border absolute top-[277px] left-[110px] flex h-[76px] w-[980px] items-center gap-6 rounded-2xl border px-7 shadow-2xl"
   >
     <Dots />
-    <div className="font-mono text-[19px] whitespace-pre">
+    <div className="font-mono text-[28px] whitespace-pre">
       <span className="text-muted-foreground">$ </span>
       <span data-part="typed" className="text-foreground" />
       <span
         data-part="caret"
-        className="bg-foreground inline-block h-[22px] w-[10px] align-middle"
+        className="bg-foreground inline-block h-[32px] w-[14px] align-middle"
       />
     </div>
   </div>
 );
 
-const Intro = ({ data }: { data: SceneData }) => (
-  <div data-part="intro" className="absolute top-[150px] left-0 flex w-full flex-col items-center">
-    <div className="flex items-center gap-3">
-      <Logo className="text-foreground size-10" />
-      <span className="text-foreground text-3xl font-light">{data.name}</span>
+const Wordmark = ({ copy }: { copy: SceneCopy }) => (
+  <div
+    data-part="wordmark"
+    className="absolute inset-0 flex flex-col items-center justify-center opacity-0"
+  >
+    <div className="flex items-center gap-5">
+      <Logo className="text-foreground size-24" />
+      <span className="text-foreground text-[84px] font-light tracking-tight">{copy.name}</span>
     </div>
-    <p className="text-muted-foreground mt-4 text-lg font-light">{data.description}</p>
+    <p className="text-muted-foreground mt-6 max-w-[760px] text-center text-[30px] leading-snug font-light">
+      {copy.description}
+    </p>
   </div>
 );
 
-const WebFrame = ({ data }: { data: SceneData }) => (
+const WebFrame = () => (
   <div
     data-part="frame"
-    className="bg-card border-border absolute top-[250px] left-[36px] w-[420px] rounded-xl border shadow-2xl"
+    className="bg-card border-border absolute top-[150px] left-[28px] h-[440px] w-[400px] rounded-2xl border shadow-2xl"
   >
     <Label name="Web" tech="Next.js" />
-    <div className="border-border flex h-9 items-center gap-3 border-b px-3">
+    <div className="border-border flex h-12 items-center gap-4 border-b px-4">
       <Dots />
-      <div className="bg-muted text-muted-foreground flex-1 truncate rounded-md px-2 py-0.5 text-[11px]">
-        {data.appUrl.replace(/^https?:\/\//u, "")}/dashboard
+      <div className="bg-muted text-muted-foreground flex-1 rounded-md px-3 py-0.5 text-lg">
+        /dashboard
       </div>
     </div>
-    {/* oxlint-disable-next-line next/no-img-element -- static markup for a file:// page, not a Next route */}
-    <img src={data.dashboard} alt="" className="block w-full rounded-b-xl" />
+    <div className="flex">
+      <div className="text-muted-foreground flex w-16 flex-col items-center gap-5 pt-5">
+        <span className="bg-muted text-foreground flex size-10 items-center justify-center rounded-lg">
+          <CheckSquare className="size-5" />
+        </span>
+        <Users2 className="size-5" />
+        <CreditCard className="size-5" />
+        <Settings className="size-5" />
+      </div>
+      <div className="flex-1 space-y-3 py-5 pr-5">
+        <p className="text-foreground text-[28px]">Todos</p>
+        {TODOS.map((todo) => (
+          <div
+            key={todo.title}
+            className="border-border flex items-start gap-3 rounded-xl border px-4 py-3"
+          >
+            <span
+              className={`mt-1 size-5 shrink-0 rounded-[5px] border ${todo.completed ? "bg-primary border-primary" : "border-input"}`}
+            />
+            <div>
+              <p
+                className={`text-xl leading-snug ${todo.completed ? "text-muted-foreground line-through" : "text-foreground"}`}
+              >
+                {todo.title}
+              </p>
+              <p className="text-muted-foreground text-base">
+                {todo.completed ? "Completed" : "Pending"}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   </div>
 );
 
-const DesktopFrame = ({ data }: { data: SceneData }) => (
+/** The window opens the web app at `/`: the marketing page, simplified. */
+const DesktopFrame = ({ copy }: { copy: SceneCopy }) => (
   <div
     data-part="frame"
-    className="bg-card border-border absolute top-[118px] left-[300px] w-[600px] rounded-xl border shadow-2xl"
+    className="bg-card border-border absolute top-[110px] left-[452px] h-[282px] w-[470px] rounded-2xl border shadow-2xl"
   >
     <Label name="Desktop" tech="Tauri" />
-    <div className="border-border relative flex h-8 items-center border-b px-3">
+    <div className="border-border relative flex h-11 items-center border-b px-4">
       <Dots />
-      <span className="text-muted-foreground absolute inset-x-0 text-center text-xs">
-        {data.name}
+      <span className="text-muted-foreground absolute inset-x-0 text-center text-lg">
+        {copy.name}
       </span>
     </div>
-    {/* oxlint-disable-next-line next/no-img-element -- static markup for a file:// page, not a Next route */}
-    <img src={data.home} alt="" className="block w-full rounded-b-xl" />
-  </div>
-);
-
-/** apps/mobile/src/app/index.tsx, signed in, at iPhone size (390×844) shown at half scale. */
-const MobileFrame = ({ data }: { data: SceneData }) => (
-  <div
-    data-part="frame"
-    className="absolute top-[112px] left-[952px] h-[438px] w-[211px] rounded-[40px] border border-white/15 bg-black p-2 shadow-2xl"
-  >
-    <Label name="Mobile" tech="Expo" />
-    <div className="relative h-full w-full overflow-hidden rounded-[32px]">
-      <div className="bg-background absolute top-0 left-0 h-[844px] w-[390px] origin-top-left scale-50">
-        <div className="text-foreground flex h-[54px] items-end justify-between px-8 pb-2 text-[17px] font-semibold">
-          <span>9:41</span>
-          <span className="bg-foreground h-3 w-7 rounded-sm" />
-        </div>
-        <div className="border-border text-foreground border-b py-3 text-center text-[17px] font-semibold">
-          Home Page
-        </div>
-        <div className="h-full w-full p-4">
-          <p className="text-foreground pb-2 text-center text-5xl font-bold">
-            <span className="text-primary">{data.name}</span>
-          </p>
-          <p className="text-foreground pb-2 text-center text-xl font-semibold">
-            Hello, {data.userName}
-          </p>
-          <div className="bg-primary flex items-center rounded-sm p-2">
-            <span>Sign Out</span>
-          </div>
-          <div className="pt-4">
-            {data.todos.map((todo) => (
-              <p key={todo.title} className="text-foreground py-1">
-                {todo.completed ? "☑" : "☐"} {todo.title}
-              </p>
-            ))}
-          </div>
-        </div>
+    <div className="px-7 pt-5">
+      <div className="flex items-center justify-between">
+        <Logo className="text-foreground size-8" />
+        <span className="bg-muted text-foreground rounded-full px-3 py-0.5 text-base">
+          Dashboard
+        </span>
       </div>
+      <p className="text-muted-foreground mt-5 text-lg font-light">
+        For you and your coding agents
+      </p>
+      <p className="text-foreground mt-2 text-[25px] leading-tight font-light">
+        {copy.description}
+      </p>
     </div>
   </div>
 );
 
-/** apps/extension/src/entrypoints/popup/app.tsx, loaded, under a toolbar strip. */
-const ExtensionFrame = ({ data }: { data: SceneData }) => (
+/** apps/extension/src/entrypoints/popup/app.tsx, loaded, scaled up. */
+const ExtensionFrame = ({ copy }: { copy: SceneCopy }) => (
   <div
     data-part="frame"
-    className="bg-card border-border absolute top-[326px] left-[592px] w-[338px] rounded-xl border p-2 shadow-2xl"
+    className="bg-card border-border absolute top-[414px] left-[470px] w-[430px] rounded-2xl border p-5 shadow-2xl"
   >
     <Label name="Extension" tech="WXT" />
-    <div className="text-muted-foreground flex h-7 items-center justify-end gap-2 px-1">
-      <span className="bg-muted text-foreground flex size-6 items-center justify-center rounded-md">
-        <Logo className="size-4" />
-      </span>
-      <Puzzle className="size-4" />
+    <div className="flex items-center gap-3 pt-1">
+      <Logo className="text-foreground size-9" />
+      <p className="text-foreground flex-1 text-[26px] font-semibold">{copy.name}</p>
+      <Settings className="text-muted-foreground size-6" />
     </div>
-    <div className="bg-background border-border flex h-[228px] w-[320px] flex-col justify-between rounded-lg border p-4">
-      <div className="flex items-start justify-between">
-        <Logo className="size-7" />
-        <Button variant="ghost" size="icon-sm" title="Settings">
-          <Settings />
-        </Button>
+    <p className="text-muted-foreground mt-2 text-lg leading-snug">
+      Your AI-native starter kit for building, launching, and scaling applications.
+    </p>
+    <Button className="mt-4 h-12 w-full text-lg [&_svg:not([class*='size-'])]:size-5">
+      <ExternalLink />
+      Open {copy.name}
+    </Button>
+  </div>
+);
+
+/** apps/mobile/src/app/index.tsx, signed in as the seeded user. */
+const MobileFrame = ({ copy }: { copy: SceneCopy }) => (
+  <div
+    data-part="frame"
+    className="absolute top-[108px] left-[950px] h-[490px] w-[226px] rounded-[44px] border border-white/15 bg-black p-2.5 shadow-2xl"
+  >
+    <Label name="Mobile" tech="Expo" />
+    <div className="bg-background h-full w-full overflow-hidden rounded-[36px] px-4">
+      <div className="text-foreground flex h-11 items-end justify-between px-3 text-base font-semibold">
+        <span>9:41</span>
+        <span className="bg-foreground h-2.5 w-6 rounded-sm" />
       </div>
-      <div className="space-y-1">
-        <h1 className="font-semibold">{data.name}</h1>
-        <p className="text-muted-foreground text-sm text-pretty">
-          Your AI-native starter kit for building, launching, and scaling applications.
-        </p>
+      <p className="text-foreground pt-6 pb-1 text-center text-[52px] font-bold">
+        <span className="text-primary">{copy.name}</span>
+      </p>
+      <p className="text-foreground pb-3 text-center text-xl font-semibold">Hello, Dev User</p>
+      <div className="bg-primary text-primary-foreground flex items-center justify-center rounded-md p-2 text-lg">
+        Sign Out
       </div>
-      <div className="space-y-2">
-        <Button className="w-full">
-          <ExternalLink />
-          Open {data.name}
-        </Button>
-        <p className="text-muted-foreground truncate text-center text-xs">{data.appUrl}</p>
+      <div className="space-y-2 pt-5">
+        {TODOS.map((todo) => (
+          <p key={todo.title} className="text-foreground text-lg leading-snug">
+            {todo.completed ? "☑" : "☐"} {todo.title}
+          </p>
+        ))}
       </div>
     </div>
   </div>
 );
 
-/** Back to front: desktop sits behind web, extension and mobile. */
-export const Scene = ({ data }: { data: SceneData }) => (
+/** Back to front: the desktop window sits behind the popup. */
+export const Scene = ({ copy }: { copy: SceneCopy }) => (
   <div className="bg-background relative h-[630px] w-[1200px] overflow-hidden font-sans">
-    <Intro data={data} />
     <div data-part="frames" className="absolute inset-0">
-      <DesktopFrame data={data} />
-      <WebFrame data={data} />
-      <ExtensionFrame data={data} />
-      <MobileFrame data={data} />
+      <DesktopFrame copy={copy} />
+      <WebFrame />
+      <ExtensionFrame copy={copy} />
+      <MobileFrame copy={copy} />
     </div>
     <Terminal />
+    <Wordmark copy={copy} />
   </div>
 );

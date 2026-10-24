@@ -6,9 +6,9 @@ export const siteConfig = {
   ogImage: "/og.jpg",
   ogImageAlt:
     "Init: one gh repo create command assembles the web, mobile, extension and desktop apps.",
-  /** Captured by `pnpm -F @repo/web og:video` (scripts/og-video); og.jpg is its poster frame. */
+  /** Recorded from a built scene by `pnpm -F @repo/web og:video` (scripts/og-video); og.jpg is its poster frame. */
   ogVideo: {
-    duration: "PT9S",
+    duration: "PT10S",
     height: 630,
     uploadDate: "2026-10-24",
     url: "/og/og.mp4",
