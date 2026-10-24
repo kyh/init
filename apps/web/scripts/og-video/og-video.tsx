@@ -30,7 +30,7 @@ const HEIGHT = 630;
 const renderScene = async () => {
   // @repo/ui compiles its JSX with the classic runtime, which reads a global React.
   Object.assign(globalThis, { React });
-  const { COMMAND, Scene } = await import("./scene");
+  const { Scene } = await import("./scene");
 
   const markup = renderToStaticMarkup(
     <Scene copy={{ description: siteConfig.description, name: siteConfig.name }} />,
@@ -41,7 +41,7 @@ const renderScene = async () => {
   );
 
   const html = `<!doctype html><html lang="en" class="dark"><head><meta charset="utf-8"><style>${css.css}</style><style>html,body{margin:0;background:var(--background)}</style></head><body>${markup}</body></html>`;
-  return { command: COMMAND, html };
+  return html;
 };
 
 /** Lanczos-downscales the 2x frames to the clip's size. */
@@ -55,7 +55,7 @@ const main = async () => {
   await mkdir(framesDir);
   await mkdir(path.join(publicDir, "og"), { recursive: true });
 
-  const { command, html } = await renderScene();
+  const html = await renderScene();
   const scenePath = path.join(workDir, "scene.html");
   await writeFile(scenePath, html);
 
@@ -72,12 +72,12 @@ const main = async () => {
 
     const frameCount = DURATION * FPS;
     for (let frame = 0; frame < frameCount; frame += 1) {
-      await page.evaluate(applyFrame, { command, t: frame / FPS });
+      await page.evaluate(applyFrame, frame / FPS);
       const name = String(frame).padStart(4, "0");
       await page.screenshot({ path: path.join(framesDir, `${name}.png`) });
     }
 
-    await page.evaluate(applyFrame, { command, t: POSTER_TIME });
+    await page.evaluate(applyFrame, POSTER_TIME);
     await page.screenshot({ path: path.join(workDir, "poster.png") });
   } finally {
     await browser.close();

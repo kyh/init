@@ -43,7 +43,7 @@ export const buildVideoObject = () => ({
   description: siteConfig.ogImageAlt,
   duration: siteConfig.ogVideo.duration,
   height: siteConfig.ogVideo.height,
-  name: `${siteConfig.name}: one command, four platforms`,
+  name: `${siteConfig.name}: the rocket launches`,
   publisher: { "@id": ORGANIZATION_ID },
   thumbnailUrl: absoluteUrl(siteConfig.ogImage),
   uploadDate: siteConfig.ogVideo.uploadDate,

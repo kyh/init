@@ -5,10 +5,10 @@ export const siteConfig = {
   name: "Init",
   ogImage: "/og.jpg",
   ogImageAlt:
-    "Init: one gh repo create command assembles the web, mobile, extension and desktop apps.",
+    "The Init rocket logo above the tagline: An AI native starter kit to build, launch, and scale your next project.",
   /** Recorded from a built scene by `pnpm -F @repo/web og:video` (scripts/og-video); og.jpg is its poster frame. */
   ogVideo: {
-    duration: "PT10S",
+    duration: "PT7S",
     height: 630,
     uploadDate: "2026-10-24",
     url: "/og/og.mp4",
