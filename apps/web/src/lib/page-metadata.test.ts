@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 
-import { pageMetadata } from "./page-metadata";
+import { pageMetadata, sitePageImage } from "./page-metadata";
 import { siteConfig } from "./site-config";
 
 describe("pageMetadata", () => {
@@ -51,5 +51,12 @@ describe("pageMetadata", () => {
 
   test("the home page keeps the layout's default title", () => {
     assert.equal("title" in pageMetadata({ description: "Home.", path: "/" }), false);
+  });
+
+  test("a marketing page's card lives under /og/pages", () => {
+    assert.deepEqual(sitePageImage("/about"), {
+      segments: ["about", "image.png"],
+      url: "/og/pages/about/image.png",
+    });
   });
 });

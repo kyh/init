@@ -20,6 +20,15 @@ interface PageMetadataInput {
   video?: boolean;
 }
 
+/**
+ * A marketing page's share card, drawn by `app/og/pages/[...slug]/route.tsx` with the
+ * same card component as the docs' (`app/og/_components/og-card.tsx`).
+ */
+export const sitePageImage = (path: string) => {
+  const segments = [...path.split("/").filter(Boolean), "image.png"];
+  return { segments, url: `/og/pages/${segments.join("/")}` };
+};
+
 const OG_SIZE = { height: 630, width: 1200 };
 
 const siteImage: PageImage = { alt: siteConfig.ogImageAlt, url: siteConfig.ogImage };

@@ -4,10 +4,16 @@ import { cn } from "cn";
 
 import type { Block, Inline, ListItem, SitePage, TableBlock } from "@/lib/agent/page-content";
 import { headingId } from "@/lib/agent/page-content";
-import { pageMetadata } from "@/lib/page-metadata";
+import { pageMetadata, sitePageImage } from "@/lib/page-metadata";
 
 export const sitePageMetadata = (page: SitePage): Metadata =>
-  pageMetadata({ description: page.description, path: page.path, title: page.title, video: true });
+  pageMetadata({
+    description: page.description,
+    image: { alt: `${page.title}: ${page.description}`, url: sitePageImage(page.path).url },
+    path: page.path,
+    title: page.title,
+    video: true,
+  });
 
 const Runs = ({ runs }: { runs: Inline[] }) =>
   runs.map((run, index) => {
