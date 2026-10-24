@@ -56,7 +56,7 @@ export const config = {
     {
       has: [{ key: "accept", type: "header", value: ".*[Mm][Aa][Rr][Kk][Dd][Oo][Ww][Nn].*" }],
       source:
-        "/((?!api/|_next/|_vercel/|md/|auth/|dashboard|favicon/|assets/|\\.well-known/|llms\\.txt$|robots\\.txt$|sitemap\\.xml$|openapi\\.json$|og\\.jpg$|logo).*)",
+        "/((?!api/|_next/|_vercel/|md/|auth/|dashboard|favicon/|assets/|\\.well-known/|llms\\.txt$|robots\\.txt$|sitemap\\.xml$|openapi\\.json$|og\\.jpg$|og/|logo).*)",
     },
   ],
 };

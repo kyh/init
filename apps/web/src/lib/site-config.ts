@@ -4,6 +4,16 @@ export const siteConfig = {
   email: "kai@kyh.io",
   name: "Init",
   ogImage: "/og.jpg",
+  ogImageAlt:
+    "Init: one gh repo create command assembles the web, mobile, extension and desktop apps.",
+  /** Captured by `pnpm -F @repo/web og:video` (scripts/og-video); og.jpg is its poster frame. */
+  ogVideo: {
+    duration: "PT9S",
+    height: 630,
+    uploadDate: "2026-10-24",
+    url: "/og/og.mp4",
+    width: 1200,
+  },
   repository: "https://github.com/kyh/init",
   sameAs: ["https://github.com/kyh/init", "https://twitter.com/kaiyuhsu"],
   shortName: "Init",
