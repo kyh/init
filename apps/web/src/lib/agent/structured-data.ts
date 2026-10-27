@@ -85,8 +85,8 @@ export interface DocGraphInput {
   path: string;
   /** Site-relative URL of the page's OpenGraph image. */
   image: string;
-  /** Last commit to the page's source, when known. */
-  lastModified?: Date;
+  /** The `lastModified` date hand-set in the page's frontmatter. */
+  lastModified: Date;
 }
 
 /** A docs page: a TechArticle plus its BreadcrumbList (Home › Documentation › page). */
@@ -105,7 +105,7 @@ export const buildDocGraph = (doc: DocGraphInput) => {
         "@id": `${url}#article`,
         "@type": "TechArticle",
         author: { "@type": "Person", name: siteConfig.author.name, url: siteConfig.author.url },
-        dateModified: doc.lastModified?.toISOString(),
+        dateModified: doc.lastModified.toISOString(),
         description: doc.description,
         headline: doc.title,
         image: absoluteUrl(doc.image),

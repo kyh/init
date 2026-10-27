@@ -1,6 +1,7 @@
 ---
 title: "Markdown"
 description: "The fumadocs-powered docs site that ships with Init, and the Markdown every page serves to agents"
+lastModified: 2026-10-27
 ---
 
 The docs site you're reading ships with Init - [fumadocs](https://fumadocs.dev) over MDX, rendered inside the Next.js app. Use it for product docs, changelogs, or internal guides.
@@ -96,7 +97,7 @@ These docs are written for humans. Agents can get their own - an optional [OpenW
 
 ## SEO
 
-Handled per-page from frontmatter, so give every page a `description`. `generateMetadata` in the docs page emits the title, description, canonical URL and OpenGraph/Twitter cards (`src/lib/page-metadata.ts`); each page gets its own share image from `src/app/og/docs/[...slug]/route.tsx` and TechArticle + BreadcrumbList JSON-LD (`buildDocGraph` in `src/lib/agent/structured-data.ts`). `src/app/sitemap.ts` lists every page with its last git commit as `lastmod` (the `lastModified` plugin in `source.config.ts`; on Vercel set `VERCEL_DEEP_CLONE=true` so git has history).
+Handled per-page from frontmatter, so give every page a `description`. `generateMetadata` in the docs page emits the title, description, canonical URL and OpenGraph/Twitter cards (`src/lib/page-metadata.ts`); each page gets its own share image from `src/app/og/docs/[...slug]/route.tsx` and TechArticle + BreadcrumbList JSON-LD (`buildDocGraph` in `src/lib/agent/structured-data.ts`). `src/app/sitemap.ts` lists every page with the `lastModified` date from its frontmatter as `lastmod`, which also feeds the TechArticle's `dateModified`. The field is required by the schema in `source.config.ts`, so a page without one fails the build; bump it when you change the page.
 
 ## Next Steps
 
