@@ -8,9 +8,9 @@ export const siteConfig = {
     "The Init rocket logo above the tagline: An AI native starter kit to build, launch, and scale your next project.",
   /** Recorded from a built scene by `pnpm -F @repo/web og:video` (scripts/og-video); og.jpg is its poster frame. */
   ogVideo: {
-    duration: "PT7S",
+    duration: "PT6.5S",
     height: 630,
-    uploadDate: "2026-10-24",
+    uploadDate: "2026-10-27",
     url: "/og/og.mp4",
     width: 1200,
   },

@@ -12,7 +12,7 @@ Init ships with the author's defaults baked in. Change these before launch:
 - **`apps/web/src/lib/site-config.ts`** - name, description, production URL, Twitter handle. `siteConfig.url` feeds metadata, sitemap, robots, and `llms.txt`
 - **`packages/service/src/auth/auth.ts`** - `oAuthProxy` derives `productionURL` from `VERCEL_PROJECT_PRODUCTION_URL`; deploying off Vercel means setting that env var (or replacing the derivation)
 - **`apps/web/src/app/(docs)/docs/layout.tsx`** - `githubUrl` points at the upstream repo
-- **`public/og.jpg`** and **`public/og/og.mp4`** - the OpenGraph image and video (`siteConfig.ogImage`, `siteConfig.ogVideo`). Both are recorded from a small HTML scene in `apps/web/scripts/og-video` (the logo mark launching in above the tagline, drawn with `@repo/ui`) (no running app or database needed): edit `scene.tsx`, run `pnpm -F @repo/web og:video` (needs ffmpeg and a Playwright Chromium), then update `ogVideo.uploadDate`. Docs and marketing pages draw their own share cards at `/og/docs/<slug>/image.png` and `/og/pages/<slug>/image.png`
+- **`public/og.jpg`** and **`public/og/og.mp4`** - the OpenGraph image and video (`siteConfig.ogImage`, `siteConfig.ogVideo`). Both are recorded from a small HTML scene in `apps/web/scripts/og-video` (the logo mark arcing in on its exhaust as the tagline rises in under it, hovering, then lifting off and coming round again, drawn with `@repo/ui`) (no running app or database needed): edit `scene.tsx`, run `pnpm -F @repo/web og:video` (needs ffmpeg and a Playwright Chromium), then update `ogVideo.uploadDate`. Docs and marketing pages draw their own share cards at `/og/docs/<slug>/image.png` and `/og/pages/<slug>/image.png`
 
 ## Secrets
 

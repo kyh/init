@@ -42,7 +42,7 @@ describe("buildVideoObject", () => {
     const video = buildVideoObject();
     assert.match(video.contentUrl, /^https?:\/\/.+\.mp4$/u);
     assert.match(video.thumbnailUrl, /^https?:\/\//u);
-    assert.match(video.duration, /^PT\d+S$/u);
+    assert.match(video.duration, /^PT\d+(?:\.\d+)?S$/u);
     assert.match(video.uploadDate, /^\d{4}-\d{2}-\d{2}$/u);
     assert.deepEqual([video.width, video.height], [1200, 630]);
   });
