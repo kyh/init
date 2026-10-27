@@ -14,7 +14,7 @@ export const docs = defineDocs({
     // without one fails the build rather than shipping with no date. Bump it when
     // the page's content changes.
     schema: frontmatterSchema.extend({
-      lastModified: z.coerce.date(),
+      lastModified: z.union([z.date(), z.iso.date().transform((day) => new Date(day))]),
     }),
   },
   meta: {
