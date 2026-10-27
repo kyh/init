@@ -8,16 +8,16 @@ import { siteConfig } from "@/lib/site-config";
  * search    = appear in search results
  * ai-input  = use as grounding for AI answers (RAG / agent retrieval)
  * ai-train  = use to train generative models
+ *
+ * /auth and /dashboard are kept out of search with meta noindex, not Disallow:
+ * a disallowed path can still be indexed from external links, since crawlers
+ * never fetch the page to see the noindex.
  */
 export const GET = () => {
   const body = [
-    "User-Agent: *",
-    "Allow: /",
-    // /auth and /dashboard are handled with meta noindex instead of Disallow —
-    // a disallowed path can still be indexed from external links, since
-    // crawlers never fetch the page to see the noindex.
-    "Disallow: /api/",
+    "User-agent: *",
     "Content-Signal: search=yes, ai-input=yes, ai-train=yes",
+    "Allow: /",
     "",
     `Sitemap: ${siteConfig.url}/sitemap.xml`,
     "",

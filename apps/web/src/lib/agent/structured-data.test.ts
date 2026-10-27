@@ -82,6 +82,7 @@ describe("buildDocGraph", () => {
   test("the docs index stops at Documentation", () => {
     const [, indexCrumbs] = buildDocGraph({
       image: "/og/docs/image.png",
+      lastModified: new Date("2026-01-02T00:00:00.000Z"),
       path: "/docs",
       title: "Introduction",
     })["@graph"];

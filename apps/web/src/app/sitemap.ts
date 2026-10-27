@@ -8,10 +8,10 @@ const sitemap = (): MetadataRoute.Sitemap => {
   // Static route: evaluated once per build, so this is the deploy time.
   const lastModified = new Date();
 
-  // A doc's lastmod is its source file's last commit, so crawlers revisit what changed.
+  // A doc's lastmod is the `lastModified` date in its frontmatter, so crawlers revisit what changed.
   const docs = source.getPages().map((page) => ({
     changeFrequency: "weekly" as const,
-    lastModified: page.data.lastModified ?? lastModified,
+    lastModified: page.data.lastModified,
     priority: 0.5,
     url: `${siteConfig.url}${page.url}`,
   }));
