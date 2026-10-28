@@ -6,12 +6,24 @@ import { TooltipProvider } from "@repo/ui/components/tooltip";
 import { DesktopMenuListener } from "@/components/desktop-menu-listener";
 import { DesktopUpdateBanner } from "@/components/desktop-update-banner";
 import { ThemeProvider } from "@/components/theme-provider";
+import { pageMetadata } from "@/lib/page-metadata";
 import { siteConfig } from "@/lib/site-config";
 import { ORPCReactProvider } from "@/orpc/react";
 
 import "./styles/globals.css";
 
+// The fallback share card for any route that sets none; no canonical here, since a
+// layout's would be inherited by every page that forgot its own.
+const { openGraph, twitter } = pageMetadata({
+  description: siteConfig.description,
+  path: "/",
+  video: true,
+});
+
 export const metadata: Metadata = {
+  applicationName: siteConfig.name,
+  authors: [{ name: siteConfig.author.name, url: siteConfig.author.url }],
+  creator: siteConfig.author.name,
   description: siteConfig.description,
   icons: [
     {
@@ -40,21 +52,7 @@ export const metadata: Metadata = {
     },
   ],
   metadataBase: new URL(siteConfig.url),
-  openGraph: {
-    description: siteConfig.description,
-    images: [
-      {
-        height: 630,
-        url: siteConfig.ogImage,
-        width: 1200,
-      },
-    ],
-    locale: "en-US",
-    siteName: siteConfig.name,
-    title: siteConfig.name,
-    type: "website",
-    url: siteConfig.url,
-  },
+  openGraph,
   other: {
     "apple-mobile-web-app-title": siteConfig.shortName,
   },
@@ -62,19 +60,7 @@ export const metadata: Metadata = {
     default: siteConfig.name,
     template: `%s | ${siteConfig.name}`,
   },
-  twitter: {
-    card: "summary_large_image",
-    creator: siteConfig.twitter,
-    description: siteConfig.description,
-    images: [
-      {
-        height: 630,
-        url: siteConfig.ogImage,
-        width: 1200,
-      },
-    ],
-    title: siteConfig.name,
-  },
+  twitter,
 };
 
 export const viewport: Viewport = {

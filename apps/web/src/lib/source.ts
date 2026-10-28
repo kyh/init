@@ -10,6 +10,12 @@ export const source = loader({
   source: docs.toFumadocsSource(),
 });
 
+/** The per-page OpenGraph image, served by `app/og/docs/[...slug]/route.tsx`. */
+export const getPageImage = (page: InferPageType<typeof source>) => {
+  const segments = [...page.slugs, "image.png"];
+  return { segments, url: `/og/docs/${segments.join("/")}` };
+};
+
 export const getLLMText = async (page: InferPageType<typeof source>) => {
   const processed = await page.data.getText("processed");
 
