@@ -1,1 +1,6 @@
 @import "@repo/ui/globals.css";
+
+/* popups are sized to their content, so a reserved gutter is only an empty strip */
+html {
+  scrollbar-gutter: auto;
+}
