@@ -16,6 +16,9 @@ export default defineConfig({
   ],
   overrides: [{ files: ["apps/web/**"], plugins: next.plugins, rules: next.rules }],
   rules: {
+    // Keep established code style when upgrading the preset; avoid unrelated rewrites.
+    "anti-slop/no-array-filter-map": "off",
+    "anti-slop/require-readable-spacing": "off",
     // Sequential awaits in loops are deliberate here (ordered seeds and migrations).
     "no-await-in-loop": "off",
   },
