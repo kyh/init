@@ -32,17 +32,17 @@
     "@orpc/client": "catalog:",
     "@repo/contract": "workspace:*",
     "@types/node": "catalog:",
-    "dotenv-cli": "^11.0.0",
+    "dotenv-cli": "^11.1.0",
     "oxfmt": "^0.73.0",
-    "oxlint": "^1.89.0",
+    "oxlint": "^1.92.0",
     "tsx": "catalog:",
     "turbo": "^2.11.10",
     "typescript": "catalog:",
-    "ultracite": "^8.0.0",
+    "ultracite": "^8.1.1",
     "zod": "catalog:"
   },
   "engines": {
-    "node": "24.x"
+    "node": "^24.15.0"
   },
   "packageManager": "pnpm@12.3.4"
 }

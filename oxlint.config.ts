@@ -16,6 +16,9 @@ export default defineConfig({
   ],
   overrides: [{ files: ["apps/web/**"], plugins: next.plugins, rules: next.rules }],
   rules: {
+    // ultracite 8.1 adds this rule; the codebase keeps its established spacing rather than
+    // take a 279-site unrelated rewrite in a dependency bump.
+    "anti-slop/require-readable-spacing": "off",
     // Sequential awaits in loops are deliberate here (ordered seeds and migrations).
     "no-await-in-loop": "off",
   },
