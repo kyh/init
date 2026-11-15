@@ -109,7 +109,7 @@ export const generateOpenAPIDocument = async () => {
       ],
     },
     // Every status shares one error shape; this narrows `code` to what the operation declares.
-    customErrorResponseBodySchema: (definedErrors) => ({
+    errorResponseBodySchema: (definedErrors) => ({
       allOf: [errorRef],
       properties: { code: { enum: definedErrors.map(({ code }) => code) } },
     }),
@@ -118,7 +118,7 @@ export const generateOpenAPIDocument = async () => {
   });
 
   if (document.components?.schemas) {
-    // oRPC registers this for its own error shape, which customErrorResponseBodySchema replaces.
+    // oRPC registers this for its own error shape, which errorResponseBodySchema replaces.
     document.components.schemas = Object.fromEntries(
       Object.entries(document.components.schemas).filter(([name]) => name !== "UndefinedError"),
     );
