@@ -35,7 +35,7 @@ const renderScene = async () => {
   const markup = renderToStaticMarkup(
     <Scene copy={{ description: siteConfig.description, name: siteConfig.name }} />,
   );
-  const css = await postcss([tailwind({ base: scriptDir })]).process(
+  const css = await postcss(tailwind({ base: scriptDir })).process(
     `@import "@repo/ui/globals.css";\n@source "./scene.tsx";\n`,
     { from: path.join(scriptDir, "scene.css") },
   );
