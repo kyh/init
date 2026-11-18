@@ -83,3 +83,5 @@ minimumReleaseAgeExclude:
   - "@orpc/shared@2.0.0-beta.45"
   - "@orpc/tanstack-query@2.0.0-beta.45"
   - "@orpc/zod@2.0.0-beta.45"
+  - "@interfere/landmines@0.1.0"
+  - "ultracite@8.3.0"
