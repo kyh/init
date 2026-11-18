@@ -1,7 +1,7 @@
 ---
 title: "Folder Structure"
 description: "The Turborepo layout: four apps, shared packages, and the rule that packages never depend on apps"
-lastModified: 2026-10-27
+lastModified: 2026-11-18
 ---
 
 Init is a Turborepo monorepo with clear separation between applications and shared packages. Apps consume packages; packages never depend on apps.
@@ -207,7 +207,7 @@ No separate docs package - these pages are MDX files in `apps/web/content/docs/`
 - `package.json` - Workspace scripts (`dev:web`, `db:push`, ...)
 - `turbo.json` - Pipeline + `globalEnv` allow-list for env vars
 - `pnpm-workspace.yaml` - Workspaces and the shared version catalog
-- `.oxlintrc.json` - Linting (oxlint); formatting is oxfmt
+- `oxlint.config.ts` - Linting (oxlint, ultracite presets including landmines); formatting is oxfmt
 
 ## Key Design Principles
 

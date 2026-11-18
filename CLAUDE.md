@@ -64,7 +64,7 @@ pnpm dev:web          # Run Next.js only
 pnpm dev:mobile       # Run Expo only
 pnpm dev:desktop      # Run the desktop app, with the web app it opens
 pnpm typecheck        # Type check all packages (tsc, clippy)
-pnpm lint             # Lint all packages (oxlint)
+pnpm lint             # oxlint, ultracite presets incl. landmines; every rule an error (AGENTS.md → Rules that matter)
 pnpm format           # Check formatting (oxfmt, cargo fmt)
 pnpm format:fix       # Format all packages (oxfmt, cargo fmt)
 pnpm test             # Run tests (node:test, cargo test)
