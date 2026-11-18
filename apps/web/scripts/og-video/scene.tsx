@@ -11,9 +11,7 @@ export const Scene = ({ copy }: { copy: SceneCopy }) => {
   return (
     <div className="bg-background relative flex h-[630px] w-[1200px] flex-col items-center justify-center overflow-hidden font-sans">
       <div className="relative size-[280px]">
-        {}
         <div data-part="rocket" className="absolute inset-0">
-          {}
           <div
             data-part="trail"
             className="from-foreground/40 absolute top-[212px] left-[54px] h-[300px] w-[22px] origin-top rounded-full bg-gradient-to-b to-transparent opacity-0 blur-[5px]"

@@ -127,7 +127,6 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
       className="space-y-8"
     >
       <div className="col-span-full flex items-center gap-x-8">
-        {}
         <label
           htmlFor="profile-image-upload"
           className="bg-secondary text-secondary-foreground hover:bg-secondary/80 relative cursor-pointer shadow-sm"
