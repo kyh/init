@@ -2,6 +2,7 @@
  * Allow absent Origin for native clients that send credentials explicitly. */
 export const isCrossOrigin = (request: Request) => {
   const origin = request.headers.get("origin");
+
   return origin !== null && origin !== new URL(request.url).origin;
 };
 

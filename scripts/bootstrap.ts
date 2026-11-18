@@ -6,31 +6,38 @@ import { z } from "zod";
 
 const ROOT_DIR = path.resolve(import.meta.dirname, "..");
 const DRY_RUN = process.argv.includes("--dry-run");
-// Non-TTY runs keep all apps so agents never enter the raw-mode prompt.
 const YES = process.argv.includes("--yes") || !process.stdin.isTTY;
 
 const fileExists = (p: string) => fs.existsSync(path.resolve(ROOT_DIR, p));
+
 const packageSchema = z
   .object({
     dependencies: z.record(z.string(), z.string()).optional(),
     scripts: z.record(z.string(), z.string()).optional(),
   })
   .catchall(z.json());
+
 const readText = (p: string) => fs.readFileSync(path.resolve(ROOT_DIR, p), "utf-8");
+
 const writeText = (p: string, data: string) => {
   if (DRY_RUN) {
     return console.log(`  [dry-run] write ${p}`);
   }
+
   fs.writeFileSync(path.resolve(ROOT_DIR, p), data);
 };
+
 const readPackage = (p: string) => packageSchema.parse(JSON.parse(readText(p)));
+
 const writeJson = (p: string, data: z.JSONType) => {
   writeText(p, `${JSON.stringify(data, null, 2)}\n`);
 };
+
 const rmDir = (p: string) => {
   if (DRY_RUN) {
     return console.log(`  [dry-run] rm -rf ${p}`);
   }
+
   fs.rmSync(path.resolve(ROOT_DIR, p), { force: true, recursive: true });
 };
 
@@ -48,9 +55,9 @@ interface CheckboxItem {
   checked: boolean;
 }
 
-const checkbox = (message: string, items: CheckboxItem[]): Promise<boolean[]> =>
+const checkbox = (message: string, items: CheckboxItem[]) =>
   // oxlint-disable-next-line promise/avoid-new -- adapts raw stdin key events into a promise
-  new Promise((resolve) => {
+  new Promise<boolean[]>((resolve) => {
     const { stdin, stdout } = process;
     stdin.setRawMode(true);
     stdin.resume();
@@ -60,6 +67,7 @@ const checkbox = (message: string, items: CheckboxItem[]): Promise<boolean[]> =>
 
     const render = () => {
       stdout.write(HIDE_CURSOR);
+
       for (const [i, item] of items.entries()) {
         stdout.write(CLEAR_LINE);
         const isActive = i === cursor;
@@ -68,8 +76,8 @@ const checkbox = (message: string, items: CheckboxItem[]): Promise<boolean[]> =>
         const pointer = isActive ? `${CYAN}❯${RESET}` : " ";
         stdout.write(`  ${pointer} ${mark} ${label}\n`);
       }
+
       stdout.write(`${DIM}  ↑/↓ navigate · space toggle · enter confirm${RESET}`);
-      // Move cursor back up to top of list
       stdout.write(`\u001B[${items.length}A\r`);
     };
 
@@ -78,53 +86,54 @@ const checkbox = (message: string, items: CheckboxItem[]): Promise<boolean[]> =>
     render();
 
     const onKey = (key: string) => {
-      // ctrl+c
       if (key === "\u0003") {
         stdin.setRawMode(false);
         stdout.write(SHOW_CURSOR);
         process.exit(0);
       }
 
-      // Up arrow or k
       if (key === "\u001B[A" || key === "k") {
         cursor = (cursor - 1 + items.length) % items.length;
         render();
+
         return;
       }
 
-      // Down arrow or j
       if (key === "\u001B[B" || key === "j") {
         cursor = (cursor + 1) % items.length;
         render();
+
         return;
       }
 
-      // Space – toggle
       if (key === " ") {
         const item = items[cursor];
+
         if (item) {
           item.checked = !item.checked;
         }
+
         render();
+
         return;
       }
 
-      // a – toggle all
       if (key === "a") {
         const allChecked = items.every((i) => i.checked);
+
         for (const item of items) {
           item.checked = !allChecked;
         }
+
         render();
+
         return;
       }
 
-      // Enter – confirm
       if (key === "\r" || key === "\n") {
         stdin.removeListener("data", onKey);
         stdin.setRawMode(false);
         stdin.pause();
-        // Move below rendered list and clear
         stdout.write(`\u001B[${items.length + 1}B\r\n`);
         stdout.write(SHOW_CURSOR);
         resolve(items.map((i) => i.checked));
@@ -145,10 +154,12 @@ const dropRecommendations = (...ids: string[]) => {
   if (!fileExists(".vscode/extensions.json")) {
     return;
   }
+
   const ext = z
     .object({ recommendations: z.array(z.string()) })
     .catchall(z.json())
     .parse(JSON.parse(readText(".vscode/extensions.json")));
+
   ext.recommendations = ext.recommendations.filter((r) => !ids.includes(r));
   writeJson(".vscode/extensions.json", ext);
 };
@@ -170,6 +181,7 @@ const removeMobile = () => {
   }
 
   const authPath = "packages/service/src/auth/auth.ts";
+
   if (fileExists(authPath)) {
     let auth = readText(authPath);
     auth = auth.replace(/import \{ expo \} from "@better-auth\/expo";\n/u, "");
@@ -199,12 +211,13 @@ const removeDesktop = () => {
   dropRecommendations("tauri-apps.tauri-vscode", "rust-lang.rust-analyzer");
 
   const ciPath = ".github/workflows/ci.yml";
+
   if (fileExists(ciPath)) {
-    // the steps only the desktop app's Rust build needs, each named `Desktop …`
     const ci = readText(ciPath).replaceAll(
       /^(?: {6}# [^\n]*\n)?^ {6}- name: Desktop [^\n]*\n(?: {8}[^\n]*\n)*\n/gmu,
       "",
     );
+
     writeText(ciPath, ci);
   }
 };
@@ -235,30 +248,32 @@ const apps: App[] = [
   },
 ];
 
-const exec = (cmd: string, opts?: { stdio?: "inherit" | "ignore" | "pipe" }): Buffer => {
+const exec = (cmd: string, opts?: { stdio?: "inherit" | "ignore" | "pipe" }) => {
   if (DRY_RUN) {
     console.log(`  [dry-run] exec: ${cmd}`);
+
     return Buffer.from("");
   }
+
   return execSync(cmd, { cwd: ROOT_DIR, ...opts });
 };
 
-const commandExists = (cmd: string): boolean => {
+const commandExists = (cmd: string) => {
   try {
     execSync(`command -v ${cmd}`, { cwd: ROOT_DIR, stdio: "ignore" });
+
     return true;
   } catch {
     return false;
   }
 };
 
-// ── Postgres + env setup ─────────────────────────────────
-
 const createEnv = () => {
   const envPath = ".env";
 
   if (fileExists(envPath)) {
     console.log("  ✓ .env already exists, skipping");
+
     return;
   }
 
@@ -278,11 +293,9 @@ const createEnv = () => {
   console.log("  ✓ .env created");
 };
 
-// Local Supabase gives every checkout and git branch its own database on its own
-// port, so clones of this template never share data or fight over a port. The
-// CLI picks the port; `pnpm db:start` has it write the URL into .env.local.
 const startPostgres = () => {
   console.log("\nStarting local Supabase...");
+
   try {
     exec("pnpm db:start", { stdio: "inherit" });
   } catch (error) {
@@ -293,6 +306,7 @@ const startPostgres = () => {
     );
     throw error;
   }
+
   console.log("  ✓ Postgres ready");
 };
 
@@ -304,6 +318,7 @@ const pushSchema = () => {
 
 const runSeed = () => {
   console.log("\nSeeding database...");
+
   try {
     exec("pnpm db:seed", { stdio: "inherit" });
   } catch (error) {
@@ -313,11 +328,13 @@ const runSeed = () => {
     );
     throw error;
   }
+
   console.log("  ✓ Seeded dev user + sample data");
 };
 
 const checkAgentTooling = () => {
   console.log("\nAgent tooling...");
+
   if (commandExists("agent-browser")) {
     console.log("  ✓ agent-browser found");
   } else {
@@ -326,6 +343,7 @@ const checkAgentTooling = () => {
     );
     console.log("    Install: npm i -g agent-browser && agent-browser install");
   }
+
   if (fileExists("emulate.config.yaml")) {
     console.log("  ✓ emulate.config.yaml present (run 'pnpm emulate' for offline GitHub OAuth)");
   }
@@ -338,6 +356,7 @@ const main = async () => {
 
   if (available.length === 0) {
     console.log("No apps found to configure.");
+
     return;
   }
 
@@ -373,8 +392,6 @@ const main = async () => {
     exec("pnpm install", { stdio: "inherit" });
   }
 
-  // ── Step 3: Create .env, then start Postgres ──
-  // .env first, then the database: `pnpm db:start` writes POSTGRES_URL into .env.local
   console.log("\nConfiguring environment...");
   createEnv();
   startPostgres();

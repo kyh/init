@@ -1,15 +1,10 @@
 import { z } from "zod";
 
-/** Optional integrations must not prevent local boot. Platform runtime variables stay at their read sites. */
 const envSchema = z.object({
-  // Transactional email (Resend). Absent, emails log to the console instead.
   EMAIL_FROM: z.string().default("onboarding@resend.dev"),
-  // "Continue with GitHub". Empty leaves the social provider unconfigured.
   GITHUB_CLIENT_ID: z.string().default(""),
   GITHUB_CLIENT_SECRET: z.string().default(""),
   RESEND_API_KEY: z.string().optional(),
-  // Stripe billing. The placeholder lets the client construct offline; billing
-  // calls fail until a real key is set (list still works, checkout/portal don't).
   STRIPE_PRO_PRICE_ID: z.string().default(""),
   STRIPE_SECRET_KEY: z.string().default("sk_test_placeholder"),
   STRIPE_WEBHOOK_SECRET: z.string().default(""),

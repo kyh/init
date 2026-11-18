@@ -25,7 +25,9 @@ describe("renderLlmsTxt — llmstxt.org format", () => {
         .split("\n")
         .slice(1)
         .filter((line) => line.trim().length > 0);
+
       assert.ok(items.length > 0);
+
       for (const item of items) {
         assert.ok(item.startsWith("- ["), item);
       }

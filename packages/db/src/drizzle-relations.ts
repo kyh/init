@@ -3,9 +3,7 @@ import { defineRelations } from "drizzle-orm";
 import * as schema from "./drizzle-schema";
 import * as schemaAuth from "./drizzle-schema-auth";
 
-// One relation graph over both schema files. It powers `db.query.*` and is how
-// better-auth's adapter finds each table, so every table must be in `schema`
-// here even when it declares no relation.
+// WARNING: better-auth's adapter finds tables through this graph, so every table must be in it even with no relation.
 export const relations = defineRelations({ ...schemaAuth, ...schema }, (r) => ({
   account: {
     user: r.one.user({ from: r.account.userId, to: r.user.id }),

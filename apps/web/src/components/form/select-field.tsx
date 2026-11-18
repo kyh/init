@@ -46,6 +46,7 @@ export const SelectField = ({
             if (value === null) {
               return;
             }
+
             field.handleChange(value);
             field.handleBlur();
           }}

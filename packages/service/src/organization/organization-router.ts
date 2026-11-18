@@ -11,7 +11,6 @@ export const organizationRouter = {
       context.db.query.member.findMany({
         where: { organizationId: organization.id },
         with: {
-          // Exclude admin-only user fields from the member response.
           user: { columns: { email: true, id: true, image: true, name: true } },
         },
       }),

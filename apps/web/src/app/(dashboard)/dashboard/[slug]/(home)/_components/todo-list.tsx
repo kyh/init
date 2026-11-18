@@ -35,9 +35,11 @@ export const TodoList = ({ slug }: TodoListProps) => {
   const createTodo = useMutation(
     orpc.todo.create.mutationOptions({ onError, onSuccess: invalidateTodos }),
   );
+
   const updateTodo = useMutation(
     orpc.todo.update.mutationOptions({ onError, onSuccess: invalidateTodos }),
   );
+
   const deleteTodo = useMutation(
     orpc.todo.delete.mutationOptions({ onError, onSuccess: invalidateTodos }),
   );
@@ -48,8 +50,10 @@ export const TodoList = ({ slug }: TodoListProps) => {
   const handleCreate = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const trimmed = newTitle.trim();
+
     if (!trimmed) {
       toast.error("Please enter a title before adding a todo.");
+
       return;
     }
 
@@ -70,8 +74,10 @@ export const TodoList = ({ slug }: TodoListProps) => {
     }
 
     const trimmed = editing.title.trim();
+
     if (!trimmed) {
       toast.error("Title is required");
+
       return;
     }
 

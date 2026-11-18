@@ -227,6 +227,7 @@ export const Sidebar = ({ user }: SidebarProps) => {
   const { data: activeOrganization } = authClient.useActiveOrganization();
 
   const rootUrl = `/dashboard/${params.slug ?? activeOrganization?.slug}`;
+
   const pageLinks = [
     { exact: true, href: rootUrl, icon: CheckSquareIcon, label: "Todos" },
     { href: `${rootUrl}/members`, icon: Users2Icon, label: "Members" },

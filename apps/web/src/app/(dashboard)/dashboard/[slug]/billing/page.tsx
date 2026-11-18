@@ -18,12 +18,11 @@ interface SectionProps extends PageProps {
   section: typeof BillingPlan | typeof BillingHistory;
 }
 
-// Each section resolves the organization and the viewer's role under its own Suspense
-// boundary; React's request cache runs the lookup once for both.
 const BillingSection = async ({ params, section: Section }: SectionProps) => {
   const { session, slug } = await resolveOrganizationPage(params, "/billing");
 
   const organization = await getOrganizationBySlug(slug).catch(() => null);
+
   if (!organization) {
     return redirect("/dashboard");
   }

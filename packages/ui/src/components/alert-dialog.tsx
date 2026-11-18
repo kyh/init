@@ -175,6 +175,7 @@ const alertDialogStore = {
   state: initialAlertState,
   subscribe: (listener: Listener) => {
     listeners.add(listener);
+
     return () => {
       listeners.delete(listener);
     };
@@ -194,6 +195,7 @@ export const alertDialog = {
 
 export const GlobalAlertDialog = () => {
   const [pending, setPending] = React.useState<"action" | "cancel" | null>(null);
+
   const alertState = React.useSyncExternalStore(
     alertDialogStore.subscribe,
     alertDialogStore.getSnapshot,
@@ -204,13 +206,18 @@ export const GlobalAlertDialog = () => {
     if (pending) {
       return;
     }
+
     setPending(action);
-    try {
-      await alertState[action]?.onClick?.();
+
+    const succeeded = await Promise.resolve()
+      .then(() => alertState[action]?.onClick?.())
+      .then(() => true)
+      .catch(() => false);
+
+    if (succeeded) {
       alertDialog.close();
-    } catch {
-      // Actions report their own errors; leave the dialog open for retry.
     }
+
     setPending(null);
   };
 

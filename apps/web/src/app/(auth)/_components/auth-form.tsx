@@ -69,8 +69,6 @@ export const AuthForm = ({ className, type, nextPath, ...props }: AuthFormProps)
   const handleAuthWithGithub = async () => {
     setSubmittingGithub(true);
     await authClient.signIn.social({
-      // The OAuth flow is a full-page redirect; the server sends the user
-      // here after the callback (client onSuccess never fires)
       callbackURL: nextPath,
       fetchOptions: {
         onError: (ctx) => {
@@ -161,6 +159,7 @@ export const AuthForm = ({ className, type, nextPath, ...props }: AuthFormProps)
 
 export const RequestPasswordResetForm = () => {
   const [sent, setSent] = useState(false);
+
   const form = useAppForm({
     defaultValues: {
       email: "",
@@ -236,8 +235,6 @@ export const RequestPasswordResetForm = () => {
   );
 };
 
-// better-auth appends the reset token to the redirectTo URL; the page reads it
-// from searchParams server-side and passes it in.
 export const UpdatePasswordForm = ({ token }: { token?: string }) => {
   const router = useRouter();
 
@@ -249,8 +246,10 @@ export const UpdatePasswordForm = ({ token }: { token?: string }) => {
     onSubmit: async ({ value }) => {
       if (!token) {
         toast.error("Invalid or expired reset link. Request a new one.");
+
         return;
       }
+
       await authClient.resetPassword({
         fetchOptions: {
           onError: (ctx) => {
@@ -315,6 +314,7 @@ export const UpdatePasswordForm = ({ token }: { token?: string }) => {
               }
 
               const password = fieldApi.form.getFieldValue("password");
+
               if (password !== value) {
                 return "Passwords don't match";
               }

@@ -9,11 +9,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
-// Maintained by hand while the auth CLI lags the runtime. Preserve RLS
-// (pgTable.withRLS), indexes and rate_limit when regenerating.
-// auth-tables.test.ts checks the contract; drizzle-relations.ts declares the
-// relations these tables take part in.
-
+// WARNING: hand-maintained; a better-auth CLI regen drops withRLS, these indexes and rate_limit, so restore them.
 export const user = pgTable.withRLS(
   "user",
   {
@@ -33,8 +29,6 @@ export const user = pgTable.withRLS(
       .$onUpdate(() => new Date())
       .notNull(),
   },
-  // @better-auth/stripe looks the user up by Stripe's customer id on the
-  // webhook path
   (table) => [index("user_stripeCustomerId_idx").on(table.stripeCustomerId)],
 );
 
@@ -174,9 +168,6 @@ export const subscription = pgTable.withRLS(
     trialEnd: timestamp("trial_end"),
     trialStart: timestamp("trial_start"),
   },
-  // @better-auth/stripe resolves subscriptions by these three: referenceId on
-  // every billing-page read, stripeSubscriptionId and stripeCustomerId on the
-  // webhook path, where latency is Stripe's retry budget.
   (table) => [
     index("subscription_referenceId_idx").on(table.referenceId),
     index("subscription_stripeSubscriptionId_idx").on(table.stripeSubscriptionId),
@@ -184,10 +175,6 @@ export const subscription = pgTable.withRLS(
   ],
 );
 
-// better-auth's database rate-limit store (rateLimit.storage = "database" in
-// auth.ts). Keyed by IP+path; `key` is unique so the counter upsert is a single
-// indexed lookup. Hand-added — the CLI regen emits this table through plain
-// pgTable, so declare it through pgTable.withRLS again if you regenerate.
 export const rateLimit = pgTable.withRLS("rate_limit", {
   count: integer("count").notNull(),
   id: text("id").primaryKey(),

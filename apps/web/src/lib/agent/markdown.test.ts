@@ -22,6 +22,7 @@ describe("renderHomeMarkdown", () => {
   test("starts with the product name and links the discovery surfaces", () => {
     const body = renderHomeMarkdown();
     assert.equal(body.split("\n")[0], "# Init");
+
     for (const path of [
       "/llms.txt",
       "/sitemap.xml",

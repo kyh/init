@@ -2,14 +2,13 @@ import type { NextConfig } from "next";
 import { createMDX } from "fumadocs-mdx/next";
 
 type ImageConfig = NonNullable<NextConfig["images"]>;
+
 type RemotePatterns = NonNullable<ImageConfig["remotePatterns"]>;
 
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
-const getRemotePatterns = (): RemotePatterns => {
+const getRemotePatterns = () => {
   const remotePatterns: RemotePatterns = [
-    // Avatar uploads land on the Vercel Blob store's public CDN host,
-    // <store-id>.public.blob.vercel-storage.com
     {
       hostname: "**.public.blob.vercel-storage.com",
       protocol: "https",
@@ -35,17 +34,8 @@ const getRemotePatterns = (): RemotePatterns => {
 const withMDX = createMDX();
 
 const config: NextConfig = {
-  /** next dev rewrites AGENTS.md/CLAUDE.md when it detects an agent; we own those files */
   agentRules: false,
-  /**
-   * Cache Components: everything is dynamic unless cached with `"use cache"`, and request
-   * data (cookies, headers, params, searchParams) renders under a `<Suspense>` boundary.
-   */
   cacheComponents: true,
-  /**
-   * RFC 8288 Link headers pointing agents at discovery resources.
-   * api-catalog (RFC 9727), service-desc and service-doc (RFC 8631) are IANA-registered rels.
-   */
   headers: () => {
     const link = [
       '</.well-known/api-catalog>; rel="api-catalog"',
@@ -66,10 +56,6 @@ const config: NextConfig = {
     remotePatterns: getRemotePatterns(),
   },
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
-  /**
-   * A `<Link>` prefetches the route's App Shell (its static and cached parts), shared by
-   * every link to that route; `<Link prefetch>` adds cached content that depends on the URL.
-   */
   partialPrefetching: true,
   transpilePackages: [
     "@repo/contract",

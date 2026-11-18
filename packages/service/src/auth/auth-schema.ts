@@ -3,11 +3,12 @@ import { z } from "zod";
 
 export const authMetadataSchema = z
   .string()
-  .transform((str, ctx): z.JSONType => {
+  .transform((str, ctx) => {
     try {
       return JSON.parse(str);
     } catch {
       ctx.addIssue({ code: "custom", message: "Invalid JSON" });
+
       return z.NEVER;
     }
   })

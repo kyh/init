@@ -57,22 +57,22 @@ const renderInline = (run: Inline) => {
   if (run.kind === "strong") {
     return `**${run.text}**`;
   }
+
   if (run.kind === "link") {
     return `[${run.text}](${run.href})`;
   }
+
   return run.text;
 };
 
 const renderRuns = (runs: Inline[]) => runs.map(renderInline).join("");
 
-/** Nested items indent two spaces per level, under their parent's text. */
-const renderListItems = (items: ListItem[], depth: number): string[] =>
+const renderListItems: (items: ListItem[], depth: number) => string[] = (items, depth) =>
   items.flatMap((entry) => [
     `${"  ".repeat(depth)}- ${renderRuns(entry.content)}`,
     ...renderListItems(entry.items, depth + 1),
   ]);
 
-/** A pipe inside a cell would end the cell early. */
 const tableRow = (cells: string[]) =>
   `| ${cells.map((cell) => cell.replaceAll("|", "\\|")).join(" | ")} |`;
 
@@ -82,24 +82,26 @@ const renderTable = (block: TableBlock) => [
   ...block.rows.map(tableRow),
 ];
 
-const renderBlock = (block: Block): string[] => {
+const renderBlock = (block: Block) => {
   switch (block.kind) {
     case "paragraph": {
       return [renderRuns(block.content)];
     }
+
     case "subheading": {
       return [`### ${block.text}`];
     }
+
     case "list": {
       return renderListItems(block.items, 0);
     }
+
     default: {
       return renderTable(block);
     }
   }
 };
 
-/** A blank line before each block keeps lists and tables from running into the text above. */
 const renderBlocks = (blocks: Block[]) => blocks.flatMap((block) => ["", ...renderBlock(block)]);
 
 export const renderSitePageMarkdown = (page: SitePage) =>

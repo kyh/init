@@ -11,7 +11,6 @@ export const waitlistRouter = {
         source: process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "",
         userId: context.session?.user.id,
       })
-      // Repeat signups are a no-op rather than an error (email is unique)
       .onConflictDoNothing({ target: waitlist.email })
       .returning();
 

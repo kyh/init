@@ -17,9 +17,9 @@ const App = () => {
     const load = async () => {
       setAppUrl(await apiBaseUrlItem.getValue());
     };
+
     void load();
 
-    // The options page can change the URL while the popup is open
     return apiBaseUrlItem.watch(setAppUrl);
   }, []);
 
@@ -27,8 +27,8 @@ const App = () => {
     if (appUrl === null) {
       return;
     }
+
     void browser.tabs.create({ url: appUrl });
-    // The popup would otherwise linger over the tab it just opened
     window.close();
   };
 

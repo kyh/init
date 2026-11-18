@@ -18,12 +18,11 @@ interface PageProps {
 
 const Invitation = async ({ params }: PageProps) => {
   const [{ id }, session] = await Promise.all([params, getSession()]);
+
   if (!session) {
     redirect(`/auth/login?nextPath=/auth/invitation/${id}`);
   }
 
-  // Throws when the invitation doesn't exist or the session user isn't
-  // the invited email
   const invitation = await auth.api
     .getInvitation({ headers: await headers(), query: { id } })
     .catch(() => null);
@@ -64,7 +63,6 @@ const InvitationSkeleton = () => (
   </div>
 );
 
-// The invitation depends on the URL and the session, so it streams in under Suspense.
 const Page = ({ params }: PageProps) => (
   <Suspense fallback={<InvitationSkeleton />}>
     <Invitation params={params} />

@@ -18,7 +18,6 @@ import {
 
 const updateOrganizationSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  // Validate the normalized slug, which can be empty for non-ASCII input.
   slug: z
     .string()
     .min(1, "Slug is required")
@@ -44,11 +43,13 @@ const useUpdateOrganization = (slug: string, organizationId: string) => {
     },
     onSuccess: async (updatedOrganization) => {
       toast.success("Organization successfully updated");
+
       if (updatedOrganization.slug === slug) {
         await invalidateOrganization(queryClient, slug);
       } else {
         removeOrganization(queryClient, slug);
       }
+
       router.replace(`/dashboard/${updatedOrganization.slug}/settings`);
     },
   });

@@ -31,15 +31,19 @@ export const DesktopUpdateBanner = () => {
 
   useEffect(() => {
     const bridge = desktopBridge();
+
     if (!bridge) {
       return;
     }
 
     const unsubscribe = bridge.onUpdateState(setUpdateState);
+
     const check = async () => {
       setUpdateState(await bridge.checkForUpdates());
     };
+
     void check();
+
     return unsubscribe;
   }, []);
 
@@ -49,6 +53,7 @@ export const DesktopUpdateBanner = () => {
 
   const handleDownload = async () => {
     const bridge = desktopBridge();
+
     if (bridge) {
       setUpdateState(await bridge.downloadUpdate());
     }
@@ -56,6 +61,7 @@ export const DesktopUpdateBanner = () => {
 
   const handleInstall = async () => {
     const bridge = desktopBridge();
+
     if (bridge) {
       setUpdateState(await bridge.installUpdate());
     }
@@ -63,6 +69,7 @@ export const DesktopUpdateBanner = () => {
 
   const handleRetry = async () => {
     const bridge = desktopBridge();
+
     if (bridge) {
       setUpdateState(await bridge.checkForUpdates());
     }

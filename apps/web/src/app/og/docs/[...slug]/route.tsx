@@ -5,9 +5,11 @@ import { getPageImage, source } from "@/lib/source";
 
 const sectionTitle = (slugs: string[]) => {
   const [folder] = slugs;
+
   if (!folder || slugs.length < 2) {
     return "Documentation";
   }
+
   return folder.charAt(0).toUpperCase() + folder.slice(1);
 };
 
@@ -15,6 +17,7 @@ const sectionTitle = (slugs: string[]) => {
 export const GET = async (_request: Request, props: { params: Promise<{ slug: string[] }> }) => {
   const { slug } = await props.params;
   const page = source.getPage(slug.slice(0, -1));
+
   if (!page) {
     notFound();
   }

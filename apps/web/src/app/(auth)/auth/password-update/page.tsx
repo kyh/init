@@ -14,6 +14,7 @@ interface PageProps {
 
 const TokenForm = async ({ searchParams }: PageProps) => {
   const { token } = await searchParams;
+
   return <UpdatePasswordForm token={token} />;
 };
 

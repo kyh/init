@@ -1,8 +1,6 @@
 import type { Config } from "drizzle-kit";
 
-// drizzle-kit's introspection and DDL stall behind a transaction-mode pooler,
-// which is what POSTGRES_URL is in production. Hosted providers ship a direct
-// URL alongside it; locally there is no pooler and POSTGRES_URL is direct.
+// WARNING: drizzle-kit stalls behind a transaction-mode pooler, so it needs the direct (non-pooling) URL.
 const url = process.env.POSTGRES_URL_NON_POOLING ?? process.env.POSTGRES_URL;
 
 if (!url) {

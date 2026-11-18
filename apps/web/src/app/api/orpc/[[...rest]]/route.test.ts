@@ -4,9 +4,6 @@ import { NextRequest } from "next/server";
 
 import { GET, POST } from "./route";
 
-/** Exercise the exported route: origin enforcement, GET refusal and no credentialed CORS.
- * Requests have no session cookie, so they stop before any database query. */
-
 const APP_ORIGIN = "http://localhost:3000";
 
 const rpc = (headers: Record<string, string>) =>
@@ -44,7 +41,6 @@ describe("rpc endpoint", () => {
   });
 
   test("refuses GET, so a cross-site navigation cannot invoke a procedure", async () => {
-    // RPC’s default allowMethods excludes GET, leaving the route unmatched.
     const response = await GET(new NextRequest(`${APP_ORIGIN}/api/orpc/todo/list`));
 
     assert.strictEqual(response.status, 404);

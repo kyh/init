@@ -10,8 +10,10 @@ import { getSession } from "@/lib/auth-server";
 export const resolveOrganizationPage = async (params: Promise<{ slug: string }>, path = "") => {
   const { slug } = await params;
   const session = await getSession();
+
   if (!session) {
     return redirect(`/auth/login?nextPath=/dashboard/${slug}${path}`);
   }
+
   return { session, slug };
 };

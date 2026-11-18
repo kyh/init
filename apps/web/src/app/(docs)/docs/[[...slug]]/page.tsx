@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createRelativeLink } from "fumadocs-ui/mdx";
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/page";
@@ -9,8 +8,6 @@ import { siteConfig } from "@/lib/site-config";
 import { getPageImage, source } from "@/lib/source";
 import { getMDXComponents } from "@/mdx-components";
 
-// Docs are build-time content: every page is prerendered, and an unknown slug waits on its
-// static render, so notFound() answers a real 404 instead of a streamed fallback shell.
 export const ensureStatic = "navigation";
 
 const Page = async (props: { params: Promise<{ slug?: string[] }> }) => {
@@ -22,6 +19,7 @@ const Page = async (props: { params: Promise<{ slug?: string[] }> }) => {
   }
 
   const MDXContent = page.data.body;
+
   const jsonLdScript = serializeJsonLd(
     buildDocGraph({
       description: page.data.description,
@@ -51,11 +49,10 @@ const Page = async (props: { params: Promise<{ slug?: string[] }> }) => {
 
 export const generateStaticParams = () => source.generateParams();
 
-export const generateMetadata = async (props: {
-  params: Promise<{ slug?: string[] }>;
-}): Promise<Metadata> => {
+export const generateMetadata = async (props: { params: Promise<{ slug?: string[] }> }) => {
   const params = await props.params;
   const page = source.getPage(params.slug);
+
   if (!page) {
     notFound();
   }

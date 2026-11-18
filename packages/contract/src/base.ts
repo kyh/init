@@ -7,7 +7,6 @@ export const publicBase = oc.errors({
   BAD_REQUEST: { message: "The input failed validation" },
 });
 
-/** `session` names the security scheme apps/web declares in its OpenAPI document. */
 const requireSession = openapi.spec((operation) => ({
   ...operation,
   security: [{ session: [] }],

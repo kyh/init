@@ -26,6 +26,7 @@ interface PageMetadataInput {
  */
 export const sitePageImage = (path: string) => {
   const segments = [...path.split("/").filter(Boolean), "image.png"];
+
   return { segments, url: `/og/pages/${segments.join("/")}` };
 };
 
@@ -33,8 +34,8 @@ const OG_SIZE = { height: 630, width: 1200 };
 
 const siteImage: PageImage = { alt: siteConfig.ogImageAlt, url: siteConfig.ogImage };
 
-// Next resolves image URLs against metadataBase but not video URLs, so these are absolute.
 const videoUrl = `${siteConfig.url}${siteConfig.ogVideo.url}`;
+
 const siteVideo = {
   height: siteConfig.ogVideo.height,
   secureUrl: videoUrl,
@@ -49,7 +50,7 @@ const siteVideo = {
  * all of it, or shares fall back to the home page's URL and title.
  * Relative URLs resolve against the root layout's `metadataBase`.
  */
-export const pageMetadata = (input: PageMetadataInput): Metadata => {
+export const pageMetadata = (input: PageMetadataInput) => {
   const title = input.title ?? siteConfig.name;
   const image = input.image ?? siteImage;
   const images = [{ ...OG_SIZE, alt: image.alt, url: image.url }];
@@ -63,6 +64,7 @@ export const pageMetadata = (input: PageMetadataInput): Metadata => {
     type: input.type ?? "website",
     url: input.path,
   };
+
   if (input.video) {
     openGraph.videos = [siteVideo];
   }
@@ -79,8 +81,10 @@ export const pageMetadata = (input: PageMetadataInput): Metadata => {
       title,
     },
   };
+
   if (input.title) {
     metadata.title = input.title;
   }
+
   return metadata;
 };

@@ -30,13 +30,13 @@ const SidebarSkeleton = () => (
   </div>
 );
 
-// The session is request data, so the sidebar streams in under Suspense and the page
-// beside it renders in parallel. Each page checks the session itself before reading data.
 const SessionSidebar = async () => {
   const session = await getSession();
+
   if (!session) {
     return redirect("/auth/login");
   }
+
   return <Sidebar user={session.user} />;
 };
 

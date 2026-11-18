@@ -10,7 +10,6 @@ export const OPENAPI_PREFIX = "/api/v1";
 /** Sunset overlap promised by the versioning policy in the API docs. */
 export const DEPRECATION_OVERLAP_DAYS = 90;
 
-// The Zod converter represents Date outputs as date-time strings; the default one drops them.
 const generator = new OpenAPIGenerator({ converters: [new ZodToJsonSchemaConverter()] });
 
 const errorRef = { $ref: "#/components/schemas/Error" };
@@ -20,10 +19,7 @@ const errorResponse = (description: string) => ({
   description,
 });
 
-/** The route, not the procedure, sends these, so the generator cannot see them. */
-const withRouteResponses = (
-  operation: OpenAPIV3_2.OperationObject,
-): OpenAPIV3_2.OperationObject => ({
+const withRouteResponses = (operation: OpenAPIV3_2.OperationObject) => ({
   ...operation,
   responses: {
     ...operation.responses,
@@ -78,7 +74,6 @@ export const generateOpenAPIDocument = async () => {
             description:
               "First-party better-auth session cookie, set by signing in (`POST /api/auth/sign-in/email`, or GitHub sign-in in the app). Not OAuth: there are no API keys, clients, or scopes.",
             in: "cookie",
-            // better-auth prefixes the cookie only when the app is served over HTTPS.
             name: `${siteConfig.url.startsWith("https://") ? "__Secure-" : ""}better-auth.session_token`,
             type: "apiKey",
           },
@@ -108,17 +103,14 @@ export const generateOpenAPIDocument = async () => {
         { description: "Pre-launch email signups; public.", name: "Waitlist" },
       ],
     },
-    // Every status shares one error shape; this narrows `code` to what the operation declares.
     customErrorResponseBodySchema: (definedErrors) => ({
       allOf: [errorRef],
       properties: { code: { enum: definedErrors.map(({ code }) => code) } },
     }),
-    // The generator builds 3.2 and downgrades to the version asked for.
     version: "3.1.1",
   });
 
   if (document.components?.schemas) {
-    // oRPC registers this for its own error shape, which customErrorResponseBodySchema replaces.
     document.components.schemas = Object.fromEntries(
       Object.entries(document.components.schemas).filter(([name]) => name !== "UndefinedError"),
     );
@@ -127,6 +119,7 @@ export const generateOpenAPIDocument = async () => {
   for (const item of Object.values(document.paths ?? {})) {
     for (const method of httpMethods) {
       const operation = item[method];
+
       if (operation) {
         item[method] = withRouteResponses(operation);
       }

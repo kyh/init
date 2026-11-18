@@ -21,9 +21,11 @@ const useSubscriptions = (organizationId: string) =>
       const { data, error } = await authClient.subscription.list({
         query: { referenceId: organizationId },
       });
+
       if (error) {
         throw new Error(error.message);
       }
+
       return data;
     },
     queryKey: ["subscriptions", organizationId],
@@ -34,11 +36,11 @@ export const BillingPlan = ({ organizationId, slug, canManage }: BillingPlanProp
   const [redirecting, setRedirecting] = useState<"upgrade" | "portal" | null>(null);
 
   const returnUrl = `/dashboard/${slug}/billing`;
+
   const subscription = subscriptions?.find(
     (sub) => sub.status === "active" || sub.status === "trialing",
   );
 
-  // Both calls redirect the browser to Stripe on success
   const handleUpgrade = async () => {
     setRedirecting("upgrade");
     await authClient.subscription.upgrade({

@@ -1,9 +1,3 @@
-/**
- * The content model of the site pages. Each page is data, rendered as HTML by
- * its route (site-page-view.tsx) and as Markdown for agents (markdown.ts), so
- * the two representations cannot drift apart.
- */
-
 /** Plain text inside a block. */
 export interface TextRun {
   kind: "text";
@@ -83,38 +77,45 @@ type Run = string | Inline;
 
 const isPlainText = (run: Run): run is string => typeof run === "string";
 
-const toInline = (run: Run): Inline => (isPlainText(run) ? { kind: "text", text: run } : run);
+const toInline = (run: Run) =>
+  isPlainText(run) ? ({ kind: "text", text: run } satisfies TextRun) : run;
 
-export const strong = (text: string): StrongRun => ({ kind: "strong", text });
+export const strong = (text: string) => ({ kind: "strong", text }) satisfies StrongRun;
 
-export const link = (text: string, href: string): LinkRun => ({ href, kind: "link", text });
+export const link = (text: string, href: string) =>
+  ({ href, kind: "link", text }) satisfies LinkRun;
 
-export const p = (...runs: Run[]): ParagraphBlock => ({
-  content: runs.map(toInline),
-  kind: "paragraph",
-});
+export const p = (...runs: Run[]) =>
+  ({
+    content: runs.map(toInline),
+    kind: "paragraph",
+  }) satisfies ParagraphBlock;
 
-export const subheading = (text: string): SubheadingBlock => ({ kind: "subheading", text });
+export const subheading = (text: string) =>
+  ({ kind: "subheading", text }) satisfies SubheadingBlock;
 
-export const item = (...runs: Run[]): ListItem => ({ content: runs.map(toInline), items: [] });
+export const item = (...runs: Run[]) =>
+  ({ content: runs.map(toInline), items: [] }) satisfies ListItem;
 
 /** A list item with a nested list under it. */
-export const itemWithList = (runs: Run[], items: ListItem[]): ListItem => ({
-  content: runs.map(toInline),
-  items,
-});
+export const itemWithList = (runs: Run[], items: ListItem[]) =>
+  ({
+    content: runs.map(toInline),
+    items,
+  }) satisfies ListItem;
 
-export const list = (...items: ListItem[]): ListBlock => ({ items, kind: "list" });
+export const list = (...items: ListItem[]) => ({ items, kind: "list" }) satisfies ListBlock;
 
 /** A list whose items are plain text. */
-export const bullets = (...texts: string[]): ListBlock => list(...texts.map((text) => item(text)));
+export const bullets = (...texts: string[]) => list(...texts.map((text) => item(text)));
 
-export const table = (caption: string, columns: string[], rows: string[][]): TableBlock => ({
-  caption,
-  columns,
-  kind: "table",
-  rows,
-});
+export const table = (caption: string, columns: string[], rows: string[][]) =>
+  ({
+    caption,
+    columns,
+    kind: "table",
+    rows,
+  }) satisfies TableBlock;
 
 /**
  * The anchor id of a section heading, slugged the way GitHub slugs Markdown
@@ -127,13 +128,14 @@ export const headingId = (heading: string) =>
     .replaceAll(/[^a-z0-9 _-]/gu, "")
     .replaceAll(" ", "-");
 
-export const section = (heading: string, ...blocks: Block[]): Section => ({ blocks, heading });
+export const section = (heading: string, ...blocks: Block[]) =>
+  ({ blocks, heading }) satisfies Section;
 
 /** A link to the section with this heading on the same page. */
-export const sectionLink = (heading: string): LinkRun => link(heading, `#${headingId(heading)}`);
+export const sectionLink = (heading: string) => link(heading, `#${headingId(heading)}`);
 
 /** In-page links to each section, in order: a legal page's index. */
-export const sectionIndex = (sections: Section[]): ListBlock =>
+export const sectionIndex = (sections: Section[]) =>
   list(...sections.map(({ heading }) => item(sectionLink(heading))));
 
 /**

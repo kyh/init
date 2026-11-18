@@ -1,5 +1,4 @@
 import type { User } from "better-auth";
-// The default adapter entry reads `db._.fullSchema`, gone in drizzle 1.0; relations-v2 reads `db._.relations`.
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { expo } from "@better-auth/expo";
 import { stripe } from "@better-auth/stripe";
@@ -17,47 +16,46 @@ import { sendEmail } from "../email/send-email";
 import { env } from "../env";
 import { isSlugCollision } from "./utils";
 
-// The placeholder constructs offline; checkout requires a configured key.
 const stripeClient = new Stripe(env.STRIPE_SECRET_KEY);
 
 const resolveBaseUrl = () => {
   if (process.env.VERCEL_ENV === "production") {
     return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
   }
+
   if (process.env.VERCEL_ENV === "preview") {
     return `https://${process.env.VERCEL_URL}`;
   }
+
   return `http://localhost:${process.env.PORT ?? 3000}`;
 };
 
 export const baseUrl = resolveBaseUrl();
 
-// Web, desktop and extension are same-origin; React Native uses expo://.
 const trustedOrigins = [baseUrl, "expo://"];
 
-// Local GitHub OAuth emulator; leave unset in production.
 const emulatorUrl = process.env.NEXT_PUBLIC_GITHUB_EMULATOR_URL;
 
-const generateAvailableSlug = async (baseSlug: string, attempt = 0): Promise<string> => {
+const generateAvailableSlug = async (baseSlug: string, attempt = 0) => {
   const slug = attempt === 0 ? baseSlug : `${baseSlug}-${attempt}`;
   const org = await db.query.organization.findFirst({ where: { slug } });
+
   if (org) {
     return generateAvailableSlug(baseSlug, attempt + 1);
   }
+
   return slug;
 };
 
 const MAX_SLUG_ATTEMPTS = 3;
 
-/** Availability checks race with concurrent signups; retry unique-constraint failures. */
 const createPersonalOrganization = async (user: User) => {
-  // Names without an ASCII base need a routable fallback.
   const baseSlug = slugify(user.name) || FALLBACK_ORGANIZATION_SLUG;
 
   for (let attempt = 1; ; attempt += 1) {
     const slug = await generateAvailableSlug(baseSlug);
+
     try {
-      // oxlint-disable-next-line no-use-before-define -- the signup hook creates the organization through the auth instance it is registered on
       return await auth.api.createOrganization({
         body: {
           metadata: {
@@ -72,12 +70,12 @@ const createPersonalOrganization = async (user: User) => {
       if (attempt < MAX_SLUG_ATTEMPTS && isSlugCollision(error)) {
         continue;
       }
+
       throw error;
     }
   }
 };
 
-/** Roll back signup if personal-organization creation fails: every user needs a membership. */
 const createRequiredOrganization = async (user: User) => {
   try {
     return await createPersonalOrganization(user);
@@ -89,19 +87,17 @@ const createRequiredOrganization = async (user: User) => {
 
 const createDefaultOrganization = async (user: User) => {
   const createdOrganization = await createRequiredOrganization(user);
+
   if (!createdOrganization) {
     return;
   }
 
-  // The signup session is created before this hook finishes, so the
-  // session.create.before hook found no membership — backfill it
   try {
     await db
       .update(sessionSchema)
       .set({ activeOrganizationId: createdOrganization.id })
       .where(and(eq(sessionSchema.userId, user.id), isNull(sessionSchema.activeOrganizationId)));
   } catch (error) {
-    // Non-fatal: the organization exists, and session.create.before sets it on the next session.
     logger.error("Failed to set the active organization on the signup session", error);
   }
 };
@@ -120,7 +116,6 @@ const setActiveOrganization = async (session: { userId: string }) => {
 export const auth = betterAuth({
   advanced: {
     defaultCookieAttributes: {
-      // RPC relies on SameSite plus its Origin check for CSRF protection.
       sameSite: "lax",
       secure: true,
     },
@@ -183,7 +178,6 @@ export const auth = betterAuth({
     }),
     admin(),
     stripe({
-      // Lazy customer creation keeps signup independent of Stripe config
       createCustomerOnSignUp: false,
       stripeClient,
       stripeWebhookSecret: env.STRIPE_WEBHOOK_SECRET,
@@ -192,6 +186,7 @@ export const auth = betterAuth({
           const membership = await db.query.member.findFirst({
             where: { organizationId: referenceId, userId: user.id },
           });
+
           return hasPermission(membership?.role, { billing: ["manage"] });
         },
         enabled: true,
@@ -203,7 +198,6 @@ export const auth = betterAuth({
         ],
       },
     }),
-    // The built-in GitHub provider hardcodes endpoints; genericOAuth supplies local emulator URLs.
     ...(emulatorUrl
       ? [
           genericOAuth({
@@ -222,7 +216,6 @@ export const auth = betterAuth({
       : []),
     nextCookies(),
   ],
-  // Database counters survive serverless instance churn.
   rateLimit: {
     enabled: true,
     max: 10,
@@ -239,4 +232,5 @@ export const auth = betterAuth({
 });
 
 export type Auth = typeof auth;
+
 export type Session = Auth["$Infer"]["Session"];

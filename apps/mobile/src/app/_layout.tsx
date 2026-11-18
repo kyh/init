@@ -7,7 +7,6 @@ import { queryClient } from "@/utils/api";
 
 import "../styles.css";
 
-// React Navigation needs concrete colors; keep aligned with styles.css background tokens.
 const BACKGROUND_LIGHT = "#ffffff";
 const BACKGROUND_DARK = "#09090b";
 

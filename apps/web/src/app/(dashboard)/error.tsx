@@ -8,8 +8,6 @@ interface ErrorBoundaryProps {
   reset: () => void;
 }
 
-// Sits inside the dashboard layout, so the sidebar survives a failed page query
-// and only the content area shows the boundary.
 const DashboardError = ({ error, reset }: ErrorBoundaryProps) => {
   useEffect(() => {
     console.error(error);

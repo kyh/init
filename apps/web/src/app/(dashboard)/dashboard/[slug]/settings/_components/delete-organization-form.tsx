@@ -239,6 +239,7 @@ interface DeleteOrganizationFormProps {
 
 export const DeleteOrganizationForm = ({ slug }: DeleteOrganizationFormProps) => {
   const { data: organizationData } = useOrganization(slug);
+
   const canDeleteOrganization = hasPermission(organizationData.currentUserMember.role, {
     organization: ["delete"],
   });

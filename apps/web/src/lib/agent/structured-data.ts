@@ -92,6 +92,7 @@ export interface DocGraphInput {
 /** A docs page: a TechArticle plus its BreadcrumbList (Home › Documentation › page). */
 export const buildDocGraph = (doc: DocGraphInput) => {
   const url = absoluteUrl(doc.path);
+
   const crumbs = [
     { name: siteConfig.name, url: siteConfig.url },
     { name: "Documentation", url: absoluteUrl("/docs") },

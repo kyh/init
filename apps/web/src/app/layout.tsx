@@ -12,8 +12,6 @@ import { ORPCReactProvider } from "@/orpc/react";
 
 import "./styles/globals.css";
 
-// The fallback share card for any route that sets none; no canonical here, since a
-// layout's would be inherited by every page that forgot its own.
 const { openGraph, twitter } = pageMetadata({
   description: siteConfig.description,
   path: "/",
