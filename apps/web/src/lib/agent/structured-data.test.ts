@@ -30,6 +30,7 @@ describe("buildHomeGraph", () => {
     const others = graph.filter((node) => node["@type"] !== "Organization");
 
     assert.equal(others.length, 3);
+
     for (const node of others) {
       assert.ok("publisher" in node);
       assert.deepEqual(node.publisher, { "@id": buildOrganization()["@id"] });
@@ -50,6 +51,7 @@ describe("buildVideoObject", () => {
 
 describe("buildDocGraph", () => {
   const lastModified = new Date("2026-01-02T03:04:05.000Z");
+
   const [article, breadcrumb] = buildDocGraph({
     description: "How queries work.",
     image: "/og/docs/build/queries/image.png",
@@ -86,6 +88,7 @@ describe("buildDocGraph", () => {
       path: "/docs",
       title: "Introduction",
     })["@graph"];
+
     assert.equal(indexCrumbs?.itemListElement?.length, 2);
   });
 });

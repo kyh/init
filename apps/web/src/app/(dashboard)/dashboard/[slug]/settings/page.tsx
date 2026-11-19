@@ -27,7 +27,6 @@ interface SectionProps extends PageProps {
   form: React.ComponentType<{ slug: string }>;
 }
 
-// Each form reads the slug and the organization query under its own Suspense boundary.
 const OrganizationForm = async ({ params, form: Form }: SectionProps) => {
   const { slug } = await resolveOrganizationPage(params, "/settings");
   prefetch(orpc.organization.get.queryOptions({ input: { slug } }));

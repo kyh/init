@@ -54,6 +54,7 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
 
   const handleProfileImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+
     if (!file) {
       return;
     }
@@ -68,6 +69,7 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
     if (!response.ok) {
       toast.error(await response.text(), { id });
       setIsUploadingProfileImage(false);
+
       return;
     }
 
@@ -92,9 +94,11 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
     setIsUploadingProfileImage(true);
 
     const response = await fetch("/api/account/avatar", { method: "DELETE" });
+
     if (!response.ok) {
       toast.error("Failed to remove profile image");
       setIsUploadingProfileImage(false);
+
       return;
     }
 
@@ -123,9 +127,6 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
       className="space-y-8"
     >
       <div className="col-span-full flex items-center gap-x-8">
-        {/* The avatar and the button below are both labels for the same file
-            input, so either opens the picker. The input itself is sr-only —
-            visually hidden but focusable and announced, unlike `invisible`. */}
         <label
           htmlFor="profile-image-upload"
           className="bg-secondary text-secondary-foreground hover:bg-secondary/80 relative cursor-pointer shadow-sm"

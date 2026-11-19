@@ -18,7 +18,6 @@ export const siteConfig = {
   sameAs: ["https://github.com/kyh/init", "https://twitter.com/kaiyuhsu"],
   shortName: "Init",
   twitter: "@kaiyuhsu",
-  // SITE_URL supports non-Vercel deployments.
   url:
     process.env.SITE_URL ??
     (process.env.VERCEL_PROJECT_PRODUCTION_URL

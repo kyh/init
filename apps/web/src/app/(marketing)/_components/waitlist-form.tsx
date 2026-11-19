@@ -21,6 +21,7 @@ export const WaitlistForm = () => {
         await joinWaitlist.mutateAsync({ email: value.email });
         formApi.reset({ email: "" });
       };
+
       toast.promise(submit(), {
         error: "Failed to join waitlist",
         loading: "Submitting...",

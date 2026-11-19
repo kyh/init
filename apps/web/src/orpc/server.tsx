@@ -14,7 +14,6 @@ import { createQueryClient } from "./query-client";
 const createContext = cache(async () =>
   createORPCContext({
     headers: new Headers(await headers()),
-    // Reuse the dashboard’s cached session lookup.
     session: await getSession(),
   }),
 );
@@ -28,6 +27,7 @@ export const orpc = createTanstackQueryUtils(caller);
 
 export const HydrateClient = (props: { children: React.ReactNode }) => {
   const queryClient = getQueryClient();
+
   return <HydrationBoundary state={dehydrate(queryClient)}>{props.children}</HydrationBoundary>;
 };
 

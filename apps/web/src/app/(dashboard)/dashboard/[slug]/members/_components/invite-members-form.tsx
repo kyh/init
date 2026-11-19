@@ -36,17 +36,21 @@ const inviteMembersSchema = z.object({
   ),
 });
 
-// `key` is client-only (React list identity); the mutation maps email/role explicitly
 type InviteModel = z.infer<typeof inviteMembersSchema>["organizationInvitations"][number];
 
-const createEmptyInviteModel = (): InviteModel => ({
-  email: "",
-  key: crypto.randomUUID(),
-  role: "member",
-});
+const createEmptyInviteModel = () => {
+  const model: InviteModel = {
+    email: "",
+    key: crypto.randomUUID(),
+    role: "member",
+  };
+
+  return model;
+};
 
 const useInviteMembers = (slug: string, organizationId: string) => {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (data: z.infer<typeof inviteMembersSchema>) => {
       const results = await Promise.allSettled(
@@ -59,13 +63,14 @@ const useInviteMembers = (slug: string, organizationId: string) => {
           }),
         ),
       );
+
       const failed = results.find((result) => result.status === "rejected");
+
       if (failed) {
         throw failed.reason;
       }
     },
     onError: (error) => toast.error(error.message),
-    // Some invitations may succeed even when another fails.
     onSettled: () => invalidateOrganization(queryClient, slug),
     onSuccess: () => {
       toast.success("Invitations sent successfully");
@@ -80,6 +85,7 @@ interface InviteMembersFormProps {
 
 const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormProps) => {
   const { data: organizationData } = useOrganization(slug);
+
   const { mutate: inviteMembers, isPending: isInvitingMembers } = useInviteMembers(
     slug,
     organizationData.organization.id,

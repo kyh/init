@@ -10,7 +10,6 @@ interface ErrorBoundaryProps {
 
 const ErrorBoundary = ({ error, reset }: ErrorBoundaryProps) => {
   useEffect(() => {
-    // Replace with your error reporting service
     console.error(error);
   }, [error]);
 

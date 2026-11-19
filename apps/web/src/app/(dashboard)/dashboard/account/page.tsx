@@ -7,12 +7,13 @@ import { PageHeader } from "@/components/header";
 import { AppearanceForm } from "./_components/appearance-form";
 import { ProfileForm } from "./_components/profile-form";
 
-// The profile is session data, so it streams in under Suspense.
 const Profile = async () => {
   const session = await getSession();
+
   if (!session) {
     return redirect("/auth/login?nextPath=/dashboard/account");
   }
+
   return <ProfileForm user={session.user} />;
 };
 

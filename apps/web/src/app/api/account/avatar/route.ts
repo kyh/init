@@ -3,13 +3,8 @@ import { Files } from "files-sdk";
 import { vercelBlob } from "files-sdk/vercel-blob";
 import { getSession } from "@/lib/auth-server";
 
-// Matches the "1MB max" copy in the profile form
 const MAX_AVATAR_BYTES = 1024 * 1024;
 
-// Both the stored extension and the Content-Type are derived from the file's
-// magic bytes, never the client-supplied MIME type (which an attacker controls).
-// SVG is deliberately excluded: it can carry <script>, and these land on a
-// public blob URL — a scripted SVG served as image/svg+xml would be stored XSS.
 const IMAGE_SIGNATURES = [
   { contentType: "image/jpeg", extension: "jpg", magic: [0xff, 0xd8, 0xff] },
   {
@@ -23,24 +18,24 @@ const IMAGE_SIGNATURES = [
 const startsWith = (bytes: Uint8Array, magic: readonly number[]) =>
   magic.every((byte, index) => bytes[index] === byte);
 
-/** Identifies an image from its leading bytes, or null if unrecognized. */
+// WARNING: derive the type from these magic bytes, never the client's MIME, and never accept SVG (stored XSS on the public blob host).
 const sniffImageType = (bytes: Uint8Array) => {
   const match = IMAGE_SIGNATURES.find((signature) => startsWith(bytes, signature.magic));
+
   if (match) {
     return { contentType: match.contentType, extension: match.extension };
   }
-  // WebP: "RIFF" <4-byte size> "WEBP"
+
   if (
     startsWith(bytes, [0x52, 0x49, 0x46, 0x46]) &&
     startsWith(bytes.subarray(8), [0x57, 0x45, 0x42, 0x50])
   ) {
     return { contentType: "image/webp", extension: "webp" };
   }
+
   return null;
 };
 
-// Vercel Blob has no local emulator, so a dev clone without a Blob store gets a
-// pointer instead of the SDK's opaque "No token found" throw.
 const requireBlobToken = () =>
   process.env.BLOB_READ_WRITE_TOKEN
     ? null
@@ -50,54 +45,32 @@ const requireBlobToken = () =>
         { status: 501 },
       );
 
-// Constructed per request, after `requireBlobToken`: the adapter validates
-// credentials on construction, so a module-scope instance would fail `next
-// build`'s page-data collection wherever the token is absent (CI, a fresh
-// clone).
-//
-// Keys are minted here (UUID) instead of via the provider's random suffix: the
-// returned key then equals the one uploaded, and `url()` can be synthesized
-// from the store id embedded in the token without a round trip.
+// WARNING: build per request, after requireBlobToken; the adapter checks credentials on construction, so a module-scope instance fails `next build` without a token.
 const blobFiles = () => new Files({ adapter: vercelBlob({ addRandomSuffix: false }) });
 
-// Avatars live under `avatars/<userId>/`. Each upload gets a fresh key so its
-// CDN URL is unique — the alternative, reusing one path, serves the previous
-// image until the blob cache expires.
 const avatarPrefix = (userId: string) => `avatars/${userId}/`;
 
-// Concurrent uploads each write their own key, so a sweep can see a blob whose
-// own request hasn't returned yet — in either direction, since which upload
-// finishes first says nothing about which swept first. Deleting one strands
-// the URL that request is about to hand the client, so the sweep only touches
-// blobs old enough that no request can still be holding one. Being too
-// generous here just leaves an orphan for the next sweep.
 const SWEEP_GRACE_MS = 5 * 60 * 1000;
 
-/**
- * Which of the user's avatars to delete. With no `keepKey` — an explicit
- * removal — that's all of them.
- *
- * Otherwise it's every blob outside the grace window, except the one just
- * uploaded. Replacing an avatar still collects the previous one right away:
- * it predates the window by definition. What survives is a blob from a
- * near-simultaneous second upload, which is exactly the one still in flight.
- */
 const isStale = (item: { key: string; lastModified?: number }, keepKey?: string) => {
   if (!keepKey) {
     return true;
   }
+
   const cutoff = Date.now() - SWEEP_GRACE_MS;
+
   return item.key !== keepKey && (item.lastModified ?? 0) < cutoff;
 };
 
-/** Deletes the user's avatars, optionally sparing a freshly uploaded one. */
 const removeAvatars = async (files: Files, userId: string, keepKey?: string) => {
   const stale: string[] = [];
+
   for await (const item of files.listAll({ prefix: avatarPrefix(userId) })) {
     if (isStale(item, keepKey)) {
       stale.push(item.key);
     }
   }
+
   if (stale.length > 0) {
     await files.delete(stale);
   }
@@ -105,17 +78,20 @@ const removeAvatars = async (files: Files, userId: string, keepKey?: string) => 
 
 export const POST = async (request: Request) => {
   const session = await getSession();
+
   if (!session) {
     return new Response("Unauthorized", { status: 401 });
   }
 
   const missingToken = requireBlobToken();
+
   if (missingToken) {
     return missingToken;
   }
 
   const formData = await request.formData();
   const file = formData.get("file");
+
   if (!(file instanceof File)) {
     return new Response("Missing file", { status: 400 });
   }
@@ -126,6 +102,7 @@ export const POST = async (request: Request) => {
 
   const bytes = new Uint8Array(await file.arrayBuffer());
   const imageType = sniffImageType(bytes);
+
   if (!imageType) {
     return new Response("Unsupported image type", { status: 415 });
   }
@@ -135,25 +112,19 @@ export const POST = async (request: Request) => {
   const files = blobFiles();
 
   let url: string;
+
   try {
-    // Upload the sniffed bytes as a type-less Blob rather than the original
-    // File, so the stored Content-Type can only come from `imageType` — never
-    // from the File's client-supplied `type`
     const uploaded = await files.upload(key, new Blob([bytes]), {
       contentType: imageType.contentType,
     });
+
     url = await files.url(uploaded.key);
   } catch (error) {
     console.error("Avatar upload failed:", error);
+
     return new Response("Upload failed", { status: 500 });
   }
 
-  // Sweep the previous avatars only once the new one is live, so a failed
-  // upload never leaves the user with no image at all. Deliberately outside
-  // the upload's catch and best-effort: the new blob is already served, and
-  // failing here would withhold its URL from the client while potentially
-  // having deleted the old one it still points at. An orphaned blob is the
-  // better failure.
   try {
     await removeAvatars(files, userId, key);
   } catch (error) {
@@ -165,11 +136,13 @@ export const POST = async (request: Request) => {
 
 export const DELETE = async () => {
   const session = await getSession();
+
   if (!session) {
     return new Response("Unauthorized", { status: 401 });
   }
 
   const missingToken = requireBlobToken();
+
   if (missingToken) {
     return missingToken;
   }

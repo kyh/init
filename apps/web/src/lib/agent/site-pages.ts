@@ -62,5 +62,4 @@ export const contact: SitePage = {
 
 export const sitePages = [about, contact, privacy, terms];
 
-export const findSitePage = (path: string): SitePage | undefined =>
-  sitePages.find((page) => page.path === path);
+export const findSitePage = (path: string) => sitePages.find((page) => page.path === path);

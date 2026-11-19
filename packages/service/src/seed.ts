@@ -1,4 +1,3 @@
-/** Idempotent local seed. Use auth signup so the personal-organization hook runs. */
 import { db } from "@repo/db/drizzle-client";
 import { todo } from "@repo/db/drizzle-schema";
 
@@ -12,6 +11,7 @@ const seed = async () => {
   const existing = await db.query.user.findFirst({ where: { email: DEV_EMAIL } });
 
   let userId: string;
+
   if (existing) {
     userId = existing.id;
     console.log(`  ✓ user ${DEV_EMAIL} already exists`);
@@ -19,19 +19,24 @@ const seed = async () => {
     const { user } = await auth.api.signUpEmail({
       body: { email: DEV_EMAIL, name: DEV_NAME, password: DEV_PASSWORD },
     });
+
     userId = user.id;
     console.log(`  ✓ created ${DEV_EMAIL} (password: ${DEV_PASSWORD})`);
   }
 
   const membership = await db.query.member.findFirst({ where: { userId } });
+
   if (!membership) {
     throw new Error("dev user has no organization — the signup hook did not run");
   }
+
   const { organizationId } = membership;
 
   const existingTodo = await db.query.todo.findFirst({ where: { organizationId } });
+
   if (existingTodo) {
     console.log("  ✓ sample todos already present");
+
     return;
   }
 

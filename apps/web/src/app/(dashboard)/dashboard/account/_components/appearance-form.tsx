@@ -31,7 +31,6 @@ const items = [
 
 export const AppearanceForm = () => {
   const { theme, setTheme } = useTheme();
-  // Wait for the client theme before rendering controlled radios.
   const hydrated = useIsHydrated();
 
   if (!hydrated) {

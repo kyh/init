@@ -10,7 +10,6 @@ import { getBaseUrl } from "./base-url";
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Avoid refetching over cellular on every remount.
       staleTime: 30 * 1000,
     },
   },
@@ -18,7 +17,6 @@ export const queryClient = new QueryClient({
 
 const link = new RPCLink({
   headers: async () => ({
-    // React Native has no cookie jar, so the session rides an explicit header.
     Cookie: (await authClient.getCookie()) || undefined,
     "x-orpc-source": "expo-react",
   }),

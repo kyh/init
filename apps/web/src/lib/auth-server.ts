@@ -5,7 +5,6 @@ import { auth } from "@repo/service/auth/auth";
 /** RSC-only: cache session and organization lookups within a request. */
 export const getSession = cache(async () => auth.api.getSession({ headers: await headers() }));
 
-// Primitive arguments let React cache deduplicate repeated lookups.
 export const getOrganizationBySlug = cache(async (slug: string) =>
   auth.api.getFullOrganization({ headers: await headers(), query: { organizationSlug: slug } }),
 );

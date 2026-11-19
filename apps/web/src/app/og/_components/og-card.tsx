@@ -3,8 +3,6 @@ import { Logo } from "@repo/ui/components/logo";
 
 import { siteConfig } from "@/lib/site-config";
 
-// The site's dark tokens (@repo/ui globals.css: --background, --foreground,
-// --muted-foreground, --border), as sRGB, since the image renderer takes no oklch.
 const BACKGROUND = "#09090b";
 const FOREGROUND = "#fafafa";
 const MUTED = "#9f9fa9";

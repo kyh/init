@@ -14,9 +14,9 @@ interface PageProps {
   searchParams: Promise<{ nextPath?: string }>;
 }
 
-// URL data streams in under Suspense, so the rest of the page is the prefetched App Shell.
 const LoginForm = async ({ searchParams }: PageProps) => {
   const { nextPath } = await searchParams;
+
   return <AuthForm type="login" nextPath={safeNextPath(nextPath)} />;
 };
 

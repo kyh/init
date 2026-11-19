@@ -7,11 +7,13 @@ import { Save, ExternalLink } from "lucide-react";
 
 import { apiBaseUrlItem } from "@/lib/storage";
 
-const parseAppUrl = (value: string): string => {
+const parseAppUrl = (value: string) => {
   const url = new URL(value);
+
   if (url.protocol !== "http:" && url.protocol !== "https:") {
     throw new Error("Use an http:// or https:// application URL");
   }
+
   return url.origin;
 };
 
@@ -19,6 +21,7 @@ const App = () => {
   const [apiBaseUrl, setApiBaseUrl] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+
   const [message, setMessage] = useState<{
     type: "success" | "error";
     text: string;
@@ -27,6 +30,7 @@ const App = () => {
   useEffect(() => {
     const loadSettings = async () => {
       setIsLoading(true);
+
       try {
         const savedApiBaseUrl = await apiBaseUrlItem.getValue();
         setApiBaseUrl(savedApiBaseUrl);
@@ -36,6 +40,7 @@ const App = () => {
           type: "error",
         });
       }
+
       setIsLoading(false);
     };
 
@@ -61,6 +66,7 @@ const App = () => {
         type: "error",
       });
     }
+
     setIsSaving(false);
   };
 

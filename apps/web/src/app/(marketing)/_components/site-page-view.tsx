@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { cn } from "cn";
 
@@ -6,7 +5,7 @@ import type { Block, Inline, ListItem, SitePage, TableBlock } from "@/lib/agent/
 import { headingId } from "@/lib/agent/page-content";
 import { pageMetadata, sitePageImage } from "@/lib/page-metadata";
 
-export const sitePageMetadata = (page: SitePage): Metadata =>
+export const sitePageMetadata = (page: SitePage) =>
   pageMetadata({
     description: page.description,
     image: { alt: `${page.title}: ${page.description}`, url: sitePageImage(page.path).url },
@@ -24,6 +23,7 @@ const Runs = ({ runs }: { runs: Inline[] }) =>
         </strong>
       );
     }
+
     if (run.kind === "link") {
       return (
         <Link
@@ -35,6 +35,7 @@ const Runs = ({ runs }: { runs: Inline[] }) =>
         </Link>
       );
     }
+
     return run.text;
   });
 
@@ -49,7 +50,6 @@ const ListItems = ({ items, nested }: { items: ListItem[]; nested: boolean }) =>
   </ul>
 );
 
-/** Tables break out of the prose measure and scroll sideways rather than squeeze their columns. */
 const Table = ({ block }: { block: TableBlock }) => (
   <div className="overflow-x-auto">
     <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
@@ -91,12 +91,15 @@ const BlockView = ({ block }: { block: Block }) => {
         </p>
       );
     }
+
     case "subheading": {
       return <h3 className="text-secondary-foreground max-w-2xl pt-4">{block.text}</h3>;
     }
+
     case "list": {
       return <ListItems items={block.items} nested={false} />;
     }
+
     default: {
       return <Table block={block} />;
     }

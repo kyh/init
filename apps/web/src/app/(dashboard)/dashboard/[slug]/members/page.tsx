@@ -40,7 +40,6 @@ const InvitationsSkeleton = () => (
   </>
 );
 
-// Both sections read the slug and the organization query under their own Suspense boundary.
 const Members = async ({ params }: PageProps) => {
   const { slug } = await resolveOrganizationPage(params, "/members");
   prefetch(orpc.organization.get.queryOptions({ input: { slug } }));

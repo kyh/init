@@ -37,6 +37,7 @@ export const requireSession = base.middleware(({ context, next }) => {
       message: "You must be logged in to access this resource",
     });
   }
+
   return next({
     context: {
       session: { ...context.session, user: context.session.user },
@@ -59,7 +60,6 @@ export const requireOrganization = builder
       throw new ORPCError("NOT_FOUND", { message: "Organization not found" });
     }
 
-    // Separate lookups distinguish a missing organization from missing membership.
     const membership = await context.db.query.member.findFirst({
       where: { organizationId: organization.id, userId: context.session.user.id },
     });

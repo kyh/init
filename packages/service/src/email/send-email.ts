@@ -14,6 +14,7 @@ export const sendEmail = async ({ to, subject, text }: SendEmailInput) => {
     console.info(
       `[email] RESEND_API_KEY not set — logging instead of sending\nto: ${to}\nsubject: ${subject}\n${text}`,
     );
+
     return;
   }
 

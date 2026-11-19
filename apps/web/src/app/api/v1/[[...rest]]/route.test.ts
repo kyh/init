@@ -6,8 +6,6 @@ import { generateOpenAPIDocument } from "@/orpc/openapi";
 
 import { GET, POST } from "./route";
 
-/** Requests carry no session cookie, so they stop before any database query. */
-
 const APP_ORIGIN = "http://localhost:3000";
 
 const rest = (path: string, headers: Record<string, string> = {}) =>
@@ -49,12 +47,14 @@ describe("openapi document", () => {
     const document = await generateOpenAPIDocument();
 
     assert.ok(document.servers?.[0]?.url.endsWith("/api/v1"));
+
     const paths: `/${string}`[] = [
       "/todo/list",
       "/todo/create",
       "/waitlist/join",
       "/organization/get",
     ];
+
     for (const path of paths) {
       assert.ok(document.paths?.[path], `missing ${path}`);
     }

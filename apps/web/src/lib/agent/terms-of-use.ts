@@ -3,13 +3,6 @@ import { siteConfig } from "@/lib/site-config";
 import type { SitePage } from "./page-content";
 import { GENERAL_LEGAL_CREDIT, link, p, section, strong } from "./page-content";
 
-/**
- * The Terms of Use, adapted from General Legal's website terms of use
- * template with its JAMS arbitration clause. Sections keep their numbers so
- * the cross-references hold; when the product changes, change this text in
- * the same commit.
- */
-
 const LAST_REVISED = "October 3, 2026";
 
 const email = link(siteConfig.email, `mailto:${siteConfig.email}`);
@@ -18,7 +11,6 @@ const privacyUrl = `${siteConfig.url}/privacy`;
 
 const privacyLink = link(privacyUrl, privacyUrl);
 
-/** A numbered subsection: "N.M Title. Text". */
 const clause = (number: string, title: string, ...text: Parameters<typeof p>) =>
   p(`${number} `, strong(title), ...text);
 

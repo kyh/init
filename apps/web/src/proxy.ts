@@ -4,18 +4,15 @@ import { getSessionCookie } from "better-auth/cookies";
 
 import { prefersMarkdown } from "@/lib/agent/accept";
 
-/**
- * Optimistic sign-in gate: a dashboard request with no session cookie gets a 307 to login
- * before any rendering, since a redirect from inside a streamed Suspense boundary can only
- * answer 200. It only checks that the cookie exists; each page still verifies the session.
- */
 const redirectSignedOut = (request: NextRequest) => {
   if (getSessionCookie(request)) {
     return NextResponse.next();
   }
+
   const { pathname, search } = request.nextUrl;
   const login = new URL("/auth/login", request.url);
   login.searchParams.set("nextPath", `${pathname}${search}`);
+
   return NextResponse.redirect(login);
 };
 
@@ -39,6 +36,7 @@ export const proxy = (request: NextRequest) => {
 
   const url = request.nextUrl.clone();
   url.pathname = url.pathname === "/" ? "/md" : `/md${url.pathname}`;
+
   return NextResponse.rewrite(url);
 };
 

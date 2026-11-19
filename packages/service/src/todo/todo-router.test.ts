@@ -104,6 +104,7 @@ describe("todoRouter", () => {
 
   test("reports NOT_FOUND when update or delete matches no tenant-owned todo", async () => {
     const operations: ("update" | "delete")[] = ["update", "delete"];
+
     for (const operation of operations) {
       const context = createMemberContext();
       context.responses.push([]);

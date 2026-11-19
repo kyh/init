@@ -16,7 +16,6 @@ describe("organizationRouter.get", () => {
     context.responses.push(
       databaseRows(organization, org),
       databaseRows(member, mockMembership),
-      // The relation rides a row_to_json lateral join, which the driver hands back parsed.
       [[...membership, user]],
       [],
     );

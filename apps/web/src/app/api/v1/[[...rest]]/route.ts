@@ -6,15 +6,14 @@ import { onError, ORPCError } from "@orpc/server";
 import { OPENAPI_PREFIX } from "@/orpc/openapi";
 import { isCrossOrigin, jsonError } from "@/orpc/request";
 
-/** REST view of the same router the RPC client uses, described by /openapi.json. */
 const handler = new OpenAPIHandler(appRouter, {
   clientInterceptors: [
     // oxlint-disable-next-line promise/prefer-await-to-callbacks -- oRPC's interceptor hook takes the error as its argument
     onError((error) => {
-      // Only unexpected failures need server logging.
       if (error instanceof ORPCError) {
         return;
       }
+
       console.error(">>> oRPC Error", error);
     }),
   ],

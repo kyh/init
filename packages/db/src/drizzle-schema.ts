@@ -2,16 +2,9 @@ import { index, pgTableCreator } from "drizzle-orm/pg-core";
 
 import { organization, user } from "./drizzle-schema-auth";
 
-// Columns here carry no explicit SQL name, so the table builder derives them:
-// `organizationId` is the `organization_id` column. Declare every table in this
-// file through this creator, never the bare pgTable from drizzle-orm/pg-core.
+// WARNING: declare every table here through this creator with withRLS, never drizzle-orm's bare pgTable.
 const pgTable = pgTableCreator((name) => name, "snake_case");
 
-// All tables enable RLS with no policies (deny-by-default). Nothing here
-// exposes Postgres to untrusted clients, so this is defense in depth: any
-// connection made with a non-owner role reads nothing unless a policy says
-// otherwise, and authz lives in the API layer. The server's drizzle connection
-// is unaffected (table owner bypasses RLS).
 export const waitlist = pgTable.withRLS(
   "waitlist",
   (t) => ({
@@ -20,8 +13,6 @@ export const waitlist = pgTable.withRLS(
     source: t.text(),
     userId: t.text().references(() => user.id, { onDelete: "set null" }),
   }),
-  // Postgres doesn't auto-index FK columns; user deletions (incl. signup
-  // rollback) would otherwise seq-scan to satisfy ON DELETE SET NULL.
   (table) => [index("waitlist_user_id_idx").on(table.userId)],
 );
 

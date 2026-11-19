@@ -38,7 +38,5 @@ const MeteorField = ({ top, number }: Required<MeteorsProps>) => {
 export const Meteors = ({ top = -5, number = 20 }: MeteorsProps) => {
   const hydrated = useIsHydrated();
 
-  // Positions are random and read window.innerWidth, so the server can't
-  // produce them; the key regenerates the field when the props change.
   return hydrated ? <MeteorField key={`${top}-${number}`} top={top} number={number} /> : null;
 };

@@ -17,22 +17,13 @@ import {
   table,
 } from "./page-content";
 
-/**
- * The Privacy Policy, adapted from General Legal's GDPR privacy policy
- * template. Every statement here describes what the code actually does; when
- * the product changes, change this text in the same commit. Its git history is
- * the policy's version history, which the page links to.
- */
-
 const EFFECTIVE_DATE = "October 3, 2026";
 
 const email = link(siteConfig.email, `mailto:${siteConfig.email}`);
 
-/** Applies to every category in the CCPA chart below. */
 const GENERAL_PURPOSES =
   "Compliance and protection; Data sharing in the context of corporate events; To create aggregated, de-identified and/or anonymized data";
 
-/** Recipients that every category in the CCPA chart below may reach. */
 const GENERAL_RECIPIENTS = "Professional advisors; Authorities and others; Business transferees";
 
 const ANY_DATA = "Any and all data types relevant in the circumstances";

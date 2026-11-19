@@ -10,6 +10,7 @@ export const DesktopMenuListener = () => {
 
   useEffect(() => {
     const bridge = desktopBridge();
+
     if (!bridge) {
       return;
     }

@@ -11,28 +11,30 @@ import { privacy } from "./privacy-policy";
 import { findSitePage, sitePages } from "./site-pages";
 import { terms } from "./terms-of-use";
 
-const itemRuns = (items: ListItem[]): Inline[] =>
+const itemRuns: (items: ListItem[]) => Inline[] = (items) =>
   items.flatMap((entry) => [...entry.content, ...itemRuns(entry.items)]);
 
-const blockRuns = (block: Block): Inline[] => {
+const blockRuns: (block: Block) => Inline[] = (block) => {
   switch (block.kind) {
     case "paragraph": {
       return block.content;
     }
+
     case "list": {
       return itemRuns(block.items);
     }
+
     case "subheading": {
       return [{ kind: "text", text: block.text }];
     }
+
     default: {
       return [...block.columns, ...block.rows.flat()].map((text) => ({ kind: "text", text }));
     }
   }
 };
 
-/** Every run of text on a page: headings, paragraphs, list items and table cells. */
-const pageRuns = (page: SitePage): Inline[] => [
+const pageRuns = (page: SitePage) => [
   ...(page.preamble ?? []).flatMap(blockRuns),
   ...page.sections.flatMap((section) => [
     { kind: "text" as const, text: section.heading },
@@ -86,6 +88,7 @@ describe("privacy policy", () => {
       .filter(isLink)
       .map((run) => run.href)
       .filter((href) => href.startsWith("#"));
+
     const index = anchors.slice(-privacy.sections.length);
     assert.deepEqual(
       index,
@@ -104,15 +107,18 @@ describe("privacy policy", () => {
     const tables = privacy.sections
       .flatMap((section) => section.blocks)
       .filter((block) => block.kind === "table");
+
     assert.deepEqual(
       tables.map((block) => block.columns.length),
       [5, 3],
     );
+
     for (const block of tables) {
       for (const row of block.rows) {
         assert.equal(row.length, block.columns.length, row.join(" | "));
       }
     }
+
     const [ccpa] = tables;
     assert.ok(ccpa?.rows.every((row) => row.at(-1) === "None"));
   });
@@ -148,9 +154,11 @@ describe("legal pages", () => {
     for (const page of legalPages) {
       for (const { href } of linksOf(page)) {
         const [target, anchor] = href.split("#");
+
         if (anchor === undefined) {
           continue;
         }
+
         const ids = target === `${siteConfig.url}/privacy` ? sectionIds(privacy) : sectionIds(page);
         assert.ok(ids.includes(anchor), `${page.path} links to missing #${anchor}`);
       }

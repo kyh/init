@@ -25,6 +25,7 @@ type Invitation = RouterOutputs["organization"]["get"]["invitations"][number];
 
 const useCancelInvitation = (slug: string, invitationId: string) => {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: () =>
       authClient.organization.cancelInvitation({
@@ -34,6 +35,7 @@ const useCancelInvitation = (slug: string, invitationId: string) => {
     onError: (error) => toast.error(error.message),
     onSuccess: () => {
       toast.success("Invitation cancelled successfully");
+
       return invalidateOrganization(queryClient, slug);
     },
   });
@@ -73,34 +75,35 @@ const ActionsDropdown = ({
   );
 };
 
-const createColumns = (
-  slug: string,
-  canManageInvitations: boolean,
-): ColumnDef<AutoTableFeatures, Invitation>[] => [
-  {
-    cell: ({ row }) => row.original.email,
-    header: "Email",
-  },
-  {
-    cell: ({ row }) => <Badge className="capitalize">{row.original.role ?? "member"}</Badge>,
-    header: "Role",
-  },
-  {
-    cell: ({ row }) => formatDate(row.original.expiresAt),
-    header: "Expires at",
-  },
-  {
-    cell: ({ row }) => (
-      <ActionsDropdown
-        slug={slug}
-        invitation={row.original}
-        canManageInvitations={canManageInvitations}
-      />
-    ),
-    header: "",
-    id: "actions",
-  },
-];
+const createColumns = (slug: string, canManageInvitations: boolean) => {
+  const columns: ColumnDef<AutoTableFeatures, Invitation>[] = [
+    {
+      cell: ({ row }) => row.original.email,
+      header: "Email",
+    },
+    {
+      cell: ({ row }) => <Badge className="capitalize">{row.original.role ?? "member"}</Badge>,
+      header: "Role",
+    },
+    {
+      cell: ({ row }) => formatDate(row.original.expiresAt),
+      header: "Expires at",
+    },
+    {
+      cell: ({ row }) => (
+        <ActionsDropdown
+          slug={slug}
+          invitation={row.original}
+          canManageInvitations={canManageInvitations}
+        />
+      ),
+      header: "",
+      id: "actions",
+    },
+  ];
+
+  return columns;
+};
 
 interface InvitationsTableProps {
   slug: string;
@@ -108,6 +111,7 @@ interface InvitationsTableProps {
 
 export const InvitationsTable = ({ slug }: InvitationsTableProps) => {
   const { data: organizationData } = useOrganization(slug);
+
   const canManageInvitations = hasPermission(organizationData.currentUserMember.role, {
     invitation: ["cancel"],
   });

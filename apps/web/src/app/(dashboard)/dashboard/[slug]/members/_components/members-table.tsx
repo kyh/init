@@ -36,6 +36,7 @@ const getDisplayName = (member: MemberWithUser) =>
 
 const useUpdateMemberRole = (slug: string, memberId: string) => {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: (newRole: string) =>
       authClient.organization.updateMemberRole({
@@ -46,6 +47,7 @@ const useUpdateMemberRole = (slug: string, memberId: string) => {
     onError: (error) => toast.error(error.message),
     onSuccess: () => {
       toast.success("Member role updated successfully");
+
       return invalidateOrganization(queryClient, slug);
     },
   });
@@ -53,6 +55,7 @@ const useUpdateMemberRole = (slug: string, memberId: string) => {
 
 const useRemoveMember = (slug: string, memberId: string) => {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: () =>
       authClient.organization.removeMember({
@@ -62,6 +65,7 @@ const useRemoveMember = (slug: string, memberId: string) => {
     onError: (error) => toast.error(error.message),
     onSuccess: () => {
       toast.success("Member removed successfully");
+
       return invalidateOrganization(queryClient, slug);
     },
   });
@@ -83,6 +87,7 @@ const ActionsDropdown = ({
   const displayName = getDisplayName(member);
 
   const { mutateAsync: updateMemberRole } = useUpdateMemberRole(slug, member.id);
+
   const handleChangeRole = (newRole: string) => {
     alertDialog.open(`Change ${displayName}'s role?`, {
       action: {
@@ -96,6 +101,7 @@ const ActionsDropdown = ({
   };
 
   const { mutateAsync: removeMember } = useRemoveMember(slug, member.id);
+
   const handleRemoveFromOrganization = () => {
     alertDialog.open(`Remove ${displayName} from the organization?`, {
       action: {
@@ -141,59 +147,60 @@ const ActionsDropdown = ({
   return <TableRowActions>{actions}</TableRowActions>;
 };
 
-const createColumns = (
-  slug: string,
-  userId: string,
-  canManageMembers: boolean,
-): ColumnDef<AutoTableFeatures, MemberWithUser>[] => [
-  {
-    cell: ({ row }) => {
-      const member = row.original;
-      const displayName = getDisplayName(member);
-      const isSelf = member.userId === userId;
+const createColumns = (slug: string, userId: string, canManageMembers: boolean) => {
+  const columns: ColumnDef<AutoTableFeatures, MemberWithUser>[] = [
+    {
+      cell: ({ row }) => {
+        const member = row.original;
+        const displayName = getDisplayName(member);
+        const isSelf = member.userId === userId;
 
-      return (
-        <span className="flex items-center gap-4 text-left">
-          <Avatar className="size-9">
-            <AvatarFallback className="animate-in fade-in uppercase">
-              {displayName?.slice(0, 1)}
-            </AvatarFallback>
-          </Avatar>
-          <span>{displayName}</span>
-          {isSelf && <Badge variant="outline">You</Badge>}
-        </span>
-      );
+        return (
+          <span className="flex items-center gap-4 text-left">
+            <Avatar className="size-9">
+              <AvatarFallback className="animate-in fade-in uppercase">
+                {displayName?.slice(0, 1)}
+              </AvatarFallback>
+            </Avatar>
+            <span>{displayName}</span>
+            {isSelf && <Badge variant="outline">You</Badge>}
+          </span>
+        );
+      },
+      header: "Name",
     },
-    header: "Name",
-  },
-  {
-    cell: ({ row }) => {
-      const member = row.original;
-      return member.user?.email;
+    {
+      cell: ({ row }) => {
+        const member = row.original;
+
+        return member.user?.email;
+      },
+      header: "Email",
     },
-    header: "Email",
-  },
-  {
-    cell: ({ row }) => <Badge className="capitalize">{row.original.role}</Badge>,
-    header: "Role",
-  },
-  {
-    cell: ({ row }) => formatDate(row.original.createdAt),
-    header: "Joined at",
-  },
-  {
-    cell: ({ row }) => (
-      <ActionsDropdown
-        slug={slug}
-        member={row.original}
-        userId={userId}
-        canManageMembers={canManageMembers}
-      />
-    ),
-    header: "",
-    id: "actions",
-  },
-];
+    {
+      cell: ({ row }) => <Badge className="capitalize">{row.original.role}</Badge>,
+      header: "Role",
+    },
+    {
+      cell: ({ row }) => formatDate(row.original.createdAt),
+      header: "Joined at",
+    },
+    {
+      cell: ({ row }) => (
+        <ActionsDropdown
+          slug={slug}
+          member={row.original}
+          userId={userId}
+          canManageMembers={canManageMembers}
+        />
+      ),
+      header: "",
+      id: "actions",
+    },
+  ];
+
+  return columns;
+};
 
 interface MembersTableProps {
   slug: string;
@@ -202,6 +209,7 @@ interface MembersTableProps {
 export const MembersTable = ({ slug }: MembersTableProps) => {
   const { data: organizationData } = useOrganization(slug);
   const { userId } = organizationData.currentUserMember;
+
   const canManageMembers = hasPermission(organizationData.currentUserMember.role, {
     member: ["update", "delete"],
   });

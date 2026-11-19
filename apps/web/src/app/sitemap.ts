@@ -4,11 +4,9 @@ import { sitePages } from "@/lib/agent/site-pages";
 import { siteConfig } from "@/lib/site-config";
 import { source } from "@/lib/source";
 
-const sitemap = (): MetadataRoute.Sitemap => {
-  // Static route: evaluated once per build, so this is the deploy time.
+const sitemap = () => {
   const lastModified = new Date();
 
-  // A doc's lastmod is the `lastModified` date in its frontmatter, so crawlers revisit what changed.
   const docs = source.getPages().map((page) => ({
     changeFrequency: "weekly" as const,
     lastModified: page.data.lastModified,
@@ -30,7 +28,7 @@ const sitemap = (): MetadataRoute.Sitemap => {
       priority: 0.3,
       url: `${siteConfig.url}${page.path}`,
     })),
-  ];
+  ] satisfies MetadataRoute.Sitemap;
 };
 
 export default sitemap;

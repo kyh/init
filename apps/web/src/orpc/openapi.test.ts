@@ -35,9 +35,8 @@ const documentSchema = z.object({
   paths: z.record(z.string(), z.record(z.string(), operationSchema)),
 });
 
-// Parsed at module level: a throw inside an async describe is not reported as a failure.
-// Parsing asserts every operation has a summary, description, tags and JSON responses.
 const document = documentSchema.parse(await generateOpenAPIDocument());
+
 const operations = Object.entries(document.paths).flatMap(([path, item]) =>
   Object.entries(item).map(([method, operation]) => ({ id: `${method} ${path}`, operation })),
 );
@@ -57,10 +56,12 @@ describe("openapi document", () => {
   test("points every error response at the shared Error schema", () => {
     assert.ok(document.components.schemas.Error);
     assert.equal(document.components.schemas.UndefinedError, undefined);
+
     for (const { id, operation } of operations) {
       const errors = Object.entries(operation.responses).filter(
         ([status]) => Number(status) >= 400,
       );
+
       for (const [status, response] of errors) {
         const parsed = errorSchema.safeParse(response.content["application/json"].schema);
         assert.ok(parsed.success, `${id} ${status} does not reference the Error schema`);
@@ -70,10 +71,13 @@ describe("openapi document", () => {
 
   test("requires a declared scheme on every operation except waitlist.join", () => {
     const schemes = Object.keys(document.components.securitySchemes);
+
     const unsecured = operations
       .filter(({ operation }) => operation.security === undefined)
       .map(({ id }) => id);
+
     assert.deepEqual(unsecured, ["post /waitlist/join"]);
+
     for (const { operation } of operations) {
       for (const requirement of operation.security ?? []) {
         for (const name of Object.keys(requirement)) {
