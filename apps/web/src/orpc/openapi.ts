@@ -103,7 +103,7 @@ export const generateOpenAPIDocument = async () => {
         { description: "Pre-launch email signups; public.", name: "Waitlist" },
       ],
     },
-    customErrorResponseBodySchema: (definedErrors) => ({
+    errorResponseBodySchema: (definedErrors) => ({
       allOf: [errorRef],
       properties: { code: { enum: definedErrors.map(({ code }) => code) } },
     }),
