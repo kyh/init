@@ -26,14 +26,14 @@
   },
   "dependencies": {
     "drizzle-orm": "catalog:",
-    "postgres": "^3.4.9",
+    "postgres": "^4.1.1",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@kyh/tsconfig": "catalog:",
     "@types/node": "catalog:",
-    "drizzle-kit": "1.0.0-rc.5",
-    "supabase": "^2.122.1",
+    "drizzle-kit": "1.0.0-rc.6",
+    "supabase": "^3.3.0",
     "typescript": "catalog:"
   }
 }
