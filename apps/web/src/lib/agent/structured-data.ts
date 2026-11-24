@@ -85,7 +85,7 @@ export interface DocGraphInput {
   path: string;
   /** Site-relative URL of the page's OpenGraph image. */
   image: string;
-  /** The `lastModified` date hand-set in the page's frontmatter. */
+  /** The `modified` date hand-set in the page's frontmatter. */
   lastModified: Date;
 }
 

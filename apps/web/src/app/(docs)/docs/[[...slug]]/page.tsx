@@ -24,7 +24,7 @@ const Page = async (props: { params: Promise<{ slug?: string[] }> }) => {
     buildDocGraph({
       description: page.data.description,
       image: getPageImage(page).url,
-      lastModified: page.data.lastModified,
+      lastModified: page.data.modified,
       path: page.url,
       title: page.data.title,
     }),
