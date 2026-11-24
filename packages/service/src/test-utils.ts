@@ -81,7 +81,16 @@ export const createMockContext = (session: ORPCContext["session"] = mockSession)
       throw new Error(`Unexpected database query: ${sql} (${params.length} parameters)`);
     }
 
-    return { values: () => Promise.resolve(rows) };
+    const encoder = new TextEncoder();
+
+    const raw = Object.assign(
+      rows.map((row) =>
+        row.map((value) => (value === null ? null : encoder.encode(JSON.stringify(value)))),
+      ),
+      { columns: (rows[0] ?? []).map(() => ({ parser: JSON.parse, type: 0 })) },
+    );
+
+    return { raw: () => Promise.resolve(raw), values: () => Promise.resolve(rows) };
   });
 
   mock.method(db.$client, "unsafe", query);

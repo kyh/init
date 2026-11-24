@@ -8,7 +8,7 @@ export const docs = defineDocs({
       includeProcessedMarkdown: true,
     },
     schema: frontmatterSchema.extend({
-      lastModified: z.union([z.date(), z.iso.date().transform((day) => new Date(day))]),
+      modified: z.union([z.date(), z.iso.date().transform((day) => new Date(day))]),
     }),
   },
   meta: {

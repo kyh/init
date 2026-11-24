@@ -9,7 +9,7 @@ const sitemap = () => {
 
   const docs = source.getPages().map((page) => ({
     changeFrequency: "weekly" as const,
-    lastModified: page.data.lastModified,
+    lastModified: page.data.modified,
     priority: 0.5,
     url: `${siteConfig.url}${page.url}`,
   }));
