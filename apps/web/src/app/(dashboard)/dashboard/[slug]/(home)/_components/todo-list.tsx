@@ -1,6 +1,6 @@
 "use client";
 
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 import { useState } from "react";
 import { alertDialog } from "@repo/ui/components/alert-dialog";
 import { Button } from "@repo/ui/components/button";
@@ -47,7 +47,7 @@ export const TodoList = ({ slug }: TodoListProps) => {
   const [editing, setEditing] = useState<Pick<Todo, "id" | "title"> | null>(null);
   const [newTitle, setNewTitle] = useState("");
 
-  const handleCreate = (event: FormEvent<HTMLFormElement>) => {
+  const handleCreate = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     const trimmed = newTitle.trim();
 

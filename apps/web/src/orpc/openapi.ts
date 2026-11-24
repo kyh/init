@@ -1,5 +1,4 @@
 import { appRouter } from "@repo/service";
-import type { OpenAPIV3_2 } from "@orpc/openapi";
 import { OpenAPIGenerator } from "@orpc/openapi";
 import { ZodToJsonSchemaConverter } from "@orpc/zod";
 
@@ -7,8 +6,7 @@ import { siteConfig } from "@/lib/site-config";
 
 export const OPENAPI_PREFIX = "/api/v1";
 
-/** Sunset overlap promised by the versioning policy in the API docs. */
-export const DEPRECATION_OVERLAP_DAYS = 90;
+const DEPRECATION_OVERLAP_DAYS = 90;
 
 const generator = new OpenAPIGenerator({ converters: [new ZodToJsonSchemaConverter()] });
 
@@ -19,14 +17,12 @@ const errorResponse = (description: string) => ({
   description,
 });
 
-const withRouteResponses = (operation: OpenAPIV3_2.OperationObject) => ({
-  ...operation,
-  responses: {
-    ...operation.responses,
-    403: errorResponse("A browser request from another origin (`FORBIDDEN`)."),
-    500: errorResponse("An unexpected server fault (`INTERNAL_SERVER_ERROR`)."),
-  },
-});
+const routeResponses = {
+  403: errorResponse("A browser request from another origin (`FORBIDDEN`)."),
+  500: errorResponse("An unexpected server fault (`INTERNAL_SERVER_ERROR`)."),
+};
+
+const isPathPattern = (key: string): key is `/${string}` => key.startsWith("/");
 
 const httpMethods: ("delete" | "get" | "patch" | "post" | "put")[] = [
   "delete",
@@ -116,12 +112,16 @@ export const generateOpenAPIDocument = async () => {
     );
   }
 
-  for (const item of Object.values(document.paths ?? {})) {
+  const paths = document.paths ?? {};
+
+  for (const pattern of Object.keys(paths).filter(isPathPattern)) {
+    const item = paths[pattern];
+
     for (const method of httpMethods) {
-      const operation = item[method];
+      const operation = item?.[method];
 
       if (operation) {
-        item[method] = withRouteResponses(operation);
+        operation.responses = { ...operation.responses, ...routeResponses };
       }
     }
   }

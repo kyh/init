@@ -21,24 +21,21 @@ describe("rest endpoint", () => {
 
     assert.strictEqual(response.status, 401);
     assert.match(response.headers.get("content-type") ?? "", /json/u);
-    const body = await response.json();
-    assert.strictEqual(body.code, "UNAUTHORIZED");
+    assert.partialDeepStrictEqual(await response.json(), { code: "UNAUTHORIZED" });
   });
 
   test("refuses a cross-origin POST with a JSON error", async () => {
     const response = await POST(rest("/todo/list", { origin: "http://evil.localhost:3000" }));
 
     assert.strictEqual(response.status, 403);
-    const body = await response.json();
-    assert.strictEqual(body.code, "FORBIDDEN");
+    assert.partialDeepStrictEqual(await response.json(), { code: "FORBIDDEN" });
   });
 
   test("answers an unknown procedure with a JSON 404", async () => {
     const response = await GET(new NextRequest(`${APP_ORIGIN}/api/v1/nope`));
 
     assert.strictEqual(response.status, 404);
-    const body = await response.json();
-    assert.strictEqual(body.code, "NOT_FOUND");
+    assert.partialDeepStrictEqual(await response.json(), { code: "NOT_FOUND" });
   });
 });
 

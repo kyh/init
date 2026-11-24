@@ -70,5 +70,5 @@ export const requireOrganization = builder
       });
     }
 
-    return next({ context: { membership, organization } });
+    return await next({ context: { membership, organization } });
   });

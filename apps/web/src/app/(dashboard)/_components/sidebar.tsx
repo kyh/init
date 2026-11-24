@@ -68,7 +68,7 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
           },
           onSuccess: (ctx) => {
             setIsOrganizationsDialogOpen(false);
-            router.push(`/dashboard/${ctx.data.slug}`);
+            router.push(`/dashboard/${z.object({ slug: z.string() }).parse(ctx.data).slug}`);
             toast.success("Organization created successfully");
           },
         },

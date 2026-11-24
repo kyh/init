@@ -1,4 +1,5 @@
-import { defineConfig, defineDocs, frontmatterSchema, metaSchema } from "fumadocs-mdx/config";
+import { metaSchema, pageSchema } from "fumadocs-core/source/schema";
+import { defineConfig, defineDocs } from "fumadocs-mdx/config";
 import { z } from "zod";
 
 export const docs = defineDocs({
@@ -7,7 +8,7 @@ export const docs = defineDocs({
     postprocess: {
       includeProcessedMarkdown: true,
     },
-    schema: frontmatterSchema.extend({
+    schema: pageSchema.extend({
       modified: z.union([z.date(), z.iso.date().transform((day) => new Date(day))]),
     }),
   },

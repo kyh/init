@@ -64,8 +64,8 @@ describe("buildDocGraph", () => {
     assert.equal(article?.["@type"], "TechArticle");
     assert.equal(article?.headline, "Queries");
     assert.equal(article?.dateModified, lastModified.toISOString());
-    assert.match(String(article?.url), /^https?:\/\/.+\/docs\/build\/queries$/u);
-    assert.match(String(article?.image), /^https?:\/\/.+\/image\.png$/u);
+    assert.match(article?.url ?? "", /^https?:\/\/.+\/docs\/build\/queries$/u);
+    assert.match(article?.image ?? "", /^https?:\/\/.+\/image\.png$/u);
   });
 
   test("breadcrumbs run Home, Documentation, page", () => {

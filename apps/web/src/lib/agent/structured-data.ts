@@ -3,7 +3,7 @@ import { siteConfig } from "@/lib/site-config";
 import { absoluteUrl } from "./markdown";
 
 /** Plain JSON; `undefined` is allowed because `JSON.stringify` drops those keys. */
-export type JsonLdValue = string | number | boolean | null | undefined | JsonLdValue[] | JsonLdNode;
+type JsonLdValue = string | number | boolean | null | undefined | JsonLdValue[] | JsonLdNode;
 
 export interface JsonLdNode {
   [key: string]: JsonLdValue;

@@ -11,6 +11,6 @@
     "plugins": [{ "name": "next" }],
     "module": "esnext"
   },
-  "include": [".", ".next/types/**/*.ts"],
+  "include": [".", "src/app/.well-known/**/*", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
 }

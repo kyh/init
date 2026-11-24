@@ -41,7 +41,7 @@ const generateAvailableSlug = async (baseSlug: string, attempt = 0) => {
   const org = await db.query.organization.findFirst({ where: { slug } });
 
   if (org) {
-    return generateAvailableSlug(baseSlug, attempt + 1);
+    return await generateAvailableSlug(baseSlug, attempt + 1);
   }
 
   return slug;

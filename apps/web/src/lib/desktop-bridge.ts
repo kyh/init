@@ -13,7 +13,7 @@ const updateStateSchema = z.discriminatedUnion("status", [
 
 export type DesktopUpdateState = z.infer<typeof updateStateSchema>;
 
-export interface DesktopBridge {
+interface DesktopBridge {
   onMenuAction: (listener: (action: string) => void) => () => void;
   checkForUpdates: () => Promise<DesktopUpdateState>;
   downloadUpdate: () => Promise<DesktopUpdateState>;

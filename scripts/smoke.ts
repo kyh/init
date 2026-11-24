@@ -3,6 +3,7 @@ import { styleText } from "node:util";
 import { createORPCClient } from "@orpc/client";
 import { RPCLink } from "@orpc/client/fetch";
 import type { ContractClient } from "@repo/contract";
+import { z } from "zod";
 
 const BASE_URL = (
   process.env.SMOKE_URL ?? `http://localhost:${process.env.PORT ?? "3000"}`
@@ -55,7 +56,11 @@ const waitForServer = async () => {
 
     try {
       const response = await fetch(url("/api/health"), { signal: deadline() });
-      const body: { status?: string } = await response.json();
+
+      const body = z
+        .object({ status: z.string().optional() })
+        .catch({})
+        .parse(await response.json());
 
       if (response.ok && body.status === "ok") {
         return;
@@ -109,7 +114,10 @@ const firstOrganizationSlug = async () => {
     fail(`organization list failed: ${await describeResponse(response)}`);
   }
 
-  const organizations: { slug?: string }[] = await response.json();
+  const organizations = z
+    .array(z.object({ slug: z.string().optional() }))
+    .parse(await response.json());
+
   const slug = organizations[0]?.slug;
 
   if (!slug) {
