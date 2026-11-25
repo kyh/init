@@ -70,7 +70,7 @@ export const UpdateOrganizationForm = ({ slug }: UpdateOrganizationFormProps) =>
   const form = useAppForm({
     defaultValues: {
       name: organizationData.organization.name,
-      slug: organizationData.organization.slug ?? "",
+      slug: organizationData.organization.slug,
     },
     onSubmit: ({ value }) => {
       updateOrganization(value);

@@ -159,7 +159,7 @@ const createColumns = (slug: string, userId: string, canManageMembers: boolean) 
           <span className="flex items-center gap-4 text-left">
             <Avatar className="size-9">
               <AvatarFallback className="animate-in fade-in uppercase">
-                {displayName?.slice(0, 1)}
+                {displayName.slice(0, 1)}
               </AvatarFallback>
             </Avatar>
             <span>{displayName}</span>

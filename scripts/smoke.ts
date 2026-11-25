@@ -186,7 +186,7 @@ const main = async () => {
     const title = `smoke-${Date.now()}`;
     const { todo } = await client.todo.create({ slug, title });
 
-    if (todo?.title !== title) {
+    if (todo.title !== title) {
       fail("todo.create did not return the created row");
     }
 

@@ -9,14 +9,7 @@ export default defineConfig({
   extends: [core, react, antiSlop, landmines],
   jsPlugins: landmines.jsPlugins,
   options: { typeAware: true },
-  ignorePatterns: [
-    ...(core.ignorePatterns ?? []),
-    ".wxt",
-    ".source",
-    ".claude",
-    ".codex",
-    ".agents",
-  ],
+  ignorePatterns: [...core.ignorePatterns, ".wxt", ".source", ".claude", ".codex", ".agents"],
   overrides: [
     { files: ["apps/web/**"], plugins: next.plugins, rules: next.rules },
     {
@@ -32,6 +25,7 @@ export default defineConfig({
   rules: {
     "eslint/require-await": "off",
     "typescript/require-await": "error",
+    "typescript/no-unnecessary-condition": "error",
     "typescript/no-floating-promises": [
       "error",
       {

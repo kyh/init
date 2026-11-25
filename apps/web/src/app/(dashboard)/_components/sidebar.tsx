@@ -108,7 +108,7 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
         <DropdownMenuTrigger className="mt-auto cursor-pointer">
           <Avatar className="size-9">
             <AvatarFallback className="animate-in fade-in uppercase">
-              {user.email?.slice(0, 1)}
+              {user.email.slice(0, 1)}
             </AvatarFallback>
           </Avatar>
         </DropdownMenuTrigger>

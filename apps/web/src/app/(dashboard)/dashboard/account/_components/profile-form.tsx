@@ -30,7 +30,7 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
 
   const form = useAppForm({
     defaultValues: {
-      displayName: user.name ?? "",
+      displayName: user.name,
     },
     onSubmit: async ({ value }) => {
       await authClient.updateUser({

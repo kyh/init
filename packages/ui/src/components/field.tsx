@@ -176,7 +176,7 @@ const FieldError = ({
       messages[0]
     ));
 
-  if (content === undefined || content === null || content === "") {
+  if (content === undefined) {
     return null;
   }
 
