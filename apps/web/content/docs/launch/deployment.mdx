@@ -113,7 +113,7 @@ publish:
   provider: github
 ```
 
-electron-builder then writes `app-update.yml` into the app, which turns the updater on, and publishes the release with its `latest-mac.yml` when `GH_TOKEN` is set (see [the auto-update guide](https://www.electron.build/auto-update)). macOS installs an update only into a signed app. The web app then checks for a release each time it loads in the shell and shows its update banner when one is out (on macOS, the app menu's Check for Updates… also checks on demand); the download and the restart each wait for a click.
+electron-builder then writes `app-update.yml` into the app, which turns the updater on, and publishes the release with its `latest-mac.yml` when `GH_TOKEN` is set (see [the auto-update guide](https://www.electron.build/auto-update)). macOS installs an update only into a signed app. The web app then checks for a release each time it loads in the shell and shows its update banner when one is out (on macOS, the app menu's Check for Updates… also checks on demand); the download and the restart each wait for a click, and a downloaded update also installs when the app quits. The package flips Electron's [fuses](https://www.electronjs.org/docs/latest/tutorial/fuses) off for running as plain Node, `NODE_OPTIONS` and `--inspect`, and loads only the `app.asar` whose integrity the package records.
 
 ## CI/CD
 

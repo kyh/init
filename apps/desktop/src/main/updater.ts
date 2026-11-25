@@ -9,7 +9,8 @@ const isBusy = (state: UpdateState) =>
 
 /**
  * The update flow the web app drives. Nothing moves without the user: the banner checks when the
- * page loads, and the download and the restart each wait for a click.
+ * page loads, and the download and the restart each wait for a click; a downloaded update also
+ * installs when the app quits, as electron-updater does by default.
  */
 export const createUpdater = (enabled: boolean, announce: (state: UpdateState) => void) => {
   const { autoUpdater } = electronUpdater;
@@ -24,7 +25,11 @@ export const createUpdater = (enabled: boolean, announce: (state: UpdateState) =
 
   if (enabled) {
     autoUpdater.autoDownload = false;
-    autoUpdater.autoInstallOnAppQuit = false;
+    autoUpdater.on("error", (error) => {
+      if (state.status === "downloaded") {
+        publish({ message: error.message, status: "error" });
+      }
+    });
     autoUpdater.on("download-progress", (progress) => {
       if (state.status === "downloading") {
         publish({
