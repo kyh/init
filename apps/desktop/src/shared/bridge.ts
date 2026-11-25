@@ -1,8 +1,7 @@
 /** The commands the web app may invoke (`apps/web/src/lib/desktop-bridge.ts`). */
 export const COMMANDS = ["check-for-updates", "download-update", "install-update"] as const;
 
-/** The events the shell sends the web app. */
-export const EVENTS = ["menu-action", "update-state"] as const;
+const EVENTS = ["menu-action", "update-state"] as const;
 
 export type Command = (typeof COMMANDS)[number];
 

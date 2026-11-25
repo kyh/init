@@ -93,5 +93,3 @@ export const createUpdater = (enabled: boolean, announce: (state: UpdateState) =
 
   return { check, download, enabled, install };
 };
-
-export type Updater = ReturnType<typeof createUpdater>;

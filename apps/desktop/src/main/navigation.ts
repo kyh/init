@@ -1,7 +1,6 @@
-/** OAuth must navigate inside the window. Keep these aligned with the configured auth providers. */
-export const OAUTH_ORIGINS = ["https://github.com"];
+const OAUTH_ORIGINS = ["https://github.com"];
 
-export type Verdict = "allow" | "open-externally" | "deny";
+type Verdict = "allow" | "open-externally" | "deny";
 
 const originOf = (url: string) => {
   try {
