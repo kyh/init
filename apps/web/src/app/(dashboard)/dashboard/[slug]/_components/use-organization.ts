@@ -6,9 +6,11 @@ import { orpc } from "@/orpc/react";
 export const useOrganization = (slug: string) =>
   useSuspenseQuery(orpc.organization.get.queryOptions({ input: { slug } }));
 
-export const invalidateOrganization = (queryClient: QueryClient, slug: string) =>
-  queryClient.invalidateQueries({ queryKey: orpc.organization.get.key({ input: { slug } }) });
+export const invalidateOrganization = async (queryClient: QueryClient, slug: string) => {
+  await queryClient.invalidateQueries({ queryKey: orpc.organization.get.key({ input: { slug } }) });
+};
 
 /** Use when a slug disappears; invalidation would refetch the old slug into NOT_FOUND. */
-export const removeOrganization = (queryClient: QueryClient, slug: string) =>
+export const removeOrganization = (queryClient: QueryClient, slug: string) => {
   queryClient.removeQueries({ queryKey: orpc.organization.get.key({ input: { slug } }) });
+};

@@ -118,6 +118,9 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
     });
   };
 
+  const image = user.image ?? "";
+  const hasImage = image !== "";
+
   return (
     <form
       onSubmit={(event) => {
@@ -131,9 +134,9 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
           htmlFor="profile-image-upload"
           className="bg-secondary text-secondary-foreground hover:bg-secondary/80 relative cursor-pointer shadow-sm"
         >
-          {user.image ? (
+          {hasImage ? (
             <Image
-              src={user.image}
+              src={image}
               alt="Profile picture"
               className="h-24 w-24 flex-none rounded-lg object-cover"
               width={96}
@@ -148,10 +151,12 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
         <div>
           <input
             id="profile-image-upload"
-            aria-label={user.image ? "Change profile image" : "Upload profile image"}
+            aria-label={hasImage ? "Change profile image" : "Upload profile image"}
             className="sr-only"
             type="file"
-            onChange={handleProfileImageChange}
+            onChange={(event) => {
+              void handleProfileImageChange(event);
+            }}
             disabled={isUploadingProfileImage}
           />
           <div className="flex gap-2">
@@ -162,12 +167,14 @@ export const ProfileForm = ({ user }: ProfileFormProps) => {
               // oxlint-disable-next-line label-has-associated-control -- associated with the file input above via htmlFor
               render={<label htmlFor="profile-image-upload" />}
             >
-              {user.image ? "Change Profile Image" : "Upload Profile Image"}
+              {hasImage ? "Change Profile Image" : "Upload Profile Image"}
             </Button>
-            {user.image && (
+            {hasImage && (
               <Button
                 variant="ghost"
-                onClick={removeProfileImage}
+                onClick={() => {
+                  void removeProfileImage();
+                }}
                 disabled={isUploadingProfileImage}
               >
                 Remove

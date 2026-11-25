@@ -15,6 +15,7 @@ import { DownloadIcon, Loader2Icon, RotateCwIcon, TriangleAlertIcon } from "luci
 
 import { desktopBridge } from "@/lib/desktop-bridge";
 import type { DesktopUpdateState } from "@/lib/desktop-bridge";
+import { unreachable } from "@/lib/unreachable";
 
 const FLOATING_CLASS = "fixed right-4 bottom-4 z-50 w-full max-w-sm";
 
@@ -31,18 +32,15 @@ export const DesktopUpdateBanner = () => {
 
   useEffect(() => {
     const bridge = desktopBridge();
+    const unsubscribe = bridge?.onUpdateState(setUpdateState);
 
-    if (!bridge) {
-      return;
+    if (bridge !== null) {
+      const check = async () => {
+        setUpdateState(await bridge.checkForUpdates());
+      };
+
+      void check();
     }
-
-    const unsubscribe = bridge.onUpdateState(setUpdateState);
-
-    const check = async () => {
-      setUpdateState(await bridge.checkForUpdates());
-    };
-
-    void check();
 
     return unsubscribe;
   }, []);
@@ -87,7 +85,12 @@ export const DesktopUpdateBanner = () => {
             <CardDescription>Version {updateState.version} is ready to download.</CardDescription>
           </CardHeader>
           <CardFooter className="justify-end">
-            <Button size="sm" onClick={handleDownload}>
+            <Button
+              size="sm"
+              onClick={() => {
+                void handleDownload();
+              }}
+            >
               Download
             </Button>
           </CardFooter>
@@ -123,7 +126,12 @@ export const DesktopUpdateBanner = () => {
             <CardDescription>Restart to finish installing the update.</CardDescription>
           </CardHeader>
           <CardFooter className="justify-end">
-            <Button size="sm" onClick={handleInstall}>
+            <Button
+              size="sm"
+              onClick={() => {
+                void handleInstall();
+              }}
+            >
               Restart
             </Button>
           </CardFooter>
@@ -142,7 +150,13 @@ export const DesktopUpdateBanner = () => {
             <CardDescription>{updateState.message}</CardDescription>
           </CardHeader>
           <CardFooter className="justify-end">
-            <Button size="sm" variant="outline" onClick={handleRetry}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                void handleRetry();
+              }}
+            >
               Retry
             </Button>
           </CardFooter>
@@ -150,8 +164,14 @@ export const DesktopUpdateBanner = () => {
       );
     }
 
-    default: {
+    case "checking":
+    case "idle":
+    case "not-available": {
       return null;
+    }
+
+    default: {
+      return unreachable(updateState);
     }
   }
 };

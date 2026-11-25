@@ -7,7 +7,7 @@ import { auth } from "./auth";
 
 describe("createORPCContext", () => {
   test("resolves the session itself when none is supplied", async (t) => {
-    const spy = t.mock.method(auth.api, "getSession", () => Promise.resolve(mockSession));
+    const spy = t.mock.method(auth.api, "getSession", () => mockSession);
 
     const ctx = await createORPCContext({ headers: new Headers() });
 

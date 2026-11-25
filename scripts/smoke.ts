@@ -31,7 +31,7 @@ const BROWSER_HEADERS = { origin: BASE_URL };
 let cookie = "";
 
 const link = new RPCLink({
-  fetch: (request, init) => fetch(request, { ...init, signal: deadline() }),
+  fetch: async (request, init) => await fetch(request, { ...init, signal: deadline() }),
   headers: () => (cookie ? { cookie } : {}),
   origin: BASE_URL,
   url: "/api/orpc",
@@ -55,11 +55,13 @@ const waitForServer = async () => {
     attempts += 1;
 
     try {
+      // oxlint-disable-next-line no-await-in-loop -- polls until the server answers
       const response = await fetch(url("/api/health"), { signal: deadline() });
 
       const body = z
         .object({ status: z.string().optional() })
         .catch({})
+        // oxlint-disable-next-line no-await-in-loop -- polls until the server answers
         .parse(await response.json());
 
       if (response.ok && body.status === "ok") {
@@ -71,6 +73,7 @@ const waitForServer = async () => {
       lastSeen = error instanceof Error ? error.message : String(error);
     }
 
+    // oxlint-disable-next-line no-await-in-loop -- polls until the server answers
     await sleep(250);
   }
 
@@ -120,7 +123,7 @@ const firstOrganizationSlug = async () => {
 
   const slug = organizations[0]?.slug;
 
-  if (!slug) {
+  if (slug === undefined) {
     fail("signed-in user has no organization — the seed did not run correctly");
   }
 
@@ -228,7 +231,7 @@ const main = async () => {
     const html = decodeEntities(await response.text());
     const title = seeded[0]?.title;
 
-    if (title && !html.includes(title)) {
+    if (title !== undefined && !html.includes(title)) {
       fail(`dashboard rendered without the seeded todo "${title}"`);
     }
   });

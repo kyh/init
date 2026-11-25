@@ -27,16 +27,16 @@ const useCancelInvitation = (slug: string, invitationId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () =>
-      authClient.organization.cancelInvitation({
+    mutationFn: async () =>
+      await authClient.organization.cancelInvitation({
         fetchOptions: { throw: true },
         invitationId,
       }),
     onError: (error) => toast.error(error.message),
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Invitation cancelled successfully");
 
-      return invalidateOrganization(queryClient, slug);
+      await invalidateOrganization(queryClient, slug);
     },
   });
 };

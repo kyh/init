@@ -10,6 +10,7 @@ import { GENERAL_LEGAL_CREDIT, headingId } from "./page-content";
 import { privacy } from "./privacy-policy";
 import { findSitePage, sitePages } from "./site-pages";
 import { terms } from "./terms-of-use";
+import { unreachable } from "@/lib/unreachable";
 
 const itemRuns: (items: ListItem[]) => Inline[] = (items) =>
   items.flatMap((entry) => [...entry.content, ...itemRuns(entry.items)]);
@@ -28,8 +29,12 @@ const blockRuns: (block: Block) => Inline[] = (block) => {
       return [{ kind: "text", text: block.text }];
     }
 
-    default: {
+    case "table": {
       return [...block.columns, ...block.rows.flat()].map((text) => ({ kind: "text", text }));
+    }
+
+    default: {
+      return unreachable(block);
     }
   }
 };
@@ -99,7 +104,7 @@ describe("privacy policy", () => {
   test("links its own history on GitHub, from the file that holds its text", () => {
     const history = linksOf(privacy).find((run) => run.text === "history on GitHub");
     const [, path] = history?.href.split(`${siteConfig.repository}/commits/main/`) ?? [];
-    assert.ok(path, "history link");
+    assert.ok(path !== undefined, "history link");
     assert.ok(fileURLToPath(new URL("privacy-policy.ts", import.meta.url)).endsWith(path));
   });
 
@@ -120,7 +125,7 @@ describe("privacy policy", () => {
     }
 
     const [ccpa] = tables;
-    assert.ok(ccpa?.rows.every((row) => row.at(-1) === "None"));
+    assert.ok(ccpa?.rows.every((row) => row.at(-1) === "None") === true);
   });
 });
 

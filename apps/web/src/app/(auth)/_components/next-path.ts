@@ -1,5 +1,5 @@
 export const safeNextPath = (nextPath?: string) => {
-  if (!nextPath?.startsWith("/")) {
+  if (nextPath?.startsWith("/") !== true) {
     return "/dashboard";
   }
 

@@ -8,7 +8,10 @@ export const GET = async () => {
     return redirect("/auth/login");
   }
 
-  if (session.session.activeOrganizationId) {
+  if (
+    session.session.activeOrganizationId !== undefined &&
+    session.session.activeOrganizationId !== null
+  ) {
     const organization = await getOrganizationById(session.session.activeOrganizationId);
 
     if (organization) {
@@ -19,7 +22,7 @@ export const GET = async () => {
   const organizations = await listOrganizations();
   const firstSlug = organizations[0]?.slug;
 
-  if (firstSlug) {
+  if (firstSlug !== undefined) {
     return redirect(`/dashboard/${firstSlug}`);
   }
 

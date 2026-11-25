@@ -29,8 +29,8 @@ const useUpdateOrganization = (slug: string, organizationId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: z.infer<typeof updateOrganizationSchema>) =>
-      authClient.organization.update({
+    mutationFn: async (data: z.infer<typeof updateOrganizationSchema>) =>
+      await authClient.organization.update({
         data: {
           name: data.name,
           slug: slugify(data.slug),
@@ -72,7 +72,9 @@ export const UpdateOrganizationForm = ({ slug }: UpdateOrganizationFormProps) =>
       name: organizationData.organization.name,
       slug: organizationData.organization.slug ?? "",
     },
-    onSubmit: ({ value }) => updateOrganization(value),
+    onSubmit: ({ value }) => {
+      updateOrganization(value);
+    },
     validators: {
       onSubmit: updateOrganizationSchema,
     },

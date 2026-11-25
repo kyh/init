@@ -5,7 +5,7 @@ import { getSessionCookie } from "better-auth/cookies";
 import { prefersMarkdown } from "@/lib/agent/accept";
 
 const redirectSignedOut = (request: NextRequest) => {
-  if (getSessionCookie(request)) {
+  if (getSessionCookie(request) !== undefined) {
     return NextResponse.next();
   }
 

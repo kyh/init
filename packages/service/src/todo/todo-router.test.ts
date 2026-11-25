@@ -105,13 +105,15 @@ describe("todoRouter", () => {
   test("reports NOT_FOUND when update or delete matches no tenant-owned todo", async () => {
     const operations: ("update" | "delete")[] = ["update", "delete"];
 
-    for (const operation of operations) {
-      const context = createMemberContext();
-      context.responses.push([]);
-      const caller = createRouterClient(todoRouter, { context });
-      await assert.rejects(caller[operation]({ id: TODO.id, slug: "acme", title: "Missing" }), {
-        code: "NOT_FOUND",
-      });
-    }
+    await Promise.all(
+      operations.map(async (operation) => {
+        const context = createMemberContext();
+        context.responses.push([]);
+        const caller = createRouterClient(todoRouter, { context });
+        await assert.rejects(caller[operation]({ id: TODO.id, slug: "acme", title: "Missing" }), {
+          code: "NOT_FOUND",
+        });
+      }),
+    );
   });
 });

@@ -20,7 +20,7 @@ const RowsSkeleton = ({ rows, withAvatar }: { rows: number; withAvatar?: boolean
   <div className="rounded-md border">
     {SKELETON_ROW_KEYS.slice(0, rows).map((key) => (
       <div key={key} className="flex items-center gap-4 border-b p-4 last:border-b-0">
-        {withAvatar ? <Skeleton className="size-9 rounded-full" /> : null}
+        {withAvatar === true ? <Skeleton className="size-9 rounded-full" /> : null}
         <div className="flex-1 space-y-2">
           <Skeleton className="h-4 w-32" />
           <Skeleton className="h-3 w-48" />

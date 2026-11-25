@@ -20,21 +20,18 @@ export default defineConfig({
   overrides: [
     { files: ["apps/web/**"], plugins: next.plugins, rules: next.rules },
     {
-      files: ["**/*.cjs", "**/*.mjs", "**/*.js"],
+      files: ["apps/mobile/metro.config.cjs"],
       rules: {
         "typescript/no-unsafe-argument": "off",
         "typescript/no-unsafe-assignment": "off",
         "typescript/no-unsafe-call": "off",
         "typescript/no-unsafe-member-access": "off",
-        "typescript/no-unsafe-return": "off",
       },
     },
   ],
   rules: {
-    "anti-slop/require-safety-comment-for-type-assertion": "off",
-    "no-await-in-loop": "off",
-    "typescript/consistent-return": "off",
-    "typescript/no-confusing-void-expression": "off",
+    "eslint/require-await": "off",
+    "typescript/require-await": "error",
     "typescript/no-floating-promises": [
       "error",
       {
@@ -42,15 +39,6 @@ export default defineConfig({
           { from: "package", package: "node:test", name: ["describe", "it", "suite", "test"] },
         ],
       },
-    ],
-    "typescript/no-misused-promises": ["error", { checksVoidReturn: { attributes: false } }],
-    "typescript/prefer-nullish-coalescing": ["error", { ignorePrimitives: { boolean: true } }],
-    "typescript/promise-function-async": "off",
-    "typescript/strict-boolean-expressions": "off",
-    "typescript/strict-void-return": "off",
-    "typescript/switch-exhaustiveness-check": [
-      "error",
-      { considerDefaultExhaustiveForUnions: true },
     ],
   },
 });

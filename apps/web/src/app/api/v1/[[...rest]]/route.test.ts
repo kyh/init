@@ -43,7 +43,7 @@ describe("openapi document", () => {
   test("describes every procedure under the REST prefix", async () => {
     const document = await generateOpenAPIDocument();
 
-    assert.ok(document.servers?.[0]?.url.endsWith("/api/v1"));
+    assert.ok(document.servers?.[0]?.url.endsWith("/api/v1") === true);
 
     const paths: `/${string}`[] = [
       "/todo/list",

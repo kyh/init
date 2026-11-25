@@ -38,17 +38,17 @@ const useUpdateMemberRole = (slug: string, memberId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (newRole: string) =>
-      authClient.organization.updateMemberRole({
+    mutationFn: async (newRole: string) =>
+      await authClient.organization.updateMemberRole({
         fetchOptions: { throw: true },
         memberId,
         role: roleSchema.parse(newRole),
       }),
     onError: (error) => toast.error(error.message),
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Member role updated successfully");
 
-      return invalidateOrganization(queryClient, slug);
+      await invalidateOrganization(queryClient, slug);
     },
   });
 };
@@ -57,16 +57,16 @@ const useRemoveMember = (slug: string, memberId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () =>
-      authClient.organization.removeMember({
+    mutationFn: async () =>
+      await authClient.organization.removeMember({
         fetchOptions: { throw: true },
         memberIdOrEmail: memberId,
       }),
     onError: (error) => toast.error(error.message),
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Member removed successfully");
 
-      return invalidateOrganization(queryClient, slug);
+      await invalidateOrganization(queryClient, slug);
     },
   });
 };
@@ -138,7 +138,7 @@ const ActionsDropdown = ({
         Remove from Organization
       </DropdownMenuItem>
     ),
-  ].filter((action) => !!action);
+  ].filter((action) => action !== false);
 
   if (actions.length === 0) {
     return null;

@@ -31,14 +31,14 @@ export const os = implement(contract).$context<ORPCContext>();
 const base = builder.$context<ORPCContext>();
 
 /** Pairs with `protectedBase`, which declares UNAUTHORIZED. Apply as `os.<feature>.use(requireSession)`. */
-export const requireSession = base.middleware(({ context, next }) => {
+export const requireSession = base.middleware(async ({ context, next }) => {
   if (!context.session?.user) {
     throw new ORPCError("UNAUTHORIZED", {
       message: "You must be logged in to access this resource",
     });
   }
 
-  return next({
+  return await next({
     context: {
       session: { ...context.session, user: context.session.user },
     },

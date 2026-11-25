@@ -22,7 +22,7 @@ export const NavLink = ({
   ...props
 }: NavLinkProps) => {
   const pathname = usePathname();
-  const isActive = exact ? pathname === href : pathname.startsWith(href);
+  const isActive = exact === true ? pathname === href : pathname.startsWith(href);
 
   return (
     <Link

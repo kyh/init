@@ -37,7 +37,7 @@ const sniffImageType = (bytes: Uint8Array) => {
 };
 
 const requireBlobToken = () =>
-  process.env.BLOB_READ_WRITE_TOKEN
+  process.env.BLOB_READ_WRITE_TOKEN !== undefined && process.env.BLOB_READ_WRITE_TOKEN !== ""
     ? null
     : new Response(
         "Avatar uploads need BLOB_READ_WRITE_TOKEN. Create a Blob store in the Vercel " +
@@ -53,7 +53,7 @@ const avatarPrefix = (userId: string) => `avatars/${userId}/`;
 const SWEEP_GRACE_MS = 5 * 60 * 1000;
 
 const isStale = (item: { key: string; lastModified?: number }, keepKey?: string) => {
-  if (!keepKey) {
+  if (keepKey === undefined) {
     return true;
   }
 

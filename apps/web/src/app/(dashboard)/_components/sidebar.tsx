@@ -173,7 +173,12 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
             </DropdownMenuSub>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem className="flex w-full gap-2" onClick={handleSignOut}>
+          <DropdownMenuItem
+            className="flex w-full gap-2"
+            onClick={() => {
+              void handleSignOut();
+            }}
+          >
             <LogOutIcon className="size-4" />
             Log out
           </DropdownMenuItem>

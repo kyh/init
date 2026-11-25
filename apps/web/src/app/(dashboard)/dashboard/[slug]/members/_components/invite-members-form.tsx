@@ -54,13 +54,14 @@ const useInviteMembers = (slug: string, organizationId: string) => {
   return useMutation({
     mutationFn: async (data: z.infer<typeof inviteMembersSchema>) => {
       const results = await Promise.allSettled(
-        data.organizationInvitations.map((invite) =>
-          authClient.organization.inviteMember({
-            email: invite.email,
-            fetchOptions: { throw: true },
-            organizationId,
-            role: invite.role,
-          }),
+        data.organizationInvitations.map(
+          async (invite) =>
+            await authClient.organization.inviteMember({
+              email: invite.email,
+              fetchOptions: { throw: true },
+              organizationId,
+              role: invite.role,
+            }),
         ),
       );
 
@@ -71,7 +72,9 @@ const useInviteMembers = (slug: string, organizationId: string) => {
       }
     },
     onError: (error) => toast.error(error.message),
-    onSettled: () => invalidateOrganization(queryClient, slug),
+    onSettled: async () => {
+      await invalidateOrganization(queryClient, slug);
+    },
     onSuccess: () => {
       toast.success("Invitations sent successfully");
     },
@@ -178,7 +181,9 @@ const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormProps) =>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => arrayField.pushValue(createEmptyInviteModel())}
+                  onClick={() => {
+                    arrayField.pushValue(createEmptyInviteModel());
+                  }}
                 >
                   <PlusIcon className="mr-1 h-3" />
                   <span>Add another one</span>

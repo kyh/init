@@ -65,7 +65,7 @@ export const pageMetadata = (input: PageMetadataInput) => {
     url: input.path,
   };
 
-  if (input.video) {
+  if (input.video === true) {
     openGraph.videos = [siteVideo];
   }
 
@@ -82,7 +82,7 @@ export const pageMetadata = (input: PageMetadataInput) => {
     },
   };
 
-  if (input.title) {
+  if (input.title !== undefined && input.title !== "") {
     metadata.title = input.title;
   }
 

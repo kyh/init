@@ -209,10 +209,13 @@ export const GlobalAlertDialog = () => {
 
     setPending(action);
 
-    const succeeded = await Promise.resolve()
-      .then(() => alertState[action]?.onClick?.())
-      .then(() => true)
-      .catch(() => false);
+    let succeeded = true;
+
+    try {
+      await alertState[action]?.onClick?.();
+    } catch {
+      succeeded = false;
+    }
 
     if (succeeded) {
       alertDialog.close();
@@ -234,23 +237,27 @@ export const GlobalAlertDialog = () => {
         <AlertDialogHeader>
           <AlertDialogTitle>{alertState.title}</AlertDialogTitle>
         </AlertDialogHeader>
-        {alertState.description && (
+        {alertState.description === undefined ? null : (
           <AlertDialogDescription>{alertState.description}</AlertDialogDescription>
         )}
         <AlertDialogFooter>
-          {!alertState.action?.hidden && (
+          {alertState.action?.hidden === true ? null : (
             <Button
-              onClick={() => run("action")}
+              onClick={() => {
+                void run("action");
+              }}
               loading={pending === "action"}
               disabled={pending !== null}
             >
               {alertState.action?.label ?? "Confirm"}
             </Button>
           )}
-          {!alertState.cancel?.hidden && (
+          {alertState.cancel?.hidden === true ? null : (
             <Button
               variant="secondary"
-              onClick={() => run("cancel")}
+              onClick={() => {
+                void run("cancel");
+              }}
               loading={pending === "cancel"}
               disabled={pending !== null}
             >

@@ -53,9 +53,11 @@ const createPersonalOrganization = async (user: User) => {
   const baseSlug = slugify(user.name) || FALLBACK_ORGANIZATION_SLUG;
 
   for (let attempt = 1; ; attempt += 1) {
+    // oxlint-disable-next-line no-await-in-loop -- each attempt needs the previous one's collision
     const slug = await generateAvailableSlug(baseSlug);
 
     try {
+      // oxlint-disable-next-line no-await-in-loop -- each attempt needs the previous one's collision
       return await auth.api.createOrganization({
         body: {
           metadata: {
@@ -87,10 +89,6 @@ const createRequiredOrganization = async (user: User) => {
 
 const createDefaultOrganization = async (user: User) => {
   const createdOrganization = await createRequiredOrganization(user);
-
-  if (!createdOrganization) {
-    return;
-  }
 
   try {
     await db
@@ -127,12 +125,14 @@ export const auth = betterAuth({
   databaseHooks: {
     session: {
       create: {
-        before: (session) => setActiveOrganization(session),
+        before: async (session) => await setActiveOrganization(session),
       },
     },
     user: {
       create: {
-        after: (user) => createDefaultOrganization(user),
+        after: async (user) => {
+          await createDefaultOrganization(user);
+        },
       },
     },
   },
@@ -160,9 +160,10 @@ export const auth = betterAuth({
   plugins: [
     oAuthProxy({
       currentURL: baseUrl,
-      productionURL: process.env.VERCEL_PROJECT_PRODUCTION_URL
-        ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-        : baseUrl,
+      productionURL:
+        process.env.VERCEL_PROJECT_PRODUCTION_URL === undefined
+          ? baseUrl
+          : `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`,
     }),
     expo(),
     organization({
@@ -198,7 +199,7 @@ export const auth = betterAuth({
         ],
       },
     }),
-    ...(emulatorUrl
+    ...(emulatorUrl !== undefined && emulatorUrl !== ""
       ? [
           genericOAuth({
             config: [

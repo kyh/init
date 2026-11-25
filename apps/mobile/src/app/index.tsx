@@ -10,9 +10,11 @@ const Todos = () => {
   const { data: organizations } = authClient.useListOrganizations();
   const slug = organizations?.[0]?.slug;
 
-  const todos = useQuery(orpc.todo.list.queryOptions({ input: slug ? { slug } : skipToken }));
+  const todos = useQuery(
+    orpc.todo.list.queryOptions({ input: slug === undefined ? skipToken : { slug } }),
+  );
 
-  if (!slug || todos.isPending) {
+  if (slug === undefined || todos.isPending) {
     return <ActivityIndicator className="pt-4" />;
   }
 
@@ -41,13 +43,15 @@ const MobileAuth = () => {
   return (
     <>
       <Text className="text-foreground pb-2 text-center text-xl font-semibold">
-        {session?.user.name ? `Hello, ${session.user.name}` : "Not logged in"}
+        {session?.user.name === undefined || session.user.name === ""
+          ? "Not logged in"
+          : `Hello, ${session.user.name}`}
       </Text>
       <Pressable
-        onPress={() =>
+        onPress={async () =>
           session
-            ? authClient.signOut()
-            : authClient.signIn.social({ callbackURL: "/", provider: "github" })
+            ? await authClient.signOut()
+            : await authClient.signIn.social({ callbackURL: "/", provider: "github" })
         }
         className="bg-primary flex items-center rounded-sm p-2"
       >
