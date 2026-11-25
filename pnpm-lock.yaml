@@ -330,9 +330,6 @@ importers:
       oxlint:
         specifier: ^1.95.0
         version: 1.95.0(oxlint-tsgolint@7.0.2008)
-      oxlint-tsgolint:
-        specifier: ^7.0.2008
-        version: 7.0.2008
       tsx:
         specifier: 'catalog:'
         version: 4.23.15
@@ -15474,6 +15471,7 @@ snapshots:
       '@oxlint-tsgolint/linux-x64': 7.0.2008
       '@oxlint-tsgolint/win32-arm64': 7.0.2008
       '@oxlint-tsgolint/win32-x64': 7.0.2008
+    optional: true
 
   oxlint@1.95.0(oxlint-tsgolint@7.0.2008):
     optionalDependencies:

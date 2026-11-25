@@ -38,7 +38,6 @@
     "knip": "^6.48.0",
     "oxfmt": "^0.80.0",
     "oxlint": "^1.95.0",
-    "oxlint-tsgolint": "^7.0.2008",
     "tsx": "catalog:",
     "turbo": "^2.11.13",
     "typescript": "catalog:",
