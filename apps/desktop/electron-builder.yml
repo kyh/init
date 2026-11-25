@@ -6,7 +6,8 @@ directories:
 files:
   - .output/app/**
   - package.json
-# Electron's security checklist: no launch runs other code as the app.
+# Electron's security checklist: no launch runs other code as the app, and no file:// page
+# gets more than a browser would.
 electronFuses:
   runAsNode: false
   enableCookieEncryption: true
@@ -14,6 +15,7 @@ electronFuses:
   enableNodeCliInspectArguments: false
   enableEmbeddedAsarIntegrityValidation: true
   onlyLoadAppFromAsar: true
+  grantFileProtocolExtraPrivileges: false
 mac:
   category: public.app-category.productivity
   target: [dmg, zip]
