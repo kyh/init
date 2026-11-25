@@ -8,7 +8,7 @@ export default defineConfig({
     build: {
       externalizeDeps: false,
       outDir: ".output/app/main",
-      rollupOptions: {
+      rolldownOptions: {
         input: { index: path.resolve(import.meta.dirname, "src/main/index.ts") },
       },
     },
@@ -20,7 +20,7 @@ export default defineConfig({
     build: {
       externalizeDeps: false,
       outDir: ".output/app/preload",
-      rollupOptions: {
+      rolldownOptions: {
         input: { index: path.resolve(import.meta.dirname, "src/preload/index.ts") },
         output: { entryFileNames: "[name].cjs", format: "cjs" },
       },
