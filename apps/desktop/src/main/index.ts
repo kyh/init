@@ -85,9 +85,20 @@ const openSettings = () => {
 };
 
 const start = async () => {
+  if (!development && !app.requestSingleInstanceLock()) {
+    app.quit();
+
+    return;
+  }
+
   app.enableSandbox();
   app.setName(APP_NAME);
   pinNavigation(allowed);
+  app.on("second-instance", () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      showWindow(mainWindow);
+    }
+  });
   await app.whenReady();
 
   for (const command of COMMANDS) {
