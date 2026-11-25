@@ -1,7 +1,7 @@
 ---
 title: "Deployment"
 description: "Ship the web app to Vercel and the database to Supabase, plus the mobile, extension and desktop pipelines"
-modified: 2026-10-27
+modified: 2026-11-25
 ---
 
 Ship Init to production. The web app targets Vercel; the database targets Supabase. Mobile, extension, and desktop each have their own pipeline.
@@ -101,25 +101,19 @@ Dev builds derive the URL from Metro. Then follow the standard [EAS Build](https
 
 ```bash
 pnpm -F @repo/extension build   # wxt build → .output/chrome-mv3
-pnpm -F @repo/desktop package   # tauri build → src-tauri/target/release/bundle
+pnpm -F @repo/desktop package   # electron-builder → .output/bin
 ```
 
-Upload the extension to the Chrome Web Store. The desktop bundle is ad-hoc signed by default; `tauri build` signs with a Developer ID and notarizes when `APPLE_SIGNING_IDENTITY` and the `APPLE_*` notarization variables are set (see [Tauri's macOS signing guide](https://v2.tauri.app/distribute/sign/macos/)). To point a build at another deployment, pass `--config '{"build":{"frontendDist":"https://staging.example.com"}}'`.
+Upload the extension to the Chrome Web Store. electron-builder signs the desktop app with the Developer ID it finds (in the keychain, or `CSC_LINK` and `CSC_KEY_PASSWORD`) and notarizes it when `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER` (or `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD` and `APPLE_TEAM_ID`) are set (see [electron-builder's code signing guide](https://www.electron.build/code-signing)). A package opens `https://init.kyh.io/`; set `WEBAPP_URL` when packaging to point it at another deployment.
 
-Updates are off until you configure them. Generate a key pair with `pnpm -F @repo/desktop tauri signer generate`, then add the public key and your feed to `apps/desktop/src-tauri/tauri.conf.json`:
+Updates are off until you configure them. Name a feed in `apps/desktop/electron-builder.yml`:
 
-```jsonc
-"bundle": { "createUpdaterArtifacts": true /* … */ },
-"plugins": {
-  "updater": {
-    "pubkey": "<contents of the .pub file>",
-    "endpoints": ["https://github.com/<owner>/<repo>/releases/latest/download/latest.json"],
-    "requireSignedVersion": true
-  }
-}
+```yaml
+publish:
+  provider: github
 ```
 
-Build with `TAURI_SIGNING_PRIVATE_KEY` set and publish the bundle beside its `latest.json` (see [the updater guide](https://v2.tauri.app/plugin/updater/)). The web app then checks for a release each time it loads in the shell and shows its update banner when one is out (on macOS, the app menu's Check for Updates… also checks on demand); the download and the restart each wait for a click.
+electron-builder then writes `app-update.yml` into the app, which turns the updater on, and publishes the release with its `latest-mac.yml` when `GH_TOKEN` is set (see [the auto-update guide](https://www.electron.build/auto-update)). macOS installs an update only into a signed app. The web app then checks for a release each time it loads in the shell and shows its update banner when one is out (on macOS, the app menu's Check for Updates… also checks on demand); the download and the restart each wait for a click.
 
 ## CI/CD
 

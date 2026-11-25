@@ -1,0 +1,19 @@
+appId: com.init.desktop
+productName: Init
+directories:
+  buildResources: resources
+  output: .output/bin
+files:
+  - .output/app/**
+  - package.json
+mac:
+  category: public.app-category.productivity
+  target: [dmg, zip]
+linux:
+  target: [AppImage]
+win:
+  target: [nsis]
+# Updates stay off until a feed is named: electron-builder then writes app-update.yml beside
+# the app, which is what turns the updater on (apps/web/content/docs/launch/deployment.mdx).
+# publish:
+#   provider: github

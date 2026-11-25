@@ -1,6 +1,3 @@
-import { invoke, isTauri } from "@tauri-apps/api/core";
-import { listen } from "@tauri-apps/api/event";
-import type { UnlistenFn } from "@tauri-apps/api/event";
 import { z } from "zod";
 
 const updateStateSchema = z.discriminatedUnion("status", [
@@ -21,42 +18,51 @@ export interface DesktopBridge {
   onUpdateState: (listener: (state: DesktopUpdateState) => void) => () => void;
 }
 
-const register = async <T>(event: string, schema: z.ZodType<T>, listener: (value: T) => void) => {
-  try {
-    return await listen<unknown>(event, ({ payload }) => {
+interface NativeBridge {
+  // oxlint-disable-next-line anti-slop/no-unknown-returns -- the preload's answers arrive unparsed; bridgeOf parses each one
+  invoke: (command: string) => Promise<unknown>;
+  // oxlint-disable-next-line anti-slop/no-unknown-parameters -- the preload's events arrive unparsed; bridgeOf parses each one
+  on: (event: string, listener: (payload: unknown) => void) => () => void;
+}
+
+declare global {
+  interface Window {
+    desktopBridge?: unknown;
+  }
+}
+
+const isNativeBridge = (value: unknown): value is NativeBridge =>
+  typeof value === "object" &&
+  value !== null &&
+  "invoke" in value &&
+  typeof value.invoke === "function" &&
+  "on" in value &&
+  typeof value.on === "function";
+
+const bridgeOf = (native: NativeBridge) => {
+  const subscribe = <T>(event: string, schema: z.ZodType<T>, listener: (value: T) => void) =>
+    native.on(event, (payload) => {
       const parsed = schema.safeParse(payload);
 
       if (parsed.success) {
         listener(parsed.data);
       }
     });
-  } catch {
-    return null;
-  }
+
+  const ask = async (command: string) => updateStateSchema.parse(await native.invoke(command));
+
+  return {
+    checkForUpdates: async () => await ask("check-for-updates"),
+    downloadUpdate: async () => await ask("download-update"),
+    installUpdate: async () => await ask("install-update"),
+    onMenuAction: (listener) => subscribe("menu-action", z.string(), listener),
+    onUpdateState: (listener) => subscribe("update-state", updateStateSchema, listener),
+  } satisfies DesktopBridge;
 };
 
-const detach = async (registration: Promise<UnlistenFn | null>) => {
-  const stop = await registration;
-  stop?.();
+/** The desktop shell (apps/desktop, its preload's `desktopBridge`), or null in a browser tab. */
+export const desktopBridge = () => {
+  const native = typeof window === "undefined" ? undefined : window.desktopBridge;
+
+  return isNativeBridge(native) ? bridgeOf(native) : null;
 };
-
-const subscribe = <T>(event: string, schema: z.ZodType<T>, listener: (value: T) => void) => {
-  const registration = register(event, schema, listener);
-
-  return () => {
-    void detach(registration);
-  };
-};
-
-const ask = async (command: string) => updateStateSchema.parse(await invoke<unknown>(command));
-
-const tauriBridge: DesktopBridge = {
-  checkForUpdates: async () => await ask("check_for_updates"),
-  downloadUpdate: async () => await ask("download_update"),
-  installUpdate: async () => await ask("install_update"),
-  onMenuAction: (listener) => subscribe("menu-action", z.string(), listener),
-  onUpdateState: (listener) => subscribe("update-state", updateStateSchema, listener),
-};
-
-/** The desktop shell (apps/desktop), or null in a browser tab. */
-export const desktopBridge = () => (isTauri() ? tauriBridge : null);
