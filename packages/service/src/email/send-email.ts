@@ -34,7 +34,7 @@ export const emailModeOf = ({ EMAIL_FROM, RESEND_API_KEY }: EmailSettings, produ
 export const EMAIL_MODE: EmailMode = emailModeOf(env, process.env.NODE_ENV === "production");
 
 export const EMAIL_OFF_WARNING =
-  "This deployment sends no email (RESEND_API_KEY is unset): password reset and email verification are refused, and invitations go unannounced.";
+  "This deployment sends no email (RESEND_API_KEY is unset): sign-in by email code is refused, and invitations go unannounced.";
 
 export const sendEmail = async ({ to, subject, text }: SendEmailInput, mode = EMAIL_MODE) => {
   if (mode.kind === "off") {

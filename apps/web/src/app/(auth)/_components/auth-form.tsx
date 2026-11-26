@@ -11,60 +11,187 @@ import { z } from "zod";
 import { authClient } from "@/lib/auth-client";
 import { useAppForm } from "@/lib/form";
 
-type AuthFormProps = {
-  type: "login" | "register";
-  nextPath: string;
-} & React.HTMLAttributes<HTMLDivElement>;
+const CODE_LENGTH = 6;
 
-export const AuthForm = ({ className, type, nextPath, ...props }: AuthFormProps) => {
-  const router = useRouter();
-  const [submittingGithub, setSubmittingGithub] = useState(false);
+const emailSchema = z.email("Invalid email address");
 
+const codeSchema = z
+  .string()
+  .regex(new RegExp(`^\\d{${CODE_LENGTH}}$`, "u"), `Enter the ${CODE_LENGTH}-digit code`);
+
+const CODE_ERRORS = new Map([
+  ["INVALID_OTP", "That code isn't right. Check it and try again."],
+  ["OTP_EXPIRED", "That code has expired. Send a new one."],
+  ["TOO_MANY_ATTEMPTS", "Too many tries. Send a new code."],
+]);
+
+const errorMessageOf = (error: { code?: string; message?: string }) =>
+  CODE_ERRORS.get(error.code ?? "") ?? error.message ?? "Something went wrong. Try again.";
+
+const sendCode = async (email: string) => {
+  const { error } = await authClient.emailOtp.sendVerificationOtp({ email, type: "sign-in" });
+
+  if (error) {
+    toast.error(errorMessageOf(error));
+  }
+
+  return error === null;
+};
+
+const EmailStep = ({ onSent }: { onSent: (email: string) => void }) => {
   const form = useAppForm({
     defaultValues: {
       email: "",
-      password: "",
     },
     onSubmit: async ({ value }) => {
-      if (type === "register") {
-        const [emailPrefix] = value.email.split("@");
-        await authClient.signUp.email({
-          email: value.email,
-          fetchOptions: {
-            onError: (ctx) => {
-              toast.error(ctx.error.message);
-            },
-            onSuccess: () => {
-              router.replace(nextPath);
-            },
-          },
-          name: emailPrefix ?? "User",
-          password: value.password,
-        });
-      }
-
-      if (type === "login") {
-        await authClient.signIn.email({
-          email: value.email,
-          fetchOptions: {
-            onError: (ctx) => {
-              toast.error(ctx.error.message);
-            },
-            onSuccess: () => {
-              router.replace(nextPath);
-            },
-          },
-          password: value.password,
-        });
+      if (await sendCode(value.email)) {
+        onSent(value.email);
       }
     },
     validators: {
-      onSubmit: z.object({
-        email: z.email("Invalid email address"),
-        password: z.string().min(1, "Password is required"),
-      }),
+      onSubmit: z.object({ email: emailSchema }),
     },
   });
+
+  return (
+    <form
+      className="grid gap-2"
+      onSubmit={(event) => {
+        event.preventDefault();
+        void form.handleSubmit();
+      }}
+    >
+      <FieldGroup className="gap-2">
+        <form.AppField name="email" validators={{ onBlur: emailSchema }}>
+          {(field) => (
+            <field.TextField
+              label="Email"
+              labelClassName="sr-only"
+              data-test="email-input"
+              required
+              type="email"
+              placeholder="name@example.com"
+              autoCapitalize="none"
+              autoComplete="email"
+              autoCorrect="off"
+            />
+          )}
+        </form.AppField>
+      </FieldGroup>
+      <form.AppForm>
+        <form.SubmitButton>Continue with email</form.SubmitButton>
+      </form.AppForm>
+    </form>
+  );
+};
+
+const CodeStep = ({
+  email,
+  nextPath,
+  onBack,
+}: {
+  email: string;
+  nextPath: string;
+  onBack: () => void;
+}) => {
+  const router = useRouter();
+  const [resending, setResending] = useState(false);
+
+  const form = useAppForm({
+    defaultValues: {
+      code: "",
+    },
+    onSubmit: async ({ value }) => {
+      const [emailPrefix] = email.split("@");
+
+      const { error } = await authClient.signIn.emailOtp({
+        email,
+        name: emailPrefix ?? "User",
+        otp: value.code,
+      });
+
+      if (error) {
+        toast.error(errorMessageOf(error));
+
+        return;
+      }
+
+      router.replace(nextPath);
+    },
+    validators: {
+      onSubmit: z.object({ code: codeSchema }),
+    },
+  });
+
+  const resend = async () => {
+    setResending(true);
+
+    if (await sendCode(email)) {
+      toast.success(`Sent a new code to ${email}`);
+    }
+
+    setResending(false);
+  };
+
+  return (
+    <form
+      className="grid gap-2"
+      onSubmit={(event) => {
+        event.preventDefault();
+        void form.handleSubmit();
+      }}
+    >
+      <p className="text-muted-foreground text-center text-sm">
+        We sent a {CODE_LENGTH}-digit code to <span className="text-foreground">{email}</span>.
+      </p>
+      <FieldGroup className="gap-2">
+        <form.AppField name="code">
+          {(field) => (
+            <field.TextField
+              label="Sign-in code"
+              labelClassName="sr-only"
+              data-test="code-input"
+              required
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={CODE_LENGTH}
+              placeholder={"0".repeat(CODE_LENGTH)}
+              autoComplete="one-time-code"
+              inputClassName="text-center font-mono tracking-[0.5em]"
+            />
+          )}
+        </form.AppField>
+      </FieldGroup>
+      <form.AppForm>
+        <form.SubmitButton>Sign in</form.SubmitButton>
+      </form.AppForm>
+      <div className="flex justify-between">
+        <Button variant="link" size="sm" type="button" onClick={onBack}>
+          Use a different email
+        </Button>
+        <Button
+          variant="link"
+          size="sm"
+          type="button"
+          loading={resending}
+          onClick={() => {
+            void resend();
+          }}
+        >
+          Resend code
+        </Button>
+      </div>
+    </form>
+  );
+};
+
+type AuthFormProps = {
+  nextPath: string;
+} & React.HTMLAttributes<HTMLDivElement>;
+
+export const AuthForm = ({ className, nextPath, ...props }: AuthFormProps) => {
+  const [submittingGithub, setSubmittingGithub] = useState(false);
+  const [email, setEmail] = useState<string>();
 
   const handleAuthWithGithub = async () => {
     setSubmittingGithub(true);
@@ -81,6 +208,20 @@ export const AuthForm = ({ className, type, nextPath, ...props }: AuthFormProps)
       provider: "github",
     });
   };
+
+  if (email !== undefined) {
+    return (
+      <div className={cn("grid gap-6", className)} {...props}>
+        <CodeStep
+          email={email}
+          nextPath={nextPath}
+          onBack={() => {
+            setEmail(undefined);
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className={cn("grid gap-6", className)} {...props}>
@@ -102,246 +243,7 @@ export const AuthForm = ({ className, type, nextPath, ...props }: AuthFormProps)
           <span className="bg-background text-muted-foreground px-2">Or</span>
         </div>
       </div>
-      <form
-        className="grid gap-2"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void form.handleSubmit();
-        }}
-      >
-        <FieldGroup className="gap-2">
-          <form.AppField
-            name="email"
-            validators={{
-              onBlur: z.email("Invalid email address"),
-            }}
-          >
-            {(field) => (
-              <field.TextField
-                label="Email"
-                labelClassName="sr-only"
-                data-test="email-input"
-                required
-                type="email"
-                placeholder="name@example.com"
-                autoCapitalize="none"
-                autoComplete="email"
-                autoCorrect="off"
-              />
-            )}
-          </form.AppField>
-          <form.AppField
-            name="password"
-            validators={{
-              onBlur: z.string().min(1, "Password is required"),
-            }}
-          >
-            {(field) => (
-              <field.TextField
-                label="Password"
-                labelClassName="sr-only"
-                data-test="password-input"
-                required
-                type="password"
-                placeholder="******"
-                autoCapitalize="none"
-                autoComplete="current-password"
-                autoCorrect="off"
-              />
-            )}
-          </form.AppField>
-        </FieldGroup>
-        <form.AppForm>
-          <form.SubmitButton>{type === "login" ? "Login" : "Register"}</form.SubmitButton>
-        </form.AppForm>
-      </form>
+      <EmailStep onSent={setEmail} />
     </div>
-  );
-};
-
-export const RequestPasswordResetForm = () => {
-  const [sent, setSent] = useState(false);
-
-  const form = useAppForm({
-    defaultValues: {
-      email: "",
-    },
-    onSubmit: async ({ value }) => {
-      await authClient.requestPasswordReset({
-        email: value.email,
-        fetchOptions: {
-          onError: (ctx) => {
-            toast.error(
-              ctx.error.code === "RESET_PASSWORD_DISABLED"
-                ? "Password reset is unavailable: this site sends no email."
-                : ctx.error.message,
-            );
-          },
-          onSuccess: () => {
-            setSent(true);
-            toast.success("Password reset email sent successfully!");
-          },
-        },
-        redirectTo: "/auth/password-update",
-      });
-    },
-    validators: {
-      onSubmit: z.object({
-        email: z.email("Invalid email address"),
-      }),
-    },
-  });
-
-  if (sent) {
-    return (
-      <div className="space-y-4 text-center">
-        <div className="rounded-md bg-green-50 p-4 dark:bg-green-900/20">
-          <p className="text-sm text-green-800 dark:text-green-200">
-            Password reset email sent! Check your inbox and follow the instructions to reset your
-            password.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <form
-      className="grid gap-4"
-      onSubmit={(event) => {
-        event.preventDefault();
-        void form.handleSubmit();
-      }}
-    >
-      <FieldGroup className="gap-4">
-        <form.AppField
-          name="email"
-          validators={{
-            onBlur: z.email("Invalid email address"),
-          }}
-        >
-          {(field) => (
-            <field.TextField
-              label="Email"
-              labelClassName="sr-only"
-              required
-              type="email"
-              placeholder="name@example.com"
-              autoCapitalize="none"
-              autoComplete="email"
-              autoCorrect="off"
-            />
-          )}
-        </form.AppField>
-      </FieldGroup>
-      <form.AppForm>
-        <form.SubmitButton>Request Password Reset</form.SubmitButton>
-      </form.AppForm>
-    </form>
-  );
-};
-
-export const UpdatePasswordForm = ({ token }: { token?: string }) => {
-  const router = useRouter();
-
-  const form = useAppForm({
-    defaultValues: {
-      confirmPassword: "",
-      password: "",
-    },
-    onSubmit: async ({ value }) => {
-      if (token === undefined || token === "") {
-        toast.error("Invalid or expired reset link. Request a new one.");
-
-        return;
-      }
-
-      await authClient.resetPassword({
-        fetchOptions: {
-          onError: (ctx) => {
-            toast.error(ctx.error.message);
-          },
-          onSuccess: () => {
-            toast.success("Password updated successfully!");
-            router.push("/dashboard");
-          },
-        },
-        newPassword: value.password,
-        token,
-      });
-    },
-    validators: {
-      onSubmit: z
-        .object({
-          confirmPassword: z.string(),
-          password: z.string().min(8, "Password must be at least 8 characters"),
-        })
-        .refine((data) => data.password === data.confirmPassword, {
-          message: "Passwords don't match",
-          path: ["confirmPassword"],
-        }),
-    },
-  });
-
-  return (
-    <form
-      className="grid gap-4"
-      onSubmit={(event) => {
-        event.preventDefault();
-        void form.handleSubmit();
-      }}
-    >
-      <FieldGroup className="gap-4">
-        <form.AppField
-          name="password"
-          validators={{
-            onBlur: z.string().min(8, "Password must be at least 8 characters"),
-          }}
-        >
-          {(field) => (
-            <field.TextField
-              label="New Password"
-              labelClassName="sr-only"
-              required
-              type="password"
-              placeholder="Enter new password"
-              autoCapitalize="none"
-              autoComplete="new-password"
-              autoCorrect="off"
-            />
-          )}
-        </form.AppField>
-        <form.AppField
-          name="confirmPassword"
-          validators={{
-            onChange: ({ value, fieldApi }) => {
-              if (!value) {
-                return "Confirm your new password";
-              }
-
-              const password = fieldApi.form.getFieldValue("password");
-
-              return password === value ? undefined : "Passwords don't match";
-            },
-          }}
-        >
-          {(field) => (
-            <field.TextField
-              label="Confirm New Password"
-              labelClassName="sr-only"
-              required
-              type="password"
-              placeholder="Confirm new password"
-              autoCapitalize="none"
-              autoComplete="new-password"
-              autoCorrect="off"
-            />
-          )}
-        </form.AppField>
-      </FieldGroup>
-      <form.AppForm>
-        <form.SubmitButton>Update Password</form.SubmitButton>
-      </form.AppForm>
-    </form>
   );
 };

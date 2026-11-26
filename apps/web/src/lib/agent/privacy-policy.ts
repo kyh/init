@@ -38,7 +38,7 @@ const personalInformationWeCollect = section(
     item(strong("Contact data"), ", such as your name and email address."),
     item(
       strong("Profile data"),
-      ", such as the password that you set to establish an online account on the Service (we store only a hash of it, never the password itself), the name shown on your profile, your profile picture, the organizations you belong to and your role in each, and any other information that you add to your account profile.",
+      ", such as the name shown on your profile, your profile picture, the organizations you belong to and your role in each, and any other information that you add to your account profile.",
     ),
     item(
       strong("Communications data"),
@@ -139,7 +139,7 @@ const howWeUseYourPersonalInformation = section(
     "enable security features of the Service, such as recording the IP address and user agent of each signed-in session and limiting how often sign-in and other account requests can be made;",
     "establish and maintain your user profile on the Service;",
     "facilitate the invitations you send to people you want to join your organizations on the Service;",
-    "communicate with you about the Service, including by sending Service-related announcements, updates, security alerts, and support and administrative messages, such as email verification, password-reset and invitation emails; and",
+    "communicate with you about the Service, including by sending Service-related announcements, updates, security alerts, and support and administrative messages, such as sign-in codes and invitation emails; and",
     "provide support for the Service, and respond to your requests, questions and feedback.",
   ),
   p(
@@ -200,7 +200,7 @@ const retention = section(
   bullets(
     "A signed-in session, with the IP address and user agent it recorded, lasts seven days and is extended while you keep using the Service. Signing out deletes it.",
     "The counters that limit sign-in and other account requests are keyed to an IP address and cover a window of at most one minute, and expired counters are deleted as new requests arrive.",
-    "Email verification and password-reset links expire after one hour, and an invitation expires after 48 hours if it is not accepted.",
+    "A sign-in code expires after five minutes, and an invitation expires after 48 hours if it is not accepted.",
     "When you replace a profile picture you uploaded, the previous one is deleted from storage, and removing your profile picture deletes it.",
     "Deleting a todo deletes it permanently, and deleting an organization deletes its memberships, invitations and todos.",
     "We keep your account and its content until you delete them or ask us to delete your account, and we keep your waitlist entry until you ask us to remove it.",
@@ -216,7 +216,7 @@ const howWeShareYourPersonalInformation = section(
   list(
     item(
       strong("Service providers."),
-      " Third parties that provide services on our behalf or help us operate the Service or our business (such as hosting, database hosting, file storage and email delivery). Vercel hosts the Service and stores uploaded profile pictures in Vercel Blob, the Service's data is kept in a hosted Postgres database, and Resend delivers the Service's email, such as verification, password-reset and invitation emails.",
+      " Third parties that provide services on our behalf or help us operate the Service or our business (such as hosting, database hosting, file storage and email delivery). Vercel hosts the Service and stores uploaded profile pictures in Vercel Blob, the Service's data is kept in a hosted Postgres database, and Resend delivers the Service's email, such as sign-in codes and invitation emails.",
     ),
     item(
       strong("Payment processors."),

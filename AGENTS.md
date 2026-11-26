@@ -26,18 +26,20 @@ pnpm install && pnpm bootstrap --yes                             # any clone: in
 
 A clone has everything except `node_modules` and `.env` (bootstrap writes `.env`). Local Postgres runs as a plain process, so a cloud sandbox runs the full stack — data, auth and all — the same way a laptop does. The committed `.codex` / `.superset` cloud-runner descriptors install deps on clone.
 
-Headless auth (no browser) — exchange the seeded login (below) for a session cookie and hand it to agent-browser or curl:
+Headless auth (no browser) — sign-in is an emailed code (better-auth's `emailOTP`), so mint one straight into the database and exchange it for a session cookie to hand to agent-browser or curl:
 
 ```sh
-curl -s -i -X POST localhost:3000/api/auth/sign-in/email \
+curl -s -i -X POST localhost:3000/api/auth/sign-in/email-otp \
   -H 'content-type: application/json' \
-  -d '{"email":"dev@init.local","password":"password"}' | grep -i set-cookie
+  -d "{\"email\":\"dev@init.local\",\"otp\":\"$(pnpm sign-in-code)\"}" | grep -i set-cookie
 ```
+
+`pnpm sign-in-code [email]` prints a fresh code for any address (default `dev@init.local`) through `auth.api.createVerificationOTP`, so nothing needs an inbox. A code lasts five minutes and allows three tries.
 
 ## Seeded login
 
 ```
-dev@init.local / password
+dev@init.local  (no password: sign in with a code)
 ```
 
 Created by `pnpm db:seed` with a personal organization and three sample todos. Use it to verify any authenticated flow — no signup step needed.
@@ -54,7 +56,7 @@ Smoke gate (also in CI) — drives a **running** server end-to-end: health, seed
 
 ```sh
 pnpm dev:web &        # or a production build: pnpm -F @repo/web build && pnpm -F @repo/web start
-pnpm smoke            # SMOKE_URL=https://<preview>.vercel.app pnpm smoke for a deployment
+pnpm smoke            # SMOKE_URL=https://<preview>.vercel.app pnpm smoke for a deployment, with its POSTGRES_URL: the sign-in code is minted into its database
 ```
 
 When calling better-auth from your own Node `fetch`, send an `Origin` header matching the app: Node sends `Sec-Fetch-Mode: cors`, which makes better-auth reject an Origin-less request with a 403 it doesn't log. `curl` sends neither, so it needs no such header.
@@ -66,8 +68,10 @@ npm i -g agent-browser && agent-browser install   # once, if missing
 agent-browser open http://localhost:3000
 agent-browser snapshot            # accessibility tree with @eN refs
 agent-browser fill @e1 dev@init.local
-agent-browser fill @e2 password
-agent-browser click @e3           # sign in
+agent-browser click @e2           # continue with email: the code lands in pnpm dev:web's log
+agent-browser snapshot
+agent-browser fill @e1 <code>     # from the log, or a fresh one: pnpm sign-in-code
+agent-browser click @e2           # sign in
 agent-browser get text            # assert the seeded todos render
 agent-browser screenshot /tmp/after.png
 ```
@@ -76,7 +80,7 @@ Don't stop at typecheck/tests — exercise the actual flow and observe the resul
 
 ## OAuth without the internet
 
-Email/password (above) needs no external service. To exercise the **GitHub** button offline, use [emulate](https://github.com/vercel-labs/emulate), a local OAuth provider (fixtures in `emulate.config.yaml`). Uncomment `NEXT_PUBLIC_GITHUB_EMULATOR_URL` in `.env` (bootstrap wrote it commented), then:
+Email codes (above) need no external service: without `RESEND_API_KEY` they land in the server log. To exercise the **GitHub** button offline, use [emulate](https://github.com/vercel-labs/emulate), a local OAuth provider (fixtures in `emulate.config.yaml`). Uncomment `NEXT_PUBLIC_GITHUB_EMULATOR_URL` in `.env` (bootstrap wrote it commented), then:
 
 ```sh
 pnpm emulate     # GitHub emulator on :4000
@@ -106,7 +110,7 @@ For the three non-web targets, verify with `pnpm typecheck` and `pnpm build`; a 
 - **knip is a gate.** `pnpm knip` (in `verify` and CI) fails on an unused file, export or dependency. An export only docs use, like `caller`, carries `@public` in its TSDoc; the rest of `knip.json` names entries knip cannot find (wxt entrypoints) and dependencies it cannot see (Tailwind's CSS import, Metro's cache).
 - **The trust pages describe what the code does.** `apps/web/src/lib/agent/privacy-policy.ts` and `terms-of-use.ts` adapt General Legal's templates; change them in the same commit as a product change that makes them untrue (their git history is the policy's version history), and keep the terms' section numbers so cross-references hold.
 - **Request data renders under `<Suspense>`.** `cacheComponents` is on: reading the session, `params` or `searchParams` outside a boundary fails `pnpm build` (not `verify`), so build after touching a page or layout. Signed-out `/dashboard/*` requests get a 307 from `src/proxy.ts` (a session-cookie check only); pages still verify the session.
-- Env degrades gracefully: missing keys (Stripe, Resend) disable a feature, they don't crash boot. Without `RESEND_API_KEY` mail is logged, links included, outside production only; a production deployment sends and logs nothing, warns once at boot, and refuses password reset and email verification (`packages/service/src/email/send-email.ts`).
+- Env degrades gracefully: missing keys (Stripe, Resend) disable a feature, they don't crash boot. Without `RESEND_API_KEY` mail is logged, sign-in codes included, outside production only; a production deployment sends and logs nothing, warns once at boot, and refuses sign-in by email code, leaving GitHub (`packages/service/src/email/send-email.ts`).
 
 ## Map
 

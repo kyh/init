@@ -12,7 +12,7 @@
 - **Styling**: Tailwind CSS 4.x, Base UI, shadcn/ui (base-vega registry)
 - **Backend**: oRPC, better-auth, Drizzle ORM
 - **Billing**: Stripe via @better-auth/stripe
-- **Email**: Resend REST API (console fallback in dev; without a key production sends nothing and refuses password reset and verification)
+- **Email**: Resend REST API (console fallback in dev; without a key production sends nothing and refuses sign-in by email code)
 - **Database**: Postgres — the Supabase CLI locally (native processes), Supabase in production by default; any Postgres works (auth is better-auth)
 - **Storage**: Vercel Blob (avatars only; no local emulator, so that route 501s offline)
 - **Desktop**: Electron — a main process and sandboxed preload around the web app
@@ -80,7 +80,8 @@ pnpm db:start         # Start local Postgres (Supabase); writes POSTGRES_URL int
 pnpm db:stop          # Stop local Postgres
 pnpm db:push          # Push Drizzle schema
 pnpm db:reset         # Reset, push, and re-seed schema
-pnpm db:seed          # Seed dev user (dev@init.local / password) + sample data
+pnpm db:seed          # Seed dev user (dev@init.local) + sample data
+pnpm sign-in-code     # Print a fresh sign-in code for dev@init.local (or the email given)
 
 # Agents
 pnpm emulate          # Local GitHub OAuth emulator (offline auth tests)
@@ -95,10 +96,11 @@ This template is built to be driven end-to-end by a coding agent. `AGENTS.md` is
 
 - **Provision headless**: `pnpm bootstrap --yes` (idempotent; the Supabase CLI runs Postgres natively). Non-TTY runs auto-keep all apps, so a piped invocation won't hang on the app-picker.
 - **One local database per git branch**: `pnpm db:start` gives every checkout and branch its own database on its own port, and the CLI writes its URL into `.env.local` (`supabase status --env`), which the `with-env` scripts load before `.env`. A new branch or worktree starts EMPTY — re-run `pnpm bootstrap --yes` there. Never pin a port in `packages/db/supabase/config.toml`: a second branch's stack then fails to bind. Postgres refuses root, so cloud sessions get a `supabase-postgres` user from the SessionStart hook in `.claude/settings.json`.
-- **Seeded login**: `dev@init.local` / `password` (via `pnpm db:seed`) — a personal org + sample todos to verify against, no signup step.
+- **Sign-in is an emailed code** (better-auth `emailOTP`), never a password: one form signs in and signs up. No back-compat for password accounts.
+- **Seeded login**: `dev@init.local` (via `pnpm db:seed`) — a personal org + sample todos to verify against, no signup step. `pnpm sign-in-code` mints its code without an inbox.
 - **Verify**: `pnpm verify` for the static gate, then `pnpm smoke` against a running server for the runtime gate (health → seeded sign-in → todo lifecycle through oRPC → authenticated render; `SMOKE_URL` points it at a deployment). Drive the UI itself with `agent-browser`. Only web is headless-driveable — mobile/desktop/extension get `typecheck` + `build` only.
 - **OAuth offline**: uncomment `NEXT_PUBLIC_GITHUB_EMULATOR_URL` in `.env` + `pnpm emulate`, then `pnpm dev:web` — the shipped "Continue with GitHub" button runs through a local emulator (dev-only `genericOAuth`; real provider untouched in prod).
-- **Fresh clone / scaffold**: `gh repo create <name> --template kyh/init --clone`, then `pnpm install && pnpm bootstrap --yes`. Headless auth: POST `dev@init.local` / `password` to `/api/auth/sign-in/email` for a session cookie. See `AGENTS.md` → Fresh clone.
+- **Fresh clone / scaffold**: `gh repo create <name> --template kyh/init --clone`, then `pnpm install && pnpm bootstrap --yes`. Headless auth: POST `dev@init.local` and `pnpm sign-in-code`'s code to `/api/auth/sign-in/email-otp` for a session cookie. See `AGENTS.md` → Fresh clone.
 
 ## UI Package
 

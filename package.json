@@ -12,6 +12,7 @@
     "db:push": "pnpm -F db push",
     "db:push-remote": "pnpm -F db push:remote",
     "db:seed": "pnpm -F @repo/service seed",
+    "sign-in-code": "pnpm --silent -F @repo/service sign-in-code",
     "dev": "turbo watch dev --continue",
     "dev:web": "turbo watch dev -F @repo/web...",
     "dev:mobile": "turbo watch dev -F @repo/mobile...",
