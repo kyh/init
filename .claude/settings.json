@@ -8,8 +8,10 @@
       "Bash(pnpm db:seed:*)",
       "Bash(pnpm verify:*)",
       "Bash(pnpm emulate:*)",
-      "Bash(agent-browser:*)"
-    ]
+      "Bash(agent-browser:*)",
+      "Bash(pnpm dev:*)"
+    ],
+    "deny": ["Bash(pnpm db:push-remote:*)", "Bash(pnpm * db:push-remote:*)"]
   },
   "hooks": {
     "SessionStart": [
