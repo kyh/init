@@ -106,7 +106,7 @@ For the three non-web targets, verify with `pnpm typecheck` and `pnpm build`; a 
 - **knip is a gate.** `pnpm knip` (in `verify` and CI) fails on an unused file, export or dependency. An export only docs use, like `caller`, carries `@public` in its TSDoc; the rest of `knip.json` names entries knip cannot find (wxt entrypoints) and dependencies it cannot see (Tailwind's CSS import, Metro's cache).
 - **The trust pages describe what the code does.** `apps/web/src/lib/agent/privacy-policy.ts` and `terms-of-use.ts` adapt General Legal's templates; change them in the same commit as a product change that makes them untrue (their git history is the policy's version history), and keep the terms' section numbers so cross-references hold.
 - **Request data renders under `<Suspense>`.** `cacheComponents` is on: reading the session, `params` or `searchParams` outside a boundary fails `pnpm build` (not `verify`), so build after touching a page or layout. Signed-out `/dashboard/*` requests get a 307 from `src/proxy.ts` (a session-cookie check only); pages still verify the session.
-- Env degrades gracefully: missing keys (Stripe, Resend) disable a feature, they don't crash boot.
+- Env degrades gracefully: missing keys (Stripe, Resend) disable a feature, they don't crash boot. Without `RESEND_API_KEY` mail is logged, links included, outside production only; a production deployment sends and logs nothing, warns once at boot, and refuses password reset and email verification (`packages/service/src/email/send-email.ts`).
 
 ## Map
 

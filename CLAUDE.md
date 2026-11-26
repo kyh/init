@@ -12,7 +12,7 @@
 - **Styling**: Tailwind CSS 4.x, Base UI, shadcn/ui (base-vega registry)
 - **Backend**: oRPC, better-auth, Drizzle ORM
 - **Billing**: Stripe via @better-auth/stripe
-- **Email**: Resend REST API (console fallback in dev)
+- **Email**: Resend REST API (console fallback in dev; without a key production sends nothing and refuses password reset and verification)
 - **Database**: Postgres — the Supabase CLI locally (native processes), Supabase in production by default; any Postgres works (auth is better-auth)
 - **Storage**: Vercel Blob (avatars only; no local emulator, so that route 501s offline)
 - **Desktop**: Electron — a main process and sandboxed preload around the web app

@@ -12,7 +12,7 @@ import { admin, genericOAuth, oAuthProxy, organization } from "better-auth/plugi
 import { and, eq, isNull } from "drizzle-orm";
 import { Stripe } from "stripe";
 
-import { sendEmail } from "../email/send-email";
+import { EMAIL_MODE, EMAIL_OFF_WARNING, sendEmail } from "../email/send-email";
 import { env } from "../env";
 import { isSlugCollision } from "./utils";
 
@@ -31,6 +31,12 @@ const resolveBaseUrl = () => {
 };
 
 export const baseUrl = resolveBaseUrl();
+
+const sendsEmail = EMAIL_MODE.kind !== "off";
+
+if (!sendsEmail) {
+  console.warn(`[email] ${EMAIL_OFF_WARNING}`);
+}
 
 const trustedOrigins = [baseUrl, "expo://"];
 
@@ -139,24 +145,28 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true,
-    sendResetPassword: async ({ user, url }) => {
-      await sendEmail({
-        subject: "Reset your password",
-        text: `Click the link to reset your password: ${url}`,
-        to: user.email,
-      });
-    },
+    sendResetPassword: sendsEmail
+      ? async ({ user, url }) => {
+          await sendEmail({
+            subject: "Reset your password",
+            text: `Click the link to reset your password: ${url}`,
+            to: user.email,
+          });
+        }
+      : undefined,
   },
   emailVerification: {
     autoSignInAfterVerification: true,
-    sendOnSignUp: true,
-    sendVerificationEmail: async ({ user, url }) => {
-      await sendEmail({
-        subject: "Verify your email",
-        text: `Click the link to verify your email: ${url}`,
-        to: user.email,
-      });
-    },
+    sendOnSignUp: sendsEmail,
+    sendVerificationEmail: sendsEmail
+      ? async ({ user, url }) => {
+          await sendEmail({
+            subject: "Verify your email",
+            text: `Click the link to verify your email: ${url}`,
+            to: user.email,
+          });
+        }
+      : undefined,
   },
   plugins: [
     oAuthProxy({
