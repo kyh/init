@@ -20,9 +20,15 @@ export interface DesktopBridge {
 
 interface NativeBridge {
   // oxlint-disable-next-line anti-slop/no-unknown-returns -- the preload's answers arrive unparsed; bridgeOf parses each one
-  invoke: (command: string) => Promise<unknown>;
+  checkForUpdates: () => Promise<unknown>;
+  // oxlint-disable-next-line anti-slop/no-unknown-returns -- as above
+  downloadUpdate: () => Promise<unknown>;
+  // oxlint-disable-next-line anti-slop/no-unknown-returns -- as above
+  installUpdate: () => Promise<unknown>;
   // oxlint-disable-next-line anti-slop/no-unknown-parameters -- the preload's events arrive unparsed; bridgeOf parses each one
-  on: (event: string, listener: (payload: unknown) => void) => () => void;
+  onMenuAction: (listener: (action: unknown) => void) => () => void;
+  // oxlint-disable-next-line anti-slop/no-unknown-parameters -- as above
+  onUpdateState: (listener: (state: unknown) => void) => () => void;
 }
 
 declare global {
@@ -34,31 +40,36 @@ declare global {
 const isNativeBridge = (value: unknown): value is NativeBridge =>
   typeof value === "object" &&
   value !== null &&
-  "invoke" in value &&
-  typeof value.invoke === "function" &&
-  "on" in value &&
-  typeof value.on === "function";
+  "checkForUpdates" in value &&
+  typeof value.checkForUpdates === "function" &&
+  "downloadUpdate" in value &&
+  typeof value.downloadUpdate === "function" &&
+  "installUpdate" in value &&
+  typeof value.installUpdate === "function" &&
+  "onMenuAction" in value &&
+  typeof value.onMenuAction === "function" &&
+  "onUpdateState" in value &&
+  typeof value.onUpdateState === "function";
 
-const bridgeOf = (native: NativeBridge) => {
-  const subscribe = <T>(event: string, schema: z.ZodType<T>, listener: (value: T) => void) =>
-    native.on(event, (payload) => {
-      const parsed = schema.safeParse(payload);
+const parsedBy =
+  <T>(schema: z.ZodType<T>, listener: (value: T) => void) =>
+  // oxlint-disable-next-line anti-slop/no-unknown-parameters -- a preload event arrives unparsed, and this is where it is parsed
+  (payload: unknown) => {
+    const parsed = schema.safeParse(payload);
 
-      if (parsed.success) {
-        listener(parsed.data);
-      }
-    });
+    if (parsed.success) {
+      listener(parsed.data);
+    }
+  };
 
-  const ask = async (command: string) => updateStateSchema.parse(await native.invoke(command));
-
-  return {
-    checkForUpdates: async () => await ask("check-for-updates"),
-    downloadUpdate: async () => await ask("download-update"),
-    installUpdate: async () => await ask("install-update"),
-    onMenuAction: (listener) => subscribe("menu-action", z.string(), listener),
-    onUpdateState: (listener) => subscribe("update-state", updateStateSchema, listener),
-  } satisfies DesktopBridge;
-};
+const bridgeOf = (native: NativeBridge) =>
+  ({
+    checkForUpdates: async () => updateStateSchema.parse(await native.checkForUpdates()),
+    downloadUpdate: async () => updateStateSchema.parse(await native.downloadUpdate()),
+    installUpdate: async () => updateStateSchema.parse(await native.installUpdate()),
+    onMenuAction: (listener) => native.onMenuAction(parsedBy(z.string(), listener)),
+    onUpdateState: (listener) => native.onUpdateState(parsedBy(updateStateSchema, listener)),
+  }) satisfies DesktopBridge;
 
 /** The desktop shell (apps/desktop, its preload's `desktopBridge`), or null in a browser tab. */
 export const desktopBridge = () => {
