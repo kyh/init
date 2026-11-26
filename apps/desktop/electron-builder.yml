@@ -1,0 +1,29 @@
+appId: com.init.desktop
+productName: Init
+directories:
+  buildResources: resources
+  output: .output/bin
+files:
+  - .output/app/**
+  - package.json
+# Electron's security checklist: no launch runs other code as the app, and no file:// page
+# gets more than a browser would.
+electronFuses:
+  runAsNode: false
+  enableCookieEncryption: true
+  enableNodeOptionsEnvironmentVariable: false
+  enableNodeCliInspectArguments: false
+  enableEmbeddedAsarIntegrityValidation: true
+  onlyLoadAppFromAsar: true
+  grantFileProtocolExtraPrivileges: false
+mac:
+  category: public.app-category.productivity
+  target: [dmg, zip]
+linux:
+  target: [AppImage]
+win:
+  target: [nsis]
+# Updates stay off until a feed is named: electron-builder then writes app-update.yml beside
+# the app, which is what turns the updater on (apps/web/content/docs/launch/deployment.mdx).
+# publish:
+#   provider: github

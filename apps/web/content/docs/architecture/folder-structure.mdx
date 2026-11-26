@@ -1,7 +1,7 @@
 ---
 title: "Folder Structure"
 description: "The Turborepo layout: four apps, shared packages, and the rule that packages never depend on apps"
-modified: 2026-11-18
+modified: 2026-11-25
 ---
 
 Init is a Turborepo monorepo with clear separation between applications and shared packages. Apps consume packages; packages never depend on apps.
@@ -14,7 +14,7 @@ init/
 │   ├── web/               # Next.js 16 web app
 │   ├── mobile/            # Expo mobile app
 │   ├── extension/         # Chrome extension (WXT)
-│   └── desktop/           # Tauri desktop app
+│   └── desktop/           # Electron desktop app
 ├── packages/
 │   ├── permissions/       # Client-safe auth helpers: role permissions, slugify
 │   ├── contract/          # oRPC contract: procedure inputs, outputs, errors
@@ -94,22 +94,22 @@ apps/extension/
 
 ### Desktop App (`apps/desktop/`)
 
-A Tauri 2 shell around the web app, not a second frontend: a Rust binary that opens the system webview (WebKit on macOS) on `devUrl` under `pnpm dev:desktop` and on `frontendDist` in a build. The web app talks to it through `apps/web/src/lib/desktop-bridge.ts`, and only through what its capability grants:
+An Electron shell around the web app, not a second frontend: its main process opens one sandboxed window on `http://localhost:3000` under `pnpm dev:desktop` and on the deployed web app in a package. The web app talks to it through `apps/web/src/lib/desktop-bridge.ts`, which reaches only the commands and events the preload exposes, and only from the web app's own origin:
 
 ```
 apps/desktop/
-├── src-tauri/
-│   ├── src/
-│   │   ├── lib.rs           # the builder: plugins, commands, menu, window
-│   │   ├── window.rs        # the window tauri.conf.json declares, with its navigation pin
-│   │   ├── navigation.rs    # which origins load in the window and which open in the browser
-│   │   ├── menu.rs          # Tauri's default macOS menu, plus Settings… and Check for Updates…
-│   │   └── updater.rs       # the update flow behind three commands and one event
-│   ├── capabilities/        # what the web app may invoke
-│   ├── build.rs             # the app manifest: every command is a permission
-│   ├── Cargo.toml
-│   └── tauri.conf.json      # identifier, URLs, the window, bundle settings
-└── rust-toolchain.toml      # the Rust version local checks and CI share
+├── src/
+│   ├── main/
+│   │   ├── index.ts         # app lifecycle, the IPC handlers, the window
+│   │   ├── window.ts        # the window and the navigation pin every web contents gets
+│   │   ├── navigation.ts    # which origins load in the window and which open in the browser
+│   │   ├── menu.ts          # the macOS menu, plus Settings… and Check for Updates…
+│   │   └── updater.ts       # the update flow behind three commands and one event
+│   ├── preload/index.ts     # `window.desktopBridge`, exposed to the web app's origin only
+│   └── shared/bridge.ts     # the commands, events and payloads main and preload share
+├── resources/               # icons electron-builder packs
+├── electron.vite.config.ts  # main and preload bundles, and the packaged web app URL
+└── electron-builder.yml     # identifier, targets, the update feed
 ```
 
 ## Shared Packages (`packages/`)

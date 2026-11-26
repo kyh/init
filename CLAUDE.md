@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**init** - pnpm monorepo with Turborepo. Multi-platform starter: Next.js web, Expo mobile, Chrome extension, Tauri desktop.
+**init** - pnpm monorepo with Turborepo. Multi-platform starter: Next.js web, Expo mobile, Chrome extension, Electron desktop.
 
 ## Tech Stack
 
@@ -15,7 +15,7 @@
 - **Email**: Resend REST API (console fallback in dev)
 - **Database**: Postgres — the Supabase CLI locally (native processes), Supabase in production by default; any Postgres works (auth is better-auth)
 - **Storage**: Vercel Blob (avatars only; no local emulator, so that route 501s offline)
-- **Desktop**: Tauri 2 — a Rust shell over the system webview (WebKit on macOS)
+- **Desktop**: Electron — a main process and sandboxed preload around the web app
 
 ## Monorepo Structure
 
@@ -24,7 +24,7 @@ apps/
   web/         # Next.js 16 web app (fumadocs for docs)
   mobile/      # React Native mobile (nativewind)
   extension/   # Chrome extension (wxt)
-  desktop/     # Desktop app (Tauri 2: a Rust shell around the web app)
+  desktop/     # Desktop app (Electron: a shell around the web app)
 packages/
   permissions/ # Client-safe auth helpers: role permissions, slugify
   contract/    # oRPC contract: zod inputs, outputs, errors, openapi meta
@@ -53,7 +53,7 @@ The Expo SDK pins the native modules. `update.ignoreDeps` in `pnpm-workspace.yam
 
 ### Desktop shell
 
-`apps/desktop` is a Tauri 2 shell around the web app, not a second frontend. Its window is declared in `src-tauri/tauri.conf.json` (`create: false`) and built in `window.rs`, because the navigation pin needs closures: the web app's origin and the OAuth providers load in it, any other web page opens in the browser, and no page gets a second window or a device permission. It opens `devUrl` under `pnpm dev:desktop`, which starts the web app beside it (`tauri dev` waits for it), and `frontendDist` in a build. The web app reaches the shell only through `apps/web/src/lib/desktop-bridge.ts`, which parses every frame with zod: three update commands and the menu's `menu-action` event. Every command is named in `build.rs`'s app manifest, so a page reaches only what `capabilities/` grants, and `removeUnusedCommands` drops every other command from the binary; Tauri counts the app URL as a local origin, so an OAuth page gets no IPC. Rust rides the same gates on the toolchain `rust-toolchain.toml` pins: `typecheck` is clippy (pedantic, `-D warnings`), `test` is `cargo test`, `format` is `cargo fmt --check`. On Linux the build needs WebKitGTK (`libwebkit2gtk-4.1-dev`); macOS ships WebKit, and Windows uses the WebView2 Runtime, which the installer fetches where it is missing. Updates stay off until `plugins.updater` is configured (`apps/web/content/docs/launch/deployment.mdx`).
+`apps/desktop` is an Electron shell around the web app, not a second frontend: a main process (`src/main`), a sandboxed preload (`src/preload`) and what the two share (`src/shared/bridge.ts`), bundled by electron-vite and packaged by electron-builder. The window loads `http://localhost:3000` under `pnpm dev:desktop`, which starts the web app beside it (the window retries until it answers), and `WEBAPP_URL` (default `https://init.kyh.io/`) in a package. `pinNavigation` (`window.ts`) holds every web contents the app creates: the web app's origin and the OAuth providers load in it, any other web page opens in the browser, a frame loads only an allowed origin, and no page gets a second window, a webview or a device permission. The renderer is `contextIsolation` + `sandbox`, no node. The preload exposes `window.desktopBridge`, one function per command and event as Electron's context-isolation guide asks, only when the page is the web app's origin, and main answers a command only from the window's main frame on that origin, so an OAuth page gets no IPC. The web app reaches the shell only through `apps/web/src/lib/desktop-bridge.ts`, which parses every answer and event with zod: three update commands, the `update-state` event and the menu's `menu-action`. Updates stay off until `publish` is configured in `electron-builder.yml`, which makes it write the `app-update.yml` main looks for (`apps/web/content/docs/launch/deployment.mdx`). The navigation pin is pure (`navigation.ts`) and tested under node; the window itself needs a human.
 
 ## Common Commands
 
@@ -63,11 +63,11 @@ pnpm dev              # Run all apps
 pnpm dev:web          # Run Next.js only
 pnpm dev:mobile       # Run Expo only
 pnpm dev:desktop      # Run the desktop app, with the web app it opens
-pnpm typecheck        # Type check all packages (tsc, clippy)
+pnpm typecheck        # Type check all packages (tsc)
 pnpm lint             # oxlint, ultracite presets incl. landmines; every rule an error (AGENTS.md → Rules that matter)
-pnpm format           # Check formatting (oxfmt, cargo fmt)
-pnpm format:fix       # Format all packages (oxfmt, cargo fmt)
-pnpm test             # Run tests (node:test, cargo test)
+pnpm format           # Check formatting (oxfmt)
+pnpm format:fix       # Format all packages (oxfmt)
+pnpm test             # Run tests (node:test)
                       # Real-database suites skip unless TEST_POSTGRES_URL points at a disposable, schema-pushed Postgres
 pnpm verify           # typecheck · lint · format · test (static CI gate)
 pnpm smoke            # Drive a running app end-to-end (runtime CI gate)

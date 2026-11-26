@@ -208,17 +208,13 @@ const removeExtension = () => {
 };
 
 const removeDesktop = () => {
-  dropRecommendations("tauri-apps.tauri-vscode", "rust-lang.rust-analyzer");
+  const workspacePath = "pnpm-workspace.yaml";
 
-  const ciPath = ".github/workflows/ci.yml";
-
-  if (fileExists(ciPath)) {
-    const ci = readText(ciPath).replaceAll(
-      /^(?: {6}# [^\n]*\n)?^ {6}- name: Desktop [^\n]*\n(?: {8}[^\n]*\n)*\n/gmu,
-      "",
+  if (fileExists(workspacePath)) {
+    writeText(
+      workspacePath,
+      readText(workspacePath).replace(/^ {2}electron-winstaller: false\n/mu, ""),
     );
-
-    writeText(ciPath, ci);
   }
 };
 
@@ -244,7 +240,7 @@ const apps: App[] = [
     cleanup: removeDesktop,
     devScript: "dev:desktop",
     dir: "apps/desktop",
-    name: "Desktop (Tauri)",
+    name: "Desktop (Electron)",
   },
 ];
 
