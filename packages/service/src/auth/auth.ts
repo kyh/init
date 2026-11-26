@@ -160,10 +160,9 @@ export const auth = betterAuth({
   plugins: [
     oAuthProxy({
       currentURL: baseUrl,
-      productionURL:
-        process.env.VERCEL_PROJECT_PRODUCTION_URL === undefined
-          ? baseUrl
-          : `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`,
+      productionURL: process.env.VERCEL_PROJECT_PRODUCTION_URL
+        ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+        : baseUrl,
     }),
     expo(),
     organization({
