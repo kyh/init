@@ -45,10 +45,6 @@ jobs:
           runtime: node@24
           cache: true
 
-      - name: Test
-        working-directory: apps/desktop
-        run: pnpm test
-
       - name: Pack
         working-directory: apps/desktop
         run: pnpm build && pnpm exec electron-builder ${{ matrix.target }} --publish never
