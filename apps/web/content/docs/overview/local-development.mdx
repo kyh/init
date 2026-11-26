@@ -1,7 +1,7 @@
 ---
 title: "Local Development"
 description: "Daily workflows, debugging and conventions for building with Init locally"
-modified: 2026-10-27
+modified: 2026-11-25
 ---
 
 Daily workflows, debugging, and conventions for building with Init.
@@ -47,9 +47,9 @@ pnpm db:push         # Push schema changes
 
 # Code quality
 pnpm lint            # oxlint
-pnpm typecheck       # TypeScript, and clippy for the desktop app
-pnpm format          # oxfmt, and cargo fmt
-pnpm test            # node:test, and cargo test
+pnpm typecheck       # TypeScript
+pnpm format          # oxfmt
+pnpm test            # node:test
 ```
 
 ## Monorepo Structure
@@ -59,7 +59,7 @@ apps/
 ├── web/          # Next.js web app
 ├── mobile/       # Expo mobile app
 ├── extension/    # Chrome extension (WXT)
-└── desktop/      # Tauri desktop app
+└── desktop/      # Electron desktop app
 
 packages/
 ├── permissions/  # Client-safe auth helpers: role permissions, slugify

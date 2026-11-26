@@ -5,19 +5,25 @@
   "description": "Init desktop app",
   "author": "kyh",
   "type": "module",
+  "main": "./.output/app/main/index.js",
   "scripts": {
-    "build": "tauri build --no-bundle",
-    "clean": "git clean -xdf .turbo src-tauri/target src-tauri/gen node_modules",
-    "dev": "pnpm with-env tauri dev",
-    "format": "cargo fmt --manifest-path src-tauri/Cargo.toml --check",
-    "format:fix": "cargo fmt --manifest-path src-tauri/Cargo.toml",
-    "package": "tauri build",
-    "tauri": "tauri",
-    "test": "cargo test --locked --manifest-path src-tauri/Cargo.toml",
-    "typecheck": "cargo clippy --locked --all-targets --manifest-path src-tauri/Cargo.toml -- -D warnings",
+    "build": "electron-vite build",
+    "clean": "git clean -xdf .cache .turbo .output node_modules",
+    "dev": "pnpm with-env electron-vite dev --watch",
+    "package": "electron-vite build && electron-builder",
+    "test": "node --import tsx --test 'src/**/*.test.ts'",
+    "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ../../.env --"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.12.6"
+    "@kyh/tsconfig": "catalog:",
+    "@types/node": "catalog:",
+    "electron": "^45.4.1",
+    "electron-builder": "^26.18.0",
+    "electron-updater": "^6.8.11",
+    "electron-vite": "^6.0.0",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
   }
 }

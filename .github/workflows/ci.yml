@@ -36,19 +36,6 @@ jobs:
           runtime: node@24
           cache: true
 
-      # Tauri compiles the desktop app against WebKitGTK on Linux; macOS and Windows ship their webview
-      - name: Desktop system libraries
-        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev
-
-      - name: Desktop Rust toolchain
-        working-directory: apps/desktop
-        run: rustup toolchain install
-
-      - name: Desktop Rust cache
-        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
-        with:
-          workspaces: apps/desktop/src-tauri
-
       - name: Typecheck
         run: pnpm typecheck
 

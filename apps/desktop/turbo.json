@@ -2,15 +2,9 @@
   "$schema": "https://turborepo.com/schema.json",
   "extends": ["//"],
   "tasks": {
-    // cargo keeps its own incremental cache in src-tauri/target, keyed on what turbo cannot
-    // see (the toolchain, ~/.cargo); a turbo hit would only skip a no-op compile
     "build": {
-      "cache": false,
-      "outputs": []
-    },
-    "typecheck": {
-      "cache": false,
-      "outputs": []
+      "env": ["WEBAPP_URL"],
+      "outputs": [".output/app/**"]
     },
     "dev": {
       "cache": false,
@@ -19,19 +13,18 @@
     // the bundle is signed with whatever the environment holds, so it is never replayed
     "package": {
       "cache": false,
-      "outputs": ["src-tauri/target/release/bundle/**"],
+      "env": ["WEBAPP_URL"],
+      "outputs": [".output/bin/**"],
       "passThroughEnv": [
         "APPLE_API_ISSUER",
         "APPLE_API_KEY",
-        "APPLE_API_KEY_PATH",
-        "APPLE_CERTIFICATE",
-        "APPLE_CERTIFICATE_PASSWORD",
+        "APPLE_API_KEY_ID",
+        "APPLE_APP_SPECIFIC_PASSWORD",
         "APPLE_ID",
-        "APPLE_PASSWORD",
-        "APPLE_SIGNING_IDENTITY",
         "APPLE_TEAM_ID",
-        "TAURI_SIGNING_PRIVATE_KEY",
-        "TAURI_SIGNING_PRIVATE_KEY_PASSWORD"
+        "CSC_KEY_PASSWORD",
+        "CSC_LINK",
+        "GH_TOKEN"
       ]
     }
   }

@@ -66,6 +66,7 @@ update:
 
 allowBuilds:
   "@tailwindcss/oxide": true
+  electron-winstaller: false
   esbuild: true
   sharp: true
   spawn-sync: true

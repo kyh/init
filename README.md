@@ -11,7 +11,7 @@ One TypeScript codebase that ships to web, mobile, browser extension, and deskto
 
 ## Getting Started
 
-**Prerequisites**: [Node.js 24](https://nodejs.org), [pnpm 12](https://pnpm.io), macOS on Apple silicon or Linux for the local database (the Supabase CLI runs Postgres natively), and for the desktop app [Rust](https://rustup.rs) plus [Tauri's platform prerequisites](https://v2.tauri.app/start/prerequisites/)
+**Prerequisites**: [Node.js 24](https://nodejs.org), [pnpm 12](https://pnpm.io), macOS on Apple silicon or Linux for the local database (the Supabase CLI runs Postgres natively)
 
 ```sh
 pnpm install
@@ -27,7 +27,7 @@ apps/
   web/         # Next.js web app
   mobile/      # Expo/React Native mobile app
   extension/   # WXT Chrome extension
-  desktop/     # Tauri desktop app
+  desktop/     # Electron desktop app
 packages/
   permissions/ # Client-safe auth helpers: role permissions, slugify
   contract/    # oRPC contract shared by server and clients
@@ -41,7 +41,7 @@ packages/
 - [Next.js](https://nextjs.org)
 - [Expo](https://expo.dev)
 - [Chrome Extension (WXT)](https://wxt.dev)
-- [Tauri](https://v2.tauri.app)
+- [Electron](https://www.electronjs.org)
 - [Tailwind CSS](https://tailwindcss.com)
 - [oRPC](https://orpc.dev)
 - [Drizzle](https://orm.drizzle.team)
@@ -59,9 +59,9 @@ packages/
 | `pnpm dev:desktop`              | Run the desktop app, with the web app it opens |
 | `pnpm build`                    | Build all packages                             |
 | `pnpm -F @repo/desktop package` | Bundle the desktop app (`.app`/`.dmg` on Mac)  |
-| `pnpm typecheck`                | Type check all packages (tsc, clippy)          |
+| `pnpm typecheck`                | Type check all packages (tsc)                  |
 | `pnpm lint`                     | Lint all packages (oxlint)                     |
-| `pnpm format`                   | Check formatting (oxfmt, cargo fmt)            |
+| `pnpm format`                   | Check formatting (oxfmt)                       |
 | `pnpm db:start`                 | Start local Postgres (Supabase)                |
 | `pnpm db:stop`                  | Stop local Postgres                            |
 | `pnpm db:push`                  | Push Drizzle schema                            |
