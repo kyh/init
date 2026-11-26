@@ -63,3 +63,6 @@ packages/db/supabase/.branches
 .claude/scheduled_tasks.lock
 .claude/worktrees
 .playwright-mcp
+
+# next dev writes these for coding agents; agent docs live at the root
+apps/*/AGENTS.md
