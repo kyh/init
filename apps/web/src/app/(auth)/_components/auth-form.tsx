@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@repo/ui/components/button";
-import { FieldGroup } from "@repo/ui/components/field";
+import { Field, FieldGroup, FieldLabel } from "@repo/ui/components/field";
+import { OTPInput } from "@repo/ui/components/otp-input";
 import { toast } from "@repo/ui/components/sonner";
 import { cn } from "cn";
 import { z } from "zod";
@@ -14,10 +15,6 @@ import { useAppForm } from "@/lib/form";
 const CODE_LENGTH = 6;
 
 const emailSchema = z.email("Invalid email address");
-
-const codeSchema = z
-  .string()
-  .regex(new RegExp(`^\\d{${CODE_LENGTH}}$`, "u"), `Enter the ${CODE_LENGTH}-digit code`);
 
 const CODE_ERRORS = new Map([
   ["INVALID_OTP", "That code isn't right. Check it and try again."],
@@ -97,32 +94,6 @@ const CodeStep = ({
   const router = useRouter();
   const [resending, setResending] = useState(false);
 
-  const form = useAppForm({
-    defaultValues: {
-      code: "",
-    },
-    onSubmit: async ({ value }) => {
-      const [emailPrefix] = email.split("@");
-
-      const { error } = await authClient.signIn.emailOtp({
-        email,
-        name: emailPrefix ?? "User",
-        otp: value.code,
-      });
-
-      if (error) {
-        toast.error(errorMessageOf(error));
-
-        return;
-      }
-
-      router.replace(nextPath);
-    },
-    validators: {
-      onSubmit: z.object({ code: codeSchema }),
-    },
-  });
-
   const resend = async () => {
     setResending(true);
 
@@ -134,37 +105,42 @@ const CodeStep = ({
   };
 
   return (
-    <form
-      className="grid gap-2"
-      onSubmit={(event) => {
-        event.preventDefault();
-        void form.handleSubmit();
-      }}
-    >
+    <div className="grid gap-4">
       <p className="text-muted-foreground text-center text-sm">
         We sent a {CODE_LENGTH}-digit code to <span className="text-foreground">{email}</span>.
       </p>
-      <FieldGroup className="gap-2">
-        <form.AppField name="code">
-          {(field) => (
-            <field.TextField
-              label="Sign-in code"
-              labelClassName="sr-only"
-              data-test="code-input"
-              required
-              inputMode="numeric"
-              pattern="[0-9]*"
-              maxLength={CODE_LENGTH}
-              placeholder={"0".repeat(CODE_LENGTH)}
-              autoComplete="one-time-code"
-              inputClassName="text-center font-mono tracking-[0.5em]"
-            />
-          )}
-        </form.AppField>
-      </FieldGroup>
-      <form.AppForm>
-        <form.SubmitButton>Sign in</form.SubmitButton>
-      </form.AppForm>
+      <Field className="items-center">
+        <FieldLabel className="sr-only" htmlFor="code">
+          Sign-in code
+        </FieldLabel>
+        <OTPInput
+          id="code"
+          data-test="code-input"
+          length={CODE_LENGTH}
+          group
+          autoFocus
+          verify={async (otp) => {
+            const [emailPrefix] = email.split("@");
+
+            const { error } = await authClient.signIn.emailOtp({
+              email,
+              name: emailPrefix ?? "User",
+              otp,
+            });
+
+            if (error) {
+              toast.error(errorMessageOf(error));
+
+              return false;
+            }
+
+            return true;
+          }}
+          onSuccess={() => {
+            router.replace(nextPath);
+          }}
+        />
+      </Field>
       <div className="flex justify-between">
         <Button variant="link" size="sm" type="button" onClick={onBack}>
           Use a different email
@@ -181,7 +157,7 @@ const CodeStep = ({
           Resend code
         </Button>
       </div>
-    </form>
+    </div>
   );
 };
 

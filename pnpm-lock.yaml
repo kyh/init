@@ -255,6 +255,9 @@ catalogs:
     lucide-react:
       specifier: ^1.78.0
       version: 1.78.0
+    motion:
+      specifier: ^14.14.0
+      version: 14.14.0
     next:
       specifier: ^16.4.6
       version: 16.4.6
@@ -790,6 +793,9 @@ importers:
       lucide-react:
         specifier: 'catalog:'
         version: 1.78.0(@types/react@19.3.0)(react@19.3.1)
+      motion:
+        specifier: 'catalog:'
+        version: 14.14.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       next-themes:
         specifier: 'catalog:'
         version: 0.4.6(react-dom@19.3.1(react@19.3.1))(react@19.3.1)

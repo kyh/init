@@ -19,6 +19,7 @@
     "class-variance-authority": "^0.7.1",
     "cn": "catalog:",
     "lucide-react": "catalog:",
+    "motion": "catalog:",
     "next-themes": "catalog:",
     "sonner": "^2.0.8",
     "tw-animate-css": "catalog:"

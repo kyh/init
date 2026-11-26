@@ -149,3 +149,14 @@
     scrollbar-color: color-mix(in oklab, var(--foreground) 25%, transparent) transparent;
   }
 }
+
+@keyframes otp-caret-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
+}
