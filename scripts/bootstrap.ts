@@ -277,20 +277,11 @@ const createEnv = () => {
     return;
   }
 
-  const env = [
-    `BETTER_AUTH_SECRET="${randomBytes(32).toString("base64")}"`,
-    "",
-    "# Avatar uploads need a Vercel Blob store; unset, that one route 501s",
-    `BLOB_READ_WRITE_TOKEN=""`,
-    "",
-    "# Uncomment + run 'pnpm emulate' so the GitHub button works offline (see AGENTS.md)",
-    `# NEXT_PUBLIC_GITHUB_EMULATOR_URL="http://localhost:4000"`,
-    `# EXPO_PUBLIC_GITHUB_EMULATOR_URL="http://localhost:4000"`,
-    "",
-  ].join("\n");
+  const secret = `BETTER_AUTH_SECRET="${randomBytes(32).toString("base64")}"`;
+  const env = readText(".env.example").replace(/^BETTER_AUTH_SECRET=.*$/mu, secret);
 
   writeText(envPath, env);
-  console.log("  ✓ .env created");
+  console.log("  ✓ .env created from .env.example, with a fresh BETTER_AUTH_SECRET");
 };
 
 const startPostgres = () => {

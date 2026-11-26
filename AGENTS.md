@@ -5,12 +5,11 @@
 ## Quickstart (headless)
 
 ```sh
-pnpm install
-pnpm bootstrap --yes  # provision everything, non-interactively
-pnpm dev:web          # web app → http://localhost:3000
+pnpm install && pnpm bootstrap --yes  # install, then provision everything non-interactively
+pnpm dev:web                          # web app → http://localhost:3000
 ```
 
-`pnpm bootstrap --yes` (or any piped / non-TTY run — e.g. an agent) keeps all apps and: writes `.env` → starts local Postgres → pushes the Drizzle schema → seeds a dev user → reports agent tooling. It's idempotent; re-run any time, or `pnpm db:reset` to rebuild + re-seed. `pnpm db:start` runs local Supabase on the CLI's native runtime — Postgres as a plain process, on macOS 14+ (Apple silicon) and Linux (glibc 2.35+) — then has the CLI write its URL into `.env.local` (`supabase status --env`, `DB_URL` renamed to `POSTGRES_URL`). The `with-env` scripts load `.env.local` before `.env`, so it wins; delete it to use a `POSTGRES_URL` from `.env` instead.
+`pnpm bootstrap --yes` (or any piped / non-TTY run — e.g. an agent) keeps all apps and: writes `.env` (a copy of `.env.example` with a fresh `BETTER_AUTH_SECRET`) → starts local Postgres → pushes the Drizzle schema → seeds a dev user → reports agent tooling. It's idempotent; re-run any time, or `pnpm db:reset` to rebuild + re-seed. `pnpm db:start` runs local Supabase on the CLI's native runtime — Postgres as a plain process, on macOS 14+ (Apple silicon) and Linux (glibc 2.35+) — then has the CLI write its URL into `.env.local` (`supabase status --env`, `DB_URL` renamed to `POSTGRES_URL`). The `with-env` scripts load `.env.local` before `.env`, so it wins; delete it to use a `POSTGRES_URL` from `.env` instead.
 
 The CLI keeps one local database per checkout **and git branch**, each on its own port, so worktrees and parallel agents never share data or fight over a port. A new branch therefore starts with an empty database: re-run `pnpm bootstrap --yes` there. The first start downloads Postgres (~400 MB from GitHub releases, then cached in `~/.supabase/cache`). Postgres refuses to run as root, which is how cloud sessions run: the SessionStart hook in `.claude/settings.json` creates a `supabase-postgres` system user and exports `SUPABASE_NATIVE_POSTGRES_USER` for the session; anywhere else that runs as root, do the same (the CLI's error says how).
 
