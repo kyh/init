@@ -8,6 +8,14 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src", "*.ts", "*.js", ".expo/types/**/*.ts", "expo-env.d.ts", "nativewind-env.d.ts"],
+  "include": [
+    "src",
+    "*.ts",
+    "*.js",
+    "*.cjs",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts",
+    "nativewind-env.d.ts"
+  ],
   "exclude": ["node_modules"]
 }

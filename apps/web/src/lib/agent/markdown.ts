@@ -3,6 +3,7 @@ import { siteConfig } from "@/lib/site-config";
 import { sitePages } from "./site-pages";
 
 import type { Block, Inline, ListItem, SitePage, TableBlock } from "./page-content";
+import { unreachable } from "@/lib/unreachable";
 
 export const absoluteUrl = (path: string) => `${siteConfig.url}${path}`;
 
@@ -96,8 +97,12 @@ const renderBlock = (block: Block) => {
       return renderListItems(block.items, 0);
     }
 
-    default: {
+    case "table": {
       return renderTable(block);
+    }
+
+    default: {
+      return unreachable(block);
     }
   }
 };

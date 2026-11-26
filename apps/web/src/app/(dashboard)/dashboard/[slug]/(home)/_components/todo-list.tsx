@@ -1,6 +1,6 @@
 "use client";
 
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 import { useState } from "react";
 import { alertDialog } from "@repo/ui/components/alert-dialog";
 import { Button } from "@repo/ui/components/button";
@@ -29,8 +29,9 @@ export const TodoList = ({ slug }: TodoListProps) => {
   const { data } = useSuspenseQuery(orpc.todo.list.queryOptions({ input: { slug } }));
   const { todos } = data;
 
-  const invalidateTodos = () =>
-    queryClient.invalidateQueries({ queryKey: orpc.todo.list.key({ input: { slug } }) });
+  const invalidateTodos = async () => {
+    await queryClient.invalidateQueries({ queryKey: orpc.todo.list.key({ input: { slug } }) });
+  };
 
   const createTodo = useMutation(
     orpc.todo.create.mutationOptions({ onError, onSuccess: invalidateTodos }),
@@ -47,7 +48,7 @@ export const TodoList = ({ slug }: TodoListProps) => {
   const [editing, setEditing] = useState<Pick<Todo, "id" | "title"> | null>(null);
   const [newTitle, setNewTitle] = useState("");
 
-  const handleCreate = (event: FormEvent<HTMLFormElement>) => {
+  const handleCreate = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     const trimmed = newTitle.trim();
 
@@ -113,7 +114,9 @@ export const TodoList = ({ slug }: TodoListProps) => {
       <form onSubmit={handleCreate} className="flex flex-col gap-2 sm:flex-row">
         <Input
           value={newTitle}
-          onChange={(event) => setNewTitle(event.target.value)}
+          onChange={(event) => {
+            setNewTitle(event.target.value);
+          }}
           placeholder="Add a new todo"
           aria-label="Todo title"
           disabled={createTodo.isPending}
@@ -138,9 +141,9 @@ export const TodoList = ({ slug }: TodoListProps) => {
                   <div className="flex items-start gap-3">
                     <Checkbox
                       checked={todo.completed}
-                      onCheckedChange={(completed) =>
-                        updateTodo.mutate({ completed, id: todo.id, slug })
-                      }
+                      onCheckedChange={(completed) => {
+                        updateTodo.mutate({ completed, id: todo.id, slug });
+                      }}
                       aria-label={
                         todo.completed ? "Mark todo as incomplete" : "Mark todo as complete"
                       }
@@ -150,9 +153,9 @@ export const TodoList = ({ slug }: TodoListProps) => {
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                         <Input
                           value={editing.title}
-                          onChange={(event) =>
-                            setEditing({ id: todo.id, title: event.target.value })
-                          }
+                          onChange={(event) => {
+                            setEditing({ id: todo.id, title: event.target.value });
+                          }}
                           aria-label="Edit todo title"
                           disabled={updateTodo.isPending}
                         />
@@ -169,7 +172,9 @@ export const TodoList = ({ slug }: TodoListProps) => {
                             type="button"
                             size="sm"
                             variant="outline"
-                            onClick={() => setEditing(null)}
+                            onClick={() => {
+                              setEditing(null);
+                            }}
                             disabled={updateTodo.isPending}
                           >
                             Cancel
@@ -198,7 +203,9 @@ export const TodoList = ({ slug }: TodoListProps) => {
                         type="button"
                         size="icon"
                         variant="ghost"
-                        onClick={() => setEditing({ id: todo.id, title: todo.title })}
+                        onClick={() => {
+                          setEditing({ id: todo.id, title: todo.title });
+                        }}
                         disabled={updateTodo.isPending || createTodo.isPending}
                         aria-label={`Edit ${todo.title}`}
                       >
@@ -208,7 +215,9 @@ export const TodoList = ({ slug }: TodoListProps) => {
                         type="button"
                         size="icon"
                         variant="ghost"
-                        onClick={() => handleDelete(todo)}
+                        onClick={() => {
+                          handleDelete(todo);
+                        }}
                         loading={isDeleting}
                         aria-label={`Delete ${todo.title}`}
                       >

@@ -10,7 +10,6 @@ const appConfig = ({ config }: ConfigContext) =>
       },
       package: "your.bundle.identifier",
     },
-    assetBundlePatterns: ["**/*"],
     experiments: {
       reactCompiler: true,
       tsconfigPaths: true,

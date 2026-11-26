@@ -1,0 +1,17 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreBinaries": ["ffmpeg"],
+  "workspaces": {
+    "apps/extension": {
+      "entry": ["src/entrypoints/*.ts", "src/entrypoints/*/main.tsx"],
+      "ignoreDependencies": ["tailwindcss"]
+    },
+    "apps/mobile": {
+      "entry": ["postcss.config.cjs"],
+      "ignoreDependencies": ["expo-updates", "metro-cache"]
+    },
+    "apps/web": {
+      "ignoreDependencies": ["tailwindcss"]
+    }
+  }
+}

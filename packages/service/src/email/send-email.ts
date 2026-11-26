@@ -10,7 +10,7 @@ export const sendEmail = async ({ to, subject, text }: SendEmailInput) => {
   const apiKey = env.RESEND_API_KEY;
   const from = env.EMAIL_FROM;
 
-  if (!apiKey) {
+  if (apiKey === undefined || apiKey === "") {
     console.info(
       `[email] RESEND_API_KEY not set — logging instead of sending\nto: ${to}\nsubject: ${subject}\n${text}`,
     );

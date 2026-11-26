@@ -46,7 +46,7 @@ export const ogCardResponse = ({ eyebrow, title, description }: OgCardProps) =>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           <div style={{ fontSize: 72, letterSpacing: -1.5, lineHeight: 1.05 }}>{title}</div>
-          {description ? (
+          {description !== undefined && description !== "" ? (
             <div style={{ color: MUTED, fontSize: 32, lineHeight: 1.35, maxWidth: 960 }}>
               {description}
             </div>

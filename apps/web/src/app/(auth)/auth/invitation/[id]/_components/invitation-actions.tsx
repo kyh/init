@@ -26,7 +26,11 @@ export const InvitationActions = ({ invitationId, organizationSlug }: Invitation
         },
         onSuccess: () => {
           toast.success("Invitation accepted");
-          router.replace(organizationSlug ? `/dashboard/${organizationSlug}` : "/dashboard");
+          router.replace(
+            organizationSlug === null || organizationSlug === undefined
+              ? "/dashboard"
+              : `/dashboard/${organizationSlug}`,
+          );
         },
       },
       invitationId,
@@ -52,12 +56,20 @@ export const InvitationActions = ({ invitationId, organizationSlug }: Invitation
 
   return (
     <div className="grid gap-2">
-      <Button onClick={handleAccept} loading={pending === "accept"} disabled={pending !== null}>
+      <Button
+        onClick={() => {
+          void handleAccept();
+        }}
+        loading={pending === "accept"}
+        disabled={pending !== null}
+      >
         Accept invitation
       </Button>
       <Button
         variant="outline"
-        onClick={handleDecline}
+        onClick={() => {
+          void handleDecline();
+        }}
         loading={pending === "decline"}
         disabled={pending !== null}
       >

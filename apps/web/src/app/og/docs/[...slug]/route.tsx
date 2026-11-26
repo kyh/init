@@ -6,7 +6,7 @@ import { getPageImage, source } from "@/lib/source";
 const sectionTitle = (slugs: string[]) => {
   const [folder] = slugs;
 
-  if (!folder || slugs.length < 2) {
+  if (folder === undefined || slugs.length < 2) {
     return "Documentation";
   }
 

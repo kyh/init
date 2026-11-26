@@ -3,7 +3,7 @@ import type { Config } from "drizzle-kit";
 // WARNING: drizzle-kit stalls behind a transaction-mode pooler, so it needs the direct (non-pooling) URL.
 const url = process.env.POSTGRES_URL_NON_POOLING ?? process.env.POSTGRES_URL;
 
-if (!url) {
+if (url === undefined || url === "") {
   throw new Error("Missing POSTGRES_URL");
 }
 

@@ -4,6 +4,7 @@ import { cn } from "cn";
 import type { Block, Inline, ListItem, SitePage, TableBlock } from "@/lib/agent/page-content";
 import { headingId } from "@/lib/agent/page-content";
 import { pageMetadata, sitePageImage } from "@/lib/page-metadata";
+import { unreachable } from "@/lib/unreachable";
 
 export const sitePageMetadata = (page: SitePage) =>
   pageMetadata({
@@ -100,8 +101,12 @@ const BlockView = ({ block }: { block: Block }) => {
       return <ListItems items={block.items} nested={false} />;
     }
 
-    default: {
+    case "table": {
       return <Table block={block} />;
+    }
+
+    default: {
+      return unreachable(block);
     }
   }
 };

@@ -54,13 +54,14 @@ const useInviteMembers = (slug: string, organizationId: string) => {
   return useMutation({
     mutationFn: async (data: z.infer<typeof inviteMembersSchema>) => {
       const results = await Promise.allSettled(
-        data.organizationInvitations.map((invite) =>
-          authClient.organization.inviteMember({
-            email: invite.email,
-            fetchOptions: { throw: true },
-            organizationId,
-            role: invite.role,
-          }),
+        data.organizationInvitations.map(
+          async (invite) =>
+            await authClient.organization.inviteMember({
+              email: invite.email,
+              fetchOptions: { throw: true },
+              organizationId,
+              role: invite.role,
+            }),
         ),
       );
 
@@ -71,7 +72,9 @@ const useInviteMembers = (slug: string, organizationId: string) => {
       }
     },
     onError: (error) => toast.error(error.message),
-    onSettled: () => invalidateOrganization(queryClient, slug),
+    onSettled: async () => {
+      await invalidateOrganization(queryClient, slug);
+    },
     onSuccess: () => {
       toast.success("Invitations sent successfully");
     },
@@ -119,7 +122,7 @@ const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormProps) =>
         <form.Field name="organizationInvitations" mode="array">
           {(arrayField) => (
             <>
-              {arrayField.state.value?.map((invite, index) => (
+              {arrayField.state.value.map((invite, index) => (
                 <div key={invite.key} className="flex items-end gap-2">
                   <form.AppField
                     name={`organizationInvitations[${index}].email`}
@@ -159,7 +162,7 @@ const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormProps) =>
                           <Button
                             variant="ghost"
                             size="icon"
-                            disabled={(arrayField.state.value?.length ?? 0) <= 1}
+                            disabled={arrayField.state.value.length <= 1}
                             aria-label="Remove invite"
                             onClick={() => {
                               arrayField.removeValue(index);
@@ -174,11 +177,13 @@ const InviteMembersForm = ({ slug, onInviteSuccess }: InviteMembersFormProps) =>
                   </div>
                 </div>
               ))}
-              {(arrayField.state.value?.length ?? 0) < MAX_INVITES && (
+              {arrayField.state.value.length < MAX_INVITES && (
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => arrayField.pushValue(createEmptyInviteModel())}
+                  onClick={() => {
+                    arrayField.pushValue(createEmptyInviteModel());
+                  }}
                 >
                   <PlusIcon className="mr-1 h-3" />
                   <span>Add another one</span>

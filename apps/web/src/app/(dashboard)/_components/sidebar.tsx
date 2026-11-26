@@ -68,7 +68,7 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
           },
           onSuccess: (ctx) => {
             setIsOrganizationsDialogOpen(false);
-            router.push(`/dashboard/${ctx.data.slug}`);
+            router.push(`/dashboard/${z.object({ slug: z.string() }).parse(ctx.data).slug}`);
             toast.success("Organization created successfully");
           },
         },
@@ -108,7 +108,7 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
         <DropdownMenuTrigger className="mt-auto cursor-pointer">
           <Avatar className="size-9">
             <AvatarFallback className="animate-in fade-in uppercase">
-              {user.email?.slice(0, 1)}
+              {user.email.slice(0, 1)}
             </AvatarFallback>
           </Avatar>
         </DropdownMenuTrigger>
@@ -173,7 +173,12 @@ const UserDropdown = ({ slug, user, organizations }: UserDropdownProps) => {
             </DropdownMenuSub>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem className="flex w-full gap-2" onClick={handleSignOut}>
+          <DropdownMenuItem
+            className="flex w-full gap-2"
+            onClick={() => {
+              void handleSignOut();
+            }}
+          >
             <LogOutIcon className="size-4" />
             Log out
           </DropdownMenuItem>

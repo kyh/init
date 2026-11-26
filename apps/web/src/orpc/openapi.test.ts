@@ -54,7 +54,7 @@ describe("openapi document", () => {
   });
 
   test("points every error response at the shared Error schema", () => {
-    assert.ok(document.components.schemas.Error);
+    assert.notEqual(document.components.schemas.Error, undefined);
     assert.equal(document.components.schemas.UndefinedError, undefined);
 
     for (const { id, operation } of operations) {

@@ -44,12 +44,12 @@ const config: NextConfig = {
       '</llms.txt>; rel="alternate"; type="text/plain"',
     ].join(", ");
 
-    return Promise.resolve([
+    return [
       {
         headers: [{ key: "Link", value: link }],
         source: "/",
       },
-    ]);
+    ];
   },
   images: {
     localPatterns: [{ pathname: "/assets/**" }],

@@ -4,14 +4,14 @@ import Constants from "expo-constants";
 export const getBaseUrl = () => {
   const productionUrl = process.env.EXPO_PUBLIC_API_URL;
 
-  if (productionUrl) {
+  if (productionUrl !== undefined && productionUrl !== "") {
     return productionUrl;
   }
 
   const debuggerHost = Constants.expoConfig?.hostUri;
   const localhost = debuggerHost?.split(":")[0];
 
-  if (!localhost) {
+  if (localhost === undefined || localhost === "") {
     throw new Error("No dev server host found. Set EXPO_PUBLIC_API_URL for production builds.");
   }
 

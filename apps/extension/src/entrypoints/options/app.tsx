@@ -97,7 +97,9 @@ const App = () => {
               id="apiBaseUrl"
               type="url"
               value={apiBaseUrl}
-              onChange={(e) => setApiBaseUrl(e.target.value)}
+              onChange={(e) => {
+                setApiBaseUrl(e.target.value);
+              }}
               placeholder="http://localhost:3000"
             />
             <p className="text-muted-foreground text-xs">
@@ -119,7 +121,12 @@ const App = () => {
           )}
 
           <div className="flex gap-2">
-            <Button onClick={handleSave} loading={isSaving}>
+            <Button
+              onClick={() => {
+                void handleSave();
+              }}
+              loading={isSaving}
+            >
               <Save className="size-4" />
               Save Settings
             </Button>

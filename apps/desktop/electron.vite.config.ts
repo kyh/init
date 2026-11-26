@@ -1,7 +1,7 @@
 import path from "node:path";
 import { defineConfig } from "electron-vite";
 
-const packagedWebAppUrl = process.env["WEBAPP_URL"] ?? "https://init.kyh.io/";
+const packagedWebAppUrl = process.env.WEBAPP_URL ?? "https://init.kyh.io/";
 
 export default defineConfig({
   main: {

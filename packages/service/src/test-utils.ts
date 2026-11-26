@@ -90,7 +90,10 @@ export const createMockContext = (session: ORPCContext["session"] = mockSession)
       { columns: (rows[0] ?? []).map(() => ({ parser: JSON.parse, type: 0 })) },
     );
 
-    return { raw: () => Promise.resolve(raw), values: () => Promise.resolve(rows) };
+    return {
+      raw: async () => await Promise.resolve(raw),
+      values: async () => await Promise.resolve(rows),
+    };
   });
 
   mock.method(db.$client, "unsafe", query);

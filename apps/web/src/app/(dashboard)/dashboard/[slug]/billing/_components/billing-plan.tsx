@@ -84,22 +84,34 @@ export const BillingPlan = ({ organizationId, slug, canManage }: BillingPlanProp
             {subscription.status}
           </Badge>
         )}
-        {subscription?.cancelAtPeriodEnd && <Badge variant="destructive">Cancels soon</Badge>}
+        {subscription?.cancelAtPeriodEnd === true && (
+          <Badge variant="destructive">Cancels soon</Badge>
+        )}
       </div>
       {subscription?.periodEnd && (
         <p className="text-muted-foreground text-sm">
-          {subscription.cancelAtPeriodEnd ? "Access until" : "Renews"}{" "}
+          {subscription.cancelAtPeriodEnd === true ? "Access until" : "Renews"}{" "}
           {formatDate(subscription.periodEnd)}
         </p>
       )}
       {canManage ? (
         <div className="flex gap-2">
           {subscription ? (
-            <Button onClick={handlePortal} loading={redirecting === "portal"}>
+            <Button
+              onClick={() => {
+                void handlePortal();
+              }}
+              loading={redirecting === "portal"}
+            >
               Manage subscription
             </Button>
           ) : (
-            <Button onClick={handleUpgrade} loading={redirecting === "upgrade"}>
+            <Button
+              onClick={() => {
+                void handleUpgrade();
+              }}
+              loading={redirecting === "upgrade"}
+            >
               Upgrade to Pro
             </Button>
           )}
@@ -136,7 +148,13 @@ export const BillingHistory = ({ organizationId, slug, canManage }: BillingPlanP
 
   return (
     <div>
-      <Button variant="outline" onClick={handlePortal} loading={redirecting}>
+      <Button
+        variant="outline"
+        onClick={() => {
+          void handlePortal();
+        }}
+        loading={redirecting}
+      >
         View invoices in Stripe
       </Button>
     </div>

@@ -50,7 +50,7 @@ export const createUpdater = (enabled: boolean, announce: (state: UpdateState) =
     try {
       const result = await autoUpdater.checkForUpdates();
 
-      return result?.isUpdateAvailable
+      return result?.isUpdateAvailable === true
         ? publish({ status: "available", version: result.updateInfo.version })
         : publish({ status: "not-available" });
     } catch (error: unknown) {

@@ -5,7 +5,9 @@ export const authMetadataSchema = z
   .string()
   .transform((str, ctx) => {
     try {
-      return JSON.parse(str);
+      const parsed: unknown = JSON.parse(str);
+
+      return parsed;
     } catch {
       ctx.addIssue({ code: "custom", message: "Invalid JSON" });
 

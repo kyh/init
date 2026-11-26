@@ -129,7 +129,7 @@ const FieldSeparator = ({
 }) => (
   <div
     data-slot="field-separator"
-    data-content={!!children}
+    data-content={children !== undefined && children !== null}
     className={cn(
       "relative -my-2 h-5 text-sm group-data-[variant=outline]/field-group:-mb-2",
       className,
@@ -137,7 +137,7 @@ const FieldSeparator = ({
     {...props}
   >
     <Separator className="absolute inset-0 top-1/2" />
-    {children && (
+    {children === undefined || children === null ? null : (
       <span
         className="relative mx-auto block w-fit bg-background px-2 text-muted-foreground"
         data-slot="field-separator-content"
@@ -157,11 +157,15 @@ const FieldError = ({
   errors?: ({ message?: string } | undefined)[];
 }) => {
   const messages = [
-    ...new Set(errors?.flatMap((fieldError) => (fieldError?.message ? [fieldError.message] : []))),
+    ...new Set(
+      errors?.flatMap((fieldError) =>
+        fieldError?.message === undefined || fieldError.message === "" ? [] : [fieldError.message],
+      ),
+    ),
   ];
 
   const content =
-    children ||
+    children ??
     (messages.length > 1 ? (
       <ul className="ml-4 flex list-disc flex-col gap-1">
         {messages.map((message) => (
@@ -172,7 +176,7 @@ const FieldError = ({
       messages[0]
     ));
 
-  if (!content) {
+  if (content === undefined) {
     return null;
   }
 

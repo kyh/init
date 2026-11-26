@@ -34,6 +34,7 @@ export const baseUrl = resolveBaseUrl();
 
 const trustedOrigins = [baseUrl, "expo://"];
 
+const productionHost = process.env.VERCEL_PROJECT_PRODUCTION_URL;
 const emulatorUrl = process.env.NEXT_PUBLIC_GITHUB_EMULATOR_URL;
 
 const generateAvailableSlug = async (baseSlug: string, attempt = 0) => {
@@ -41,7 +42,7 @@ const generateAvailableSlug = async (baseSlug: string, attempt = 0) => {
   const org = await db.query.organization.findFirst({ where: { slug } });
 
   if (org) {
-    return generateAvailableSlug(baseSlug, attempt + 1);
+    return await generateAvailableSlug(baseSlug, attempt + 1);
   }
 
   return slug;
@@ -53,9 +54,11 @@ const createPersonalOrganization = async (user: User) => {
   const baseSlug = slugify(user.name) || FALLBACK_ORGANIZATION_SLUG;
 
   for (let attempt = 1; ; attempt += 1) {
+    // oxlint-disable-next-line no-await-in-loop -- each attempt needs the previous one's collision
     const slug = await generateAvailableSlug(baseSlug);
 
     try {
+      // oxlint-disable-next-line no-await-in-loop -- each attempt needs the previous one's collision
       return await auth.api.createOrganization({
         body: {
           metadata: {
@@ -87,10 +90,6 @@ const createRequiredOrganization = async (user: User) => {
 
 const createDefaultOrganization = async (user: User) => {
   const createdOrganization = await createRequiredOrganization(user);
-
-  if (!createdOrganization) {
-    return;
-  }
 
   try {
     await db
@@ -127,12 +126,14 @@ export const auth = betterAuth({
   databaseHooks: {
     session: {
       create: {
-        before: (session) => setActiveOrganization(session),
+        before: async (session) => await setActiveOrganization(session),
       },
     },
     user: {
       create: {
-        after: (user) => createDefaultOrganization(user),
+        after: async (user) => {
+          await createDefaultOrganization(user);
+        },
       },
     },
   },
@@ -160,9 +161,10 @@ export const auth = betterAuth({
   plugins: [
     oAuthProxy({
       currentURL: baseUrl,
-      productionURL: process.env.VERCEL_PROJECT_PRODUCTION_URL
-        ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-        : baseUrl,
+      productionURL:
+        productionHost === undefined || productionHost === ""
+          ? baseUrl
+          : `https://${productionHost}`,
     }),
     expo(),
     organization({
@@ -198,7 +200,7 @@ export const auth = betterAuth({
         ],
       },
     }),
-    ...(emulatorUrl
+    ...(emulatorUrl !== undefined && emulatorUrl !== ""
       ? [
           genericOAuth({
             config: [

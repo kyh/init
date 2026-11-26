@@ -28,7 +28,7 @@ const matchOf = (accept: string, mediaType: string) => {
     }
 
     const q = params.find((param) => param.startsWith("q="));
-    const parsed = q ? Number(q.slice(2)) : 1;
+    const parsed = q === undefined ? 1 : Number(q.slice(2));
     best = { quality: Number.isNaN(parsed) ? 1 : Math.min(Math.max(parsed, 0), 1), specificity };
   }
 
@@ -40,7 +40,7 @@ const matchOf = (accept: string, mediaType: string) => {
  * high as HTML. Wildcards alone keep the default HTML, so browsers never flip.
  */
 export const prefersMarkdown = (accept: string | null) => {
-  if (!accept) {
+  if (accept === null || accept === "") {
     return false;
   }
 

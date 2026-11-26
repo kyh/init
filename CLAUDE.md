@@ -69,7 +69,8 @@ pnpm format           # Check formatting (oxfmt)
 pnpm format:fix       # Format all packages (oxfmt)
 pnpm test             # Run tests (node:test)
                       # Real-database suites skip unless TEST_POSTGRES_URL points at a disposable, schema-pushed Postgres
-pnpm verify           # typecheck · lint · format · test (static CI gate)
+pnpm verify           # typecheck · lint · format · knip · test (static CI gate)
+pnpm knip             # Unused files, exports and dependencies
 pnpm smoke            # Drive a running app end-to-end (runtime CI gate)
 pnpm build            # Build all packages
 pnpm -F @repo/desktop package  # Bundle the desktop app (.app/.dmg on macOS)

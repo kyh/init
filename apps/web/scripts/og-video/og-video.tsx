@@ -59,13 +59,15 @@ const main = async () => {
 
     await page.addInitScript("globalThis.__name = (target) => target;");
     await page.goto(`file://${scenePath}`);
-    await page.evaluate(() => document.fonts.ready);
+    await page.evaluate(async () => await document.fonts.ready);
 
     const frameCount = DURATION * FPS;
 
     for (let frame = 0; frame < frameCount; frame += 1) {
+      // oxlint-disable-next-line no-await-in-loop -- frames render in order on one page
       await page.evaluate(applyFrame, frame / FPS);
       const name = String(frame).padStart(4, "0");
+      // oxlint-disable-next-line no-await-in-loop -- frames render in order on one page
       await page.screenshot({ path: path.join(framesDir, `${name}.png`) });
     }
 

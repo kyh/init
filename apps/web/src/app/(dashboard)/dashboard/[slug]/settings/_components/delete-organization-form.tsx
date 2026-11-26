@@ -29,8 +29,8 @@ const useDeleteOrganization = (organizationId: string) => {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: () =>
-      authClient.organization.delete({
+    mutationFn: async () =>
+      await authClient.organization.delete({
         fetchOptions: { throw: true },
         organizationId,
       }),
@@ -48,8 +48,8 @@ const useLeaveOrganization = (organizationId: string) => {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: () =>
-      authClient.organization.leave({
+    mutationFn: async () =>
+      await authClient.organization.leave({
         fetchOptions: { throw: true },
         organizationId,
       }),
@@ -74,7 +74,9 @@ const Delete = ({ organization }: DeleteProps) => {
     defaultValues: {
       name: "",
     },
-    onSubmit: () => deleteOrganization(),
+    onSubmit: () => {
+      deleteOrganization();
+    },
     validators: {
       onSubmit: z.object({
         name: z.string().refine((value) => value === organization.name, {
@@ -165,7 +167,9 @@ const Leave = ({ organization }: LeaveProps) => {
     defaultValues: {
       confirmation: "",
     },
-    onSubmit: () => leaveOrganization(),
+    onSubmit: () => {
+      leaveOrganization();
+    },
     validators: {
       onSubmit: z.object({
         confirmation: z.string().refine((value) => value === "LEAVE", {
@@ -244,7 +248,7 @@ export const DeleteOrganizationForm = ({ slug }: DeleteOrganizationFormProps) =>
     organization: ["delete"],
   });
 
-  if (organizationData.organizationMetadata.personal) {
+  if (organizationData.organizationMetadata.personal === true) {
     return null;
   }
 

@@ -41,7 +41,7 @@ export const SelectField = ({
       </FieldLabel>
       <FieldContent>
         <Select
-          value={field.state.value ?? ""}
+          value={field.state.value}
           onValueChange={(value) => {
             if (value === null) {
               return;

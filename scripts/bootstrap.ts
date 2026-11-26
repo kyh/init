@@ -21,7 +21,9 @@ const readText = (p: string) => fs.readFileSync(path.resolve(ROOT_DIR, p), "utf-
 
 const writeText = (p: string, data: string) => {
   if (DRY_RUN) {
-    return console.log(`  [dry-run] write ${p}`);
+    console.log(`  [dry-run] write ${p}`);
+
+    return;
   }
 
   fs.writeFileSync(path.resolve(ROOT_DIR, p), data);
@@ -35,7 +37,9 @@ const writeJson = (p: string, data: z.JSONType) => {
 
 const rmDir = (p: string) => {
   if (DRY_RUN) {
-    return console.log(`  [dry-run] rm -rf ${p}`);
+    console.log(`  [dry-run] rm -rf ${p}`);
+
+    return;
   }
 
   fs.rmSync(path.resolve(ROOT_DIR, p), { force: true, recursive: true });
@@ -55,9 +59,9 @@ interface CheckboxItem {
   checked: boolean;
 }
 
-const checkbox = (message: string, items: CheckboxItem[]) =>
+const checkbox = async (message: string, items: CheckboxItem[]) =>
   // oxlint-disable-next-line promise/avoid-new -- adapts raw stdin key events into a promise
-  new Promise<boolean[]>((resolve) => {
+  await new Promise<boolean[]>((resolve) => {
     const { stdin, stdout } = process;
     stdin.setRawMode(true);
     stdin.resume();
@@ -364,8 +368,8 @@ const main = async () => {
           available.map((app) => ({ checked: true, label: app.name })),
         );
 
-  const toKeep = available.filter((_, i) => selected[i]);
-  const toRemove = available.filter((_, i) => !selected[i]);
+  const toKeep = available.filter((_, i) => selected[i] === true);
+  const toRemove = available.filter((_, i) => selected[i] !== true);
 
   if (toKeep.length === 0) {
     console.log("You must keep at least one app.");

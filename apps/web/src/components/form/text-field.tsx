@@ -45,9 +45,11 @@ export const TextField = ({
     <Input
       id={field.name}
       name={field.name}
-      value={field.state.value ?? ""}
+      value={field.state.value}
       onBlur={field.handleBlur}
-      onChange={(event) => field.handleChange(event.target.value)}
+      onChange={(event) => {
+        field.handleChange(event.target.value);
+      }}
       aria-invalid={isInvalid}
       className={inputClassName}
       {...inputProps}
@@ -60,7 +62,7 @@ export const TextField = ({
         {label}
       </FieldLabel>
       <FieldContent>
-        {startAdornment ? (
+        {startAdornment !== undefined && startAdornment !== null ? (
           <div className="flex rounded-lg shadow-sm shadow-black/[.04]">
             {startAdornment}
             {input}
@@ -69,7 +71,9 @@ export const TextField = ({
           input
         )}
       </FieldContent>
-      {description ? <FieldDescription>{description}</FieldDescription> : null}
+      {description !== undefined && description !== "" ? (
+        <FieldDescription>{description}</FieldDescription>
+      ) : null}
       {isInvalid ? (
         <FieldError className={errorClassName} errors={toFieldErrors(field.state.meta.errors)} />
       ) : null}
