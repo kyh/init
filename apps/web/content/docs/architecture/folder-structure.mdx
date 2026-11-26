@@ -1,7 +1,7 @@
 ---
 title: "Folder Structure"
 description: "The Turborepo layout: four apps, shared packages, and the rule that packages never depend on apps"
-modified: 2026-11-25
+modified: 2026-11-26
 ---
 
 Init is a Turborepo monorepo with clear separation between applications and shared packages. Apps consume packages; packages never depend on apps.
@@ -39,7 +39,7 @@ apps/web/
 │   └── docs/              # These docs (fumadocs MDX)
 ├── src/
 │   ├── app/
-│   │   ├── (auth)/        # Login, register, password reset
+│   │   ├── (auth)/        # Login and register (email code)
 │   │   ├── (dashboard)/   # Protected dashboard
 │   │   │   └── dashboard/
 │   │   │       ├── [slug]/    # Org pages: todos, members, settings, billing

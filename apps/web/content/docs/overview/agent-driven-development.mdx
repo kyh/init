@@ -1,7 +1,7 @@
 ---
 title: "Agent-Driven Development"
 description: "How a coding agent provisions, drives and verifies Init end to end, from a cold clone to a proven change"
-modified: 2026-11-25
+modified: 2026-11-26
 ---
 
 Init is built to be driven end-to-end by a coding agent — from a cold clone to a verified, running feature — without a human babysitting each step. This page is that workflow; [`AGENTS.md`](https://github.com/kyh/init/blob/main/AGENTS.md) at the repo root is the same guide your agent reads in-context.
@@ -22,10 +22,10 @@ The Supabase CLI runs local Postgres as a native process, so cloud sandboxes run
 Every provision leaves a known account, so an agent can verify authenticated flows with no signup step:
 
 ```
-dev@init.local / password
+dev@init.local
 ```
 
-It comes with a personal organization and a few sample todos (see `packages/service/src/seed.ts`). The seed goes through better-auth's own signup API, so it exercises the same organization-provisioning path a real user hits.
+Sign-in is an emailed code, so `pnpm sign-in-code` mints one straight into the database (better-auth's server-only `createVerificationOTP`): no inbox needed. It comes with a personal organization and a few sample todos (see `packages/service/src/seed.ts`). The seed signs in with a code through better-auth's own API, so it exercises the same organization-provisioning path a real user hits.
 
 ## Verifying a change
 
@@ -68,7 +68,7 @@ The web app is the one surface an agent can drive headlessly. Mobile, desktop, a
 
 ## OAuth without the internet
 
-Email/password needs nothing external. For the **GitHub** button, Init wires [emulate](https://github.com/vercel-labs/emulate) — a local OAuth provider — so the shipped button works offline in dev. Uncomment `NEXT_PUBLIC_GITHUB_EMULATOR_URL` in `.env`, then:
+Email codes need nothing external: without `RESEND_API_KEY` they land in the server log. For the **GitHub** button, Init wires [emulate](https://github.com/vercel-labs/emulate) — a local OAuth provider — so the shipped button works offline in dev. Uncomment `NEXT_PUBLIC_GITHUB_EMULATOR_URL` in `.env`, then:
 
 ```bash
 pnpm emulate

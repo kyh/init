@@ -8,7 +8,8 @@ import { db } from "@repo/db/drizzle-client";
 import { session as sessionSchema, user as userSchema } from "@repo/db/drizzle-schema-auth";
 import { betterAuth, logger } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
-import { admin, genericOAuth, oAuthProxy, organization } from "better-auth/plugins";
+import { APIError, createAuthMiddleware, formCsrfMiddleware } from "better-auth/api";
+import { admin, emailOTP, genericOAuth, oAuthProxy, organization } from "better-auth/plugins";
 import { and, eq, isNull } from "drizzle-orm";
 import { Stripe } from "stripe";
 
@@ -118,6 +119,20 @@ const setActiveOrganization = async (session: { userId: string }) => {
   };
 };
 
+// WARNING: better-auth checks no origin on a code's sign-in and answers success when its sender throws.
+const guardSignInCodes = createAuthMiddleware(async (ctx) => {
+  if (ctx.path === "/sign-in/email-otp") {
+    await formCsrfMiddleware(ctx);
+  }
+
+  if (ctx.path === "/email-otp/send-verification-otp" && !sendsEmail) {
+    throw APIError.from("SERVICE_UNAVAILABLE", {
+      code: "EMAIL_DISABLED",
+      message: "Sign-in by email is unavailable: this site sends no email.",
+    });
+  }
+});
+
 export const auth = betterAuth({
   advanced: {
     defaultCookieAttributes: {
@@ -129,6 +144,7 @@ export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
   }),
+  hooks: { before: guardSignInCodes },
   databaseHooks: {
     session: {
       create: {
@@ -143,31 +159,6 @@ export const auth = betterAuth({
       },
     },
   },
-  emailAndPassword: {
-    enabled: true,
-    sendResetPassword: sendsEmail
-      ? async ({ user, url }) => {
-          await sendEmail({
-            subject: "Reset your password",
-            text: `Click the link to reset your password: ${url}`,
-            to: user.email,
-          });
-        }
-      : undefined,
-  },
-  emailVerification: {
-    autoSignInAfterVerification: true,
-    sendOnSignUp: sendsEmail,
-    sendVerificationEmail: sendsEmail
-      ? async ({ user, url }) => {
-          await sendEmail({
-            subject: "Verify your email",
-            text: `Click the link to verify your email: ${url}`,
-            to: user.email,
-          });
-        }
-      : undefined,
-  },
   plugins: [
     oAuthProxy({
       currentURL: baseUrl,
@@ -177,6 +168,19 @@ export const auth = betterAuth({
           : `https://${productionHost}`,
     }),
     expo(),
+    emailOTP({
+      sendVerificationOTP: async ({ email, otp, type }) => {
+        if (type !== "sign-in" || !sendsEmail) {
+          return;
+        }
+
+        await sendEmail({
+          subject: "Your sign-in code",
+          text: `Your sign-in code is ${otp}. It expires in 5 minutes. If you didn't ask for it, ignore this email.`,
+          to: email,
+        });
+      },
+    }),
     organization({
       ac,
       roles,

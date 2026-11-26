@@ -1,7 +1,7 @@
 ---
 title: "Installation"
 description: "Prerequisites and the commands that take a fresh clone to a running local app"
-modified: 2026-11-25
+modified: 2026-11-26
 ---
 
 Get Init running locally in a few minutes.
@@ -78,7 +78,7 @@ Using a hosted database instead? Create a [Supabase](https://supabase.com) proje
 
 ### 5. Trim the Starter (Optional)
 
-`pnpm bootstrap` is the one-command alternative to steps 3–4: it writes `.env`, starts Postgres, pushes the schema, and seeds a dev user (`dev@init.local` / `password`), then ends with an interactive checklist — deselect mobile, extension, or desktop and it deletes them cleanly. Pass `--yes` to keep all apps and run unattended (how a coding agent provisions).
+`pnpm bootstrap` is the one-command alternative to steps 3–4: it writes `.env`, starts Postgres, pushes the schema, and seeds a dev user (`dev@init.local`, signed in with a code from `pnpm sign-in-code`), then ends with an interactive checklist — deselect mobile, extension, or desktop and it deletes them cleanly. Pass `--yes` to keep all apps and run unattended (how a coding agent provisions).
 
 ```bash
 pnpm bootstrap        # interactive

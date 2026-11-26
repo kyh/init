@@ -1,10 +1,9 @@
 import { db } from "@repo/db/drizzle-client";
 import { todo } from "@repo/db/drizzle-schema";
 
-import { auth } from "./auth/auth";
+import { signInWithCode } from "./auth/sign-in-code";
 
 const DEV_EMAIL = "dev@init.local";
-const DEV_PASSWORD = "password";
 const DEV_NAME = "Dev User";
 
 const seed = async () => {
@@ -16,12 +15,10 @@ const seed = async () => {
     userId = existing.id;
     console.log(`  ✓ user ${DEV_EMAIL} already exists`);
   } else {
-    const { user } = await auth.api.signUpEmail({
-      body: { email: DEV_EMAIL, name: DEV_NAME, password: DEV_PASSWORD },
-    });
+    const { user } = await signInWithCode(DEV_EMAIL, DEV_NAME);
 
     userId = user.id;
-    console.log(`  ✓ created ${DEV_EMAIL} (password: ${DEV_PASSWORD})`);
+    console.log(`  ✓ created ${DEV_EMAIL} (sign in with a code: pnpm sign-in-code)`);
   }
 
   const membership = await db.query.member.findFirst({ where: { userId } });

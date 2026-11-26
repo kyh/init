@@ -35,10 +35,9 @@ With Supabase's Data API off ([Deployment](/docs/launch/deployment#database-supa
 
 Honest gaps. Each is a deliberate "add when you need it":
 
-- **Email delivery** - set `RESEND_API_KEY` (and `EMAIL_FROM`) in production. Password reset, verification and organization invite emails send through Resend's REST API (`packages/service/src/email/send-email.ts`). Without the key, outside production they log to the server console, links included, so local dev can follow them; in production nothing is sent or logged (a reset link in the logs would hand an account to anyone who can read them), boot warns that the deployment sends no email, and password reset and email verification are refused up front
+- **Email delivery** - set `RESEND_API_KEY` (and `EMAIL_FROM`) in production. Sign-in codes and organization invite emails send through Resend's REST API (`packages/service/src/email/send-email.ts`). Without the key, outside production they log to the server console, codes included, so local dev can follow them; in production nothing is sent or logged (a code in the logs would hand an account to anyone who can read them), boot warns that the deployment sends no email, and sign-in by email code is refused, leaving GitHub
 - **Rate limiting** - better-auth's database-backed limiter covers auth routes, but oRPC procedures (`/api/orpc` and `/api/v1`) have none. Add [Vercel WAF rules](https://vercel.com/docs/security/vercel-waf) or a middleware backed by a shared store
 - **Billing** - Stripe via `@better-auth/stripe`. Set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and `STRIPE_PRO_PRICE_ID`, then point a Stripe webhook at `/api/auth/stripe/webhook` (events: `checkout.session.completed`, `customer.subscription.created/updated/deleted`). The webhook keeps the `subscription` table in sync; `dashboard/[slug]/billing` handles checkout and the billing portal. Subscriptions are org-scoped — only owners/admins can manage them
-- **Email verification** - verification emails send on signup. Set `requireEmailVerification: true` under `emailAndPassword` in `packages/service/src/auth/auth.ts` to block unverified logins (only with `RESEND_API_KEY` set: a production deployment without it sends no verification email, so nobody could sign in)
 - **Background jobs** - no queue. Long work either fits in a request or needs Inngest/Trigger.dev/QStash
 
 ## Database Safety
@@ -62,7 +61,7 @@ Green CI is the merge bar. Note `apps/web/next.config.ts` sets `typescript.ignor
 - [ ] `site-config.ts` (name, description, Twitter), `githubUrl`, `og.jpg` and `og/og.mp4` updated
 - [ ] Unique `BETTER_AUTH_SECRET`; separate GitHub OAuth apps
 - [ ] Production schema pushed; Vercel Blob store created and `BLOB_READ_WRITE_TOKEN` set
-- [ ] `RESEND_API_KEY` + `EMAIL_FROM` set (verification, password reset, invite emails)
+- [ ] `RESEND_API_KEY` + `EMAIL_FROM` set (sign-in codes, invite emails)
 - [ ] Stripe keys set + webhook pointed at `/api/auth/stripe/webhook`
 - [ ] Uptime monitor on `/api/health`
 - [ ] Error tracking installed ([Monitoring](/docs/launch/monitoring))

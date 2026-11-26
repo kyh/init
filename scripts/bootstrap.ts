@@ -396,7 +396,9 @@ const main = async () => {
   console.log(`\n  ${GREEN}Setup complete!${RESET}\n`);
   console.log(`  Start:  ${CYAN}pnpm dev${RESET}       (web → http://localhost:3000)`);
   console.log(`  Verify: ${CYAN}pnpm verify${RESET}    (typecheck · lint · format · test)`);
-  console.log(`  Login:  ${CYAN}dev@init.local${RESET} / ${CYAN}password${RESET}  (seeded)`);
+  console.log(
+    `  Login:  ${CYAN}dev@init.local${RESET}, code from ${CYAN}pnpm sign-in-code${RESET}  (seeded)`,
+  );
   console.log(`  Agents: read ${CYAN}AGENTS.md${RESET}\n`);
 };
 
