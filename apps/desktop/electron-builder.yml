@@ -19,8 +19,6 @@ electronFuses:
 mac:
   category: public.app-category.productivity
   target: [dmg, zip]
-linux:
-  target: [AppImage]
 win:
   target: [nsis]
 # Updates stay off until a feed is named: electron-builder then writes app-update.yml beside
