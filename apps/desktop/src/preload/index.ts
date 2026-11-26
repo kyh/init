@@ -9,9 +9,9 @@ const appOrigin = process.argv
   ?.slice(APP_ORIGIN_ARG.length);
 
 const ask = async (command: Command) => {
-  const state: UpdateState = await ipcRenderer.invoke(channelOf(command));
+  const answer: unknown = await ipcRenderer.invoke(channelOf(command));
 
-  return state;
+  return answer;
 };
 
 const subscribe = <E extends BridgeEvent>(
