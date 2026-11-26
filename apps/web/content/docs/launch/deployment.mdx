@@ -1,7 +1,7 @@
 ---
 title: "Deployment"
 description: "Ship the web app to Vercel and the database to Supabase, plus the mobile, extension and desktop pipelines"
-modified: 2026-11-25
+modified: 2026-11-26
 ---
 
 Ship Init to production. The web app targets Vercel; the database targets Supabase. Mobile, extension, and desktop each have their own pipeline.
@@ -104,7 +104,7 @@ pnpm -F @repo/extension build   # wxt build → .output/chrome-mv3
 pnpm -F @repo/desktop package   # electron-builder → .output/bin
 ```
 
-Upload the extension to the Chrome Web Store. electron-builder signs the desktop app with the Developer ID it finds (in the keychain, or `CSC_LINK` and `CSC_KEY_PASSWORD`) and notarizes it when `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER` (or `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD` and `APPLE_TEAM_ID`) are set (see [electron-builder's code signing guide](https://www.electron.build/code-signing)). A package opens `https://init.kyh.io/`; set `WEBAPP_URL` when packaging to point it at another deployment.
+Upload the extension to the Chrome Web Store. electron-builder signs the desktop app with the Developer ID it finds (in the keychain, or `CSC_LINK` and `CSC_KEY_PASSWORD`) and notarizes it when `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER` (or `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD` and `APPLE_TEAM_ID`) are set (see [electron-builder's code signing guide](https://www.electron.build/code-signing)). A package opens `https://init.kyh.io/`; set `WEBAPP_URL` when packaging to point it at another deployment. GitHub Actions packs it unsigned too, as a check that it still packs: `desktop.yml` builds the Linux AppImage on pull requests that touch `apps/desktop`, and `desktop-release.yml` builds the macOS zip and the Windows installer on a published release or when you run it by hand, keeping each as a workflow artifact. A macOS runner bills about ten times a Linux one, so neither runs it on every push.
 
 Updates are off until you configure them. Name a feed in `apps/desktop/electron-builder.yml`:
 

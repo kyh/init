@@ -1,0 +1,54 @@
+name: Desktop
+
+# The app's shell packed for Linux, unsigned, kept as an artifact, when a PR or a push to main
+# touches it, and by hand. The macOS and Windows packs are desktop-release.yml's, which a PR does
+# not run. Nothing here signs, notarizes or publishes.
+on:
+  pull_request:
+    paths:
+      - apps/desktop/**
+      - .github/workflows/desktop.yml
+  push:
+    branches: [main]
+    paths:
+      - apps/desktop/**
+      - .github/workflows/desktop.yml
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  CSC_IDENTITY_AUTO_DISCOVERY: "false"
+  TURBO_TELEMETRY_DISABLED: 1
+
+jobs:
+  desktop:
+    name: Linux (AppImage)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - uses: pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b # v2.1.0
+        with:
+          runtime: node@24
+          cache: true
+
+      - name: Test
+        working-directory: apps/desktop
+        run: pnpm test
+
+      - name: Pack
+        working-directory: apps/desktop
+        run: pnpm build && pnpm exec electron-builder --linux --publish never
+
+      - name: Keep the bundle
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: init-Linux
+          path: apps/desktop/.output/bin/*.AppImage
+          if-no-files-found: error
