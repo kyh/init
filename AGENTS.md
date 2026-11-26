@@ -72,6 +72,8 @@ agent-browser get text            # assert the seeded todos render
 agent-browser screenshot /tmp/after.png
 ```
 
+Give each agent its own browser with `AGENT_BROWSER_SESSION=<repo>-<task>` (or `--session`): the default one is shared. Locate by `snapshot -i` refs or `find role … --name`, never `find text`, which can match a hidden duplicate label. A background tab gets no animation frames, so menus won't open: `agent-browser tab keep live` fixes it.
+
 Don't stop at typecheck/tests — exercise the actual flow and observe the result.
 
 ## OAuth without the internet
