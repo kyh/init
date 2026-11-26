@@ -34,6 +34,7 @@ export const baseUrl = resolveBaseUrl();
 
 const trustedOrigins = [baseUrl, "expo://"];
 
+const productionHost = process.env.VERCEL_PROJECT_PRODUCTION_URL;
 const emulatorUrl = process.env.NEXT_PUBLIC_GITHUB_EMULATOR_URL;
 
 const generateAvailableSlug = async (baseSlug: string, attempt = 0) => {
@@ -160,9 +161,10 @@ export const auth = betterAuth({
   plugins: [
     oAuthProxy({
       currentURL: baseUrl,
-      productionURL: process.env.VERCEL_PROJECT_PRODUCTION_URL
-        ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-        : baseUrl,
+      productionURL:
+        productionHost === undefined || productionHost === ""
+          ? baseUrl
+          : `https://${productionHost}`,
     }),
     expo(),
     organization({

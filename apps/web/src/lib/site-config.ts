@@ -1,3 +1,5 @@
+const productionHost = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+
 export const siteConfig = {
   author: { name: "Kaiyu Hsu", url: "https://kyh.io" },
   description: "An AI native starter kit to build, launch, and scale your next project.",
@@ -20,7 +22,7 @@ export const siteConfig = {
   twitter: "@kaiyuhsu",
   url:
     process.env.SITE_URL ??
-    (process.env.VERCEL_PROJECT_PRODUCTION_URL
-      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-      : "http://localhost:3000"),
+    (productionHost === undefined || productionHost === ""
+      ? "http://localhost:3000"
+      : `https://${productionHost}`),
 };

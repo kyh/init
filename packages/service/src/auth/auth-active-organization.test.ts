@@ -7,7 +7,10 @@ import { sql } from "drizzle-orm";
 
 import { auth } from "./auth";
 
-const skip = process.env.TEST_POSTGRES_URL ? false : "TEST_POSTGRES_URL is unset";
+const testPostgresUrl = process.env.TEST_POSTGRES_URL;
+
+const skip =
+  testPostgresUrl === undefined || testPostgresUrl === "" ? "TEST_POSTGRES_URL is unset" : false;
 
 const newCredentials = () => ({
   email: `${randomUUID()}@example.com`,
